@@ -1,0 +1,154 @@
+:root {
+    --primary: #2c7ecb;
+    --secondary: #66a7da;
+    --bg-header: #8eb9ed;
+    --headerName: #1f4774;
+    --bg-surfacePrm: #f8f8f8;
+    --bg-surfaceSec: #f5fbff;
+    --bg-surface-hover: #fdfdfd;
+    --border: #d9eff6;
+    --cards-border: #bfe3f1;
+
+    --border-radius: 5px;
+    --spacing: 3px;
+
+    /* Оптимизированные переменные для анимации */
+    --transition: 0.2s ease-in-out;
+    --transform: scale(1.1);
+}
+
+.project-details-container {
+    background: var(--bg-surfacePrm);
+    min-height: 50vh;
+    padding: 3px;
+    border-radius: var(--border-radius);
+    /* border: 2px solid red; */
+}
+
+.project-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: -7px 0 15px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.project-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--secondary);
+}
+
+.project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 7px;
+    gap: 12px;
+    font-size: 0.875rem;
+}
+
+/* Dashboard.tsx */
+.dashboard-grid {
+    display: grid;
+    gap: 12px;
+}
+
+/* верхние 4 карточки */
+.dashboard-summary {
+    display: grid;
+    justify-items: center;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    /* border: 1px solid #1f4774; */
+}
+
+/* основной контент */
+.dashboard-main {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    border: 1px solid #f55353;
+}
+
+@media (max-width: 900px) {
+    .dashboard-main {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards.tsx */
+.cards {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--cards-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cards h4 {
+    margin-bottom: 10px;
+}
+
+.cards-row {
+    display: flex;
+    /* justify-content: space-between; */
+    /* font-size: 12px; */
+    /* color: var(--text-secondary); */
+}
+.cards:hover {
+    transform: scale(1.02); /* лёгкое увеличение */
+    box-shadow: 0 6px 18px var(--cards-border);
+    border-color: var(--bg-header);
+}
+
+/* .summary-card:focus-visible {
+    outline: 2px solid #66a7da;
+    outline-offset: 2px;
+} */
+
+/* StatusOverview.tsx */
+.status-card {
+    background: var(--bg-surfacePrm);
+    border-radius: var(--border-radius);
+    padding: 12px;
+}
+
+.status-row {
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.status-bar {
+    height: 4px;
+    background: #edf2f7;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.status-bar-fill {
+    height: 100%;
+}
+
+/* CustomerPreview.tsx */
+.customer-card {
+    background: var(--bg-surfacePrm);
+    border-radius: var(--border-radius);
+    padding: 12px;
+    text-align: center;
+}
+
+.circle-wrap {
+    position: relative;
+    margin: 16px 0;
+}
+
+.circle-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}

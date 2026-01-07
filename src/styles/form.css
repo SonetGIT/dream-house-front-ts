@@ -1,0 +1,269 @@
+:root {
+    --primary: #2c7ecb;
+    --secondary: #66a7da;
+    --bg-header: #8eb9ed;
+    --headerName: #1f4774;
+    --bg-surfacePrm: #f8f8f8;
+    --bg-surfaceSec: #f5fbff;
+    --bg-surface-hover: #fdfdfd;
+    --border: #d9eff6;
+    --border-radius: 7px;
+    --spacing: 3px;
+
+    --success: #14b8a6;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+
+    --transition: 0.2s ease-in-out;
+    --transform-hover: scale(1.03);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* ====== ЦЕНТРИРУЮЩИЙ КОНТЕЙНЕР ====== */
+.form-centered-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* не центрируем по вертикали, чтобы длинные формы не "уезжали" */
+    padding: calc(var(--spacing) * 6) calc(var(--spacing) * 3);
+    box-sizing: border-box;
+    /* min-height: calc(100vh - 60px); оставляем место под хедер/футер, если есть */
+}
+
+/* На малых экранах — чуть меньше отступов */
+@media (max-width: 480px) {
+    .form-centered-wrapper {
+        padding: calc(var(--spacing) * 4) calc(var(--spacing) * 2);
+    }
+}
+
+/* ====== БАЗОВЫЙ КОНТЕЙНЕР ====== */
+.creation-form {
+    width: 100%;
+    max-width: 520px;
+    background: var(--bg-surfacePrm);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; */
+}
+
+/* ====== ШАПКА ФОРМЫ ====== */
+.form-header {
+    text-align: center;
+    background: var(--bg-header);
+    color: var(--headerName);
+    padding: 6px;
+    text-transform: uppercase;
+}
+.form-title {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--headerName);
+}
+.icon-sm {
+    font-size: medium;
+    vertical-align: middle;
+}
+.icon-gap {
+    margin-right: 6px;
+}
+
+/* ====== ТЕЛО ФОРМЫ ====== */
+.form-body {
+    padding: calc(var(--spacing) * 4);
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 3);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 1);
+}
+
+.form-label {
+    font-size: 12px;
+    color: var(--headerName);
+}
+
+/* ====== ПОЛЯ ВВОДА ====== */
+.form-control {
+    width: 100%;
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
+    /* font-size: 13px; */
+    /* background: var(--bg-surfacePrm); */
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    outline: none;
+    line-height: 1;
+    min-height: 24px; /*calc(13px + 2px + calc(var(--spacing) * 3));*/
+}
+
+.form-control:focus {
+    border-color: var(--bg-header);
+    box-shadow: 0 0 0 2px rgba(44, 126, 203, 0.12);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger);
+}
+.form-control.is-valid {
+    border-color: var(--success);
+}
+
+.form-control-textarea {
+    min-height: 72px;
+    resize: vertical;
+}
+
+/* ====== ДВЕ КОЛОНКИ ====== */
+/* .form-row {
+    display: flex;
+    gap: calc(var(--spacing) * 3);
+}
+.form-col {
+    flex: 1;
+} */
+
+/* ====== КНОПКИ (улучшенные) ====== */
+.btn {
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 5);
+    font-size: 11px;
+    /* font-weight: 500; */
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    /* transition: all var(--transition); */
+    /* line-height: 1.2; */
+    min-height: 27px;
+    width: 100px;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); */
+}
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+    /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); */
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: 1px solid var(--primary);
+}
+.btn-primary:hover:not(:disabled) {
+    background: var(--secondary);
+    color: var(--headerName);
+}
+
+.btn-secondary {
+    background: var(--bg-surfacePrm);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+.btn-secondary:hover:not(:disabled) {
+    background: var(--secondary);
+    color: white;
+}
+
+/* ====== ТЕГИ (для участников, меток) ====== */
+.tag-input {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 1);
+    border: 1px dashed var(--border);
+    border-radius: var(--border-radius);
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+}
+.tag-input-field {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    outline: none;
+    background: transparent;
+}
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 1);
+    width: 100%;
+}
+.tag {
+    display: inline-flex;
+    align-items: center;
+    padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 2);
+    font-size: 12px;
+    border-radius: 12px;
+    background: var(--bg-surfaceSec);
+    color: var(--text-primary);
+}
+.tag-primary {
+    background: rgba(44, 126, 203, 0.12);
+    color: var(--primary);
+}
+.tag-secondary {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning);
+}
+.tag-remove {
+    margin-left: 4px;
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border: none;
+}
+.tag-remove:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* ====== ФУТЕР (кнопки) ====== */
+.form-footer {
+    display: flex;
+    margin: 7px;
+    padding: 7px;
+    gap: 7px;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid var(--border);
+}
+/* ====== АДАПТИВ ====== */
+@media (max-width: 480px) {
+    .creation-form {
+        width: 100%;
+        margin: 0;
+    }
+    .form-header,
+    .form-body,
+    .form-footer {
+        padding-left: calc(var(--spacing) * 3);
+        padding-right: calc(var(--spacing) * 3);
+    }
+    .form-row {
+        flex-direction: column;
+        gap: calc(var(--spacing) * 2);
+    }
+    .form-footer {
+        flex-direction: column;
+    }
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
