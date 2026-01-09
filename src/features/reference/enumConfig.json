@@ -56,5 +56,26 @@
             "name": ["name"]
         },
         "apiName": "/materialRequestStatuses/gets"
+    },
+    "beaaf9c2-b0d1-4c1c-8861-5723b936c334": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/materialRequestItemStatuses/gets"
+    },
+    "52fc32f7-44dd-42f2-92d2-bfcbb56f466d": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/currencies/gets"
+    },
+    "7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/suppliers/gets"
     }
 }

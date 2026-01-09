@@ -3,6 +3,7 @@ export interface EnumItem {
     name?: string;
     type?: number;
     unit_of_measure?: number;
+    currency?: string;
     [key: string]: string | number | boolean | null | undefined;
 }
 

@@ -3,7 +3,7 @@ import { Autocomplete, TextField, autocompleteClasses } from '@mui/material';
 import { useMemo } from 'react';
 
 // Базовые стили — вынесены, но адаптированы под size="small"
-const createReferenceSelectSx = (minWidth: number = 200) => ({
+const createReferenceSelectSx = (minWidth: number = 190) => ({
     minWidth,
 
     '& .MuiOutlinedInput-root': {
@@ -58,7 +58,7 @@ interface ReferenceSelectProps {
     loading?: boolean;
     minWidth?: number;
     disabled?: boolean;
-    // sx?: typeof createReferenceSelectSx;
+    sx?: typeof createReferenceSelectSx;
 }
 
 /*******************************************************************************************************************************/

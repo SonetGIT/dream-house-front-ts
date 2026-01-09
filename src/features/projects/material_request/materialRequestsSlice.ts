@@ -139,7 +139,6 @@ export const updateMaterialRequest = createAsyncThunk<
 >('materialRequests/update', async ({ id, data }, { rejectWithValue }) => {
     try {
         const response = await apiRequest(`${API_URL}/materialRequests/update/${id}`, 'PUT', data);
-
         return response.data as MaterialRequest;
     } catch (err: any) {
         return rejectWithValue(err.message);
@@ -156,6 +155,29 @@ export const signMaterialRequest = createAsyncThunk<
         const now = new Date().toISOString();
 
         switch (role_id) {
+            //case 1 - временно для админа
+            case 1:
+                update.foreman_user_id = userId;
+                update.approved_by_foreman = true;
+                update.approved_by_foreman_time = now;
+
+                update.purchasing_agent_user_id = userId;
+                update.approved_by_purchasing_agent = true;
+                update.approved_by_purchasing_agent_time = now;
+
+                update.site_manager_user_id = userId;
+                update.approved_by_site_manager = true;
+                update.approved_by_site_manager_time = now;
+
+                update.planning_engineer_user_id = userId;
+                update.approved_by_planning_engineer = true;
+                update.approved_by_planning_engineer_time = now;
+
+                update.main_engineer_user_id = userId;
+                update.approved_by_main_engineer = true;
+                update.approved_by_main_engineer_time = now;
+                break;
+
             case 4: // Прораб
                 update.foreman_user_id = userId;
                 update.approved_by_foreman = true;
@@ -253,6 +275,7 @@ export const materialRequestsSlice = createSlice({
                     u.id === action.payload.id ? action.payload : u
                 );
             })
+
             //SIGN
             .addCase(signMaterialRequest.pending, (state) => {
                 state.loading = true;
@@ -261,7 +284,7 @@ export const materialRequestsSlice = createSlice({
 
             .addCase(signMaterialRequest.fulfilled, (state, action) => {
                 state.loading = false;
-
+                console.log('ACTION', action.payload);
                 const index = state.data.findIndex((req) => req.id === action.payload.id);
 
                 if (index !== -1) {
@@ -280,5 +303,4 @@ export const materialRequestsSlice = createSlice({
 });
 
 export const { clearMaterialRequests } = materialRequestsSlice.actions;
-
 export default materialRequestsSlice.reducer;

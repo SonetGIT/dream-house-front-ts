@@ -58,6 +58,11 @@ export default function MaterialRequestsTable(props: PropsType) {
         const userId = Number(user.id);
         const roleId = Number(user.role_id);
 
+        // Временная проверка для admin (например, роль = 1)
+        if (roleId === 1) {
+            // 1 = admin
+            return true; // admin может подписывать всё
+        }
         switch (roleId) {
             case 4: // Прораб
                 return (
@@ -107,6 +112,7 @@ export default function MaterialRequestsTable(props: PropsType) {
             })
         );
     };
+
     /********************************************************************************************************************************/
     return (
         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>

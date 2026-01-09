@@ -6,6 +6,7 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import UserAvatar from './UserAvatar';
 import LogoutButton from './LogoutButton';
+import USDRate from '../ui/USDRate';
 
 interface HeaderProps {
     onMenuClick?: () => void;
@@ -43,15 +44,19 @@ export default function Header(props: HeaderProps) {
                     >
                         АИС «Dream House»
                     </Typography>
+
                     <Box
                         sx={{
                             top: '50%',
                             right: -17,
                             display: 'flex',
+                            alignItems: 'center',
                             position: 'absolute',
                             transform: 'translateY(-50%)',
                         }}
                     >
+                        {' '}
+                        <USDRate />
                         <UserAvatar />
                         <LogoutButton />
                     </Box>

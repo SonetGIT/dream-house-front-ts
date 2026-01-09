@@ -13,6 +13,7 @@ export interface MaterialRequestItems {
     price: number | null;
     summ: number | null;
     comment: string | null;
+    currency: number | null;
     material_request_id: number;
     status: number;
     created_at: string;
@@ -33,7 +34,7 @@ interface SearchParams {
     size?: number;
     material_type?: number;
     material_id?: number;
-    status?: number;
+    // status?: number;
 }
 
 interface PurchasingAgentState {
@@ -50,6 +51,19 @@ const initialState: PurchasingAgentState = {
     error: null,
 };
 
+export interface PurchasingAgentSearchResponse {
+    success: boolean;
+    data: MaterialRequestItems[];
+    pagination: Pagination;
+}
+
+interface SearchParams {
+    page?: number;
+    size?: number;
+    material_type?: number;
+    material_id?: number;
+    // status?: number;
+}
 export const fetchPurchasingAgentItems = createAsyncThunk<
     PurchasingAgentSearchResponse,
     SearchParams | void

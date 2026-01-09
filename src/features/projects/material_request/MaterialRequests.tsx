@@ -1,8 +1,8 @@
-import { Box, IconButton } from '@mui/material';
+import { Box } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { MdOutlinePlaylistAdd, MdSkipNext, MdSkipPrevious } from 'react-icons/md';
+import { MdOutlinePlaylistAdd } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import {
@@ -17,6 +17,7 @@ import { getProjectById } from '../projectsSlice';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import MaterialReqCreateEditForm from './MaterialReqCreateEditForm';
 import MaterialRequestsTable from './MaterialRequestsTable';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 /******************************************************************************************************/
 export default function MaterialRequests() {
@@ -202,39 +203,11 @@ export default function MaterialRequests() {
                     </div>
 
                     {/*Пагинация****************************************************************************************************/}
-                    <div className="table-footer-container">
-                        <div className="pagination">
-                            <StyledTooltip title="Предыдущая страница">
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        className="table-page-button"
-                                        onClick={handleNextPage}
-                                        disabled={!pagination?.hasPrev}
-                                    >
-                                        <MdSkipPrevious />
-                                    </IconButton>
-                                </span>
-                            </StyledTooltip>
-
-                            <span className="page-text">стр. {pagination?.page}</span>
-                            <span className="page-text"> из {pagination?.pages}</span>
-
-                            <StyledTooltip title="Следующая страница">
-                                <span>
-                                    <IconButton
-                                        size="small"
-                                        className="table-page-button"
-                                        onClick={handlePrevPage}
-                                        disabled={!pagination?.hasNext}
-                                    >
-                                        <MdSkipNext />
-                                    </IconButton>
-                                </span>
-                            </StyledTooltip>
-                            <span className="page-count">Кол-во: {pagination?.total}</span>
-                        </div>
-                    </div>
+                    <TablePagination
+                        pagination={pagination}
+                        onPrev={handlePrevPage}
+                        onNext={handleNextPage}
+                    />
                 </Box>
             )}
 

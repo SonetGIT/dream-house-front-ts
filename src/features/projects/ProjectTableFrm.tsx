@@ -7,9 +7,9 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 
 interface PropsType {
     items: Project[];
-    pagination: Pagination | null;
     loading: boolean;
     error: string | null;
+    pagination: Pagination | null;
     onPrevPage: () => void;
     onNextPage: () => void;
     getRefName: {
@@ -24,8 +24,6 @@ export default function ProjectTableFrm(props: PropsType) {
         navigate(`/projects/${project.id}`, { state: { project } });
     };
 
-    // const getTypeName = (id: number | string) =>
-    //     props.projectTypesName?.find((pt) => pt.id === id)?.name ?? `#${id}`;
     /*******************************************************************************************************************************/
     return (
         <div className="table-container">

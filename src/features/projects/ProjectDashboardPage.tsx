@@ -28,7 +28,6 @@ export default function ProjectDashboardPage() {
         () => ({ projectType: getProjectTypeName, projectStatus: getProjectStatusName }),
         [getProjectTypeName, getProjectStatusName]
     );
-    console.log('projectType', getProjectTypeName);
     const projectId = Number(id);
 
     useEffect(() => {
