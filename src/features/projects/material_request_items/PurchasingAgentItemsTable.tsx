@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Paper, Checkbox, Box, Typography, TextField } from '@mui/material';
+import { Paper, Checkbox, Box, TextField, FormHelperText } from '@mui/material';
 import { useForm, Controller, useWatch } from 'react-hook-form';
-import type { MaterialRequestItems } from '@/features/projects/material_request_items/materialRequestItemsSlice';
+import {
+    fetchPurchasingAgentItems,
+    type MaterialRequestItems,
+} from '@/features/projects/material_request_items/materialRequestItemsSlice';
 import type { EnumItem } from '@/features/reference/referenceService';
 import { compactTextFieldSx } from '@/styles/ui_style';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { TablePagination } from '@/components/ui/TablePagination';
-import type { Pagination } from '../projectsSlice';
+import { useAppDispatch, useAppSelector } from '@/app/store';
+import { createPurchaseOrder } from '../purchaseOrders/purchaseOrdersSlice';
+import { useOutletContext } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import type { Pagination } from '@/features/users/userSlice';
 
 interface PurchasingAgentItemsProps {
     items: MaterialRequestItems[];
@@ -21,64 +28,53 @@ interface PurchasingAgentItemsProps {
     pagination: Pagination | null;
     onPrevPage: () => void;
     onNextPage: () => void;
+    fullyOrderedStatusId?: number | string;
 }
 
 interface FormValues {
     items: MaterialRequestItems[];
 }
 
-/*****************************************************************************************************************/
+type ProjectOutletContext = {
+    projectId: number;
+};
+
 export default function PurchasingAgentItemsTable({
     items,
     getRefName,
     pagination,
     onPrevPage,
     onNextPage,
+    fullyOrderedStatusId,
 }: PurchasingAgentItemsProps) {
-    // Локальные состояния
+    const dispatch = useAppDispatch();
+    const currentUser = useAppSelector((state) => state.auth.user);
+    const { projectId } = useOutletContext<ProjectOutletContext>();
+
     const [suppliersId, setSuppliersId] = useState<string | number | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [supplierError, setSupplierError] = useState<string | null>(null);
 
-    const { control, reset, setValue } = useForm<FormValues>({
+    const { control, reset, setValue, trigger } = useForm<FormValues>({
         defaultValues: { items: [] },
     });
 
-    /* Инициализация формы из API */
     useEffect(() => {
         reset({ items });
     }, [items, reset]);
 
-    /* Следим за строками */
-    const watchedItems = useWatch({
-        control,
-        name: 'items',
-    });
+    const watchedItems = useWatch({ control, name: 'items' });
 
-    /* Автоподсчёт суммы */
+    const isReadonlyRow = (item: MaterialRequestItems) => item.status === fullyOrderedStatusId;
+
     useEffect(() => {
         watchedItems?.forEach((item, idx) => {
-            const price = Number(item.price || 0);
-            const qty = Number(item.quantity || 0);
-            const sum = price * qty;
-
+            const sum = Number(item.price || 0) * Number(item.quantity || 0);
             if (item.summ !== sum) {
                 setValue(`items.${idx}.summ`, sum);
             }
         });
     }, [watchedItems, setValue]);
-
-    // === Логика чекбоксов ===
-    const allSelected = watchedItems?.length > 0 && selectedIds.length === watchedItems.length;
-    const someSelected = selectedIds.length > 0 && !allSelected;
-
-    const toggleAll = () => {
-        if (allSelected) {
-            setSelectedIds([]);
-        } else {
-            const ids = watchedItems?.map((item) => item.id) || [];
-            setSelectedIds(ids);
-        }
-    };
 
     const toggleOne = (id: number) => {
         setSelectedIds((prev) =>
@@ -86,164 +82,227 @@ export default function PurchasingAgentItemsTable({
         );
     };
 
-    /**********************************************************************************************************************/
+    const handleCreate = async () => {
+        let hasError = false;
+
+        if (!suppliersId) {
+            setSupplierError('Выберите поставщика');
+            hasError = true;
+        } else {
+            setSupplierError(null);
+        }
+
+        if (!currentUser?.id) {
+            toast.error('Пользователь не авторизован');
+            return;
+        }
+
+        const selectedItems = watchedItems.filter(
+            (item) => selectedIds.includes(item.id) && !isReadonlyRow(item)
+        );
+
+        if (selectedItems.length === 0) {
+            toast.error('Выберите хотя бы один элемент');
+            return;
+        }
+
+        const fieldsToValidate = selectedItems.flatMap((item) => {
+            const idx = watchedItems.findIndex((i) => i.id === item.id);
+            return [`items.${idx}.price`, `items.${idx}.currency`, `items.${idx}.total_ordered`];
+        });
+
+        const isValid = await trigger(fieldsToValidate as any);
+        if (!isValid || hasError) {
+            toast.error('Заполните обязательные поля');
+            return;
+        }
+
+        const payloadItems = selectedItems.map((item) => ({
+            material_request_item_id: item.id,
+            material_type: item.material_type,
+            material_id: item.material_id,
+            unit_of_measure: item.unit_of_measure,
+            quantity: item.quantity,
+            price: item.price,
+            summ: item.summ,
+            currency: item.currency,
+            total_ordered: item.total_ordered,
+        }));
+
+        const result = await dispatch(
+            createPurchaseOrder({
+                created_user_id: currentUser.id,
+                project_id: projectId,
+                supplier_id: suppliersId,
+                comment: 'Закупка по заявке',
+                items: payloadItems,
+            })
+        );
+
+        if (createPurchaseOrder.fulfilled.match(result)) {
+            toast.success('Заявка успешно создана');
+
+            setSelectedIds([]);
+            setSuppliersId(null);
+
+            dispatch(fetchPurchasingAgentItems({ page: 1, size: 10 }));
+        }
+    };
+
+    /************************************************************************************************************************/
     return (
         <Paper className="table-container">
             <table className="table">
                 <thead>
                     <tr>
                         <th>Статус</th>
-                        <th>Тип материала</th>
+                        <th>Тип</th>
                         <th>Материал</th>
-                        <th>Ед. изм.</th>
+                        <th>Ед.</th>
                         <th>Кол-во</th>
                         <th>Цена</th>
                         <th>Сумма</th>
                         <th>Валюта</th>
                         <th>Заказано</th>
                         <th>Остаток</th>
-                        <th>Комментарий</th>
-                        <th>
-                            <Checkbox
-                                style={{ padding: 0 }}
-                                checked={allSelected}
-                                indeterminate={someSelected}
-                                onChange={toggleAll}
-                            />
-                        </th>
+                        <th />
                     </tr>
                 </thead>
 
                 <tbody>
-                    {watchedItems?.map((item, idx) => (
-                        <tr key={item.id}>
-                            <td>{getRefName.statusName(item.status)}</td>
-                            <td>{getRefName.materialType(item.material_type)}</td>
-                            <td>{getRefName.materialName(item.material_id)}</td>
-                            <td>{getRefName.unitName(item.unit_of_measure)}</td>
-                            <td>{item.quantity}</td>
+                    {watchedItems?.map((item, idx) => {
+                        const readonly = isReadonlyRow(item);
 
-                            {/* Цена */}
-                            <td>
-                                <Controller
-                                    name={`items.${idx}.price`}
-                                    control={control}
-                                    rules={{
-                                        required: 'Обязательно',
-                                        min: { value: 111, message: '> 0' },
-                                    }}
-                                    render={({ field, fieldState }) => (
-                                        <TextField
-                                            {...field}
-                                            type="number"
-                                            error={!!fieldState.error}
-                                            helperText={fieldState.error?.message}
-                                            sx={compactTextFieldSx}
-                                        />
-                                    )}
-                                />
-                            </td>
+                        return (
+                            <tr
+                                key={item.id}
+                                style={{
+                                    opacity: readonly ? 0.5 : 1,
+                                }}
+                            >
+                                <td>{getRefName.statusName(item.status)}</td>
+                                <td>{getRefName.materialType(item.material_type)}</td>
+                                <td>{getRefName.materialName(item.material_id)}</td>
+                                <td>{getRefName.unitName(item.unit_of_measure)}</td>
+                                <td>{item.quantity}</td>
 
-                            {/* Сумма (readonly) */}
-                            <td>{item.summ?.toFixed(2) || '0.00'}</td>
+                                {/* Цена */}
+                                <td>
+                                    <Controller
+                                        name={`items.${idx}.price`}
+                                        control={control}
+                                        rules={{
+                                            required:
+                                                selectedIds.includes(item.id) && !readonly
+                                                    ? 'Обязательно'
+                                                    : false,
+                                        }}
+                                        render={({ field, fieldState }) => (
+                                            <TextField
+                                                {...field}
+                                                type="number"
+                                                value={field.value ?? ''}
+                                                disabled={readonly}
+                                                error={!!fieldState.error}
+                                                helperText={fieldState.error?.message}
+                                                sx={compactTextFieldSx}
+                                            />
+                                        )}
+                                    />
+                                </td>
 
-                            {/* Валюта */}
-                            <td>
-                                <Controller
-                                    name={`items.${idx}.currency`}
-                                    control={control}
-                                    render={({ field }) => (
-                                        <ReferenceSelect
-                                            label=""
-                                            placeholder="Выберите валюту"
-                                            options={getRefName.currency || []}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                            disabled={field.disabled}
-                                            minWidth={10}
-                                        />
-                                    )}
-                                />
-                            </td>
+                                <td>{item.summ?.toFixed(2) || '0.00'}</td>
 
-                            {/* Заказано */}
-                            <td>
-                                <Controller
-                                    name={`items.${idx}.total_ordered`}
-                                    control={control}
-                                    rules={{
-                                        required: 'Обязательно',
-                                        min: { value: 111, message: '> 0' },
-                                    }}
-                                    render={({ field, fieldState }) => (
-                                        <TextField
-                                            {...field}
-                                            type="number"
-                                            error={!!fieldState.error}
-                                            helperText={fieldState.error?.message}
-                                            sx={compactTextFieldSx}
-                                        />
-                                    )}
-                                />
-                            </td>
+                                {/* Валюта */}
+                                <td>
+                                    <Controller
+                                        name={`items.${idx}.currency`}
+                                        control={control}
+                                        rules={{
+                                            required:
+                                                selectedIds.includes(item.id) && !readonly
+                                                    ? 'Обязательно'
+                                                    : false,
+                                        }}
+                                        render={({ field, fieldState }) => (
+                                            <>
+                                                <ReferenceSelect
+                                                    label=""
+                                                    value={field.value ?? ''}
+                                                    onChange={field.onChange}
+                                                    options={getRefName.currency || []}
+                                                    disabled={readonly}
+                                                    error={!!fieldState.error}
+                                                    minWidth={10}
+                                                />
+                                                {fieldState.error && (
+                                                    <FormHelperText error>
+                                                        {fieldState.error.message}
+                                                    </FormHelperText>
+                                                )}
+                                            </>
+                                        )}
+                                    />
+                                </td>
 
-                            {/* Остаток */}
-                            <td>{item.remaining_quantity ?? '—'}</td>
+                                {/* Заказано */}
+                                <td>
+                                    <Controller
+                                        name={`items.${idx}.total_ordered`}
+                                        control={control}
+                                        rules={{
+                                            validate: (value) => {
+                                                if (readonly) return true;
+                                                if (!selectedIds.includes(item.id)) return true;
+                                                return Number(value) <= Number(item.quantity)
+                                                    ? true
+                                                    : 'Больше количества';
+                                            },
+                                        }}
+                                        render={({ field, fieldState }) => (
+                                            <TextField
+                                                {...field}
+                                                type="number"
+                                                disabled={readonly}
+                                                error={!!fieldState.error}
+                                                helperText={fieldState.error?.message}
+                                                sx={compactTextFieldSx}
+                                            />
+                                        )}
+                                    />
+                                </td>
 
-                            {/* Комментарий */}
-                            <td>{item.comment?.trim() ? item.comment : '—'}</td>
+                                <td>{item.remaining_quantity ?? '—'}</td>
 
-                            <td>
-                                <Checkbox
-                                    checked={selectedIds.includes(item.id)}
-                                    onChange={() => toggleOne(item.id)}
-                                />
-                            </td>
-                        </tr>
-                    ))}
-
-                    {(!watchedItems || watchedItems.length === 0) && (
-                        <tr>
-                            <td colSpan={12}>
-                                <Box textAlign="center" py={3}>
-                                    <Typography color="text.secondary" fontSize="0.9rem">
-                                        Данные не найдены
-                                    </Typography>
-                                </Box>
-                            </td>
-                        </tr>
-                    )}
+                                <td>
+                                    <Checkbox
+                                        checked={selectedIds.includes(item.id)}
+                                        disabled={readonly}
+                                        onChange={() => toggleOne(item.id)}
+                                    />
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
 
-            {/* <div style={{ display: 'flex', justifyContent: 'flex-end' }}> */}
             <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} p={1}>
-                <Box flex={1} maxWidth={320}>
-                    <ReferenceSelect
-                        label=""
-                        placeholder="Выберите поставщика"
-                        options={getRefName.suppliers || []}
-                        value={suppliersId || ''}
-                        onChange={setSuppliersId}
-                    />
-                </Box>
-                <Box display="flex" gap={1}>
-                    {/* <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => reset()}
-                        // disabled={isSubmitting}
-                    >
-                        Отмена
-                    </button> */}
-                    {/* <button type="submit" className="btn btn-primary" disabled={isSubmitting}> */}
-                    <button type="submit" className="btn btn-primary">
-                        Сформировать
-                        {/* {isSubmitting ? 'Сохранение...' : isEdit ? 'Сохранить' : 'Создать'} */}
-                    </button>
-                </Box>
+                <ReferenceSelect
+                    label=""
+                    placeholder="Выберите поставщика"
+                    options={getRefName.suppliers || []}
+                    value={suppliersId || ''}
+                    onChange={setSuppliersId}
+                    error={!!supplierError}
+                    helperText={supplierError || ''}
+                />
+
+                <button className="btn btn-primary" onClick={handleCreate}>
+                    Сформировать
+                </button>
             </Box>
-            {/*Пагинация****************************************************************************************************/}
+
             <TablePagination pagination={pagination} onPrev={onPrevPage} onNext={onNextPage} />
         </Paper>
     );

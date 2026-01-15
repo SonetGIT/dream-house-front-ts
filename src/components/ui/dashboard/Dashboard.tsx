@@ -15,14 +15,14 @@ export default function Dashboard() {
             title: 'Заявка на закупку',
             label: 'Этот месяц',
             value: '34 000 $',
-            to: 'materialRequestItems',
+            to: 'purchaseRequestCard',
         },
         {
-            title: 'Заявка на материалы',
+            title: 'Склады',
             label: 'Этот месяц',
             value: '34 000 $',
             color: '#22c55e',
-            to: 'materialRequests1',
+            to: 'warehouses',
         },
         {
             title: 'Заявка на закупку',

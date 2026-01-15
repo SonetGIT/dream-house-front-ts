@@ -5,8 +5,8 @@ import type { Pagination } from '@/features/users/userSlice';
 
 interface TablePaginationProps {
     pagination?: Pagination | null;
-    onNext: () => void;
-    onPrev: () => void;
+    onNext?: () => void;
+    onPrev?: () => void;
 }
 
 /****************************************************************************************************************/

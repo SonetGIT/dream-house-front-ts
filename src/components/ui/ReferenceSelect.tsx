@@ -2,7 +2,7 @@ import type { EnumItem } from '@/features/reference/referenceService';
 import { Autocomplete, TextField, autocompleteClasses } from '@mui/material';
 import { useMemo } from 'react';
 
-// Базовые стили — вынесены, но адаптированы под size="small"
+// Базовые стили — вынесены, адаптированы под size="small"
 const createReferenceSelectSx = (minWidth: number = 190) => ({
     minWidth,
 
@@ -12,10 +12,8 @@ const createReferenceSelectSx = (minWidth: number = 190) => ({
     },
 
     '& .MuiAutocomplete-input': {
-        fontSize: '0.700rem', // лучше использовать rem
+        fontSize: '0.700rem',
         padding: 0,
-        // height: 9,
-        // minHeight: '20px', // достаточно для текста
     },
 
     '&:hover .MuiOutlinedInput-root': {
@@ -34,7 +32,6 @@ const createReferenceSelectSx = (minWidth: number = 190) => ({
         whiteSpace: 'nowrap',
     },
 
-    // Убираем фокус-обводку, если нужно — по дизайну
     '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
         border: '1px solid #8eb9ed',
     },
@@ -51,7 +48,6 @@ const createReferenceSelectSx = (minWidth: number = 190) => ({
 interface ReferenceSelectProps {
     label: string;
     placeholder?: string;
-    // value — либо id (number/string), либо пустая строка для "не выбрано"
     value: number | string | '';
     onChange: (value: number | string | '') => void;
     options: EnumItem[];
@@ -59,19 +55,14 @@ interface ReferenceSelectProps {
     minWidth?: number;
     disabled?: boolean;
     sx?: typeof createReferenceSelectSx;
+    error?: boolean;
+    helperText?: string;
 }
 
-/*******************************************************************************************************************************/
 export function ReferenceSelect(props: ReferenceSelectProps) {
     const selectedOption = useMemo(() => {
         if (props.value === '' || props.value == null) return null;
-        return (
-            props.options.find(
-                (opt) =>
-                    // Сравниваем как строки, чтобы избежать type mismatch
-                    String(opt.id) === String(props.value)
-            ) ?? null
-        );
+        return props.options.find((opt) => String(opt.id) === String(props.value)) ?? null;
     }, [props.value, props.options]);
 
     return (
@@ -82,7 +73,6 @@ export function ReferenceSelect(props: ReferenceSelectProps) {
             size="small"
             value={selectedOption}
             onChange={(_, newValue) => {
-                // Передаём id или '' если ничего не выбрано
                 props.onChange(newValue ? newValue.id : '');
             }}
             isOptionEqualToValue={(option, value) =>
@@ -90,8 +80,8 @@ export function ReferenceSelect(props: ReferenceSelectProps) {
             }
             getOptionLabel={(option) => (option?.name ? String(option.name) : '')}
             disabled={props.disabled}
-            renderOption={(props, option) => {
-                const { key, ...rest } = props;
+            renderOption={(propsLi, option) => {
+                const { key, ...rest } = propsLi;
                 return (
                     <li key={key} {...rest}>
                         {option.name}
@@ -104,6 +94,8 @@ export function ReferenceSelect(props: ReferenceSelectProps) {
                     label={props.label}
                     placeholder={props.placeholder}
                     size="small"
+                    error={props.error} // передаем ошибку
+                    helperText={props.helperText} // передаем подсказку
                     InputProps={{
                         ...params.InputProps,
                     }}

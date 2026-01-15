@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getToken } from '../auth/getToken';
+import type { Pagination } from '../users/userSlice';
 const API_URL = import.meta.env.VITE_BASE_URL;
 
 export interface Project {
@@ -11,15 +12,6 @@ export interface Project {
     status: number;
     created_at: string;
     updated_at: string;
-}
-
-export interface Pagination {
-    page: number;
-    size: number;
-    total: number;
-    pages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
 }
 
 export interface ProjectsState {

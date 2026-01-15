@@ -1,12 +1,12 @@
-import { LinearProgress, IconButton } from '@mui/material';
-import { RiFileExcel2Fill, RiDeleteBin2Fill } from 'react-icons/ri';
-import { MdSkipNext, MdSkipPrevious } from 'react-icons/md';
+import { LinearProgress } from '@mui/material';
+import { RiDeleteBin2Fill } from 'react-icons/ri';
 import { BiReset } from 'react-icons/bi';
 import { CiEdit } from 'react-icons/ci';
 
 import type { Users } from './userSlice';
 import type { Pagination } from '../projects/projectsSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface PropsType {
     items: Users[];
@@ -96,49 +96,11 @@ export default function UsersTableFrm(props: PropsType) {
             </table>
 
             {/*Пагинация******************************************************************************************************************************/}
-            <div className="table-footer-container">
-                <div className="pagination">
-                    <StyledTooltip title="Предыдущая страница">
-                        <span>
-                            <IconButton
-                                size="small"
-                                className="table-page-button"
-                                onClick={props.onPrevPage}
-                                disabled={!props.pagination?.hasPrev}
-                            >
-                                <MdSkipPrevious />
-                            </IconButton>
-                        </span>
-                    </StyledTooltip>
-
-                    <span className="page-text">стр. {props.pagination?.page}</span>
-                    <span className="page-text"> из {props.pagination?.pages}</span>
-
-                    <StyledTooltip title="Следующая страница">
-                        <span>
-                            <IconButton
-                                size="small"
-                                className="table-page-button"
-                                onClick={props.onNextPage}
-                                disabled={!props.pagination?.hasNext}
-                            >
-                                <MdSkipNext />
-                            </IconButton>
-                        </span>
-                    </StyledTooltip>
-
-                    <span className="page-count">
-                        Кол-во:{' '}
-                        {props.pagination && props.pagination.total !== null
-                            ? props.pagination.total
-                            : 0}
-                    </span>
-
-                    {!props.loading && (
-                        <RiFileExcel2Fill className="table-excelabtn" title="Excel" />
-                    )}
-                </div>
-            </div>
+            <TablePagination
+                pagination={props.pagination}
+                onPrev={props.onPrevPage}
+                onNext={props.onNextPage}
+            />
         </div>
     );
 }

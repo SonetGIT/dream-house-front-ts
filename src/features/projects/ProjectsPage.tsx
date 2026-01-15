@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchProjects, setSearch, setFilters } from './projectsSlice';
-import ProjectTableFrm from './ProjectTableFrm';
+import ProjectsTable from './ProjectsTable';
 import InputSearch from '@/components/ui/InputSearch';
 import { useReference } from '../reference/useReference';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
@@ -140,7 +140,7 @@ export default function ProjectsPage() {
             </div>
 
             {/* ======= ТАБЛИЦА ======= */}
-            <ProjectTableFrm
+            <ProjectsTable
                 items={items}
                 loading={loading}
                 error={error}

@@ -18,9 +18,10 @@ interface PropsType {
 }
 
 /*******************************************************************************************************************************/
-export default function ProjectTableFrm(props: PropsType) {
+export default function ProjectsTable(props: PropsType) {
     const navigate = useNavigate();
     const handleRowClick = (project: Project) => {
+        console.log('project', project);
         navigate(`/projects/${project.id}`, { state: { project } });
     };
 
@@ -51,7 +52,11 @@ export default function ProjectTableFrm(props: PropsType) {
                 <tbody>
                     {props.items.length > 0 ? (
                         props.items.map((item) => (
-                            <tr key={item.id}>
+                            <tr
+                                key={item.id}
+                                onClick={() => handleRowClick(item)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <td>{item.name}</td>
                                 <td>{item.code}</td>
                                 <td>{props.getRefName.type(item.type)}</td>

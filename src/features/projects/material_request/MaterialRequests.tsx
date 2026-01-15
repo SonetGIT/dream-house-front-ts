@@ -142,7 +142,6 @@ export default function MaterialRequests() {
                             project_id: formData.project_id, //источник истины
                         })
                     );
-                    console.log('formData', formData);
                     toast.success('Заявка успешно создана', { duration: 3000 });
                 })
                 .catch((err: string) => {

@@ -21,11 +21,14 @@ export default function ProjectDashboardPage() {
         (state) => state.projects
     );
 
-    const { lookup: getProjectTypeName } = useReference('0e86b36a-aa48-4993-874f-1ce21cd393d');
+    const { lookup: getProjectTypeName } = useReference('0e86b36a-aa48-4993-874f-1ce21cd3931d');
     const { lookup: getProjectStatusName } = useReference('231fec20-3f64-4343-8d49-b1d53e71ad4d');
 
     const getRefName = useMemo(
-        () => ({ projectType: getProjectTypeName, projectStatus: getProjectStatusName }),
+        () => ({
+            prjTypeName: getProjectTypeName,
+            prjStatusName: getProjectStatusName,
+        }),
         [getProjectTypeName, getProjectStatusName]
     );
     const projectId = Number(id);
@@ -49,6 +52,7 @@ export default function ProjectDashboardPage() {
     // Показываем Dashboard только если путь точно "/projects/:id"
     const isIndexRoute = location.pathname === `/projects/${id}`;
 
+    /*******************************************************************************************************************************/
     return (
         <Box className="project-details-container" component="main">
             <StyledTooltip title="Назад">
@@ -61,13 +65,13 @@ export default function ProjectDashboardPage() {
                     <span>
                         Код: <strong>{project.code}</strong>
                     </span>
-                    <span>Тип: {getRefName.projectType(project.type)}</span>
-                    <span>Статус: {getRefName.projectStatus(project.status)}</span>
+                    <span>Тип: {getRefName.prjTypeName(project.type)}</span>
+                    <span>Статус: {getRefName.prjStatusName(project.status)}</span>
                     <span>Адрес: {project.address}</span>
                 </div>
             </header>
 
-            {isIndexRoute ? <Dashboard /> : <Outlet />}
+            {isIndexRoute ? <Dashboard /> : <Outlet context={{ projectId: project.id }} />}
         </Box>
     );
 }

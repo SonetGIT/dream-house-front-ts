@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { Pagination } from '../projectsSlice';
 import { apiRequest } from '@/utils/apiRequest';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
+import type { Pagination } from '@/features/users/userSlice';
 const API_URL = import.meta.env.VITE_BASE_URL;
 
 // Типы

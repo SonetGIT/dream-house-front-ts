@@ -10,8 +10,6 @@ export const CustomToaster = () => {
                 className: 'toast',
                 success: { icon: <MdCheckCircle color="#4caf50" size={20} /> },
                 error: { icon: <MdError color="#f44336" size={20} /> },
-                // можно добавить info и warning toast('Информационное уведомление');
-                // info: { icon: <MdInfo color="#2196f3" size={20} /> },
             }}
         />
     );

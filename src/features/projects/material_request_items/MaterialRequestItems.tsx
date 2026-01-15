@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchProjects, setFilters } from '../projectsSlice';
+import { setFilters } from '../projectsSlice';
 import { useReference } from '../../reference/useReference';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
@@ -40,6 +40,10 @@ export default function MaterialRequestItems() {
     const { data: suppliers, lookup: getSuppliersName } = useReference(
         '7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf'
     );
+
+    const fullyOrderedStatusId = useMemo(() => {
+        return statusType?.find((s) => s.id === 4)?.id;
+    }, [statusType]);
 
     const getRefName = useMemo(
         () => ({
@@ -106,6 +110,7 @@ export default function MaterialRequestItems() {
     useEffect(() => {
         setMaterialId(null);
     }, [materialTypeId]);
+
     const filteredMaterials = useMemo(() => {
         if (!materialTypeId) return [];
         return (materials || []).filter((m) => m.type === materialTypeId);
@@ -151,7 +156,7 @@ export default function MaterialRequestItems() {
             {!isFormOpen && (
                 <Box>
                     {/* ======= ПОИСК И ФИЛЬТРЫ ======= */}
-                    <div className="filter-container">
+                    {/* <div className="filter-container">
                         <ReferenceSelect
                             label="Тип материала"
                             value={materialTypeId || ''}
@@ -170,7 +175,7 @@ export default function MaterialRequestItems() {
                         <StyledTooltip title="Сбросить фильтры и поиск">
                             <MdOutlineRestartAlt className="icon" onClick={handleReset} />
                         </StyledTooltip>
-                    </div>
+                    </div> */}
 
                     {/* ======= ТАБЛИЦА ======= */}
                     <PurchasingAgentItemsTable
@@ -179,6 +184,7 @@ export default function MaterialRequestItems() {
                         pagination={pagination}
                         onPrevPage={handlePrevPage}
                         onNextPage={handleNextPage}
+                        fullyOrderedStatusId={fullyOrderedStatusId}
                     />
                 </Box>
             )}

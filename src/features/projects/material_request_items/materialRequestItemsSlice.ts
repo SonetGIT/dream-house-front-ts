@@ -64,6 +64,7 @@ interface SearchParams {
     material_id?: number;
     // status?: number;
 }
+
 export const fetchPurchasingAgentItems = createAsyncThunk<
     PurchasingAgentSearchResponse,
     SearchParams | void
@@ -74,7 +75,7 @@ export const fetchPurchasingAgentItems = createAsyncThunk<
             'POST',
             params
         );
-
+        console.log('');
         return response;
     } catch (error: any) {
         return rejectWithValue(error.response?.data || 'Ошибка загрузки');
