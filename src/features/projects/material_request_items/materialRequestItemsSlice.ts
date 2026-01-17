@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { Pagination } from '../projectsSlice';
 import { apiRequest } from '@/utils/apiRequest';
+import type { Pagination } from '@/features/users/userSlice';
 const API_URL = import.meta.env.VITE_BASE_URL;
 
 // types.ts
@@ -30,10 +30,11 @@ export interface PurchasingAgentSearchResponse {
 }
 
 interface SearchParams {
-    page?: number;
-    size?: number;
+    project_id?: number;
     material_type?: number;
     material_id?: number;
+    page?: number;
+    size?: number;
     // status?: number;
 }
 
@@ -58,10 +59,11 @@ export interface PurchasingAgentSearchResponse {
 }
 
 interface SearchParams {
-    page?: number;
-    size?: number;
+    project_id?: number;
     material_type?: number;
     material_id?: number;
+    page?: number;
+    size?: number;
     // status?: number;
 }
 

@@ -33,7 +33,9 @@ export interface PurchaseOrderItem {
     price: number;
     summ: number;
     status: number;
+    comment?: string;
     delivered_quantity: number;
+    recieved_quantity: number;
     created_at: string;
     updated_at: string;
     deleted: boolean;

@@ -14,6 +14,7 @@ import { createPurchaseOrder } from '../purchaseOrders/purchaseOrdersSlice';
 import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import type { Pagination } from '@/features/users/userSlice';
+import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 
 interface PurchasingAgentItemsProps {
     items: MaterialRequestItems[];
@@ -35,10 +36,6 @@ interface FormValues {
     items: MaterialRequestItems[];
 }
 
-type ProjectOutletContext = {
-    projectId: number;
-};
-
 export default function PurchasingAgentItemsTable({
     items,
     getRefName,
@@ -50,6 +47,7 @@ export default function PurchasingAgentItemsTable({
     const dispatch = useAppDispatch();
     const currentUser = useAppSelector((state) => state.auth.user);
     const { projectId } = useOutletContext<ProjectOutletContext>();
+    console.log('projectId', projectId);
 
     const [suppliersId, setSuppliersId] = useState<string | number | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -82,6 +80,7 @@ export default function PurchasingAgentItemsTable({
         );
     };
 
+    //Сформировать
     const handleCreate = async () => {
         let hasError = false;
 

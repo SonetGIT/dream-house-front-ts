@@ -90,6 +90,7 @@ export const getProjectById = createAsyncThunk<
         }
 
         const result = await response.json();
+        console.log('result', result);
         return result.data;
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка сети');

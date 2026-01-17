@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { MdOutlinePlaylistAdd } from 'react-icons/md';
 import toast from 'react-hot-toast';
@@ -19,13 +19,16 @@ import MaterialReqCreateEditForm from './MaterialReqCreateEditForm';
 import MaterialRequestsTable from './MaterialRequestsTable';
 import { TablePagination } from '@/components/ui/TablePagination';
 
-export interface ProjectOutletContext {
+interface ProjectOutletContext {
     projectId: number;
 }
-
+/******************************************************************************************************/
 export default function MaterialRequests() {
     const dispatch = useAppDispatch();
     const { projectId } = useOutletContext<ProjectOutletContext>();
+    const { id } = useParams<{ id: string }>();
+    console.log('id', id);
+    console.log('projectId', projectId);
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingMatReq, setEditingMatReq] = useState<MaterialRequest | null>(null);
@@ -83,12 +86,11 @@ export default function MaterialRequests() {
 
     // Загрузка проекта
     useEffect(() => {
-        if (projectId && (!project || project.id !== projectId)) {
-            dispatch(getProjectById(projectId));
+        if (id && (!project || project.id !== Number(id))) {
+            dispatch(getProjectById(Number(id)));
         }
-    }, [projectId, project, dispatch]);
+    }, [id, project, dispatch]);
 
-    // Загрузка заявок на материалы
     useEffect(() => {
         if (project?.id) {
             dispatch(clearMaterialRequests());
@@ -110,12 +112,14 @@ export default function MaterialRequests() {
         setIsFormOpen(true);
     };
 
+    // Сохранение формы (создание или редактирование)
     const handleSave = (formData: MaterialRequestCreatePayload) => {
         if (editingMatReq) {
+            // UPDATE — допускаем Partial
             dispatch(
                 updateMaterialRequest({
                     id: editingMatReq.id,
-                    data: formData,
+                    data: formData, // backend принимает полный payload — это ок
                 })
             )
                 .unwrap()
@@ -133,6 +137,7 @@ export default function MaterialRequests() {
                     toast.error(err || 'Ошибка при обновлении заявки');
                 });
         } else {
+            // CREATE — ТОЛЬКО полный payload
             dispatch(createMaterialReq(formData))
                 .unwrap()
                 .then(() => {
@@ -140,7 +145,7 @@ export default function MaterialRequests() {
                         fetchSearchMaterialReq({
                             page: 1,
                             size: 10,
-                            project_id: formData.project_id,
+                            project_id: formData.project_id, //источник истины
                         })
                     );
                     toast.success('Заявка успешно создана', { duration: 3000 });
@@ -152,10 +157,13 @@ export default function MaterialRequests() {
         setIsFormOpen(false);
     };
 
+    //Отмена формы
     const handleCancel = () => {
         setIsFormOpen(false);
+        // setEditingUser(null);
     };
 
+    //Пагинация
     const handleNextPage = () => {
         if (!pagination?.hasNext) return;
         dispatch(
@@ -163,6 +171,9 @@ export default function MaterialRequests() {
                 page: pagination.page + 1,
                 size: pagination.size,
                 project_id: project.id,
+
+                // search,
+                // filters: getCurrentFilters(),
             })
         );
     };
@@ -171,13 +182,16 @@ export default function MaterialRequests() {
         if (!pagination?.hasPrev) return;
         dispatch(
             fetchSearchMaterialReq({
-                page: pagination.page - 1,
+                page: pagination.page + 1,
                 size: pagination.size,
                 project_id: project.id,
+                // search,
+                // filters: getCurrentFilters(),
             })
         );
     };
 
+    /***********************************************************************************************************************************************/
     return (
         <>
             {!isFormOpen && (
@@ -193,6 +207,7 @@ export default function MaterialRequests() {
                         />
                     </div>
 
+                    {/*Пагинация****************************************************************************************************/}
                     <TablePagination
                         pagination={pagination}
                         onPrev={handlePrevPage}
@@ -201,6 +216,7 @@ export default function MaterialRequests() {
                 </Box>
             )}
 
+            {/* CREATE-EDIT */}
             {isFormOpen && (
                 <MaterialReqCreateEditForm
                     request={editingMatReq || undefined}

@@ -21,7 +21,7 @@ import { useReference } from '@/features/reference/useReference';
 export default function PurchaseOrdersTable() {
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    const { lookup: getStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
+    const { lookup: getStatusName } = useReference('84242cf6-76a5-403a-bd87-63f58c539d2b');
     const { lookup: getSuppliersName } = useReference('7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf');
     const { lookup: getMaterialTypeName } = useReference('681635e7-3eff-413f-9a07-990bfe7bc68a');
     const { lookup: getMaterialName } = useReference('7c52acfc-843a-4242-80ba-08f7439a29a7');

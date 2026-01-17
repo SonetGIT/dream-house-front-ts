@@ -19,12 +19,23 @@ import { fetchPurchaseOrders } from '../projects/purchaseOrders/purchaseOrdersSl
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useReference } from '@/features/reference/useReference';
-import { compactFieldSx, compactTextFieldSx, tableCellSx } from '@/styles/ui_style';
-
+import { compactFieldSx, compactTextFieldSx } from '@/styles/ui_style';
+import { receivePurchaseOrderItems } from '../purchaseOrderItems/purchaseOrderItemsSlice';
+import toast from 'react-hot-toast';
+// В компоненте (WarehousePurchaseOrdersTable.tsx)
+type ReceiveItemPayload = {
+    purchase_order_item_id: number;
+    recieved_quantity: number;
+    comment?: string;
+};
 export default function WarehousePurchaseOrdersTable() {
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    const { lookup: getStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
+    const [deliveredMap, setDeliveredMap] = useState<Record<number, number | ''>>({});
+    const [commentMap, setCommentMap] = useState<Record<number, string>>({});
+    const [checkedMap, setCheckedMap] = useState<Record<number, boolean>>({});
+
+    const { lookup: getStatusName } = useReference('2beaaf9c2-b0d1-4c1c-8861-6c3345723b93');
     const { lookup: getSuppliersName } = useReference('7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf');
     const { lookup: getMaterialTypeName } = useReference('681635e7-3eff-413f-9a07-990bfe7bc68a');
     const { lookup: getMaterialName } = useReference('7c52acfc-843a-4242-80ba-08f7439a29a7');
@@ -34,7 +45,7 @@ export default function WarehousePurchaseOrdersTable() {
         setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
     };
     const { data: orders, pagination, loading } = useAppSelector((state) => state.purchaseOrders);
-
+    console.log('ORDERS', orders);
     // 🔥 Загрузка списка при монтировании
     useEffect(() => {
         dispatch(fetchPurchaseOrders({ page: 1, size: 10 }));
@@ -50,6 +61,101 @@ export default function WarehousePurchaseOrdersTable() {
         statusName: getStatusName,
     };
 
+    const handleReceive = async () => {
+        const warehouse_id = 4; // или получите из контекста/состояния
+        const validItems: ReceiveItemPayload[] = [];
+        let hasError = false;
+
+        // Проходим по всем заказам и их элементам
+        orders.forEach((order) => {
+            (order.items || []).forEach((item) => {
+                if (checkedMap[item.id]) {
+                    const rawValue = deliveredMap[item.id];
+
+                    // Проверка: значение указано?
+                    if (rawValue === '' || rawValue === undefined) {
+                        toast.error(
+                            `Укажите количество для "${getRefName.materialName(item.material_id)}"`
+                        );
+                        hasError = true;
+                        return;
+                    }
+
+                    const recieved_quantity = Number(rawValue);
+
+                    // Проверка: число и > 0
+                    if (isNaN(recieved_quantity) || recieved_quantity <= 0) {
+                        toast.error(
+                            `Количество должно быть числом > 0 для "${getRefName.materialName(
+                                item.material_id
+                            )}"`
+                        );
+                        hasError = true;
+                        return;
+                    }
+
+                    // Проверка: не превышает заказанное
+                    if (recieved_quantity > item.quantity) {
+                        toast.error(
+                            `Доставлено не может быть больше заказанного (${
+                                item.quantity
+                            }) для "${getRefName.materialName(item.material_id)}"`
+                        );
+                        hasError = true;
+                        return;
+                    }
+
+                    validItems.push({
+                        purchase_order_item_id: item.id,
+                        recieved_quantity,
+                        comment: commentMap[item.id] || undefined,
+                    });
+                }
+            });
+        });
+
+        // Если есть ошибки — не отправляем
+        if (hasError) {
+            return;
+        }
+
+        // Если ничего не выбрано
+        if (validItems.length === 0) {
+            toast.error('Выберите хотя бы один материал для приёмки');
+            return;
+        }
+
+        try {
+            const result = await dispatch(
+                receivePurchaseOrderItems({
+                    warehouse_id,
+                    items: validItems,
+                })
+            );
+
+            if (receivePurchaseOrderItems.fulfilled.match(result)) {
+                toast.success('Приёмка успешно завершена!');
+
+                // 🔥 Сбрасываем UI-состояние
+                setCheckedMap({});
+                setDeliveredMap({});
+                setCommentMap({});
+
+                // ❗ НЕ вызываем fetchPurchaseOrders, потому что:
+                // ваш слайс уже обновил state.items = action.payload
+                // и UI перерисуется автоматически
+            } else {
+                // Ошибка от rejectWithValue
+                const errorMessage = result.payload as string;
+                toast.error(errorMessage || 'Не удалось завершить приёмку');
+            }
+        } catch (err) {
+            console.error('Unexpected error in handleReceive:', err);
+            toast.error('Произошла непредвиденная ошибка');
+        }
+    };
+
+    /****************************************************************************************************************************/
     return (
         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
             <Table className="table">
@@ -65,7 +171,6 @@ export default function WarehousePurchaseOrdersTable() {
                                 >
                                     <TableCell padding="checkbox">
                                         <IconButton
-                                            // size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggleRow(req.id);
@@ -116,11 +221,12 @@ export default function WarehousePurchaseOrdersTable() {
                                                             <TableCell>Цена</TableCell>
                                                             <TableCell>Сумма</TableCell>
                                                             <TableCell>Статус</TableCell>
+                                                            <TableCell>Доставлено</TableCell>
                                                             <TableCell>
                                                                 Доставленное кол-во
                                                             </TableCell>
                                                             <TableCell>Примечание</TableCell>
-                                                            <TableCell></TableCell>
+                                                            <TableCell>Принять</TableCell>
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
@@ -169,16 +275,10 @@ export default function WarehousePurchaseOrdersTable() {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <TextField
-                                                                        // {/* {...field} */}
-                                                                        type="number"
-                                                                        // error={!!fieldState.error}
-                                                                        // helperText={fieldState.error?.message}
-                                                                        sx={compactTextFieldSx}
-                                                                    />
-                                                                    {/* <TextField
                                                                         type="number"
                                                                         size="small"
                                                                         value={
+                                                                            deliveredMap[item.id] ??
                                                                             item.delivered_quantity ??
                                                                             ''
                                                                         }
@@ -186,40 +286,98 @@ export default function WarehousePurchaseOrdersTable() {
                                                                             min: 0,
                                                                             max: item.quantity,
                                                                         }}
-                                                                        sx={{ width: 80 }}
+                                                                        sx={compactTextFieldSx}
                                                                         onChange={(e) => {
-                                                                            const value = Number(
-                                                                                e.target.value
-                                                                            );
-                                                                            // здесь позже будет setState / dispatch
-                                                                            console.log(
-                                                                                'delivered_quantity',
-                                                                                value
+                                                                            const value =
+                                                                                e.target.value ===
+                                                                                ''
+                                                                                    ? ''
+                                                                                    : Number(
+                                                                                          e.target
+                                                                                              .value
+                                                                                      );
+
+                                                                            setDeliveredMap(
+                                                                                (prev) => ({
+                                                                                    ...prev,
+                                                                                    [item.id]:
+                                                                                        value,
+                                                                                })
                                                                             );
                                                                         }}
-                                                                    /> */}
+                                                                    />
                                                                 </TableCell>
-
                                                                 <TableCell>
                                                                     <TextField
-                                                                        sx={compactFieldSx}
+                                                                        type="number"
+                                                                        size="small"
+                                                                        value={
+                                                                            deliveredMap[item.id] ??
+                                                                            item.recieved_quantity ??
+                                                                            ''
+                                                                        }
+                                                                        inputProps={{
+                                                                            min: 0,
+                                                                            max: item.quantity,
+                                                                        }}
+                                                                        sx={compactTextFieldSx}
                                                                         onChange={(e) => {
-                                                                            console.log(
-                                                                                'comment',
-                                                                                e.target.value
+                                                                            const value =
+                                                                                e.target.value ===
+                                                                                ''
+                                                                                    ? ''
+                                                                                    : Number(
+                                                                                          e.target
+                                                                                              .value
+                                                                                      );
+
+                                                                            setDeliveredMap(
+                                                                                (prev) => ({
+                                                                                    ...prev,
+                                                                                    [item.id]:
+                                                                                        value,
+                                                                                })
                                                                             );
                                                                         }}
                                                                     />
                                                                 </TableCell>
 
-                                                                <TableCell align="center">
+                                                                <TableCell>
+                                                                    <TextField
+                                                                        sx={compactFieldSx}
+                                                                        value={
+                                                                            commentMap[item.id] ??
+                                                                            ''
+                                                                        }
+                                                                        onChange={(e) =>
+                                                                            setCommentMap(
+                                                                                (prev) => ({
+                                                                                    ...prev,
+                                                                                    [item.id]:
+                                                                                        e.target
+                                                                                            .value,
+                                                                                })
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </TableCell>
+
+                                                                <TableCell>
                                                                     <Checkbox
-                                                                        onChange={(e) => {
-                                                                            console.log(
-                                                                                'accepted',
-                                                                                e.target.checked
-                                                                            );
-                                                                        }}
+                                                                        checked={
+                                                                            checkedMap[item.id] ??
+                                                                            false
+                                                                        }
+                                                                        onChange={(e) =>
+                                                                            setCheckedMap(
+                                                                                (prev) => ({
+                                                                                    ...prev,
+                                                                                    [item.id]:
+                                                                                        e.target
+                                                                                            .checked,
+                                                                                })
+                                                                            )
+                                                                        }
                                                                     />
                                                                 </TableCell>
                                                             </TableRow>
@@ -235,6 +393,11 @@ export default function WarehousePurchaseOrdersTable() {
                     })}
                 </TableBody>
             </Table>
+            <Box display="flex" justifyContent="flex-end" p={1}>
+                <button className="btn btn-primary" onClick={handleReceive}>
+                    Подтвердить
+                </button>
+            </Box>
         </TableContainer>
     );
 }

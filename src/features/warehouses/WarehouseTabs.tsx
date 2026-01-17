@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box, Paper, Tabs, Tab } from '@mui/material';
-import PurchaseOrdersTable from '../projects/purchaseOrders/PurchaseOrdersTable';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchWarehouseStocks } from '../projects/warehouseStocks/warehouseStocksSlice';
-import WarehouseStocksTable from '../projects/warehouseStocks/warehouseStocksTable';
+import WarehouseStocksTable from '../projects/warehouseStocks/WarehouseStocksTable';
 import { useReference } from '../reference/useReference';
 import WarehousePurchaseOrdersTable from './WarehousePurchaseOrdersTable';
 
@@ -36,19 +35,19 @@ export default function WarehouseTabs() {
     return (
         <Paper>
             <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-                <Tab label="Список запасов" />
                 <Tab label="Список заявок" />
+                <Tab label="Запас материалов" />
             </Tabs>
 
             <Box>
-                {tab === 0 && (
+                {tab === 0 && <WarehousePurchaseOrdersTable />}
+                {tab === 1 && (
                     <WarehouseStocksTable
                         data={data}
                         pagination={pagination}
                         getRefName={getRefName}
                     />
                 )}
-                {tab === 1 && <WarehousePurchaseOrdersTable />}
             </Box>
         </Paper>
     );

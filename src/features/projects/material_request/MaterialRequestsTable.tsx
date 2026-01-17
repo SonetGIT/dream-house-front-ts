@@ -209,12 +209,12 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                 <Table size="small">
                                                     <TableHead>
                                                         <TableRow>
-                                                            <TableCell>ID</TableCell>
                                                             <TableCell>Тип</TableCell>
                                                             <TableCell>Материал</TableCell>
                                                             <TableCell>Ед.</TableCell>
                                                             <TableCell>Кол-во</TableCell>
                                                             <TableCell>Примечание</TableCell>
+                                                            <TableCell>Статус</TableCell>
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
@@ -228,7 +228,6 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                     },
                                                                 }}
                                                             >
-                                                                <TableCell>{item.id}</TableCell>
                                                                 <TableCell>
                                                                     {props.getRefName.materialType(
                                                                         item.material_type
@@ -249,6 +248,11 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {item.comment ?? '—'}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {props.getRefName.statusName(
+                                                                        req.status
+                                                                    )}
                                                                 </TableCell>
                                                             </TableRow>
                                                         ))}

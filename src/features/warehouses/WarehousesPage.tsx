@@ -2,16 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '../reference/useReference';
 import { fetchWarehouses } from './warehousesSlice';
-import { useOutletContext } from 'react-router-dom';
 import WarehousesList from './WarehousesList';
 
-type ProjectOutletContext = {
-    projectId: number;
-};
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {
     const dispatch = useAppDispatch();
-    const { projectId } = useOutletContext<ProjectOutletContext>();
     const { data, pagination } = useAppSelector((state) => state.warehouses);
 
     // Справочники
