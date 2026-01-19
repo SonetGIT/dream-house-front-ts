@@ -20,14 +20,14 @@ export const router = createBrowserRouter([
             { path: 'users', element: <UsersPage /> },
             { path: 'projects', element: <ProjectsPage /> },
             {
-                path: 'projects/:id',
+                path: 'projects/:projectId',
                 element: <ProjectDashboardPage />,
                 children: [
                     { index: true, element: null }, //дашборд
                     { path: 'materialRequests', element: <MaterialRequests /> },
                     { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
                     { path: 'warehouses', element: <WarehousesPage /> },
-                    { path: 'warehouses/:id', element: <WarehouseTabs /> },
+                    { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },
                 ],
             },
         ],

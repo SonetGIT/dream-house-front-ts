@@ -54,7 +54,11 @@ export default function MaterialRequests() {
     );
 
     const { lookup: getUserName } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
-    const { lookup: getMatReqStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
+    // const { lookup: getMatReqStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
+    const { lookup: getMatReqStatusName } = useReference('c1aa58c8-2419-4832-ba09-8c54f27b5bf3'); //api/materialRequestStatuses/gets
+    const { lookup: getMatReqItemStatusName } = useReference(
+        'beaaf9c2-b0d1-4c1c-8861-5723b936c334'
+    ); //api/materialRequestItemStatuses/gets
 
     const getRefName = useMemo(
         () => ({
@@ -65,6 +69,7 @@ export default function MaterialRequests() {
             materialName: getMaterialName,
             userName: getUserName,
             statusName: getMatReqStatusName,
+            statusItemName: getMatReqItemStatusName,
             materialTypes,
             materials,
             unitTypes,

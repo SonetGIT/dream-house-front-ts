@@ -16,7 +16,7 @@ export default function ProjectDashboardPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
-    const { id } = useParams<{ id: string }>();
+    const { projectId } = useParams<{ projectId: string }>();
     const { currentProject: project, loading: projectLoading } = useAppSelector(
         (state) => state.projects
     );
@@ -31,14 +31,11 @@ export default function ProjectDashboardPage() {
         }),
         [getProjectTypeName, getProjectStatusName]
     );
-    const projectId = Number(id);
-
     useEffect(() => {
-        if (!projectId) return;
-        if (!project || project.id !== projectId) {
-            dispatch(getProjectById(projectId));
+        if (projectId) {
+            dispatch(getProjectById(Number(projectId)));
         }
-    }, [projectId, project, dispatch]);
+    }, [projectId]);
 
     useEffect(() => {
         if (!project?.id) return;
@@ -50,7 +47,7 @@ export default function ProjectDashboardPage() {
     if (!project) return <div>Проект не найден</div>;
 
     // Показываем Dashboard только если путь точно "/projects/:id"
-    const isIndexRoute = location.pathname === `/projects/${id}`;
+    const isIndexRoute = location.pathname === `/projects/${projectId}`;
 
     /*******************************************************************************************************************************/
     return (

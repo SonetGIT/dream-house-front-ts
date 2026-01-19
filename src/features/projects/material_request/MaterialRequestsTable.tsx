@@ -28,6 +28,7 @@ interface PropsType {
         unitName: (id: number) => string;
         userName: (id: number) => string;
         statusName: (id: number) => string;
+        statusItemName: (id: number) => string;
     };
 }
 
@@ -250,7 +251,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                     {item.comment ?? '—'}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.getRefName.statusName(
+                                                                    {props.getRefName.statusItemName(
                                                                         req.status
                                                                     )}
                                                                 </TableCell>

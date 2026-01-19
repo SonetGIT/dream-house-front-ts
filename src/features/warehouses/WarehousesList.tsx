@@ -2,10 +2,11 @@ import { RiArrowRightUpBoxFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Warehouse } from './warehousesSlice';
+import type { Pagination } from '../users/userSlice';
 
 interface PropsType {
     items: Warehouse[];
-    pagination: { total: number } | undefined;
+    pagination: Pagination | null;
     getRefName: {
         [key: string]: (id: number | string) => string;
     };

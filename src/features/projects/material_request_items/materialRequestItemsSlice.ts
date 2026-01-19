@@ -30,7 +30,7 @@ export interface PurchasingAgentSearchResponse {
 }
 
 interface SearchParams {
-    project_id?: number;
+    project_id: number;
     material_type?: number;
     material_id?: number;
     page?: number;
@@ -59,7 +59,7 @@ export interface PurchasingAgentSearchResponse {
 }
 
 interface SearchParams {
-    project_id?: number;
+    project_id: number;
     material_type?: number;
     material_id?: number;
     page?: number;

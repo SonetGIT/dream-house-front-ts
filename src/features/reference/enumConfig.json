@@ -85,18 +85,19 @@
         },
         "apiName": "/warehouses/gets"
     },
-    "2beaaf9c2-b0d1-4c1c-8861-6c3345723b93": {
-        "data": {
-            "id": "id",
-            "name": ["name"]
-        },
-        "apiName": "/purchaseOrderItemStatuses/gets"
-    },
+
     "84242cf6-76a5-403a-bd87-63f58c539d2b": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/purchaseOrderStatuses/gets"
+    },
+    "2beaaf9c2-b0d1-4c1c-8861-6c3345723b93": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/purchaseOrderItemStatuses/gets"
     }
 }

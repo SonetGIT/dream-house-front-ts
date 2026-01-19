@@ -1,9 +1,10 @@
 import { LinearProgress, IconButton } from '@mui/material';
-import type { Pagination, Project } from './projectsSlice';
+import type { Project } from './projectsSlice';
 import { RiFileExcel2Fill, RiArrowRightUpBoxFill } from 'react-icons/ri';
 import { MdSkipNext, MdSkipPrevious } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import type { Pagination } from '../users/userSlice';
 
 interface PropsType {
     items: Project[];

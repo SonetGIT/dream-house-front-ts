@@ -17,11 +17,20 @@ import { fetchPurchaseOrders } from './purchaseOrdersSlice';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useReference } from '@/features/reference/useReference';
+import { useOutletContext, useParams } from 'react-router-dom';
+import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 
+/***********************************************************************************************************************************/
 export default function PurchaseOrdersTable() {
+    const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    const { lookup: getStatusName } = useReference('84242cf6-76a5-403a-bd87-63f58c539d2b');
+    const { lookup: getPurchaseOrderStatusesName } = useReference(
+        '84242cf6-76a5-403a-bd87-63f58c539d2b'
+    ); //purchaseOrderStatuses/gets
+    const { lookup: getPurchaseOrderItemStatusesName } = useReference(
+        '2beaaf9c2-b0d1-4c1c-8861-6c3345723b93'
+    ); //purchaseOrderItemStatuses/gets
     const { lookup: getSuppliersName } = useReference('7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf');
     const { lookup: getMaterialTypeName } = useReference('681635e7-3eff-413f-9a07-990bfe7bc68a');
     const { lookup: getMaterialName } = useReference('7c52acfc-843a-4242-80ba-08f7439a29a7');
@@ -30,11 +39,11 @@ export default function PurchaseOrdersTable() {
     const toggleRow = (id: number) => {
         setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
     };
-    const { data: orders, pagination, loading } = useAppSelector((state) => state.purchaseOrders);
+    const { data: orders, loading } = useAppSelector((state) => state.purchaseOrders);
 
     // 🔥 Загрузка списка при монтировании
     useEffect(() => {
-        dispatch(fetchPurchaseOrders({ page: 1, size: 10 }));
+        dispatch(fetchPurchaseOrders({ page: 1, size: 10, project_id: projectId }));
     }, [dispatch]);
 
     if (loading) return <Typography>Загрузка заявок...</Typography>;
@@ -44,7 +53,8 @@ export default function PurchaseOrdersTable() {
         materialName: getMaterialName,
         unitName: getUnitOfMeasure,
         suppliersName: getSuppliersName,
-        statusName: getStatusName,
+        statusName: getPurchaseOrderStatusesName,
+        statusItemName: getPurchaseOrderItemStatusesName,
     };
 
     return (
@@ -156,7 +166,7 @@ export default function PurchaseOrdersTable() {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <strong>
-                                                                        {getRefName.statusName(
+                                                                        {getRefName.statusItemName(
                                                                             item.status
                                                                         )}
                                                                     </strong>

@@ -8,6 +8,8 @@ import { MdOutlineRestartAlt } from 'react-icons/md';
 import PurchasingAgentItemsTable from './PurchasingAgentItemsTable';
 import { Box } from '@mui/material';
 import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';
+import { useOutletContext, useParams } from 'react-router-dom';
+import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 
 interface MaterialFilters {
     mType?: string | number;
@@ -16,15 +18,16 @@ interface MaterialFilters {
 
 /*******************************************************************************************************************************************************************/
 export default function MaterialRequestItems() {
+    const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
     const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
-    // console.log('ITEMS', items);
+    console.log('ITEMS', items);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     // Справочники
-    const { data: statusType, lookup: getStatusName } = useReference(
+    const { data: statusType, lookup: getMatReqItemStatusName } = useReference(
         'beaaf9c2-b0d1-4c1c-8861-5723b936c334'
-    );
+    ); //api/materialRequestItemStatuses/gets
     const { data: materialTypes, lookup: getMaterialTypeName } = useReference(
         '681635e7-3eff-413f-9a07-990bfe7bc68a'
     );
@@ -50,7 +53,7 @@ export default function MaterialRequestItems() {
             unitName: getUnitOfMeasure,
             materialType: getMaterialTypeName,
             materialName: getMaterialName,
-            statusName: getStatusName,
+            statusName: getMatReqItemStatusName,
             currencies: getCurrencies,
             suppliersName: getSuppliersName,
             materialTypes,
@@ -64,7 +67,7 @@ export default function MaterialRequestItems() {
             getUnitOfMeasure,
             getMaterialTypeName,
             getMaterialName,
-            getStatusName,
+            getMatReqItemStatusName,
             getCurrencies,
             getSuppliersName,
             materialTypes,
@@ -82,7 +85,7 @@ export default function MaterialRequestItems() {
 
     // ===== 1. Первичная загрузка =====
     useEffect(() => {
-        dispatch(fetchPurchasingAgentItems({ page: 1, size: 10 }));
+        dispatch(fetchPurchasingAgentItems({ page: 1, size: 10, project_id: projectId }));
     }, [dispatch]);
 
     // ===== 2. Формирование фильтров =====
@@ -101,6 +104,7 @@ export default function MaterialRequestItems() {
             fetchPurchasingAgentItems({
                 page: 1,
                 size: 10,
+                project_id: projectId,
                 // material_type: materialTypeId,
                 // material_id: materialId,
             })
@@ -122,7 +126,7 @@ export default function MaterialRequestItems() {
         setMaterialId(null);
 
         dispatch(setFilters({}));
-        dispatch(fetchPurchasingAgentItems({ page: 1, size: 10 }));
+        dispatch(fetchPurchasingAgentItems({ page: 1, size: 10, project_id: projectId }));
     };
 
     // ===== 6. Пагинация =====
@@ -132,6 +136,7 @@ export default function MaterialRequestItems() {
             fetchPurchasingAgentItems({
                 page: pagination.page + 1,
                 size: pagination.size,
+                project_id: projectId,
                 /*search,*/
                 // filters: getCurrentFilters(),
             })
@@ -144,6 +149,7 @@ export default function MaterialRequestItems() {
             fetchPurchasingAgentItems({
                 page: pagination.page - 1,
                 size: pagination.size,
+                project_id: projectId,
                 /*search,*/
                 // filters: getCurrentFilters(),
             })
@@ -155,28 +161,6 @@ export default function MaterialRequestItems() {
         <>
             {!isFormOpen && (
                 <Box>
-                    {/* ======= ПОИСК И ФИЛЬТРЫ ======= */}
-                    {/* <div className="filter-container">
-                        <ReferenceSelect
-                            label="Тип материала"
-                            value={materialTypeId || ''}
-                            onChange={setMaterialTypeId}
-                            options={materialTypes || []}
-                        />
-
-                        <ReferenceSelect
-                            label="Материалы"
-                            value={materialId || ''}
-                            onChange={setMaterialId}
-                            options={filteredMaterials}
-                            disabled={!materialTypeId}
-                        />
-
-                        <StyledTooltip title="Сбросить фильтры и поиск">
-                            <MdOutlineRestartAlt className="icon" onClick={handleReset} />
-                        </StyledTooltip>
-                    </div> */}
-
                     {/* ======= ТАБЛИЦА ======= */}
                     <PurchasingAgentItemsTable
                         items={items}

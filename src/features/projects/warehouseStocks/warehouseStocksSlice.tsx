@@ -33,7 +33,7 @@ export const fetchWarehouseStocks = createAsyncThunk(
     'warehouseStocks/fetch',
     async (
         params: {
-            // project_id?: number;
+            project_id?: number;
             warehouse_id?: number;
             material_id?: number;
             page: number;

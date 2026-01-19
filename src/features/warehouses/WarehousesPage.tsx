@@ -3,9 +3,12 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '../reference/useReference';
 import { fetchWarehouses } from './warehousesSlice';
 import WarehousesList from './WarehousesList';
+import { useOutletContext } from 'react-router-dom';
+import type { ProjectOutletContext } from '../projects/material_request/MaterialRequests';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {
+    const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
     const { data, pagination } = useAppSelector((state) => state.warehouses);
 
@@ -20,7 +23,7 @@ export default function WarehousesPage() {
     );
     //Первичная загрузка =====
     useEffect(() => {
-        dispatch(fetchWarehouses());
+        dispatch(fetchWarehouses({ page: 1, size: 10, project_id: projectId }));
     }, [dispatch]);
 
     /********************************************************************************************************************************************/
