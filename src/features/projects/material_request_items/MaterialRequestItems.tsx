@@ -8,7 +8,7 @@ import { MdOutlineRestartAlt } from 'react-icons/md';
 import PurchasingAgentItemsTable from './PurchasingAgentItemsTable';
 import { Box } from '@mui/material';
 import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 
 interface MaterialFilters {

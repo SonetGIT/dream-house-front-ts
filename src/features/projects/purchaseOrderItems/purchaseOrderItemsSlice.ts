@@ -1,7 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
-import type { PurchaseOrderItem } from '../projects/purchaseOrders/purchaseOrdersSlice';
+import type { PurchaseOrderItem } from '../purchaseOrders/purchaseOrdersSlice';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 interface PurchaseOrderItemsState {
     items: PurchaseOrderItem[];
@@ -14,6 +15,12 @@ const initialState: PurchaseOrderItemsState = {
     error: null,
 };
 
+//Исправлено: правильное написание (но лучше "received")
+export type ReceiveItemPayload = {
+    purchase_order_item_id: number;
+    received_quantity: number;
+    comment?: string;
+};
 export const receivePurchaseOrderItems = createAsyncThunk(
     'purchaseOrderItems/receive',
     async (
@@ -21,17 +28,20 @@ export const receivePurchaseOrderItems = createAsyncThunk(
             warehouse_id: number;
             items: {
                 purchase_order_item_id: number;
-                recieved_quantity: number;
+                received_quantity: number;
                 comment?: string;
             }[];
         },
         { rejectWithValue }
     ) => {
         try {
-            const res = await apiRequest('/api/purchaseOrderItems/receive', 'POST', payload);
-            return res.data;
+            console.log('payload', payload);
+            // const response = await apiRequest(`${API_URL}/materialRequests/search`, 'POST', body);
+            const res = await apiRequest(`${API_URL}/purchaseOrderItems/receive`, 'POST', payload);
+            console.log('res', res);
+            return res;
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.message || err.message);
+            return rejectWithValue(err || err.message);
         }
     }
 );

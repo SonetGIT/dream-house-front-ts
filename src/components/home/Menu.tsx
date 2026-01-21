@@ -7,6 +7,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
+import { FaUsersLine } from 'react-icons/fa6';
 import {
     BiSolidUserAccount,
     BiSolidFolder,
@@ -45,7 +46,7 @@ const drawerItems: DrawerItem[] = [
         icon: <BiSolidFolder />,
         // subItems: [{ label: 'Видео' }, { label: 'PDF' }, { label: 'Презентации' }],
     },
-    { label: 'Отправить email', icon: <BiMailSend /> },
+    { label: 'Поставщики', path: '/suppliers', icon: <FaUsersLine /> },
 ];
 
 export default function Menu({ open, onClose }: DrawerProps) {

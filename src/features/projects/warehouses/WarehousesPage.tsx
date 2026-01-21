@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { useReference } from '../reference/useReference';
+import { useReference } from '../../reference/useReference';
 import { fetchWarehouses } from './warehousesSlice';
 import WarehousesList from './WarehousesList';
 import { useOutletContext } from 'react-router-dom';
-import type { ProjectOutletContext } from '../projects/material_request/MaterialRequests';
+import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {

@@ -7,8 +7,9 @@ import UsersPage from '@/features/users/UsersPage';
 import ProjectDashboardPage from '@/features/projects/ProjectDashboardPage';
 import MaterialRequests from '@/features/projects/material_request/MaterialRequests';
 import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequestTabs';
-import WarehousesPage from '@/features/warehouses/WarehousesPage';
-import WarehouseTabs from '@/features/warehouses/WarehouseTabs';
+import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
+import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
+import SuppliersPage from '@/features/suppliers/SuppliersPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
             { index: true, element: <ProjectsPage /> },
             { path: 'users', element: <UsersPage /> },
             { path: 'projects', element: <ProjectsPage /> },
+            { path: 'suppliers', element: <SuppliersPage /> },
             {
                 path: 'projects/:projectId',
                 element: <ProjectDashboardPage />,

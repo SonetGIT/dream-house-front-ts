@@ -22,7 +22,6 @@ interface PropsType {
 export default function ProjectsTable(props: PropsType) {
     const navigate = useNavigate();
     const handleRowClick = (project: Project) => {
-        console.log('project', project);
         navigate(`/projects/${project.id}`, { state: { project } });
     };
 

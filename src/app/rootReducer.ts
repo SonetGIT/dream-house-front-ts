@@ -6,9 +6,11 @@ import referenceReducer from '../features/reference/referenceSlice';
 import materialRequestsReducer from '@/features/projects/material_request/materialRequestsSlice';
 import materialRequestItemsReducer from '@/features/projects/material_request_items/materialRequestItemsSlice';
 import purchaseOrdersReducer from '@/features/projects/purchaseOrders/purchaseOrdersSlice';
-import warehousesReducer from '@/features/warehouses/warehousesSlice';
+import warehousesReducer from '@/features/projects/warehouses/warehousesSlice';
 import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehouseStocksSlice';
-import purchaseOrderItemsReducer from '@/features/purchaseOrderItems/purchaseOrderItemsSlice';
+import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
+import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
+import suppliersReducer from '@/features/suppliers/SuppliersSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -21,6 +23,8 @@ export const rootReducer = combineReducers({
     warehouses: warehousesReducer,
     warehouseStocks: warehouseStocksReducer,
     purchaseOrderItems: purchaseOrderItemsReducer,
+    materialMovements: materialMovementsReducer,
+    suppliers: suppliersReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

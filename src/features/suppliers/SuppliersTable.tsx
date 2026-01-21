@@ -1,27 +1,22 @@
-import { LinearProgress } from '@mui/material';
-import { RiDeleteBin2Fill } from 'react-icons/ri';
-import { BiReset } from 'react-icons/bi';
-import { CiEdit } from 'react-icons/ci';
-
-import type { Pagination, Users } from './userSlice';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { TablePagination } from '@/components/ui/TablePagination';
+import type { Suppliers } from './SuppliersSlice';
+import type { Pagination } from '../users/userSlice';
+import { LinearProgress } from '@mui/material';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { CiEdit } from 'react-icons/ci';
+import { RiDeleteBin2Fill } from 'react-icons/ri';
 
-interface PropsType {
-    items: Users[];
-    userRollName: (id: number | string) => string;
+interface SuppliersPtopsType {
+    data: Suppliers[];
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
-    onEdit: (id: number) => void;
-    onDelete: (id: number) => void;
-    onResetPass: (id: number) => void;
+    // onEdit: (id: number) => void;
+    // onDelete: (id: number) => void;
     onPrevPage: () => void;
     onNextPage: () => void;
 }
-
-/*******************************************************************************************************************************/
-export default function UsersTableFrm(props: PropsType) {
+export default function SuppliersTable(props: SuppliersPtopsType) {
     return (
         <div className="table-container">
             {props.loading && (
@@ -36,34 +31,38 @@ export default function UsersTableFrm(props: PropsType) {
             <table className="table">
                 <thead>
                     <tr>
-                        <th>Пользователь</th>
-                        <th>Имя</th>
-                        <th>Фамилия</th>
-                        <th>Отчество</th>
-                        <th>email</th>
+                        <th>Поставщик</th>
+                        <th>ИНН</th>
+                        <th>КПП</th>
+                        <th>ОГРН</th>
+                        <th>Адрес</th>
                         <th>Телефон</th>
-                        <th>Роль</th>
+                        <th>email</th>
+                        <th>Контактное лицо</th>
+                        <th>Рейтинг</th>
                         <th>Действия</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    {props.items.length > 0 ? (
-                        props.items.map((item) => (
+                    {props.data.length > 0 ? (
+                        props.data.map((item) => (
                             <tr key={item.id}>
-                                <td>{item.username}</td>
-                                <td>{item.first_name}</td>
-                                <td>{item.last_name}</td>
-                                <td>{item.middle_name}</td>
-                                <td>{item.email}</td>
+                                <td>{item.name}</td>
+                                <td>{item.inn}</td>
+                                <td>{item.kpp}</td>
+                                <td>{item.ogrn}</td>
+                                <td>{item.address}</td>
                                 <td>{item.phone}</td>
-                                <td>{props.userRollName(item.role_id)}</td>
+                                <td>{item.email}</td>
+                                <td>{item.contact_person}</td>
+                                <td>{item.rating}</td>
                                 <td className="action-container">
                                     <StyledTooltip title="Редактировать">
                                         <CiEdit
                                             size={15}
                                             color="#66a7da"
-                                            onClick={() => props.onEdit(item.id)}
+                                            // onClick={() => props.onEdit(item.id)}
                                         />
                                     </StyledTooltip>
 
@@ -71,14 +70,7 @@ export default function UsersTableFrm(props: PropsType) {
                                         <RiDeleteBin2Fill
                                             size={15}
                                             color="#c96161"
-                                            onClick={() => props.onDelete(item.id)}
-                                        />
-                                    </StyledTooltip>
-                                    <StyledTooltip title="Сброс пароля">
-                                        <BiReset
-                                            size={15}
-                                            color="#66a7da"
-                                            onClick={() => props.onResetPass(item.id)}
+                                            // onClick={() => props.onDelete(item.id)}
                                         />
                                     </StyledTooltip>
                                 </td>

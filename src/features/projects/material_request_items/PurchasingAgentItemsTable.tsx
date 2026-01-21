@@ -47,7 +47,6 @@ export default function PurchasingAgentItemsTable({
     const dispatch = useAppDispatch();
     const currentUser = useAppSelector((state) => state.auth.user);
     const { projectId } = useOutletContext<ProjectOutletContext>();
-    console.log('projectId', projectId);
 
     const [suppliersId, setSuppliersId] = useState<string | number | null>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -144,7 +143,7 @@ export default function PurchasingAgentItemsTable({
             setSelectedIds([]);
             setSuppliersId(null);
 
-            dispatch(fetchPurchasingAgentItems({ page: 1, size: 10 }));
+            dispatch(fetchPurchasingAgentItems({ page: 1, size: 10, project_id: projectId }));
         }
     };
 
@@ -162,7 +161,7 @@ export default function PurchasingAgentItemsTable({
                         <th>Цена</th>
                         <th>Сумма</th>
                         <th>Валюта</th>
-                        <th>Заказано</th>
+                        <th>Заказать</th>
                         <th>Остаток</th>
                         <th />
                     </tr>

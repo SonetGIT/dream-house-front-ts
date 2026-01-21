@@ -1,29 +1,35 @@
-import type { WarehouseStocks } from './warehouseStocksSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 import type { Pagination } from '@/features/users/userSlice';
+import type { MaterialMovement } from './materialMovementsSlice';
 
 interface PropsType {
-    data: WarehouseStocks[];
+    data: MaterialMovement[];
     pagination: Pagination | null | undefined;
     getRefName: {
-        materialTypeName: (id: number) => string;
         materialName: (id: number) => string;
-        unitName: (id: number) => string;
+        wareHouseName: (id: number) => string;
+        userName: (id: number) => string;
+        movementsName: (id: number) => string;
     };
 }
 
 /*******************************************************************************************************************************/
-export default function WarehouseStocksTable(props: PropsType) {
+export default function MaterialMovementsTable(props: PropsType) {
     return (
         <div className="table-container">
             <table className="table">
                 <thead>
                     <tr>
                         {/* <th>Наименование склада</th> */}
-                        <th>Тип материала</th>
+                        <th>Дата</th>
+                        <th>Со склада</th>
+                        <th>На склад</th>
+                        <th>Выполнил</th>
+                        <th>Автоматическая транзакция</th>
                         <th>Материал</th>
-                        <th>Едю изм.</th>
-                        <th>Количество</th>
+                        <th>Кол-во</th>
+                        <th>Операция</th>
+                        <th>Cтатус</th>
                     </tr>
                 </thead>
 
@@ -31,10 +37,24 @@ export default function WarehouseStocksTable(props: PropsType) {
                     {props.data?.length > 0 ? (
                         props.data.map((item) => (
                             <tr key={item.id}>
-                                <td>{props.getRefName.materialTypeName(item.material_type)}</td>
+                                <td>{new Date(item.date).toLocaleDateString('ru-RU')}</td>
+                                <td>
+                                    {item.from_warehouse_id !== null
+                                        ? props.getRefName.wareHouseName(item.from_warehouse_id)
+                                        : '-'}
+                                </td>
+                                <td>
+                                    {item.to_warehouse_id !== null
+                                        ? props.getRefName.wareHouseName(item.to_warehouse_id)
+                                        : '-'}
+                                </td>
+                                <td>{props.getRefName.userName(item.user_id)}</td>
+                                <td>{item.note}</td>
                                 <td>{props.getRefName.materialName(item.material_id)}</td>
-                                <td>{props.getRefName.unitName(item.unit_of_measure)}</td>
+
                                 <td>{item.quantity}</td>
+                                <td>{item.operation}</td>
+                                <td>{props.getRefName.movementsName(item.status)}</td>
                             </tr>
                         ))
                     ) : (

@@ -99,5 +99,12 @@
             "name": ["name"]
         },
         "apiName": "/purchaseOrderItemStatuses/gets"
+    },
+    "5f72a11c-ff64-452a-b650-d593811776b7": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/materialMovementStatuses/gets"
     }
 }
