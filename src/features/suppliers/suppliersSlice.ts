@@ -13,7 +13,7 @@ export interface Suppliers {
     phone: string;
     email: string;
     contact_person: null;
-    rating: null;
+    // rating: null;
     created_at: string;
     updated_at: string;
     deleted: boolean;
@@ -81,6 +81,18 @@ export const updateSupplier = createAsyncThunk<
     }
 });
 
+export const deleteSupplier = createAsyncThunk(
+    'users/delete',
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiRequestNew<Suppliers>(`/suppliers/delete/${id}`, 'DELETE');
+            return id;
+        } catch (err: any) {
+            return rejectWithValue(err.message);
+        }
+    }
+);
+
 /* SLICE */
 const suppliersSlice = createSlice({
     name: 'suppliers',
@@ -118,6 +130,10 @@ const suppliersSlice = createSlice({
             .addCase(updateSupplier.fulfilled, (state, action) => {
                 const index = state.data.findIndex((s) => s.id === action.payload.id);
                 if (index !== -1) state.data[index] = action.payload;
+            })
+            // DELETE
+            .addCase(deleteSupplier.fulfilled, (state, action) => {
+                state.data = state.data.filter((u) => u.id !== action.payload);
             });
     },
 });

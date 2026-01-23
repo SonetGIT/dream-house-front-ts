@@ -5,14 +5,15 @@ import { LinearProgress } from '@mui/material';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { CiEdit } from 'react-icons/ci';
 import { RiDeleteBin2Fill } from 'react-icons/ri';
+import type { Supplier } from './SupplierCreateEditForm';
 
 interface SuppliersPtopsType {
     data: Suppliers[];
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
-    // onEdit: (id: number) => void;
-    // onDelete: (id: number) => void;
+    onEdit: (supplier: Supplier) => void;
+    onDelete: (id: number) => void;
     onPrevPage: () => void;
     onNextPage: () => void;
 }
@@ -39,7 +40,7 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                         <th>Телефон</th>
                         <th>email</th>
                         <th>Контактное лицо</th>
-                        <th>Рейтинг</th>
+                        {/* <th>Рейтинг</th> */}
                         <th>Действия</th>
                     </tr>
                 </thead>
@@ -47,7 +48,11 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                 <tbody>
                     {props.data.length > 0 ? (
                         props.data.map((item) => (
-                            <tr key={item.id}>
+                            <tr
+                                key={item.id}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => props.onEdit(item)}
+                            >
                                 <td>{item.name}</td>
                                 <td>{item.inn}</td>
                                 <td>{item.kpp}</td>
@@ -56,13 +61,13 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                                 <td>{item.phone}</td>
                                 <td>{item.email}</td>
                                 <td>{item.contact_person}</td>
-                                <td>{item.rating}</td>
+                                {/* <td>{item.rating}</td> */}
                                 <td className="action-container">
                                     <StyledTooltip title="Редактировать">
                                         <CiEdit
                                             size={15}
                                             color="#66a7da"
-                                            // onClick={() => props.onEdit(item.id)}
+                                            onClick={() => props.onEdit(item)}
                                         />
                                     </StyledTooltip>
 
@@ -70,7 +75,7 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                                         <RiDeleteBin2Fill
                                             size={15}
                                             color="#c96161"
-                                            // onClick={() => props.onDelete(item.id)}
+                                            onClick={() => props.onDelete(item.id)}
                                         />
                                     </StyledTooltip>
                                 </td>

@@ -21,7 +21,7 @@ interface PropsType {
 }
 
 /*******************************************************************************************************************************/
-export default function UsersTableFrm(props: PropsType) {
+export default function UsersTable(props: PropsType) {
     return (
         <div className="table-container">
             {props.loading && (
@@ -50,7 +50,11 @@ export default function UsersTableFrm(props: PropsType) {
                 <tbody>
                     {props.items.length > 0 ? (
                         props.items.map((item) => (
-                            <tr key={item.id}>
+                            <tr
+                                key={item.id}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => props.onEdit(item.id)}
+                            >
                                 <td>{item.username}</td>
                                 <td>{item.first_name}</td>
                                 <td>{item.last_name}</td>

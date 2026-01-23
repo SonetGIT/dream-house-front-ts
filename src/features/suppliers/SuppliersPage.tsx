@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import SuppliersTable from './SuppliersTable';
-import { createSupplier, fetchSuppliers, updateSupplier, type Suppliers } from './SuppliersSlice';
+import { createSupplier, deleteSupplier, fetchSuppliers, updateSupplier } from './SuppliersSlice';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdGroupAdd } from 'react-icons/md';
 import InputSearch from '@/components/ui/InputSearch';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import SupplierCreateEditForm, { type Supplier } from './SupplierCreateEditForm';
+import toast from 'react-hot-toast';
+import type { ConfirmAction } from '../users/UsersPage';
 
+/***********************************************************************************************************/
 export default function SuppliersPage() {
     const dispatch = useAppDispatch();
     const suppliersState = useAppSelector((state) => state.suppliers);
@@ -15,10 +18,10 @@ export default function SuppliersPage() {
     //Локальные состояния
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const [confirmAction, setConfirmAction] = useState(null);
+    const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
     const [searchText, setSearchText] = useState('');
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>();
+    const [editingSupplier, setEditingSupplier] = useState<Supplier | null>();
+    const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
 
     useEffect(() => {
         dispatch(fetchSuppliers({ page: 1, size: 10 }));
@@ -31,26 +34,80 @@ export default function SuppliersPage() {
     };
 
     const handleAdd = () => {
-        setEditingSupplier(undefined);
+        setEditingSupplier(null);
         setIsFormOpen(true);
     };
 
-    const handleEdit = (supplier: Suppliers) => {
+    const handleEdit = (supplier: Supplier) => {
         setEditingSupplier(supplier);
         setIsFormOpen(true);
     };
 
-    const handleSubmit = (data: any) => {
-        if (editingSupplier?.id) {
-            dispatch(updateSupplier({ id: editingSupplier.id, data }));
+    //Отмена формы
+    const handleCancel = () => {
+        setIsFormOpen(false);
+        setEditingSupplier(null);
+    };
+
+    //Сохранение формы (создание или редактирование)
+    const handleSubmit = (formData: any) => {
+        if (editingSupplier) {
+            dispatch(updateSupplier({ id: editingSupplier.id, data: formData }))
+                .unwrap()
+                .then(() => {
+                    dispatch(fetchSuppliers({ page: 1, size: 10 }));
+                    toast.success('Поставщик успешно обновлён');
+                })
+                .catch((err: string) => {
+                    toast.error(err || 'Ошибка при обновлении поставщика');
+                });
         } else {
-            dispatch(createSupplier(data));
+            dispatch(createSupplier(formData))
+                .unwrap()
+                .then(() => {
+                    dispatch(fetchSuppliers({ page: 1, size: 10 }));
+                    toast.success('Поставщик успешно создан', {
+                        duration: 3000,
+                    });
+                })
+                .catch((err: string) => {
+                    console.log('err', err);
+                    toast.error(err || 'Ошибка при создании поставщика');
+                });
         }
-        setModalOpen(false);
+        setIsFormOpen(false);
+    };
+
+    //DELETE
+    const handleDelete = (id: number) => {
+        setSelectedSupplierId(id);
+        setConfirmAction('delete');
+        setConfirmOpen(true);
     };
 
     const handleConfirm = () => {
-        console.log('handleConfirm');
+        if (!selectedSupplierId || !confirmAction) return;
+
+        if (confirmAction === 'delete') {
+            dispatch(deleteSupplier(selectedSupplierId))
+                .unwrap()
+                .then(() => {
+                    dispatch(
+                        fetchSuppliers({
+                            page: 1,
+                            size: 10,
+                        })
+                    );
+                    toast.success('Поставщик успешно удалён');
+                })
+                .catch((err: string) => {
+                    toast.error(err || 'Ошибка при удалении поставщика');
+                });
+        }
+
+        setConfirmOpen(false);
+        setSelectedSupplierId(null);
+        setConfirmAction(null);
     };
 
     //Пагинация
@@ -76,7 +133,7 @@ export default function SuppliersPage() {
         );
     };
 
-    /********************************************************************************************************************/
+    /*********************************************************************************************************************************/
     return (
         <>
             {!isFormOpen && (
@@ -90,10 +147,12 @@ export default function SuppliersPage() {
                     <SuppliersTable
                         data={suppliersState.data}
                         pagination={suppliersState.pagination}
-                        onPrevPage={handlePrevPage}
-                        onNextPage={handleNextPage}
                         loading={suppliersState.loading}
                         error={suppliersState.error}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onPrevPage={handlePrevPage}
+                        onNextPage={handleNextPage}
                     />
                 </div>
             )}
@@ -101,29 +160,24 @@ export default function SuppliersPage() {
                 <SupplierCreateEditForm
                     supplier={editingSupplier || undefined}
                     onSubmit={handleSubmit}
-                    onCancel={() => {}}
+                    onCancel={handleCancel}
                     //     userRoles={userRoles || []}
                 />
             )}
+
             {/* Диалог подтверждения */}
-            {/* <ConfirmDialog
+            <ConfirmDialog
                 open={confirmOpen}
-                title={
-                    confirmAction === 'delete'
-                        ? 'Удалить поставщика?'
-                        : 'Подтверждаем редактирование поставщика?'
-                }
+                title={confirmAction === 'delete' ? 'Удалить поставщика?' : ''}
                 message={
-                    confirmAction === 'delete'
-                        ? 'Вы уверены, что хотите удалить этого поставщика?'
-                        : 'Данные поставщика будет изменены. Продолжить?'
+                    confirmAction === 'delete' ? 'Вы уверены, что хотите удалить поставщика?' : ''
                 }
                 onConfirm={handleConfirm}
                 onCancel={() => {
                     setConfirmOpen(false);
                     setConfirmAction(null);
                 }}
-            /> */}
+            />
         </>
     );
 }

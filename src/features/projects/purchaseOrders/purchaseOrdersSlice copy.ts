@@ -1,5 +1,5 @@
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequest } from '@/utils/apiRequest';
+import { apiRequest } from '@/utils/apiRequestOLD';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 const API_URL = import.meta.env.VITE_BASE_URL;

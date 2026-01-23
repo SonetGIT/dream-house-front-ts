@@ -1,10 +1,9 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import type { Users } from '../users/userSlice';
-import { apiRequestNew } from '@/utils/apiRequestNew';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
 
-/* ===================== TYPES ===================== */
+/* TYPES */
 export interface AuthCredentials {
     username: string;
     password: string;
@@ -25,13 +24,13 @@ interface ProfileResponse {
 
 interface AuthState {
     user: Users | null;
-    token: string | null;
+    token: string | null; // текущий токен
     loading: boolean;
     error: string | null;
-    resetRequired: boolean;
+    resetRequired: boolean; // нужно ли открыть модалку смены пароля
 }
 
-/* ===================== INITIAL STATE ===================== */
+/* INITIAL STATE */
 const initialState: AuthState = {
     user: null,
     token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
@@ -40,12 +39,7 @@ const initialState: AuthState = {
     resetRequired: false,
 };
 
-/* ===================== THUNKS ===================== */
-
-/**
- * LOGIN
- * ❗ НЕЛЬЗЯ через apiRequestNew (токена ещё нет)
- */
+/* THUNKS */
 export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { rejectValue: string }>(
     'auth/authUser',
     async ({ username, password }, { rejectWithValue }) => {
@@ -56,71 +50,80 @@ export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { reject
                 body: JSON.stringify({ username, password }),
             });
 
-            const data: AuthResponse = await res.json().catch(() => null);
-
-            if (!res.ok || !data?.success) {
-                return rejectWithValue(data?.message || `Ошибка HTTP ${res.status}`);
+            const response: AuthResponse = await res.json().catch(() => null);
+            if (!res.ok || !response?.success) {
+                return rejectWithValue(response?.message || `Ошибка HTTP ${res.status}`);
             }
 
-            // Сохраняем токен только если НЕ нужен reset пароля
-            if (data.data.required_action !== 'RESET_PASSWORD') {
-                localStorage.setItem('token', data.token);
+            // Сохраняем токен только если не требуется смена пароля
+            if (response.data.required_action !== 'RESET_PASSWORD') {
+                localStorage.setItem('token', response.token);
+            }
+
+            return response;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Неизвестная ошибка сети');
+        }
+    }
+);
+
+export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValue: string }>(
+    'auth/fetchProfile',
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return rejectWithValue('Токен отсутствует');
+
+            const res = await fetch(`${API_URL}/auth/profile`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data: ProfileResponse = await res.json().catch(() => null);
+            if (!res.ok || !data?.success) {
+                localStorage.removeItem('token');
+                return rejectWithValue(data?.message || 'Ошибка загрузки профиля');
             }
 
             return data;
+        } catch {
+            return rejectWithValue('Сетевая ошибка');
+        }
+    }
+);
+
+export const changeOwnPassword = createAsyncThunk<
+    { message: string },
+    { oldPassword: string; newPassword: string },
+    { state: { auth: AuthState }; rejectValue: string }
+>(
+    'auth/changeOwnPassword',
+    async ({ oldPassword, newPassword }, { getState, rejectWithValue, dispatch }) => {
+        try {
+            const token = getState().auth.token;
+            if (!token) return rejectWithValue('Токен отсутствует');
+
+            const res = await fetch(`${API_URL}/users/changeOwnPassword`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ oldPassword, newPassword }),
+            });
+
+            const data = await res.json().catch(() => null);
+            if (!res.ok || !data?.success) {
+                return rejectWithValue(data?.message || 'Ошибка смены пароля');
+            }
+
+            localStorage.setItem('token', token);
+            await dispatch(fetchProfile());
+
+            return { message: data.message || 'Пароль успешно изменен' };
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка сети');
         }
     }
 );
 
-/**
- * PROFILE
- * ✅ apiRequestNew (Bearer автоматически)
- */
-export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValue: string }>(
-    'auth/fetchProfile',
-    async (_, { rejectWithValue }) => {
-        try {
-            const res = await apiRequestNew<Users>('/auth/profile', 'GET');
-
-            return {
-                success: true,
-                data: res.data,
-            };
-        } catch (err: any) {
-            localStorage.removeItem('token');
-            return rejectWithValue(err.message || 'Ошибка загрузки профиля');
-        }
-    }
-);
-
-/**
- * CHANGE OWN PASSWORD
- * ✅ apiRequestNew
- */
-export const changeOwnPassword = createAsyncThunk<
-    { message: string },
-    { oldPassword: string; newPassword: string },
-    { rejectValue: string }
->('auth/changeOwnPassword', async ({ oldPassword, newPassword }, { dispatch, rejectWithValue }) => {
-    try {
-        const res = await apiRequestNew<{ message?: string }>('/users/changeOwnPassword', 'PUT', {
-            oldPassword,
-            newPassword,
-        });
-
-        await dispatch(fetchProfile());
-
-        return {
-            message: res.message || 'Пароль успешно изменён',
-        };
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка смены пароля');
-    }
-});
-
-/* ===================== SLICE ===================== */
+/* SLICE */
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -141,7 +144,7 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            /* ===== LOGIN ===== */
+            // AUTH USER
             .addCase(authUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -151,35 +154,38 @@ const authSlice = createSlice({
                 state.user = action.payload.data;
 
                 if (action.payload.data.required_action === 'RESET_PASSWORD') {
-                    state.resetRequired = true;
-                    state.token = action.payload.token;
+                    state.resetRequired = true; // открываем модалку
+                    state.token = action.payload.token; // временный токен
                 } else {
                     state.resetRequired = false;
                     state.token = action.payload.token;
                     localStorage.setItem('token', action.payload.token);
                 }
+
+                state.error = null;
             })
             .addCase(authUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка авторизации';
             })
 
-            /* ===== PROFILE ===== */
+            // FETCH PROFILE
             .addCase(fetchProfile.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(fetchProfile.fulfilled, (state, action) => {
+            .addCase(fetchProfile.fulfilled, (state, action: PayloadAction<ProfileResponse>) => {
                 state.loading = false;
                 state.user = action.payload.data;
+                state.error = null;
             })
             .addCase(fetchProfile.rejected, (state, action) => {
                 state.loading = false;
                 state.user = null;
                 state.token = null;
-                state.error = action.payload ?? 'Ошибка авторизации';
+                state.error = action.payload ?? 'Ошибка проверки авторизации';
             })
 
-            /* ===== CHANGE PASSWORD ===== */
+            // CHANGE OWN PASSWORD
             .addCase(changeOwnPassword.pending, (state) => {
                 state.loading = true;
                 state.error = null;

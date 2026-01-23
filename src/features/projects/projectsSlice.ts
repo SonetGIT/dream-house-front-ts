@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getToken } from '../auth/getToken';
 import type { Pagination } from '../users/userSlice';
-const API_URL = import.meta.env.VITE_BASE_URL;
+import { apiRequestNew } from '@/utils/apiRequestNew';
 
 export interface Project {
     id: number;
@@ -35,67 +34,38 @@ const initialState: ProjectsState = {
 };
 
 // Thunk
-export const fetchProjects = createAsyncThunk<
-    { data: Project[]; pagination: Pagination },
-    { page?: number; size?: number; search?: string; filters?: any },
-    { rejectValue: string }
->('projects/fetch', async (params, { rejectWithValue }) => {
-    const { page = 1, size = 10, search = '', filters = {} } = params;
-    const body = { page, size, search, ...filters };
-
-    const token = getToken();
-    if (!token) return rejectWithValue('Токен отсутствует');
-
-    try {
-        const response = await fetch(`${API_URL}/projects/search`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(body),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || data.success === false) {
-            return rejectWithValue(data.message || 'Ошибка загрузки данных');
+export const fetchProjects = createAsyncThunk(
+    'projects/fetch',
+    async (
+        params: { page?: number; size?: number; search?: string; filters?: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const body = {
+                page: params.page ?? 1,
+                size: params.size ?? 10,
+                search: params.search ?? '',
+                ...(params.filters || {}),
+            };
+            const data = await apiRequestNew<Project[]>(`/projects/search`, 'POST', body);
+            return data;
+        } catch (err: any) {
+            return rejectWithValue(err.message);
         }
-
-        return data;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Неизвестная ошибка при загрузке данных');
     }
-});
+);
 
-export const getProjectById = createAsyncThunk<
-    Project,
-    number, // что принимаем (ID)
-    { rejectValue: string }
->('projects/getById', async (id, { rejectWithValue }) => {
-    const token = getToken();
-    if (!token) return rejectWithValue('Токен отсутствует');
-
-    try {
-        const response = await fetch(`${API_URL}/projects/getById/${id}`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            const data = await response.json().catch(() => null);
-            return rejectWithValue(data?.message || 'Ошибка получения проекта');
+export const getProjectById = createAsyncThunk(
+    'projects/getById',
+    async (id: number, { rejectWithValue }) => {
+        try {
+            const response = await apiRequestNew<Project>(`/projects/getById/${id}`, 'GET');
+            return response.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message);
         }
-
-        const result = await response.json();
-        console.log('result', result);
-        return result.data;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка сети');
     }
-});
+);
 
 // Slice
 const projectsSlice = createSlice({
@@ -126,7 +96,7 @@ const projectsSlice = createSlice({
             })
             .addCase(fetchProjects.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload ?? 'Ошибка запроса';
+                state.error = action.payload as string;
             })
             .addCase(getProjectById.pending, (state) => {
                 state.loading = true;
@@ -138,7 +108,7 @@ const projectsSlice = createSlice({
             })
             .addCase(getProjectById.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload || 'Ошибка';
+                state.error = action.payload as string;
             });
     },
 });

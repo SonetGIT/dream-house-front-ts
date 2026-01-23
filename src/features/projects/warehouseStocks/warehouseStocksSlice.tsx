@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
-const API_URL = import.meta.env.VITE_BASE_URL;
+import { apiRequestNew } from '@/utils/apiRequestNew';
 
 export interface WarehouseStocks {
     id: number;
@@ -42,7 +41,11 @@ export const fetchWarehouseStocks = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const response = await apiRequest(`${API_URL}/warehouseStocks/search`, 'POST', params);
+            const response = await apiRequestNew<WarehouseStocks[]>(
+                `/warehouseStocks/search`,
+                'POST',
+                params
+            );
             return {
                 data: response.data,
                 pagination: response.pagination,

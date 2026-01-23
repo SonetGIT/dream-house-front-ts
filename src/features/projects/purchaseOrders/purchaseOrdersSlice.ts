@@ -1,10 +1,8 @@
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequest } from '@/utils/apiRequest';
+import { apiRequestNew } from '@/utils/apiRequestNew';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
-const API_URL = import.meta.env.VITE_BASE_URL;
 
-// payload для создания заказа
 export interface PurchaseOrderItemPayload {
     material_request_item_id: number | string;
     material_type: number;
@@ -71,49 +69,48 @@ const initialState: PurchaseOrdersState = {
 };
 
 //THUNK
-export const createPurchaseOrder = createAsyncThunk(
-    'purchaseOrders/create',
-    async (payload: PurchaseOrderCreatePayload, { rejectWithValue }) => {
-        console.log('PAYLOAD', payload);
-        try {
-            const res = await apiRequest(`${API_URL}/purchaseOrders/create`, 'POST', payload);
-            return res;
-        } catch (err: any) {
-            return rejectWithValue(err.response?.data || 'Ошибка создания заказа');
-        }
+export const fetchPurchaseOrders = createAsyncThunk<
+    {
+        data: PurchaseOrder[];
+        pagination?: Pagination;
+    },
+    {
+        project_id?: number;
+        supplier_id?: number;
+        created_user_id?: number;
+        status?: number;
+        page: number;
+        size: number;
+    },
+    { rejectValue: string }
+>('purchaseOrders/fetch', async (params, { rejectWithValue }) => {
+    try {
+        return await apiRequestNew<PurchaseOrder[]>('/purchaseOrders/search', 'POST', params);
+    } catch (error: any) {
+        return rejectWithValue(error.message || 'Ошибка загрузки');
     }
-);
+});
 
-//AsyncThunk для поиска / фильтрации заявок
-export const fetchPurchaseOrders = createAsyncThunk(
-    'purchaseOrders/fetch',
-    async (
-        params: {
-            project_id?: number;
-            supplier_id?: number;
-            created_user_id?: number;
-            status?: number;
-            page: number;
-            size: number;
-        },
-        { rejectWithValue }
-    ) => {
-        try {
-            const response = await apiRequest(`${API_URL}/purchaseOrders/search`, 'POST', params);
+export const createPurchaseOrder = createAsyncThunk<
+    PurchaseOrder,
+    PurchaseOrderCreatePayload,
+    { rejectValue: string }
+>('purchaseOrders/create', async (payload, { rejectWithValue }) => {
+    try {
+        const res = await apiRequestNew<PurchaseOrder>('/purchaseOrders/create', 'POST', payload);
 
-            return response;
-        } catch (error: any) {
-            return rejectWithValue(error.response?.data || 'Ошибка загрузки');
-        }
+        return res.data;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка создания заказа');
     }
-);
+});
 
 //SLICE
 const purchaseOrdersSlice = createSlice({
     name: 'purchaseOrders',
     initialState,
     reducers: {
-        resetPurchaseOrderState: (state) => {
+        resetPurchaseOrderState(state) {
             state.loading = false;
             state.error = null;
             state.success = false;
@@ -121,6 +118,7 @@ const purchaseOrdersSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // CREATE
             .addCase(createPurchaseOrder.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -132,22 +130,22 @@ const purchaseOrdersSlice = createSlice({
             })
             .addCase(createPurchaseOrder.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload as string;
+                state.error = action.payload || 'Ошибка создания заказа';
             })
 
-            //fetchPurchaseOrders
+            // FETCH
             .addCase(fetchPurchaseOrders.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchPurchaseOrders.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data = action.payload.data || [];
-                state.pagination = action.payload.pagination || null;
+                state.data = action.payload.data;
+                state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchPurchaseOrders.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.error.message || 'Ошибка при загрузке заявок';
+                state.error = action.payload || 'Ошибка при загрузке заявок';
             });
     },
 });

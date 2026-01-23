@@ -1,7 +1,6 @@
 import { Controller, useForm } from 'react-hook-form';
 import { RiUserAddLine } from 'react-icons/ri';
 import { CiEdit } from 'react-icons/ci';
-import type { Suppliers } from './SuppliersSlice';
 
 export interface Supplier {
     id: number;
@@ -13,7 +12,7 @@ export interface Supplier {
     phone: string;
     email: string;
     contact_person: string | null;
-    rating: number | null;
+    // rating: number | null;
 }
 
 export interface SupplierFormValues {
@@ -25,7 +24,7 @@ export interface SupplierFormValues {
     phone: string;
     email: string;
     contact_person?: string;
-    rating?: number;
+    // rating?: number;
 }
 
 interface PropsType {
@@ -52,7 +51,7 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
             phone: supplier?.phone ?? '',
             email: supplier?.email ?? '',
             contact_person: supplier?.contact_person ?? '',
-            rating: supplier?.rating ?? undefined,
+            // rating: supplier?.rating ?? undefined,
         },
     });
 
@@ -65,7 +64,7 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
         phone: 'Телефон',
         email: 'Email',
         contact_person: 'Контактное лицо',
-        rating: 'Рейтинг',
+        // rating: 'Рейтинг',
     };
 
     const textFields: (keyof SupplierFormValues)[] = [
@@ -78,6 +77,33 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
         'email',
         'contact_person',
     ];
+
+    const getRules = (key: string) => {
+        switch (key) {
+            case 'name':
+                return { required: 'Обязательное поле' };
+
+            case 'inn':
+                return {
+                    required: 'Обязательное поле',
+                    minLength: { value: 14, message: 'ПИН должен состоять из 14 цифр' },
+                    maxLength: { value: 14, message: 'ПИН должен состоять из 14 цифр' },
+                    pattern: { value: /^\d+$/, message: 'ПИН должен содержать только цифры' },
+                };
+
+            case 'email':
+                return {
+                    required: 'Обязательное поле',
+                    pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: 'Некорректный email',
+                    },
+                };
+
+            default:
+                return undefined;
+        }
+    };
 
     /*****************************************************************************************************************/
     return (
@@ -102,7 +128,8 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
 
                 {/* Body */}
                 <div className="form-body">
-                    <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
+                    {/* <form onSubmit={handleSubmit(onSubmit)} autoComplete="off"> */}
+                    <form onSubmit={handleSubmit(onSubmit)}>
                         {/* Text fields */}
                         {textFields.map((key) => (
                             <div className="form-group" key={key}>
@@ -116,15 +143,12 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
                                 <Controller
                                     name={key}
                                     control={control}
-                                    rules={
-                                        key === 'name' || key === 'inn'
-                                            ? { required: 'Обязательное поле' }
-                                            : undefined
-                                    }
+                                    rules={getRules(key)}
                                     render={({ field }) => (
                                         <input
                                             {...field}
                                             type={key === 'email' ? 'email' : 'text'}
+                                            maxLength={key === 'inn' ? 14 : undefined}
                                             className={`form-control ${
                                                 errors[key] ? 'is-invalid' : ''
                                             }`}
@@ -141,7 +165,7 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
                         ))}
 
                         {/* Rating */}
-                        <div className="form-group">
+                        {/* <div className="form-group">
                             <label className="form-label">{fieldLabels.rating}</label>
                             <Controller
                                 name="rating"
@@ -157,7 +181,7 @@ export default function SupplierCreateEditForm({ supplier, onSubmit, onCancel }:
                                     />
                                 )}
                             />
-                        </div>
+                        </div> */}
 
                         {/* Footer */}
                         <div className="form-footer">

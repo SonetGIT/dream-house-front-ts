@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyledTooltip } from './StyledTooltip';
-
-const API_URL = import.meta.env.VITE_BASE_URL;
+import { apiRequestNew } from '@/utils/apiRequestNew';
 
 interface CurrencyRate {
     id: number;
@@ -14,6 +13,7 @@ interface USDRateProps {
     date?: string;
 }
 
+/*********************************************************************************************************/
 export default function USDRate({ date }: USDRateProps) {
     const [usdRate, setUsdRate] = useState<number | null>(null);
 
@@ -21,13 +21,15 @@ export default function USDRate({ date }: USDRateProps) {
         const fetchUSD = async () => {
             try {
                 const selectedDate = date ?? new Date().toISOString().split('T')[0];
-                const res = await fetch(`${API_URL}/currencyRates/getByDate/${selectedDate}`);
-                const data = await res.json();
 
-                if (data?.success && Array.isArray(data.data)) {
-                    const usd = data.data.find((r: CurrencyRate) => r.currency_id === 2);
-                    setUsdRate(usd?.rate ?? null);
-                }
+                const res = await apiRequestNew<CurrencyRate[]>(
+                    `/currencyRates/getByDate/${selectedDate}`,
+                    'GET'
+                );
+
+                const usd = res.data.find((r) => r.currency_id === 2);
+
+                setUsdRate(usd?.rate ?? null);
             } catch (err) {
                 console.error('Ошибка при получении курса USD:', err);
                 setUsdRate(null);

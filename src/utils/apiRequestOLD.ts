@@ -1,7 +1,7 @@
 import { getToken } from '@/features/auth/getToken';
 
 // COMMON FETCH HELPER
-export async function apiRequest(url: string, method: string, body?: any) {
+export async function apiRequestOLD(url: string, method: string, body?: any) {
     const token = getToken();
     if (!token) throw new Error('Токен отсутствует');
 

@@ -1,5 +1,3 @@
-// import '../../styles/tableFormStl.css';
-
 import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -9,7 +7,6 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import InputSearch from '@/components/ui/InputSearch';
 import { useReference } from '../reference/useReference';
 import UserCreateEditFrm from './UserCreateEditFrm';
-import UsersTableFrm from './UsersTableFrm';
 
 import {
     fetchUsers,
@@ -23,11 +20,12 @@ import {
     resetPassword,
 } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import UsersTable from './UsersTable';
 
 interface UsersFilters {
     role_id?: string | number;
 }
-type ConfirmAction = 'delete' | 'resetPassword' | null;
+export type ConfirmAction = 'delete' | 'resetPassword' | null;
 
 /*************************************************************************************************************************************************/
 export default function UsersPage() {
@@ -247,7 +245,7 @@ export default function UsersPage() {
                         </StyledTooltip>
                     </div>
 
-                    <UsersTableFrm
+                    <UsersTable
                         items={items}
                         userRollName={userRollName}
                         loading={loading}

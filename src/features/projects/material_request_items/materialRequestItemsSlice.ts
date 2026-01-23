@@ -1,9 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
-const API_URL = import.meta.env.VITE_BASE_URL;
+import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
 
-// types.ts
 export interface MaterialRequestItems {
     id: number;
     material_type: number;
@@ -67,20 +65,37 @@ interface SearchParams {
     // status?: number;
 }
 
+// export const fetchPurchasingAgentItems = createAsyncThunk<
+//     PurchasingAgentSearchResponse,
+//      ApiResponse<MaterialRequestItems[]>,
+//     SearchParams | void
+// >('materialRequestItems/purchasingAgentSearch', async (params, { rejectWithValue }) => {
+//     try {
+//         const response = await apiRequestNew<MaterialRequestItems[]>(
+//             `/materialRequestItems/purchasingAgentSearch`,
+//             'POST',
+//             params
+//         );
+//         console.log('');
+//         return response;
+//     } catch (error: any) {
+//         return rejectWithValue(error.response?.data || 'Ошибка загрузки');
+//     }
+// });
+
 export const fetchPurchasingAgentItems = createAsyncThunk<
-    PurchasingAgentSearchResponse,
-    SearchParams | void
+    ApiResponse<MaterialRequestItems[]>,
+    SearchParams,
+    { rejectValue: string }
 >('materialRequestItems/purchasingAgentSearch', async (params, { rejectWithValue }) => {
     try {
-        const response = await apiRequest(
-            `${API_URL}/materialRequestItems/purchasingAgentSearch`,
+        return await apiRequestNew<MaterialRequestItems[]>(
+            '/materialRequestItems/purchasingAgentSearch',
             'POST',
             params
         );
-        console.log('');
-        return response;
     } catch (error: any) {
-        return rejectWithValue(error.response?.data || 'Ошибка загрузки');
+        return rejectWithValue(error.message || 'Ошибка при загрузке заявок на материалы');
     }
 });
 

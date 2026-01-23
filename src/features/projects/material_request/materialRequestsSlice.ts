@@ -1,8 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { apiRequest } from '@/utils/apiRequest';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import type { Pagination } from '@/features/users/userSlice';
-const API_URL = import.meta.env.VITE_BASE_URL;
+import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
 
 // Типы
 export interface MaterialRequestItem {
@@ -86,32 +85,16 @@ interface FetchSearchMaterialReqParams {
 }
 
 export const fetchSearchMaterialReq = createAsyncThunk<
-    MaterialRequestSearchResponse, // return type
-    FetchSearchMaterialReqParams, // params type
-    { rejectValue: string } // reject type
->(
-    'materialRequests/fetchSearch',
-    async ({ page = 1, size = 10, search = '', filters, project_id }, { rejectWithValue }) => {
-        try {
-            const body = {
-                page,
-                size,
-                search,
-                project_id,
-                ...filters,
-            };
-
-            const response = await apiRequest(`${API_URL}/materialRequests/search`, 'POST', body);
-
-            return response as MaterialRequestSearchResponse;
-        } catch (error) {
-            const message =
-                error instanceof Error ? error.message : 'Ошибка при загрузке заявок на материалы';
-
-            return rejectWithValue(message);
-        }
+    ApiResponse<MaterialRequest[]>,
+    FetchSearchMaterialReqParams,
+    { rejectValue: string }
+>('suppliers/search', async (params, { rejectWithValue }) => {
+    try {
+        return await apiRequestNew<MaterialRequest[]>('/materialRequests/search', 'POST', params);
+    } catch (error: any) {
+        return rejectWithValue(error.message || 'Ошибка при загрузке заявок на материалы');
     }
-);
+});
 
 export const createMaterialReq = createAsyncThunk<
     MaterialRequest,
@@ -119,14 +102,13 @@ export const createMaterialReq = createAsyncThunk<
     { rejectValue: string }
 >('materialRequests/create', async (materialRequest, { rejectWithValue }) => {
     try {
-        const response = await apiRequest(
-            `${API_URL}/materialRequests/create`,
+        const res = await apiRequestNew<MaterialRequest>(
+            '/materialRequests/create',
             'POST',
             materialRequest
         );
-        console.log('response', materialRequest);
 
-        return response.data as MaterialRequest;
+        return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);
     }
@@ -138,8 +120,13 @@ export const updateMaterialRequest = createAsyncThunk<
     { rejectValue: string }
 >('materialRequests/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const response = await apiRequest(`${API_URL}/materialRequests/update/${id}`, 'PUT', data);
-        return response.data as MaterialRequest;
+        const res = await apiRequestNew<MaterialRequest>(
+            `/materialRequests/update/${id}`,
+            'PUT',
+            data
+        );
+
+        return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);
     }
@@ -155,7 +142,6 @@ export const signMaterialRequest = createAsyncThunk<
         const now = new Date().toISOString();
 
         switch (role_id) {
-            //case 1 - временно для админа
             case 1:
                 update.foreman_user_id = userId;
                 update.approved_by_foreman = true;
@@ -178,31 +164,31 @@ export const signMaterialRequest = createAsyncThunk<
                 update.approved_by_main_engineer_time = now;
                 break;
 
-            case 4: // Прораб
+            case 4:
                 update.foreman_user_id = userId;
                 update.approved_by_foreman = true;
                 update.approved_by_foreman_time = now;
                 break;
 
-            case 7: // Снабженец
+            case 7:
                 update.purchasing_agent_user_id = userId;
                 update.approved_by_purchasing_agent = true;
                 update.approved_by_purchasing_agent_time = now;
                 break;
 
-            case 9: // Нач. участка
+            case 9:
                 update.site_manager_user_id = userId;
                 update.approved_by_site_manager = true;
                 update.approved_by_site_manager_time = now;
                 break;
 
-            case 10: // Инженер ПТО
+            case 10:
                 update.planning_engineer_user_id = userId;
                 update.approved_by_planning_engineer = true;
                 update.approved_by_planning_engineer_time = now;
                 break;
 
-            case 11: // Гл. инженер
+            case 11:
                 update.main_engineer_user_id = userId;
                 update.approved_by_main_engineer = true;
                 update.approved_by_main_engineer_time = now;
@@ -212,7 +198,11 @@ export const signMaterialRequest = createAsyncThunk<
                 return rejectWithValue('Неизвестная роль');
         }
 
-        const res = await apiRequest(`${API_URL}/materialRequests/update/${id}`, 'PUT', update);
+        const res = await apiRequestNew<MaterialRequest>(
+            `/materialRequests/update/${id}`,
+            'PUT',
+            update
+        );
 
         return res.data;
     } catch (err: any) {

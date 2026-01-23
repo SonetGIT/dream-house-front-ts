@@ -112,7 +112,6 @@ export default function UserCreateEditFrm(props: PropsType) {
                 {/* Тело */}
                 <div className="form-body">
                     <form onSubmit={handleSubmit(handleUpdate)} autoComplete="off">
-                        {/* Text fields: username, email, fullname и т.д. */}
                         {textFields.map((key) => (
                             <div className="form-group" key={key}>
                                 <label className="form-label">

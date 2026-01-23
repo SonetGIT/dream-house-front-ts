@@ -1,11 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
+import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
 
-const API_URL = import.meta.env.VITE_BASE_URL;
-
-/* ===================== TYPES ===================== */
-
+/* TYPES */
 export interface Warehouse {
     id: number;
     project_id: number;
@@ -27,12 +24,6 @@ interface WarehousesSearchParams {
     size?: number;
 }
 
-interface WarehousesSearchResponse {
-    success: boolean;
-    data: Warehouse[];
-    pagination: Pagination;
-}
-
 interface WarehousesState {
     data: Warehouse[];
     pagination: Pagination | null;
@@ -40,8 +31,7 @@ interface WarehousesState {
     error: string | null;
 }
 
-/* ===================== INITIAL STATE ===================== */
-
+/* INITIAL STATE */
 const initialState: WarehousesState = {
     data: [],
     pagination: null,
@@ -49,22 +39,20 @@ const initialState: WarehousesState = {
     error: null,
 };
 
-/* ===================== THUNK ===================== */
-
+/* THUNK */
 export const fetchWarehouses = createAsyncThunk<
-    WarehousesSearchResponse,
-    WarehousesSearchParams | void
->('warehouses/search', async (params, { rejectWithValue }) => {
+    ApiResponse<Warehouse[]>,
+    WarehousesSearchParams,
+    { rejectValue: string }
+>('suppliers/search', async (params, { rejectWithValue }) => {
     try {
-        const res = await apiRequest(`${API_URL}/warehouses/search`, 'POST', params);
-        return res;
-    } catch (err: any) {
-        return rejectWithValue(err.response?.data?.message || 'Ошибка загрузки складов');
+        return await apiRequestNew<Warehouse[]>('/warehouses/search', 'POST', params);
+    } catch (error: any) {
+        return rejectWithValue(error.message || 'Ошибка загрузки движений');
     }
 });
 
-/* ===================== SLICE ===================== */
-
+/* SLICE */
 const warehousesSlice = createSlice({
     name: 'warehouses',
     initialState,
