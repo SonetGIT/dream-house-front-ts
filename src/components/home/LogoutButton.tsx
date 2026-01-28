@@ -13,7 +13,12 @@ export default function LogoutButton() {
 
     return (
         <StyledTooltip title="выйти">
-            <Button size="small" color="inherit" style={{ fontSize: '7px' }} onClick={handleLogout}>
+            <Button
+                size="small"
+                color="inherit"
+                style={{ fontSize: '13px' }}
+                onClick={handleLogout}
+            >
                 esc
             </Button>
         </StyledTooltip>

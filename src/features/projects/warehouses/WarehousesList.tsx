@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Warehouse } from './warehousesSlice';
 import type { Pagination } from '../../users/userSlice';
+import { MdAdsClick } from 'react-icons/md';
 
 interface PropsType {
     items: Warehouse[];
@@ -31,7 +32,9 @@ export default function WarehousesList(props: PropsType) {
                         <th>Адрес</th>
                         <th>Кладовшик</th>
                         <th>Телефон</th>
-                        <th>Действия</th>
+                        <th>
+                            <MdAdsClick size={20} style={{ verticalAlign: 'middle' }} />
+                        </th>
                     </tr>
                 </thead>
 
@@ -51,7 +54,7 @@ export default function WarehousesList(props: PropsType) {
                                 <td className="action-container">
                                     <StyledTooltip title="Открыть">
                                         <RiArrowRightUpBoxFill
-                                            size={15}
+                                            size={20}
                                             color="#66a7da"
                                             onClick={(e) => {
                                                 e.stopPropagation();

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import type { Users } from '../users/userSlice';
-import { apiRequestNew } from '@/utils/apiRequestNew';
+import { apiRequest } from '@/utils/apiRequest';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
 
@@ -44,7 +44,7 @@ const initialState: AuthState = {
 
 /**
  * LOGIN
- * ❗ НЕЛЬЗЯ через apiRequestNew (токена ещё нет)
+ * ❗ НЕЛЬЗЯ через apiRequest (токена ещё нет)
  */
 export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { rejectValue: string }>(
     'auth/authUser',
@@ -76,13 +76,13 @@ export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { reject
 
 /**
  * PROFILE
- * ✅ apiRequestNew (Bearer автоматически)
+ * ✅ apiRequest (Bearer автоматически)
  */
 export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValue: string }>(
     'auth/fetchProfile',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await apiRequestNew<Users>('/auth/profile', 'GET');
+            const res = await apiRequest<Users>('/auth/profile', 'GET');
 
             return {
                 success: true,
@@ -97,7 +97,7 @@ export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValu
 
 /**
  * CHANGE OWN PASSWORD
- * ✅ apiRequestNew
+ * ✅ apiRequest
  */
 export const changeOwnPassword = createAsyncThunk<
     { message: string },
@@ -105,7 +105,7 @@ export const changeOwnPassword = createAsyncThunk<
     { rejectValue: string }
 >('auth/changeOwnPassword', async ({ oldPassword, newPassword }, { dispatch, rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<{ message?: string }>('/users/changeOwnPassword', 'PUT', {
+        const res = await apiRequest<{ message?: string }>('/users/changeOwnPassword', 'PUT', {
             oldPassword,
             newPassword,
         });

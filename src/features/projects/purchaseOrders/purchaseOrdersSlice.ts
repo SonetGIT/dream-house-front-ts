@@ -1,5 +1,5 @@
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequestNew } from '@/utils/apiRequestNew';
+import { apiRequest } from '@/utils/apiRequest';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -85,7 +85,7 @@ export const fetchPurchaseOrders = createAsyncThunk<
     { rejectValue: string }
 >('purchaseOrders/fetch', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequestNew<PurchaseOrder[]>('/purchaseOrders/search', 'POST', params);
+        return await apiRequest<PurchaseOrder[]>('/purchaseOrders/search', 'POST', params);
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка загрузки');
     }
@@ -97,7 +97,7 @@ export const createPurchaseOrder = createAsyncThunk<
     { rejectValue: string }
 >('purchaseOrders/create', async (payload, { rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<PurchaseOrder>('/purchaseOrders/create', 'POST', payload);
+        const res = await apiRequest<PurchaseOrder>('/purchaseOrders/create', 'POST', payload);
 
         return res.data;
     } catch (err: any) {

@@ -25,6 +25,7 @@ import {
     receivePurchaseOrderItems,
     type ReceiveItemPayload,
 } from '../purchaseOrderItems/purchaseOrderItemsSlice';
+import { formatDateTime } from '@/utils/formatDateTime';
 
 interface PropsType {
     orders: PurchaseOrder[];
@@ -64,7 +65,7 @@ export default function WarehousePurchaseOrdersTable({
 
     const allSelectableItems = useMemo(() => {
         return orders.flatMap((order) =>
-            (order.items || []).filter((item) => !isFullyReceived(item))
+            (order.items || []).filter((item) => !isFullyReceived(item)),
         );
     }, [orders]);
 
@@ -130,8 +131,8 @@ export default function WarehousePurchaseOrdersTable({
                 if (rawValue === '' || rawValue === undefined) {
                     toast.error(
                         `Укажите количество прихода для "${getRefName.materialName(
-                            item.material_id
-                        )}"`
+                            item.material_id,
+                        )}"`,
                     );
                     hasError = true;
                     return;
@@ -141,8 +142,8 @@ export default function WarehousePurchaseOrdersTable({
                 if (isNaN(received_quantity) || received_quantity <= 0) {
                     toast.error(
                         `Количество должно быть > 0 для "${getRefName.materialName(
-                            item.material_id
-                        )}"`
+                            item.material_id,
+                        )}"`,
                     );
                     hasError = true;
                     return;
@@ -151,8 +152,8 @@ export default function WarehousePurchaseOrdersTable({
                 if (received_quantity > available) {
                     toast.error(
                         `Макс. приход: ${available} для "${getRefName.materialName(
-                            item.material_id
-                        )}"`
+                            item.material_id,
+                        )}"`,
                     );
                     hasError = true;
                     return;
@@ -177,7 +178,7 @@ export default function WarehousePurchaseOrdersTable({
                 receivePurchaseOrderItems({
                     warehouse_id: warehouseIdNum,
                     items: validItems,
-                })
+                }),
             );
 
             if (receivePurchaseOrderItems.fulfilled.match(result)) {
@@ -187,7 +188,7 @@ export default function WarehousePurchaseOrdersTable({
                 setCommentMap({});
             } else {
                 toast.error(
-                    'Ошибка при приёмке: ' + ((result.payload as string) || 'Неизвестная ошибка')
+                    'Ошибка при приёмке: ' + ((result.payload as string) || 'Неизвестная ошибка'),
                 );
             }
         } catch (err) {
@@ -196,6 +197,7 @@ export default function WarehousePurchaseOrdersTable({
         }
     };
 
+    /********************************************************************************************************************/
     return (
         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
             <Table className="table">
@@ -225,10 +227,7 @@ export default function WarehousePurchaseOrdersTable({
                                     № заявки: <strong>{req.id}</strong>
                                 </TableCell>
                                 <TableCell>
-                                    Дата создания:{' '}
-                                    <strong>
-                                        {new Date(req.created_at).toLocaleDateString('ru-RU')}
-                                    </strong>
+                                    Дата создания: <strong>{formatDateTime(req.created_at)}</strong>
                                 </TableCell>
                                 <TableCell>
                                     Поставщик:{' '}
@@ -266,7 +265,7 @@ export default function WarehousePurchaseOrdersTable({
                                                                     !allSelected &&
                                                                     allSelectableItems.some(
                                                                         (item) =>
-                                                                            checkedMap[item.id]
+                                                                            checkedMap[item.id],
                                                                     )
                                                                 }
                                                                 onChange={toggleAll}
@@ -285,7 +284,7 @@ export default function WarehousePurchaseOrdersTable({
                                                         const isChecked = !!checkedMap[item.id];
                                                         // Значение для отображения: если выбрано — из receivedMap, иначе — available
                                                         const displayValue = isChecked
-                                                            ? receivedMap[item.id] ?? available
+                                                            ? (receivedMap[item.id] ?? available)
                                                             : available;
 
                                                         return (
@@ -304,12 +303,12 @@ export default function WarehousePurchaseOrdersTable({
                                                             >
                                                                 <TableCell>
                                                                     {getRefName.materialTypeName(
-                                                                        item.material_type
+                                                                        item.material_type,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {getRefName.materialName(
-                                                                        item.material_id
+                                                                        item.material_id,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
@@ -317,7 +316,7 @@ export default function WarehousePurchaseOrdersTable({
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {getRefName.unitName(
-                                                                        item.unit_of_measure
+                                                                        item.unit_of_measure,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
@@ -328,7 +327,7 @@ export default function WarehousePurchaseOrdersTable({
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {getRefName.statusItemName(
-                                                                        item.status
+                                                                        item.status,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
@@ -360,14 +359,14 @@ export default function WarehousePurchaseOrdersTable({
                                                                                         : Number(
                                                                                               e
                                                                                                   .target
-                                                                                                  .value
+                                                                                                  .value,
                                                                                           );
                                                                                 setReceivedMap(
                                                                                     (prev) => ({
                                                                                         ...prev,
                                                                                         [item.id]:
                                                                                             val,
-                                                                                    })
+                                                                                    }),
                                                                                 );
                                                                             }}
                                                                         />
@@ -393,7 +392,7 @@ export default function WarehousePurchaseOrdersTable({
                                                                                         [item.id]:
                                                                                             e.target
                                                                                                 .value,
-                                                                                    })
+                                                                                    }),
                                                                                 )
                                                                             }
                                                                             sx={compactFieldSx}

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
+import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 
 /*TYPES*/
@@ -47,7 +47,7 @@ export const fetchMaterialMovements = createAsyncThunk<
     { rejectValue: string }
 >('materialMovements/search', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequestNew<MaterialMovement[]>('/materialMovements/search', 'POST', params);
+        return await apiRequest<MaterialMovement[]>('/materialMovements/search', 'POST', params);
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка загрузки движений');
     }

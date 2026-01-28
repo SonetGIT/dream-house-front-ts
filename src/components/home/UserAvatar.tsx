@@ -14,6 +14,7 @@ const getInitials = (user: Users | null): string => {
     return username.slice(0, 2).toUpperCase();
 };
 
+/***********************************************************************************************************************/
 export default function UserAvatar() {
     const user = useAppSelector((state) => state.auth.user);
     const initial = getInitials(user);
@@ -23,11 +24,12 @@ export default function UserAvatar() {
         <StyledTooltip title={tooltipTxt}>
             <Avatar
                 sx={{
-                    width: 26,
-                    height: 26,
+                    width: 30,
+                    height: 30,
                     color: '#2c7ecb',
                     bgcolor: '#ffffff',
-                    fontSize: 10,
+                    fontSize: 14,
+                    marginRight: 2,
                     fontWeight: 600,
                     cursor: 'default',
                     lineHeight: '28px',

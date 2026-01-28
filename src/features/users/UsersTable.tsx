@@ -2,10 +2,10 @@ import { LinearProgress } from '@mui/material';
 import { RiDeleteBin2Fill } from 'react-icons/ri';
 import { BiReset } from 'react-icons/bi';
 import { CiEdit } from 'react-icons/ci';
-
 import type { Pagination, Users } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { TablePagination } from '@/components/ui/TablePagination';
+import { MdAdsClick } from 'react-icons/md';
 
 interface PropsType {
     items: Users[];
@@ -43,7 +43,9 @@ export default function UsersTable(props: PropsType) {
                         <th>email</th>
                         <th>Телефон</th>
                         <th>Роль</th>
-                        <th>Действия</th>
+                        <th>
+                            <MdAdsClick size={20} style={{ verticalAlign: 'middle' }} />
+                        </th>
                     </tr>
                 </thead>
 
@@ -65,22 +67,25 @@ export default function UsersTable(props: PropsType) {
                                 <td className="action-container">
                                     <StyledTooltip title="Редактировать">
                                         <CiEdit
-                                            size={15}
-                                            color="#66a7da"
+                                            size={20}
+                                            color="#2c7ecb"
                                             onClick={() => props.onEdit(item.id)}
                                         />
                                     </StyledTooltip>
 
                                     <StyledTooltip title="Удалить">
                                         <RiDeleteBin2Fill
-                                            size={15}
+                                            size={20}
                                             color="#c96161"
-                                            onClick={() => props.onDelete(item.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onDelete(item.id);
+                                            }}
                                         />
                                     </StyledTooltip>
                                     <StyledTooltip title="Сброс пароля">
                                         <BiReset
-                                            size={15}
+                                            size={20}
                                             color="#66a7da"
                                             onClick={() => props.onResetPass(item.id)}
                                         />

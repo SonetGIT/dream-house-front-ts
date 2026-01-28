@@ -26,6 +26,8 @@ export default function App() {
             <Menu open={drawerOpen} onClose={handleDrawerClose} />
             <main>
                 <Outlet />
+                {/* <div className="main-content">
+                </div> */}
             </main>
             <Footer />
         </div>

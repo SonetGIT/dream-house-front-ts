@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
+import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 
 // Типы
 export interface MaterialRequestItem {
@@ -90,7 +90,7 @@ export const fetchSearchMaterialReq = createAsyncThunk<
     { rejectValue: string }
 >('suppliers/search', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequestNew<MaterialRequest[]>('/materialRequests/search', 'POST', params);
+        return await apiRequest<MaterialRequest[]>('/materialRequests/search', 'POST', params);
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка при загрузке заявок на материалы');
     }
@@ -102,7 +102,7 @@ export const createMaterialReq = createAsyncThunk<
     { rejectValue: string }
 >('materialRequests/create', async (materialRequest, { rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<MaterialRequest>(
+        const res = await apiRequest<MaterialRequest>(
             '/materialRequests/create',
             'POST',
             materialRequest
@@ -120,7 +120,7 @@ export const updateMaterialRequest = createAsyncThunk<
     { rejectValue: string }
 >('materialRequests/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<MaterialRequest>(
+        const res = await apiRequest<MaterialRequest>(
             `/materialRequests/update/${id}`,
             'PUT',
             data
@@ -198,7 +198,7 @@ export const signMaterialRequest = createAsyncThunk<
                 return rejectWithValue('Неизвестная роль');
         }
 
-        const res = await apiRequestNew<MaterialRequest>(
+        const res = await apiRequest<MaterialRequest>(
             `/materialRequests/update/${id}`,
             'PUT',
             update

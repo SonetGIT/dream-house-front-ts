@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequestNew } from '@/utils/apiRequestNew';
+import { apiRequest } from '@/utils/apiRequest';
 
 export interface WarehouseStocks {
     id: number;
@@ -41,7 +41,7 @@ export const fetchWarehouseStocks = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const response = await apiRequestNew<WarehouseStocks[]>(
+            const response = await apiRequest<WarehouseStocks[]>(
                 `/warehouseStocks/search`,
                 'POST',
                 params

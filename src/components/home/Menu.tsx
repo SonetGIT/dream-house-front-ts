@@ -7,15 +7,11 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
-import { FaUsersLine } from 'react-icons/fa6';
-import {
-    BiSolidUserAccount,
-    BiSolidFolder,
-    BiMailSend,
-    BiChevronDown,
-    BiChevronUp,
-} from 'react-icons/bi';
+import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { useLocation, useNavigate } from 'react-router-dom';
+import SwitchAccountSharpIcon from '@mui/icons-material/SwitchAccountSharp';
+import SupervisedUserCircleSharpIcon from '@mui/icons-material/SupervisedUserCircleSharp';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 
 interface SubItem {
     label: string;
@@ -37,16 +33,16 @@ const drawerItems: DrawerItem[] = [
     {
         label: 'Пользователи',
         path: '/users',
-        icon: <BiSolidUserAccount />,
+        icon: <SwitchAccountSharpIcon />,
         // subItems: [{ label: 'Администраторы' }, { label: 'Клиенты' }, { label: 'Гости' }],
     },
     {
         label: 'Проекты',
         path: '/projects',
-        icon: <BiSolidFolder />,
+        icon: <AssessmentOutlinedIcon />,
         // subItems: [{ label: 'Видео' }, { label: 'PDF' }, { label: 'Презентации' }],
     },
-    { label: 'Поставщики', path: '/suppliers', icon: <FaUsersLine /> },
+    { label: 'Поставщики', path: '/suppliers', icon: <SupervisedUserCircleSharpIcon /> },
 ];
 
 export default function Menu({ open, onClose }: DrawerProps) {
@@ -81,8 +77,8 @@ export default function Menu({ open, onClose }: DrawerProps) {
                                 <ListItem disablePadding>
                                     <ListItemButton
                                         sx={{
-                                            py: 0.5,
-                                            pl: 1.5,
+                                            py: 0.9,
+                                            pl: 1.9,
                                             bgcolor: isActive ? 'action.selected' : 'inherit',
                                         }}
                                         onClick={(e) => {

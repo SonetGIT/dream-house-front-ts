@@ -1,6 +1,6 @@
 :root {
     --primary: #2c7ecb;
-    --bg-header: #8eb9ed;
+    --bg-header: #9fc3f0;
     --headerName: #1f4774;
     --bg-surfacePrm: #f8f8f8;
     --bg-surfaceSec: #f5fbff; /* зебра */
@@ -15,15 +15,16 @@
     --transform: scale(1.1);
 }
 .icon {
-    font-size: 25px;
+    font-size: 2.3rem;
     color: #66a7da;
     cursor: pointer;
-    transition: transform 0.2s ease, color 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease;
 }
 
 .icon:hover {
     color: var(--primary);
-    /* transform: rotate(-90deg) scale(1.05); */
 }
 
 /*СТИЛИ ДЛЯ ФИЛЬТР*/
@@ -32,16 +33,17 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 7px;
+    margin-bottom: 10px;
     align-items: center;
 }
 
 /* СТИЛИ ТАБЛИЦЫ И ЕЕ ЭЛЕМЕНТОВ */
 /* Контейнер */
 .table-container {
+    width: 90%;
     background: var(--bg-surfacePrm);
     border-radius: var(--border-radius);
-    padding: 5px; /*отступ по краям таблицы*/
+    padding: 8px; /*отступ по краям таблицы*/
     box-shadow: 0 3px 8px #0000000d;
     overflow-x: auto;
 }
@@ -58,9 +60,10 @@
 .table thead th {
     background: var(--bg-header);
     color: var(--headerName);
-    padding: 7px;
+    padding: 3px;
     text-transform: uppercase;
-    font-size: 7px;
+    font-weight: 500;
+    font-size: 13px;
     text-align: center;
 }
 
@@ -74,7 +77,7 @@
 
 /* Ячейки тела — компактные */
 .table tbody td {
-    padding-top: 3px;
+    padding: 5px 6px;
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
     transition: var(--transition);
@@ -92,13 +95,15 @@
 
 /* ACTIONS */
 .action-container {
-    justify-content: center;
-    align-items: center;
+    display: flex;
+    justify-content: center; /* выравнивание по горизонтали */
+    align-items: center; /* выравнивание по вертикали */
+    gap: 8px;
+    vertical-align: middle;
 }
 
 .action-container svg {
     cursor: pointer;
-    margin-right: 8px;
     transition: var(--transition);
 }
 
@@ -110,7 +115,7 @@
 .table-footer-container {
     display: flex;
     padding: 10px;
-    justify-content: center;
+    justify-content: right;
     align-items: center;
     border-top: 1px solid var(--border);
 }
@@ -121,21 +126,19 @@
     gap: 10px;
     flex-wrap: wrap;
 }
+.current-page {
+    font-weight: bold; /* жирный текст */
+    color: white;
+    background-color: var(--primary);
+    border-radius: 3px;
+    padding: 2px 6px;
+}
 
 /* КОМПАКТНЫЕ КНОПКИ ПАГИНАЦИИ */
 .table-page-button {
-    /* width: 24px;
-    height: 22px; */
     display: flex;
     align-items: center;
     justify-content: center;
-    background: red;
-    /* border-radius: 4px; */
-    /* background: transparent; */
-    /* color: var(--text-secondary); */
-    /* cursor: pointer; */
-    /* transition: var(--transition); */
-    /* font-size: 0.75rem; */
 }
 
 .table-page-button:hover:not(:disabled) {
@@ -146,6 +149,16 @@
 .table-page-button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+.page-count {
+    font-size: 0.875rem; /* чуть меньше основного текста */
+    color: #333;
+    margin-right: 10px;
+}
+
+.page-text {
+    font-size: 0.875rem;
+    color: #333;
 }
 
 /* Экспорт — компактнее */

@@ -159,7 +159,7 @@ export default function UsersPage() {
                             size: 10,
                             search,
                             filters: getCurrentFilters(),
-                        })
+                        }),
                     );
                     toast.success('Пользователь успешно удалён');
                 })
@@ -200,7 +200,7 @@ export default function UsersPage() {
                 size: pagination.size,
                 search,
                 filters: getCurrentFilters(),
-            })
+            }),
         );
     };
 
@@ -212,7 +212,7 @@ export default function UsersPage() {
                 size: pagination.size,
                 search,
                 filters: getCurrentFilters(),
-            })
+            }),
         );
     };
 

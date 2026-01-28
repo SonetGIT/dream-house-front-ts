@@ -14,8 +14,8 @@ const Search = styled('div')({
         borderColor: '#8eb9ed',
     },
     width: '100%',
-    maxWidth: 200,
-    height: 27,
+    maxWidth: 280,
+    height: 36,
     display: 'flex',
     alignItems: 'center',
 });
@@ -44,7 +44,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
         padding: '4px 0',
         // paddingLeft: `calc(1em + ${theme.spacing(2)})`,
         paddingRight: theme.spacing(2),
-        fontSize: 12,
+        // fontSize: 12,
     },
 }));
 
@@ -85,65 +85,3 @@ export default function InputSearch(props: PropsType) {
         </Search>
     );
 }
-
-// import { styled } from '@mui/material/styles';
-// import InputBase from '@mui/material/InputBase';
-// import SearchIcon from '@mui/icons-material/Search';
-
-// const Search = styled('div')(({}) => ({
-//     position: 'relative',
-//     borderRadius: 5,
-//     border: '1px solid #afafaf',
-//     backgroundColor: '#f8f8f8',
-//     '&:hover': {
-//         backgroundColor: '#f5fbff',
-//         borderColor: '#8eb9ed',
-//     },
-//     width: '100%',
-//     maxWidth: 200,
-//     height: 27,
-// }));
-
-// const SearchIconWrapper = styled('div')(({ theme }) => ({
-//     padding: theme.spacing(0, 1),
-//     height: '100%',
-//     position: 'absolute',
-//     pointerEvents: 'none',
-//     display: 'flex',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-// }));
-
-// const StyledInputBase = styled(InputBase)(({ theme }) => ({
-//     width: '100%',
-//     '& .MuiInputBase-input': {
-//         paddingLeft: `calc(1em + ${theme.spacing(2)})`,
-//     },
-// }));
-
-// interface PropsType {
-//     value: string;
-//     onChange: (value: string) => void;
-//     onEnter?: () => void;
-// }
-
-// export default function InputSearch(props: PropsType) {
-//     return (
-//         <Search>
-//             <SearchIconWrapper>
-//                 <SearchIcon />
-//             </SearchIconWrapper>
-//             <StyledInputBase
-//                 placeholder="Поиск…"
-//                 value={props.value}
-//                 onChange={(e) => props.onChange(e.target.value)}
-//                 onKeyDown={(e) => {
-//                     if (e.key === 'Enter') {
-//                         props.onEnter?.();
-//                     }
-//                 }}
-//                 inputProps={{ 'aria-label': 'search' }}
-//             />
-//         </Search>
-//     );
-// }

@@ -9,7 +9,7 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
-export async function apiRequestNew<T = any>(
+export async function apiRequest<T = any>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     body?: unknown

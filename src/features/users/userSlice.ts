@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { apiRequestNew } from '@/utils/apiRequestNew';
+import { apiRequest } from '@/utils/apiRequest';
 
 // TYPES
 export interface Users {
@@ -67,7 +67,7 @@ export const getUserRoles = createAsyncThunk<UserRole[], void, { rejectValue: st
     'users/getUserRoles',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await apiRequestNew<UserRole[]>(`/userRoles/gets`, 'GET');
+            const response = await apiRequest<UserRole[]>(`/userRoles/gets`, 'GET');
             return response.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -88,7 +88,7 @@ export const fetchUsers = createAsyncThunk(
                 search: params.search ?? '',
                 ...(params.filters || {}),
             };
-            const data = await apiRequestNew<Users[]>(`/users/search`, 'POST', body);
+            const data = await apiRequest<Users[]>(`/users/search`, 'POST', body);
             return data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -100,7 +100,7 @@ export const createUser = createAsyncThunk<Users, Partial<Users>, { rejectValue:
     'users/create',
     async (user, { rejectWithValue }) => {
         try {
-            const response = await apiRequestNew<Users>(`/users/createUser`, 'POST', user);
+            const response = await apiRequest<Users>(`/users/createUser`, 'POST', user);
             return response.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -112,7 +112,7 @@ export const deleteUser = createAsyncThunk(
     'users/delete',
     async (id: number, { rejectWithValue }) => {
         try {
-            await apiRequestNew<Users>(`/users/delete/${id}`, 'DELETE');
+            await apiRequest<Users>(`/users/delete/${id}`, 'DELETE');
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -124,7 +124,7 @@ export const getUserById = createAsyncThunk(
     'users/getById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await apiRequestNew<Users>(`/users/getById/${id}`, 'GET');
+            const response = await apiRequest<Users>(`/users/getById/${id}`, 'GET');
             return response.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -138,7 +138,7 @@ export const updateUser = createAsyncThunk(
         try {
             const send = { ...payload.data };
             if (!send.password) delete send.password;
-            const response = await apiRequestNew<Users>(`/users/update/${payload.id}`, 'PUT', send);
+            const response = await apiRequest<Users>(`/users/update/${payload.id}`, 'PUT', send);
             return response.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -150,7 +150,7 @@ export const resetPassword = createAsyncThunk(
     'users/resetPassword',
     async ({ id, password }: { id: number; password: string }, { rejectWithValue }) => {
         try {
-            const data = await apiRequestNew<Users>(`/users/resetPassword/${id}`, 'PUT', {
+            const data = await apiRequest<Users>(`/users/resetPassword/${id}`, 'PUT', {
                 password,
             });
             return { message: data.message || 'Пароль обновлён' };

@@ -1,6 +1,7 @@
 import { TablePagination } from '@/components/ui/TablePagination';
 import type { Pagination } from '@/features/users/userSlice';
 import type { MaterialMovement } from './materialMovementsSlice';
+import { formatDateTime } from '@/utils/formatDateTime';
 
 interface PropsType {
     data: MaterialMovement[];
@@ -37,7 +38,7 @@ export default function MaterialMovementsTable(props: PropsType) {
                     {props.data?.length > 0 ? (
                         props.data.map((item) => (
                             <tr key={item.id}>
-                                <td>{new Date(item.date).toLocaleDateString('ru-RU')}</td>
+                                <td> {formatDateTime(item.date)}</td>
                                 <td>
                                     {item.from_warehouse_id !== null
                                         ? props.getRefName.wareHouseName(item.from_warehouse_id)

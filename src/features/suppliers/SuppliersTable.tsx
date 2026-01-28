@@ -1,4 +1,3 @@
-import { TablePagination } from '@/components/ui/TablePagination';
 import type { Suppliers } from './SuppliersSlice';
 import type { Pagination } from '../users/userSlice';
 import { LinearProgress } from '@mui/material';
@@ -6,6 +5,8 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { CiEdit } from 'react-icons/ci';
 import { RiDeleteBin2Fill } from 'react-icons/ri';
 import type { Supplier } from './SupplierCreateEditForm';
+import { MdAdsClick } from 'react-icons/md';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface SuppliersPtopsType {
     data: Suppliers[];
@@ -17,6 +18,8 @@ interface SuppliersPtopsType {
     onPrevPage: () => void;
     onNextPage: () => void;
 }
+
+/**********************************************************************************************************************/
 export default function SuppliersTable(props: SuppliersPtopsType) {
     return (
         <div className="table-container">
@@ -41,7 +44,9 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                         <th>email</th>
                         <th>Контактное лицо</th>
                         {/* <th>Рейтинг</th> */}
-                        <th>Действия</th>
+                        <th>
+                            <MdAdsClick size={20} style={{ verticalAlign: 'middle' }} />
+                        </th>
                     </tr>
                 </thead>
 
@@ -65,15 +70,15 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                                 <td className="action-container">
                                     <StyledTooltip title="Редактировать">
                                         <CiEdit
-                                            size={15}
-                                            color="#66a7da"
+                                            size={20}
+                                            color="#2c7ecb"
                                             onClick={() => props.onEdit(item)}
                                         />
                                     </StyledTooltip>
 
                                     <StyledTooltip title="Удалить">
                                         <RiDeleteBin2Fill
-                                            size={15}
+                                            size={20}
                                             color="#c96161"
                                             onClick={() => props.onDelete(item.id)}
                                         />
@@ -91,7 +96,7 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                 </tbody>
             </table>
 
-            {/*Пагинация******************************************************************************************************************************/}
+            {/*Пагинация***********************************************************************************************************/}
             <TablePagination
                 pagination={props.pagination}
                 onPrev={props.onPrevPage}

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { apiRequestNew } from '@/utils/apiRequestNew';
+import { apiRequest } from '@/utils/apiRequest';
 import type { PurchaseOrderItem } from '../purchaseOrders/purchaseOrdersSlice';
 
 interface PurchaseOrderItemsState {
@@ -30,7 +30,7 @@ export const receivePurchaseOrderItems = createAsyncThunk<
     { rejectValue: string }
 >('purchaseOrderItems/receive', async (payload, { rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<PurchaseOrderItem[]>(
+        const res = await apiRequest<PurchaseOrderItem[]>(
             '/purchaseOrderItems/receive',
             'POST',
             payload

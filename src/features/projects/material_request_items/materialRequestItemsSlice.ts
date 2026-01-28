@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
+import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 
 export interface MaterialRequestItems {
     id: number;
@@ -71,7 +71,7 @@ interface SearchParams {
 //     SearchParams | void
 // >('materialRequestItems/purchasingAgentSearch', async (params, { rejectWithValue }) => {
 //     try {
-//         const response = await apiRequestNew<MaterialRequestItems[]>(
+//         const response = await apiRequest<MaterialRequestItems[]>(
 //             `/materialRequestItems/purchasingAgentSearch`,
 //             'POST',
 //             params
@@ -89,7 +89,7 @@ export const fetchPurchasingAgentItems = createAsyncThunk<
     { rejectValue: string }
 >('materialRequestItems/purchasingAgentSearch', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequestNew<MaterialRequestItems[]>(
+        return await apiRequest<MaterialRequestItems[]>(
             '/materialRequestItems/purchasingAgentSearch',
             'POST',
             params

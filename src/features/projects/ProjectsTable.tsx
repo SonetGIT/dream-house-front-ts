@@ -4,7 +4,9 @@ import { RiFileExcel2Fill, RiArrowRightUpBoxFill } from 'react-icons/ri';
 import { MdSkipNext, MdSkipPrevious } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { MdAdsClick } from 'react-icons/md';
 import type { Pagination } from '../users/userSlice';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface PropsType {
     items: Project[];
@@ -45,7 +47,9 @@ export default function ProjectsTable(props: PropsType) {
                         <th>Тип</th>
                         <th>Статус</th>
                         <th>Адрес</th>
-                        <th>Действия</th>
+                        <th>
+                            <MdAdsClick size={20} style={{ verticalAlign: 'middle' }} />
+                        </th>
                     </tr>
                 </thead>
 
@@ -65,7 +69,7 @@ export default function ProjectsTable(props: PropsType) {
                                 <td className="action-container">
                                     <StyledTooltip title="Открыть">
                                         <RiArrowRightUpBoxFill
-                                            size={15}
+                                            size={20}
                                             color="#66a7da"
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -87,46 +91,11 @@ export default function ProjectsTable(props: PropsType) {
             </table>
 
             {/*Пагинация******************************************************************************************************************************/}
-            <div className="table-footer-container">
-                <div className="pagination">
-                    <StyledTooltip title="Предыдущая страница">
-                        <span>
-                            <IconButton
-                                size="small"
-                                className="table-page-button"
-                                onClick={props.onPrevPage}
-                                disabled={!props.pagination?.hasPrev}
-                            >
-                                <MdSkipPrevious />
-                            </IconButton>
-                        </span>
-                    </StyledTooltip>
-
-                    <span className="page-text">стр. {props.pagination?.page}</span>
-                    <span className="page-text"> из {props.pagination?.pages}</span>
-
-                    <StyledTooltip title="Следующая страница">
-                        <span>
-                            <IconButton
-                                size="small"
-                                className="table-page-button"
-                                onClick={props.onNextPage}
-                                disabled={!props.pagination?.hasNext}
-                            >
-                                <MdSkipNext />
-                            </IconButton>
-                        </span>
-                    </StyledTooltip>
-
-                    <span className="page-count">Кол-во: {props.pagination?.total}</span>
-
-                    {!props.loading && (
-                        <StyledTooltip title="скачать в Excel">
-                            <RiFileExcel2Fill className="table-excelabtn" />
-                        </StyledTooltip>
-                    )}
-                </div>
-            </div>
+            <TablePagination
+                pagination={props.pagination}
+                onPrev={props.onPrevPage}
+                onNext={props.onNextPage}
+            />
         </div>
     );
 }

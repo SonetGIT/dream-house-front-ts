@@ -110,7 +110,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                 id: req.id,
                 role_id: currentUser.role_id,
                 userId: currentUser.id,
-            })
+            }),
         );
     };
 
@@ -185,9 +185,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                     </TableCell>
                                     <TableCell>
                                         Дата создание:{' '}
-                                        <strong>
-                                            {new Date(req.created_at).toLocaleDateString('ru-RU')}
-                                        </strong>
+                                        <strong>{formatDateTime(req.created_at)}</strong>
                                     </TableCell>
                                     <TableCell>
                                         <Box display="flex" gap={0.5} mt={1}>
@@ -231,17 +229,17 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             >
                                                                 <TableCell>
                                                                     {props.getRefName.materialType(
-                                                                        item.material_type
+                                                                        item.material_type,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {props.getRefName.materialName(
-                                                                        item.material_id
+                                                                        item.material_id,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {props.getRefName.unitName(
-                                                                        item.unit_of_measure
+                                                                        item.unit_of_measure,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
@@ -252,7 +250,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {props.getRefName.statusItemName(
-                                                                        req.status
+                                                                        req.status,
                                                                     )}
                                                                 </TableCell>
                                                             </TableRow>
@@ -288,7 +286,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             >
                                                                 {s.userId
                                                                     ? props.getRefName.userName(
-                                                                          s.userId
+                                                                          s.userId,
                                                                       )
                                                                     : '—'}
                                                             </Typography>
@@ -303,13 +301,13 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             >
                                                                 {s.approved === true
                                                                     ? `Подписано (${formatDateTime(
-                                                                          s.approvedTime
+                                                                          s.approvedTime,
                                                                       )})`
                                                                     : s.approved === false
-                                                                    ? `Отклонено (${formatDateTime(
-                                                                          s.approvedTime
-                                                                      )})`
-                                                                    : 'Ожидает'}
+                                                                      ? `Отклонено (${formatDateTime(
+                                                                            s.approvedTime,
+                                                                        )})`
+                                                                      : 'Ожидает'}
                                                             </Typography>
                                                         </Box>
                                                     ))}

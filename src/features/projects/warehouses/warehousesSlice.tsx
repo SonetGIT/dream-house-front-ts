@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
+import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 
 /* TYPES */
 export interface Warehouse {
@@ -46,7 +46,7 @@ export const fetchWarehouses = createAsyncThunk<
     { rejectValue: string }
 >('suppliers/search', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequestNew<Warehouse[]>('/warehouses/search', 'POST', params);
+        return await apiRequest<Warehouse[]>('/warehouses/search', 'POST', params);
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка загрузки движений');
     }

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Pagination } from '../users/userSlice';
-import { apiRequestNew } from '@/utils/apiRequestNew';
+import { apiRequest } from '@/utils/apiRequest';
 
 export interface Project {
     id: number;
@@ -47,7 +47,7 @@ export const fetchProjects = createAsyncThunk(
                 search: params.search ?? '',
                 ...(params.filters || {}),
             };
-            const data = await apiRequestNew<Project[]>(`/projects/search`, 'POST', body);
+            const data = await apiRequest<Project[]>(`/projects/search`, 'POST', body);
             return data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -59,7 +59,7 @@ export const getProjectById = createAsyncThunk(
     'projects/getById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await apiRequestNew<Project>(`/projects/getById/${id}`, 'GET');
+            const response = await apiRequest<Project>(`/projects/getById/${id}`, 'GET');
             return response.data;
         } catch (err: any) {
             return rejectWithValue(err.message);

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { apiRequestNew, type ApiResponse } from '@/utils/apiRequestNew';
+import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 
 /* TYPES */
@@ -49,7 +49,7 @@ export const fetchSuppliers = createAsyncThunk<
     { rejectValue: string }
 >('suppliers/search', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequestNew<Suppliers[]>('/suppliers/search', 'POST', params);
+        return await apiRequest<Suppliers[]>('/suppliers/search', 'POST', params);
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка загрузки движений');
     }
@@ -61,7 +61,7 @@ export const createSupplier = createAsyncThunk<
     { rejectValue: string }
 >('suppliers/create', async (supplier, { rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<Suppliers>('/suppliers/create', 'POST', supplier);
+        const res = await apiRequest<Suppliers>('/suppliers/create', 'POST', supplier);
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);
@@ -74,7 +74,7 @@ export const updateSupplier = createAsyncThunk<
     { rejectValue: string }
 >('suppliers/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequestNew<Suppliers>(`/suppliers/update/${id}`, 'PUT', data);
+        const res = await apiRequest<Suppliers>(`/suppliers/update/${id}`, 'PUT', data);
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);
@@ -85,7 +85,7 @@ export const deleteSupplier = createAsyncThunk(
     'users/delete',
     async (id: number, { rejectWithValue }) => {
         try {
-            await apiRequestNew<Suppliers>(`/suppliers/delete/${id}`, 'DELETE');
+            await apiRequest<Suppliers>(`/suppliers/delete/${id}`, 'DELETE');
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message);

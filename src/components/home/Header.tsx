@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
+import { RiMenu3Fill } from 'react-icons/ri';
 import UserAvatar from './UserAvatar';
 import LogoutButton from './LogoutButton';
 import USDRate from '../ui/USDRate';
@@ -30,7 +30,7 @@ export default function Header(props: HeaderProps) {
                     }}
                 >
                     <IconButton edge="start" color="inherit" onClick={props.onMenuClick}>
-                        <MenuIcon />
+                        <RiMenu3Fill />
                     </IconButton>
 
                     <Typography
@@ -42,7 +42,7 @@ export default function Header(props: HeaderProps) {
                             color: '#2c7ecb',
                         }}
                     >
-                        АИС «Dream House»
+                        АИС «DREAM HOUSE»
                     </Typography>
 
                     <Box

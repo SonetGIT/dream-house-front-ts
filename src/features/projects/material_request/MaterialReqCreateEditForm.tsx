@@ -123,11 +123,11 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                             onChange(v);
                                                             setValue(
                                                                 `items.${index}.material_id`,
-                                                                ''
+                                                                '',
                                                             );
                                                             setValue(
                                                                 `items.${index}.unit_of_measure`,
-                                                                ''
+                                                                '',
                                                             );
                                                         }}
                                                         options={
@@ -156,7 +156,7 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                             ? props.getRefName.materials.filter(
                                                                   (m) =>
                                                                       Number(m.type) ===
-                                                                      Number(selectedType)
+                                                                      Number(selectedType),
                                                               )
                                                             : [];
 
@@ -173,12 +173,12 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                                 field.onChange(value);
                                                                 const material =
                                                                     props.getRefName.materials?.find(
-                                                                        (m) => m.id === value
+                                                                        (m) => m.id === value,
                                                                     );
                                                                 setValue(
                                                                     `items.${index}.unit_of_measure`,
                                                                     material?.unit_of_measure ?? '',
-                                                                    { shouldValidate: true }
+                                                                    { shouldValidate: true },
                                                                 );
                                                             }}
                                                             options={materials}
@@ -198,7 +198,7 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                 render={({ field }) => {
                                                     const unitName =
                                                         props.getRefName.unitTypes?.find(
-                                                            (u) => u.id === field.value
+                                                            (u) => u.id === field.value,
                                                         )?.name ?? '';
 
                                                     return (

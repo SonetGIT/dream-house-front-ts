@@ -9,12 +9,13 @@ interface TablePaginationProps {
     onPrev?: () => void;
 }
 
-/****************************************************************************************************************/
+/***********************************************************************************************************************************/
 export function TablePagination({ pagination, onNext, onPrev }: TablePaginationProps) {
     if (!pagination) return null;
 
     return (
         <div className="table-footer-container">
+            <span className="page-count">Всего: {pagination.total}</span>
             <div className="pagination">
                 <StyledTooltip title="Предыдущая страница">
                     <span>
@@ -30,7 +31,8 @@ export function TablePagination({ pagination, onNext, onPrev }: TablePaginationP
                 </StyledTooltip>
 
                 <span className="page-text">
-                    стр. {pagination.page} из {pagination.pages}
+                    стр. <span className="current-page">{pagination.page}</span> /{' '}
+                    {pagination.pages}
                 </span>
 
                 <StyledTooltip title="Следующая страница">
@@ -45,8 +47,6 @@ export function TablePagination({ pagination, onNext, onPrev }: TablePaginationP
                         </IconButton>
                     </span>
                 </StyledTooltip>
-
-                <span className="page-count">Кол-во: {pagination.total}</span>
             </div>
         </div>
     );
