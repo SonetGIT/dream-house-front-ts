@@ -4,6 +4,16 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Warehouse } from './warehousesSlice';
 import type { Pagination } from '../../users/userSlice';
 import { MdAdsClick } from 'react-icons/md';
+import { TablePagination } from '@/components/ui/TablePagination';
+import {
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+} from '@mui/material';
 
 interface PropsType {
     items: Warehouse[];
@@ -23,35 +33,40 @@ export default function WarehousesList(props: PropsType) {
 
     /*******************************************************************************************************************************/
     return (
-        <div className="table-container">
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Наименование склада</th>
-                        <th>Код</th>
-                        <th>Адрес</th>
-                        <th>Кладовшик</th>
-                        <th>Телефон</th>
-                        <th>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+            <Table className="table">
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Наименование склада</TableCell>
+                        <TableCell>Код</TableCell>
+                        <TableCell>Адрес</TableCell>
+                        <TableCell>Кладовшик</TableCell>
+                        <TableCell>Телефон</TableCell>
+                        <TableCell>
                             <MdAdsClick size={20} style={{ verticalAlign: 'middle' }} />
-                        </th>
-                    </tr>
-                </thead>
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
 
-                <tbody>
+                <TableBody>
                     {props.items?.length > 0 ? (
                         props.items.map((item) => (
-                            <tr
+                            <TableRow
                                 key={item.id}
                                 onClick={() => handleRowClick(item)}
-                                style={{ cursor: 'pointer' }}
+                                sx={{
+                                    '& td': {
+                                        textAlign: 'center',
+                                    },
+                                    cursor: 'pointer',
+                                }}
                             >
-                                <td>{item.name}</td>
-                                <td>{item.code}</td>
-                                <td>{item.address}</td>
-                                <td>{props.getRefName.userName(item.manager_id)}</td>
-                                <td>{item.phone}</td>
-                                <td className="action-container">
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell>{item.code}</TableCell>
+                                <TableCell>{item.address}</TableCell>
+                                <TableCell>{props.getRefName.userName(item.manager_id)}</TableCell>
+                                <TableCell>{item.phone}</TableCell>
+                                <TableCell className="action-container">
                                     <StyledTooltip title="Открыть">
                                         <RiArrowRightUpBoxFill
                                             size={20}
@@ -62,25 +77,25 @@ export default function WarehousesList(props: PropsType) {
                                             }}
                                         />
                                     </StyledTooltip>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ))
                     ) : (
-                        <tr>
+                        <TableRow>
                             <td colSpan={6} style={{ textAlign: 'center', color: 'red' }}>
                                 Ничего не найдено
                             </td>
-                        </tr>
+                        </TableRow>
                     )}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
 
             {/*Пагинация***************************************************************************************************************/}
-            <div className="table-footer-container">
-                <div className="pagination">
-                    <span className="page-count">Кол-во: {props.pagination?.total}</span>
-                </div>
-            </div>
-        </div>
+            <TablePagination
+                pagination={props.pagination}
+                // onPrev={props.onPrevPage}
+                // onNext={props.onNextPage}
+            />
+        </TableContainer>
     );
 }

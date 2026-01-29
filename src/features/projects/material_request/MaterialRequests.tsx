@@ -23,6 +23,7 @@ export interface ProjectOutletContext {
     projectId: number;
 }
 
+/*************************************************************************************************************************/
 export default function MaterialRequests() {
     const dispatch = useAppDispatch();
     const { projectId } = useOutletContext<ProjectOutletContext>();
@@ -31,7 +32,7 @@ export default function MaterialRequests() {
     const [editingMatReq, setEditingMatReq] = useState<MaterialRequest | null>(null);
 
     const { currentProject: project, loading: projectLoading } = useAppSelector(
-        (state) => state.projects
+        (state) => state.projects,
     );
 
     const {
@@ -44,20 +45,20 @@ export default function MaterialRequests() {
     const { lookup: getProjectStatusName } = useReference('231fec20-3f64-4343-8d49-b1d53e71ad4d');
 
     const { data: materialTypes, lookup: getMaterialTypeName } = useReference(
-        '681635e7-3eff-413f-9a07-990bfe7bc68a'
+        '681635e7-3eff-413f-9a07-990bfe7bc68a',
     );
     const { data: materials, lookup: getMaterialName } = useReference(
-        '7c52acfc-843a-4242-80ba-08f7439a29a7'
+        '7c52acfc-843a-4242-80ba-08f7439a29a7',
     );
     const { data: unitTypes, lookup: getUnitOfMeasure } = useReference(
-        '2198d87a-d834-4c5d-abf8-8925aeed784e'
+        '2198d87a-d834-4c5d-abf8-8925aeed784e',
     );
 
     const { lookup: getUserName } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
     // const { lookup: getMatReqStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
     const { lookup: getMatReqStatusName } = useReference('c1aa58c8-2419-4832-ba09-8c54f27b5bf3'); //api/materialRequestStatuses/gets
     const { lookup: getMatReqItemStatusName } = useReference(
-        'beaaf9c2-b0d1-4c1c-8861-5723b936c334'
+        'beaaf9c2-b0d1-4c1c-8861-5723b936c334',
     ); //api/materialRequestItemStatuses/gets
 
     const getRefName = useMemo(
@@ -83,7 +84,7 @@ export default function MaterialRequests() {
             materialTypes,
             materials,
             unitTypes,
-        ]
+        ],
     );
 
     // Загрузка проекта
@@ -102,7 +103,7 @@ export default function MaterialRequests() {
                     page: 1,
                     size: 10,
                     project_id: project.id,
-                })
+                }),
             );
         }
     }, [project?.id, dispatch]);
@@ -121,7 +122,7 @@ export default function MaterialRequests() {
                 updateMaterialRequest({
                     id: editingMatReq.id,
                     data: formData,
-                })
+                }),
             )
                 .unwrap()
                 .then(() => {
@@ -130,7 +131,7 @@ export default function MaterialRequests() {
                             page: 1,
                             size: 10,
                             project_id: editingMatReq.project_id,
-                        })
+                        }),
                     );
                     toast.success('Заявка успешно обновлена');
                 })
@@ -146,7 +147,7 @@ export default function MaterialRequests() {
                             page: 1,
                             size: 10,
                             project_id: formData.project_id,
-                        })
+                        }),
                     );
                     toast.success('Заявка успешно создана', { duration: 3000 });
                 })
@@ -168,7 +169,7 @@ export default function MaterialRequests() {
                 page: pagination.page + 1,
                 size: pagination.size,
                 project_id: project.id,
-            })
+            }),
         );
     };
 
@@ -179,7 +180,7 @@ export default function MaterialRequests() {
                 page: pagination.page - 1,
                 size: pagination.size,
                 project_id: project.id,
-            })
+            }),
         );
     };
 

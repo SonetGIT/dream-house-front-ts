@@ -108,7 +108,11 @@ export default function PurchaseOrdersTable() {
                                     <TableCell colSpan={5} sx={{ p: 1 }}>
                                         <Collapse in={openRows[req.id]} unmountOnExit>
                                             <Box>
-                                                <Typography fontWeight={600} color="#2c7ecb">
+                                                <Typography
+                                                    fontWeight={600}
+                                                    color="#2c7ecb"
+                                                    sx={{ p: 1 }}
+                                                >
                                                     Список материалов для поставщика
                                                 </Typography>
                                                 <Table size="small">

@@ -72,7 +72,10 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                                         <CiEdit
                                             size={20}
                                             color="#2c7ecb"
-                                            onClick={() => props.onEdit(item)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onEdit(item);
+                                            }}
                                         />
                                     </StyledTooltip>
 
@@ -80,7 +83,10 @@ export default function SuppliersTable(props: SuppliersPtopsType) {
                                         <RiDeleteBin2Fill
                                             size={20}
                                             color="#c96161"
-                                            onClick={() => props.onDelete(item.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onDelete(item.id);
+                                            }}
                                         />
                                     </StyledTooltip>
                                 </td>

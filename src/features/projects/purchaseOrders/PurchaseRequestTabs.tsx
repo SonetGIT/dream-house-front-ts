@@ -9,9 +9,9 @@ export default function PurchaseRequestTabs() {
     return (
         <Paper>
             <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-                <Tab label="📝 Формирование" />
-                <Tab label="📦 Сформированные" />
-                <Tab label=" Отправленные" />
+                <Tab label="✏️ Формирование" />
+                <Tab label="✔️ Сформированные" />
+                <Tab label="🚀 Отправленные" />
             </Tabs>
 
             <Box>

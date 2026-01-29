@@ -26,6 +26,7 @@ import {
     type ReceiveItemPayload,
 } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
+import { AppButton } from '@/components/ui/AppButton';
 
 interface PropsType {
     orders: PurchaseOrder[];
@@ -427,9 +428,20 @@ export default function WarehousePurchaseOrdersTable({
             </Table>
 
             <Box display="flex" justifyContent="flex-end" p={1}>
-                <Button variant="contained" color="primary" onClick={handleReceive}>
+                <AppButton
+                    variantType="primary"
+                    sx={{
+                        bgcolor: 'transparent',
+                        color: 'var(--primary)',
+                        border: '1px solid var(--primary)',
+                        '&:hover': {
+                            bgcolor: 'rgba(44,126,203,0.1)',
+                        },
+                    }}
+                    onClick={handleReceive}
+                >
                     Подтвердить приёмку
-                </Button>
+                </AppButton>
             </Box>
         </TableContainer>
     );

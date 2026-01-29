@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Paper, Checkbox, Box, TextField, FormHelperText } from '@mui/material';
+import {
+    Paper,
+    Checkbox,
+    Box,
+    TextField,
+    FormHelperText,
+    TableContainer,
+    Table,
+    TableHead,
+    TableRow,
+    TableCell,
+    TableBody,
+} from '@mui/material';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import {
     fetchPurchasingAgentItems,
@@ -15,6 +27,7 @@ import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import type { Pagination } from '@/features/users/userSlice';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
+import { AppButton } from '@/components/ui/AppButton';
 
 interface PurchasingAgentItemsProps {
     items: MaterialRequestItems[];
@@ -75,7 +88,7 @@ export default function PurchasingAgentItemsTable({
 
     const toggleOne = (id: number) => {
         setSelectedIds((prev) =>
-            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
         );
     };
 
@@ -96,7 +109,7 @@ export default function PurchasingAgentItemsTable({
         }
 
         const selectedItems = watchedItems.filter(
-            (item) => selectedIds.includes(item.id) && !isReadonlyRow(item)
+            (item) => selectedIds.includes(item.id) && !isReadonlyRow(item),
         );
 
         if (selectedItems.length === 0) {
@@ -134,7 +147,7 @@ export default function PurchasingAgentItemsTable({
                 supplier_id: suppliersId,
                 comment: 'Закупка по заявке',
                 items: payloadItems,
-            })
+            }),
         );
 
         if (createPurchaseOrder.fulfilled.match(result)) {
@@ -149,43 +162,51 @@ export default function PurchasingAgentItemsTable({
 
     /************************************************************************************************************************/
     return (
-        <Paper className="table-container">
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Статус</th>
-                        <th>Тип</th>
-                        <th>Материал</th>
-                        <th>Ед.</th>
-                        <th>Кол-во</th>
-                        <th>Цена</th>
-                        <th>Сумма</th>
-                        <th>Валюта</th>
-                        <th>Заказать</th>
-                        <th>Остаток</th>
-                        <th />
-                    </tr>
-                </thead>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+            <Table className="table">
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Статус</TableCell>
+                        <TableCell>Тип</TableCell>
+                        <TableCell>Материал</TableCell>
+                        <TableCell>Ед.</TableCell>
+                        <TableCell>Кол-во</TableCell>
+                        <TableCell>Цена</TableCell>
+                        <TableCell>Сумма</TableCell>
+                        <TableCell>Валюта</TableCell>
+                        <TableCell>Заказать</TableCell>
+                        <TableCell>Остаток</TableCell>
+                        <TableCell>
+                            Checkbox
+                            {/* <Checkbox
+                                // size="small"
+                                // checked={selectedIds.includes(item.id)}
+                                // disabled={readonly}
+                                // onChange={() => toggleOne(item.id)}
+                            /> */}
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
 
-                <tbody>
+                <TableBody>
                     {watchedItems?.map((item, idx) => {
                         const readonly = isReadonlyRow(item);
 
                         return (
-                            <tr
+                            <TableRow
                                 key={item.id}
                                 style={{
                                     opacity: readonly ? 0.5 : 1,
                                 }}
                             >
-                                <td>{getRefName.statusName(item.status)}</td>
-                                <td>{getRefName.materialType(item.material_type)}</td>
-                                <td>{getRefName.materialName(item.material_id)}</td>
-                                <td>{getRefName.unitName(item.unit_of_measure)}</td>
-                                <td>{item.quantity}</td>
+                                <TableCell>{getRefName.statusName(item.status)}</TableCell>
+                                <TableCell>{getRefName.materialType(item.material_type)}</TableCell>
+                                <TableCell>{getRefName.materialName(item.material_id)}</TableCell>
+                                <TableCell>{getRefName.unitName(item.unit_of_measure)}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
 
                                 {/* Цена */}
-                                <td>
+                                <TableCell>
                                     <Controller
                                         name={`items.${idx}.price`}
                                         control={control}
@@ -207,12 +228,12 @@ export default function PurchasingAgentItemsTable({
                                             />
                                         )}
                                     />
-                                </td>
+                                </TableCell>
 
-                                <td>{item.summ?.toFixed(2) || '0.00'}</td>
+                                <TableCell>{item.summ?.toFixed(2) || '0.00'}</TableCell>
 
                                 {/* Валюта */}
-                                <td>
+                                <TableCell>
                                     <Controller
                                         name={`items.${idx}.currency`}
                                         control={control}
@@ -241,10 +262,10 @@ export default function PurchasingAgentItemsTable({
                                             </>
                                         )}
                                     />
-                                </td>
+                                </TableCell>
 
                                 {/* Заказано */}
-                                <td>
+                                <TableCell>
                                     <Controller
                                         name={`items.${idx}.total_ordered`}
                                         control={control}
@@ -268,24 +289,24 @@ export default function PurchasingAgentItemsTable({
                                             />
                                         )}
                                     />
-                                </td>
+                                </TableCell>
 
-                                <td>{item.remaining_quantity ?? '—'}</td>
+                                <TableCell>{item.remaining_quantity ?? '—'}</TableCell>
 
-                                <td>
+                                <TableCell>
                                     <Checkbox
                                         checked={selectedIds.includes(item.id)}
                                         disabled={readonly}
                                         onChange={() => toggleOne(item.id)}
                                     />
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         );
                     })}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
 
-            <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} p={1}>
+            <Box display="flex" alignItems="center" justifyContent="end" gap={2} p={1}>
                 <ReferenceSelect
                     label=""
                     placeholder="Выберите поставщика"
@@ -296,12 +317,23 @@ export default function PurchasingAgentItemsTable({
                     helperText={supplierError || ''}
                 />
 
-                <button className="btn btn-primary" onClick={handleCreate}>
+                <AppButton
+                    variantType="primary"
+                    sx={{
+                        bgcolor: 'transparent',
+                        color: 'var(--primary)',
+                        border: '1px solid var(--primary)',
+                        '&:hover': {
+                            bgcolor: 'rgba(44,126,203,0.1)',
+                        },
+                    }}
+                    onClick={handleCreate}
+                >
                     Сформировать
-                </button>
+                </AppButton>
             </Box>
 
             <TablePagination pagination={pagination} onPrev={onPrevPage} onNext={onNextPage} />
-        </Paper>
+        </TableContainer>
     );
 }

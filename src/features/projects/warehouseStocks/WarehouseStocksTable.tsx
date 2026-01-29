@@ -1,6 +1,15 @@
 import type { WarehouseStocks } from './warehouseStocksSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 import type { Pagination } from '@/features/users/userSlice';
+import {
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+} from '@mui/material';
 
 interface PropsType {
     data: WarehouseStocks[];
@@ -15,40 +24,53 @@ interface PropsType {
 /*******************************************************************************************************************************/
 export default function WarehouseStocksTable(props: PropsType) {
     return (
-        <div className="table-container">
-            <table className="table">
-                <thead>
-                    <tr>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+            <Table className="table">
+                <TableHead>
+                    <TableRow>
                         {/* <th>Наименование склада</th> */}
-                        <th>Тип материала</th>
-                        <th>Материал</th>
-                        <th>Едю изм.</th>
-                        <th>Количество</th>
-                    </tr>
-                </thead>
+                        <TableCell>Тип материала</TableCell>
+                        <TableCell>Материал</TableCell>
+                        <TableCell>Едю изм.</TableCell>
+                        <TableCell>Количество</TableCell>
+                    </TableRow>
+                </TableHead>
 
-                <tbody>
+                <TableBody>
                     {props.data?.length > 0 ? (
                         props.data.map((item) => (
-                            <tr key={item.id}>
-                                <td>{props.getRefName.materialTypeName(item.material_type)}</td>
-                                <td>{props.getRefName.materialName(item.material_id)}</td>
-                                <td>{props.getRefName.unitName(item.unit_of_measure)}</td>
-                                <td>{item.quantity}</td>
-                            </tr>
+                            <TableRow
+                                key={item.id}
+                                sx={{
+                                    '& td': {
+                                        textAlign: 'center',
+                                    },
+                                }}
+                            >
+                                <TableCell>
+                                    {props.getRefName.materialTypeName(item.material_type)}
+                                </TableCell>
+                                <TableCell>
+                                    {props.getRefName.materialName(item.material_id)}
+                                </TableCell>
+                                <TableCell>
+                                    {props.getRefName.unitName(item.unit_of_measure)}
+                                </TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                            </TableRow>
                         ))
                     ) : (
-                        <tr>
-                            <td colSpan={6} style={{ textAlign: 'center', color: 'red' }}>
+                        <TableRow>
+                            <TableCell colSpan={6} style={{ textAlign: 'center', color: 'red' }}>
                                 Ничего не найдено
-                            </td>
-                        </tr>
+                            </TableCell>
+                        </TableRow>
                     )}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
 
             {/*Пагинация***************************************************************************************************************/}
             <TablePagination pagination={props.pagination} />
-        </div>
+        </TableContainer>
     );
 }

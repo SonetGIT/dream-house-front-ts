@@ -1,7 +1,6 @@
-import { LinearProgress, IconButton } from '@mui/material';
+import { LinearProgress, TableContainer } from '@mui/material';
 import type { Project } from './projectsSlice';
-import { RiFileExcel2Fill, RiArrowRightUpBoxFill } from 'react-icons/ri';
-import { MdSkipNext, MdSkipPrevious } from 'react-icons/md';
+import { RiArrowRightUpBoxFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdAdsClick } from 'react-icons/md';
@@ -29,7 +28,7 @@ export default function ProjectsTable(props: PropsType) {
 
     /*******************************************************************************************************************************/
     return (
-        <div className="table-container">
+        <table className="table-container">
             {props.loading && (
                 <LinearProgress
                     style={{
@@ -96,6 +95,6 @@ export default function ProjectsTable(props: PropsType) {
                 onPrev={props.onPrevPage}
                 onNext={props.onNextPage}
             />
-        </div>
+        </table>
     );
 }

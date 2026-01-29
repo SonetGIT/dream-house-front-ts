@@ -32,6 +32,7 @@ interface PropsType {
     };
 }
 
+/*************************************************************************************************************************/
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
@@ -188,7 +189,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                         <strong>{formatDateTime(req.created_at)}</strong>
                                     </TableCell>
                                     <TableCell>
-                                        <Box display="flex" gap={0.5} mt={1}>
+                                        <Box display="flex" gap={0.5} alignItems={'center'}>
                                             Этап согласования:
                                             {signatures.map((s) => (
                                                 <ApprovalDot key={s.label} value={s.approved} />
@@ -199,10 +200,14 @@ export default function MaterialRequestsTable(props: PropsType) {
 
                                 {/* DETAILS */}
                                 <TableRow>
-                                    <TableCell colSpan={5} sx={{ p: 1 }}>
+                                    <TableCell colSpan={8} sx={{ p: 1 }}>
                                         <Collapse in={openRows[req.id]} unmountOnExit>
                                             <Box>
-                                                <Typography fontWeight={600} color="#2c7ecb">
+                                                <Typography
+                                                    fontWeight={600}
+                                                    color="#2c7ecb"
+                                                    sx={{ p: 1 }}
+                                                >
                                                     Список материалов
                                                 </Typography>
                                                 <Table size="small">
@@ -266,12 +271,13 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                     mb={2}
                                                     flexWrap="wrap"
                                                     justifyContent="space-between"
+                                                    sx={{ backgroundColor: '#fff' }}
                                                 >
                                                     {signatures.map((s) => (
                                                         <Box
                                                             key={s.label}
                                                             sx={{
-                                                                border: '1px solid #d9eff6',
+                                                                // border: '1px solid #d9eff6',
                                                                 textAlign: 'center',
                                                                 minWidth: 200,
                                                             }}

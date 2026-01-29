@@ -34,7 +34,7 @@ export default function WarehouseTabs() {
                 size: 10,
                 project_id: projectId,
                 // warehouse_id: warehouseId,
-            })
+            }),
         );
     }, [dispatch]);
     //Загрузка СПИСОК ЗАЯВОК
@@ -44,7 +44,7 @@ export default function WarehouseTabs() {
 
     //Справочники для СПИСОК ЗАЯВОК + ЗАПАС МАТЕРИАЛОВ
     const { lookup: getMaterialMovementsName } = useReference(
-        '5f72a11c-ff64-452a-b650-d593811776b7'
+        '5f72a11c-ff64-452a-b650-d593811776b7',
     );
     const { lookup: getUserName } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
     const { lookup: getMaterialTypeName } = useReference('681635e7-3eff-413f-9a07-990bfe7bc68a');
@@ -52,11 +52,11 @@ export default function WarehouseTabs() {
     const { lookup: getUnitOfMeasure } = useReference('2198d87a-d834-4c5d-abf8-8925aeed784e');
     const { lookup: getWareHouseName } = useReference('7ff6ec0d-46fe-a9cd-bc8a-d32f20fbfbcd');
     const { lookup: getPurchaseOrderStatusesName } = useReference(
-        '84242cf6-76a5-403a-bd87-63f58c539d2b'
+        '84242cf6-76a5-403a-bd87-63f58c539d2b',
     ); //purchaseOrderStatuses/gets
 
     const { lookup: getPurchaseOrderItemStatusesName } = useReference(
-        '2beaaf9c2-b0d1-4c1c-8861-6c3345723b93'
+        '2beaaf9c2-b0d1-4c1c-8861-6c3345723b93',
     ); //purchaseOrderItemStatuses/gets
     const { lookup: getSuppliersName } = useReference('7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf');
 
@@ -82,19 +82,19 @@ export default function WarehouseTabs() {
             getSuppliersName,
             getPurchaseOrderStatusesName,
             getPurchaseOrderItemStatusesName,
-        ]
+        ],
     );
 
     /******************************************************************************************************************************/
     return (
-        <Paper>
+        <Paper style={{ border: '1px solid red' }}>
             <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-                <Tab label="Список заявок" />
-                <Tab label="Запас материалов" />
-                <Tab label="Транзакции" />
+                <Tab label="📋 Список заявок" />
+                <Tab label="🏭 Запас материалов" />
+                <Tab label="📊 Транзакции" />
             </Tabs>
 
-            <Box>
+            <div>
                 {tab === 0 && (
                     <WarehousePurchaseOrdersTable
                         warehouseId={warehouseId}
@@ -116,7 +116,7 @@ export default function WarehouseTabs() {
                         getRefName={getRefName}
                     />
                 )}
-            </Box>
+            </div>
         </Paper>
     );
 }

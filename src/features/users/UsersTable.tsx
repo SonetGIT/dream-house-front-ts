@@ -69,7 +69,10 @@ export default function UsersTable(props: PropsType) {
                                         <CiEdit
                                             size={20}
                                             color="#2c7ecb"
-                                            onClick={() => props.onEdit(item.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onEdit(item.id);
+                                            }}
                                         />
                                     </StyledTooltip>
 
@@ -87,7 +90,10 @@ export default function UsersTable(props: PropsType) {
                                         <BiReset
                                             size={20}
                                             color="#66a7da"
-                                            onClick={() => props.onResetPass(item.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onResetPass(item.id);
+                                            }}
                                         />
                                     </StyledTooltip>
                                 </td>

@@ -19,7 +19,7 @@ export default function WarehousesPage() {
         () => ({
             userName: getUserName,
         }),
-        [getUserName]
+        [getUserName],
     );
     //Первичная загрузка =====
     useEffect(() => {

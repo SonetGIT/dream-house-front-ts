@@ -1,3 +1,4 @@
+import { MdAssignment, MdShoppingCart, MdWarehouse } from 'react-icons/md';
 import { Cards } from './Cards';
 import { CustomerPreview } from './CustomerPreview';
 import { StatusOverview } from './StatusOverview';
@@ -8,26 +9,31 @@ export default function Dashboard() {
             title: 'Заявка на материалы',
             label: 'Этот месяц',
             value: '34 000 $',
-            color: '#22c55e',
+            color: '#22c55e', // зеленая иконка
             to: 'materialRequests',
+            icon: <MdAssignment />,
         },
         {
             title: 'Заявка на закупку',
             label: 'Этот месяц',
             value: '34 000 $',
+            color: '#2c7ecb', // синий
             to: 'purchaseRequestCard',
+            icon: <MdShoppingCart />,
         },
         {
             title: 'Склады',
             label: 'Этот месяц',
             value: '34 000 $',
-            color: '#22c55e',
+            color: '#f59e0b', // оранжевый
             to: 'warehouses',
+            icon: <MdWarehouse />,
         },
         {
             title: 'Заявка на закупку',
             label: 'Этот месяц',
             value: '34 000 $',
+            color: '#e11d48', // красный
             to: 'materialRequestItems1',
         },
     ];
@@ -44,7 +50,6 @@ export default function Dashboard() {
                 <div className="status-grid">
                     <StatusOverview title="Lead Preview" />
                     <StatusOverview title="Quote Preview" />
-                    <StatusOverview title="Order Preview" />
                 </div>
 
                 <CustomerPreview />

@@ -100,8 +100,7 @@ select,
 textarea,
 button {
     font-family: 'Roboto', Arial, sans-serif !important;
-    /* font-size: 13px; */
-    font-size: 0.945rem; /* 14px */
+    font-size: 0.983rem;
 }
 #root {
     width: 100%;
@@ -127,11 +126,12 @@ button {
 
 main {
     flex: 1;
-    padding: 70px 0 0 170px;
+    /* padding: 70px 0 0 170px; */
+    padding: 50px 0 0 150px;
     overflow-y: auto;
 
-    display: inline;
-    justify-content: center;
+    /* display: block; */
+    justify-content: left;
 }
 /* TOAST */
 .toast {
@@ -146,12 +146,33 @@ main {
     /* font-family: Arial, sans-serif; */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+/* УИВЕРСАЛЬНЫЙ СТИЛЬ  */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 14px; /* ширина зависит от текста */
+    min-height: 36px;
+
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    white-space: nowrap; /* не переносить текст */
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
 
 /*СТИЛИ LOGIN_FORM*/
 .container {
-    margin: 100px auto;
+    margin: 200px auto;
     position: relative;
-    width: 900px;
+    min-height: 100vh;
+    /* width: 900px; */
 }
 #content {
     background: #f9f9f9;
@@ -176,7 +197,7 @@ main {
     position: relative;
     text-align: center;
     text-shadow: 0 1px 0 #fff;
-    width: 400px;
+    width: 450px;
 }
 #content h1 {
     color: #7e7e7e;
