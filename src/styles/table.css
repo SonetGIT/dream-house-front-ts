@@ -43,6 +43,7 @@
     width: 90%;
     background: var(--bg-surfacePrm);
     border-radius: var(--border-radius);
+    margin-top: 7px;
     padding: 8px; /*отступ по краям таблицы*/
     box-shadow: 0 3px 8px #0000000d;
     overflow-x: auto;

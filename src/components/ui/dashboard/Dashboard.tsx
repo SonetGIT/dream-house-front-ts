@@ -2,14 +2,23 @@ import { MdAssignment, MdShoppingCart, MdWarehouse } from 'react-icons/md';
 import { Cards } from './Cards';
 import { CustomerPreview } from './CustomerPreview';
 import { StatusOverview } from './StatusOverview';
+import { IoDocumentsSharp } from 'react-icons/io5';
 
 export default function Dashboard() {
     const dashboardCards = [
         {
+            title: 'Документы',
+            label: 'Инфо',
+            value: '',
+            color: '#117394',
+            to: 'documentStages',
+            icon: <IoDocumentsSharp />,
+        },
+        {
             title: 'Заявка на материалы',
             label: 'Этот месяц',
             value: '34 000 $',
-            color: '#22c55e', // зеленая иконка
+            color: '#22c55e',
             to: 'materialRequests',
             icon: <MdAssignment />,
         },
@@ -17,7 +26,7 @@ export default function Dashboard() {
             title: 'Заявка на закупку',
             label: 'Этот месяц',
             value: '34 000 $',
-            color: '#2c7ecb', // синий
+            color: '#2c7ecb',
             to: 'purchaseRequestCard',
             icon: <MdShoppingCart />,
         },
@@ -25,7 +34,7 @@ export default function Dashboard() {
             title: 'Склады',
             label: 'Этот месяц',
             value: '34 000 $',
-            color: '#f59e0b', // оранжевый
+            color: '#f59e0b',
             to: 'warehouses',
             icon: <MdWarehouse />,
         },
@@ -33,7 +42,7 @@ export default function Dashboard() {
             title: 'Заявка на закупку',
             label: 'Этот месяц',
             value: '34 000 $',
-            color: '#e11d48', // красный
+            color: '#e11d48',
             to: 'materialRequestItems1',
         },
     ];

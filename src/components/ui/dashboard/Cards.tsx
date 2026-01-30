@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 type CardsProps = {
     title: string;
-    label: string;
-    value: string;
-    color?: string; // цвет текста value и иконки
+    label?: string;
+    value?: string;
+    color?: string;
     to?: string;
     icon?: ReactNode;
 };

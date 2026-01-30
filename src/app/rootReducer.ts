@@ -10,7 +10,10 @@ import warehousesReducer from '@/features/projects/warehouses/warehousesSlice';
 import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehouseStocksSlice';
 import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
 import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
-import suppliersReducer from '@/features/suppliers/SuppliersSlice';
+import suppliersReducer from '@/features/suppliers/suppliersSlice';
+import documentStagesReducer from '@/features/projects/legal_department/documentStagesSlice';
+import documentsReducer from '@/features/projects/legal_department/documentsSlice';
+import documentFilesReducer from '@/features/projects/legal_department/documentFilesSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -25,6 +28,9 @@ export const rootReducer = combineReducers({
     purchaseOrderItems: purchaseOrderItemsReducer,
     materialMovements: materialMovementsReducer,
     suppliers: suppliersReducer,
+    documentStages: documentStagesReducer,
+    documents: documentsReducer,
+    documentFiles: documentFilesReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Paper, Tabs, Tab } from '@mui/material';
+import { Paper, Tabs, Tab } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchWarehouseStocks } from '../warehouseStocks/warehouseStocksSlice';
 import WarehouseStocksTable from '../warehouseStocks/WarehouseStocksTable';

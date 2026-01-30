@@ -2,9 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { setFilters } from '../projectsSlice';
 import { useReference } from '../../reference/useReference';
-import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { MdOutlineRestartAlt } from 'react-icons/md';
 import PurchasingAgentItemsTable from './PurchasingAgentItemsTable';
 import { Box } from '@mui/material';
 import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';
@@ -26,22 +23,22 @@ export default function MaterialRequestItems() {
 
     // Справочники
     const { data: statusType, lookup: getMatReqItemStatusName } = useReference(
-        'beaaf9c2-b0d1-4c1c-8861-5723b936c334'
+        'beaaf9c2-b0d1-4c1c-8861-5723b936c334',
     ); //api/materialRequestItemStatuses/gets
     const { data: materialTypes, lookup: getMaterialTypeName } = useReference(
-        '681635e7-3eff-413f-9a07-990bfe7bc68a'
+        '681635e7-3eff-413f-9a07-990bfe7bc68a',
     );
     const { data: materials, lookup: getMaterialName } = useReference(
-        '7c52acfc-843a-4242-80ba-08f7439a29a7'
+        '7c52acfc-843a-4242-80ba-08f7439a29a7',
     );
     const { data: unitTypes, lookup: getUnitOfMeasure } = useReference(
-        '2198d87a-d834-4c5d-abf8-8925aeed784e'
+        '2198d87a-d834-4c5d-abf8-8925aeed784e',
     );
     const { data: currency, lookup: getCurrencies } = useReference(
-        '52fc32f7-44dd-42f2-92d2-bfcbb56f466d'
+        '52fc32f7-44dd-42f2-92d2-bfcbb56f466d',
     );
     const { data: suppliers, lookup: getSuppliersName } = useReference(
-        '7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf'
+        '7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf',
     );
 
     const fullyOrderedStatusId = useMemo(() => {
@@ -76,7 +73,7 @@ export default function MaterialRequestItems() {
             statusType,
             currency,
             suppliers,
-        ]
+        ],
     );
 
     // Локальные состояния
@@ -107,7 +104,7 @@ export default function MaterialRequestItems() {
                 project_id: projectId,
                 // material_type: materialTypeId,
                 // material_id: materialId,
-            })
+            }),
         );
     }, [materialTypeId, materialId]);
 
@@ -139,7 +136,7 @@ export default function MaterialRequestItems() {
                 project_id: projectId,
                 /*search,*/
                 // filters: getCurrentFilters(),
-            })
+            }),
         );
     };
 
@@ -152,7 +149,7 @@ export default function MaterialRequestItems() {
                 project_id: projectId,
                 /*search,*/
                 // filters: getCurrentFilters(),
-            })
+            }),
         );
     };
 

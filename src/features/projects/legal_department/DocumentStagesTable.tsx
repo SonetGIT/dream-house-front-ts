@@ -1,33 +1,31 @@
-import { RiArrowRightUpBoxFill } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import type { Warehouse } from './warehousesSlice';
-import type { Pagination } from '../../users/userSlice';
-import { MdAdsClick } from 'react-icons/md';
-import { TablePagination } from '@/components/ui/TablePagination';
 import {
-    Paper,
     Table,
     TableBody,
     TableCell,
-    TableContainer,
     TableHead,
     TableRow,
+    Paper,
+    TableContainer,
 } from '@mui/material';
+import { type DocumentStages } from './documentStagesSlice';
+import { formatDateTime } from '@/utils/formatDateTime';
+import { useNavigate } from 'react-router-dom';
+import type { Pagination } from '@/features/users/userSlice';
+import { MdAdsClick } from 'react-icons/md';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { RiArrowRightUpBoxFill } from 'react-icons/ri';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface PropsType {
-    items: Warehouse[];
+    items: DocumentStages[];
     pagination: Pagination | null;
-    getRefName: {
-        [key: string]: (id: number | string) => string;
-    };
 }
 
-/*******************************************************************************************************************************/
-export default function WarehousesList(props: PropsType) {
+export function DocumentStagesTable(props: PropsType) {
     const navigate = useNavigate();
-    const handleRowClick = (warehouse: Warehouse) => {
-        navigate(`${warehouse.id}`, { state: { warehouse } });
+    const handleRowClick = (docStage: DocumentStages) => {
+        navigate(`${docStage.id}`, { state: { docStage } });
+        console.log('docStages', docStage);
     };
 
     /*******************************************************************************************************************************/
@@ -36,11 +34,9 @@ export default function WarehousesList(props: PropsType) {
             <Table className="table">
                 <TableHead>
                     <TableRow>
-                        <TableCell>Наименование склада</TableCell>
-                        <TableCell>Код</TableCell>
-                        <TableCell>Адрес</TableCell>
-                        <TableCell>Кладовшик</TableCell>
-                        <TableCell>Телефон</TableCell>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Наименование</TableCell>
+                        <TableCell>Создан</TableCell>
                         <TableCell>
                             <MdAdsClick size={20} style={{ verticalAlign: 'middle' }} />
                         </TableCell>
@@ -60,11 +56,9 @@ export default function WarehousesList(props: PropsType) {
                                     cursor: 'pointer',
                                 }}
                             >
+                                <TableCell>{item.id}</TableCell>
                                 <TableCell>{item.name}</TableCell>
-                                <TableCell>{item.code}</TableCell>
-                                <TableCell>{item.address}</TableCell>
-                                <TableCell>{props.getRefName.userName(item.manager_id)}</TableCell>
-                                <TableCell>{item.phone}</TableCell>
+                                <TableCell>{formatDateTime(item.created_at)}</TableCell>
                                 <TableCell className="action-container">
                                     <StyledTooltip title="Открыть">
                                         <RiArrowRightUpBoxFill

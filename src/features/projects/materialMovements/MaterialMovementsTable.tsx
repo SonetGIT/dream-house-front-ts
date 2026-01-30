@@ -26,7 +26,7 @@ interface PropsType {
 /*******************************************************************************************************************************/
 export default function MaterialMovementsTable(props: PropsType) {
     return (
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} className="table-container">
             <Table className="table">
                 <TableHead>
                     <TableRow>

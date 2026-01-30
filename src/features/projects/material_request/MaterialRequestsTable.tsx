@@ -117,7 +117,7 @@ export default function MaterialRequestsTable(props: PropsType) {
 
     /********************************************************************************************************************************/
     return (
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} className="table-container">
             <Table className="table">
                 <TableBody>
                     {props.data?.map((req) => {

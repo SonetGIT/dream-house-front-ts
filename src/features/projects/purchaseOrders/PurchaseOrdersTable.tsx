@@ -59,7 +59,7 @@ export default function PurchaseOrdersTable() {
     };
 
     return (
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} className="table-container">
             <Table className="table">
                 <TableBody>
                     {orders?.map((req) => {

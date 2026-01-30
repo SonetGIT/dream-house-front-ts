@@ -13,7 +13,6 @@ import {
     Collapse,
     Checkbox,
     TextField,
-    Button,
 } from '@mui/material';
 import { type PurchaseOrder } from '../purchaseOrders/purchaseOrdersSlice';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -200,7 +199,7 @@ export default function WarehousePurchaseOrdersTable({
 
     /********************************************************************************************************************/
     return (
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} className="table-container">
             <Table className="table">
                 <TableBody>
                     {orders?.map((req) => (

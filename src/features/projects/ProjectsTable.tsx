@@ -1,4 +1,4 @@
-import { LinearProgress, TableContainer } from '@mui/material';
+import { LinearProgress } from '@mui/material';
 import type { Project } from './projectsSlice';
 import { RiArrowRightUpBoxFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';

@@ -1,4 +1,3 @@
-import type { Suppliers } from './SuppliersSlice';
 import type { Pagination } from '../users/userSlice';
 import { LinearProgress } from '@mui/material';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
@@ -7,6 +6,7 @@ import { RiDeleteBin2Fill } from 'react-icons/ri';
 import type { Supplier } from './SupplierCreateEditForm';
 import { MdAdsClick } from 'react-icons/md';
 import { TablePagination } from '@/components/ui/TablePagination';
+import type { Suppliers } from './suppliersSlice';
 
 interface SuppliersPtopsType {
     data: Suppliers[];
