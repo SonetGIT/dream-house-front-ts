@@ -53,6 +53,19 @@ export const fetchDocuments = createAsyncThunk<
     }
 });
 
+export const updateDocuments = createAsyncThunk<
+    Documents,
+    { id: number; data: Partial<Documents> },
+    { rejectValue: string }
+>('suppliers/update', async ({ id, data }, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<Documents>(`/documents/update/${id}`, 'PUT', data);
+        return res.data;
+    } catch (err: any) {
+        return rejectWithValue(err.message);
+    }
+});
+
 /* SLICE */
 const documentsSlice = createSlice({
     name: 'documents',
@@ -78,6 +91,10 @@ const documentsSlice = createSlice({
             .addCase(fetchDocuments.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+            .addCase(updateDocuments.fulfilled, (state, action) => {
+                const index = state.data.findIndex((s) => s.id === action.payload.id);
+                if (index !== -1) state.data[index] = action.payload;
             });
     },
 });

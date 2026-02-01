@@ -19,7 +19,7 @@ interface PropsType {
     items: Warehouse[];
     pagination: Pagination | null;
     getRefName: {
-        [key: string]: (id: number | string) => string;
+        userName: (id: number) => string;
     };
 }
 

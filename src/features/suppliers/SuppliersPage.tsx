@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import SuppliersTable from './SuppliersTable';
-import { createSupplier, deleteSupplier, fetchSuppliers, updateSupplier } from './SuppliersSlice';
+import { createSupplier, deleteSupplier, fetchSuppliers, updateSupplier } from './suppliersSlice';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdGroupAdd } from 'react-icons/md';
@@ -96,7 +96,7 @@ export default function SuppliersPage() {
                         fetchSuppliers({
                             page: 1,
                             size: 10,
-                        })
+                        }),
                     );
                     toast.success('Поставщик успешно удалён');
                 })
@@ -118,7 +118,7 @@ export default function SuppliersPage() {
                 page: suppliersState.pagination.page + 1,
                 size: suppliersState.pagination.size,
                 search: searchText,
-            })
+            }),
         );
     };
 
@@ -129,7 +129,7 @@ export default function SuppliersPage() {
                 page: suppliersState.pagination.page - 1,
                 size: suppliersState.pagination.size,
                 search: searchText,
-            })
+            }),
         );
     };
 

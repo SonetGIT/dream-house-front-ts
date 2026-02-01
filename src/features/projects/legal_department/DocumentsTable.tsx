@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Box,
     CircularProgress,
@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchDocuments } from './documentsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { DocumentEditForm } from './DocumentEditForm';
+import { useReference } from '@/features/reference/useReference';
 
 export function DocumentsTable() {
     const dispatch = useAppDispatch();
@@ -27,6 +28,15 @@ export function DocumentsTable() {
     // Для редактирования
     const [editingDocId, setEditingDocId] = useState<number | null>(null);
     const [editingValues, setEditingValues] = useState<any>(null);
+
+    // Справочники
+    const { lookup: getdocStagesName } = useReference('8ba2b356-f147-4926-827c-113aafb7b2ff');
+    const getRefName = useMemo(
+        () => ({
+            docStagesName: getdocStagesName,
+        }),
+        [getdocStagesName],
+    );
 
     useEffect(() => {
         dispatch(
@@ -115,7 +125,7 @@ export function DocumentsTable() {
                             >
                                 <TableCell>{doc.id}</TableCell>
                                 <TableCell>{doc.name}</TableCell>
-                                <TableCell>{doc.status}</TableCell>
+                                <TableCell>{getRefName.docStagesName(doc.status)}</TableCell>
                                 <TableCell>{doc.price}</TableCell>
                                 <TableCell>{doc.description}</TableCell>
                                 <TableCell>{formatDateTime(doc.created_at)}</TableCell>

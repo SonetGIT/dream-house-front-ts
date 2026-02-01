@@ -1,11 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
+import { downloadFile } from '@/utils/downloadFile';
 
 export interface DocumentFile {
     id: number;
     document_id: number;
     name: string;
     file_path: string;
+    uploaded_user_id: number;
     mime_type: string;
     file_size: number;
     created_at: string;
@@ -25,11 +27,9 @@ const initialState: DocumentFilesState = {
     error: null,
 };
 
-/* ============================
-   THUNKS
-============================ */
+/* THUNKS */
 
-// Получить список файлов документа
+// FETCH
 export const fetchDocumentFiles = createAsyncThunk<
     ApiResponse<DocumentFile[]>,
     number,
@@ -42,7 +42,7 @@ export const fetchDocumentFiles = createAsyncThunk<
     }
 });
 
-// Загрузить файл
+// UPLOAD
 export const uploadDocumentFile = createAsyncThunk<
     ApiResponse<DocumentFile>,
     { documentId: number; file: File },
@@ -51,7 +51,7 @@ export const uploadDocumentFile = createAsyncThunk<
     try {
         const formData = new FormData();
         formData.append('file', file);
-
+        console.log('file', formData);
         return await apiRequest<DocumentFile>(
             `/documentFiles/upload/${documentId}`,
             'POST',
@@ -62,46 +62,24 @@ export const uploadDocumentFile = createAsyncThunk<
     }
 });
 
-// Скачать файл
+// DOWNLOAD
 export const downloadDocumentFile = createAsyncThunk<
     void,
-    { id: number; filename: string },
+    { file_id: number; filename: string },
     { rejectValue: string }
->('documentFiles/download', async ({ id, filename }, { rejectWithValue }) => {
+>('documentFiles/download', async ({ file_id, filename }, { rejectWithValue }) => {
     try {
-        const res = await fetch(`/api/documentFiles/download/${id}`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-        });
-
-        if (!res.ok) {
-            const text = await res.text();
-            throw new Error(text || 'Ошибка скачивания');
-        }
-
-        const blob = await res.blob();
-
-        // 🔥 КРИТИЧНО: проверка, что это не JSON / HTML
-        if (blob.type.includes('application/json') || blob.type.includes('text/html')) {
-            throw new Error('Сервер вернул не файл');
-        }
-
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename; // ⬅️ обязательно
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
+        await downloadFile(
+            `/documentFiles/download/${file_id}`,
+            filename,
+            localStorage.getItem('token') || undefined,
+        );
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка скачивания файла');
     }
 });
 
-// Удалить файл
+// DELETE
 export const deleteDocumentFile = createAsyncThunk<
     ApiResponse<null>,
     number,
@@ -114,22 +92,16 @@ export const deleteDocumentFile = createAsyncThunk<
     }
 });
 
-/* ============================
-   SLICE
-============================ */
+/* SLICE */
 const documentFilesSlice = createSlice({
     name: 'documentFiles',
     initialState,
     reducers: {
-        clearDocumentFiles(state) {
-            state.data = [];
-            state.loading = false;
-            state.error = null;
-        },
+        clearDocumentFiles: () => initialState,
     },
     extraReducers: (builder) => {
         builder
-            /* FETCH */
+            // FETCH
             .addCase(fetchDocumentFiles.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -143,7 +115,7 @@ const documentFilesSlice = createSlice({
                 state.error = action.payload ?? 'Ошибка загрузки файлов';
             })
 
-            /* UPLOAD */
+            // UPLOAD
             .addCase(uploadDocumentFile.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -157,14 +129,27 @@ const documentFilesSlice = createSlice({
                 state.error = action.payload ?? 'Ошибка загрузки файла';
             })
 
-            /* DELETE */
+            // DOWNLOAD
+            .addCase(downloadDocumentFile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(downloadDocumentFile.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(downloadDocumentFile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка скачивания файла';
+            })
+
+            // DELETE
             .addCase(deleteDocumentFile.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(deleteDocumentFile.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data = state.data.filter((file) => file.id !== action.meta.arg);
+                state.data = state.data.filter((f) => f.id !== action.meta.arg);
             })
             .addCase(deleteDocumentFile.rejected, (state, action) => {
                 state.loading = false;
@@ -173,6 +158,5 @@ const documentFilesSlice = createSlice({
     },
 });
 
-/* EXPORTS */
 export const { clearDocumentFiles } = documentFilesSlice.actions;
 export default documentFilesSlice.reducer;

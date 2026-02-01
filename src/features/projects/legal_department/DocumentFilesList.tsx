@@ -3,28 +3,24 @@ import {
     Typography,
     IconButton,
     CircularProgress,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Tooltip,
+    Table,
+    TableBody,
+    TableCell,
+    TableRow,
+    Paper,
 } from '@mui/material';
-import { InsertDriveFile, Image, PictureAsPdf, Download, Delete } from '@mui/icons-material';
+import { Download, Delete } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchDocumentFiles, downloadDocumentFile, deleteDocumentFile } from './documentFilesSlice';
 import { useEffect } from 'react';
 import { formatBytes } from '@/utils/formatBytes';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { getFileIcon } from '@/utils/getFileIcon';
 
 type Props = {
     documentId: number;
 };
-
-const getFileIcon = (mime: string) => {
-    if (mime.startsWith('image/')) return <Image color="primary" />;
-    if (mime === 'application/pdf') return <PictureAsPdf color="error" />;
-    return <InsertDriveFile />;
-};
-
+/**********************************************************************************************************************/
 export function DocumentFilesList({ documentId }: Props) {
     const dispatch = useAppDispatch();
     const { data, loading, error } = useAppSelector((s) => s.documentFiles);
@@ -47,49 +43,82 @@ export function DocumentFilesList({ documentId }: Props) {
 
     if (!data.length) {
         return (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
                 Файлы не загружены
             </Typography>
         );
     }
 
+    /**********************************************************************************************************************/
     return (
-        <List dense>
-            {data.map((file) => (
-                <ListItem
-                    key={file.id}
-                    secondaryAction={
-                        <Box display="flex" gap={1}>
-                            <Tooltip title="Скачать">
-                                <IconButton
-                                    onClick={() =>
-                                        dispatch(
-                                            downloadDocumentFile({
-                                                id: file.id,
-                                                filename: file.name,
-                                            }),
-                                        )
-                                    }
-                                >
-                                    <Download fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
+        <Paper variant="outlined">
+            <Table size="small">
+                <TableBody>
+                    {data.map((file) => (
+                        <TableRow
+                            key={file.id}
+                            sx={{
+                                '&:hover': {
+                                    bgcolor: 'action.hover',
+                                },
+                                transition: 'background-color 0.2s',
+                            }}
+                        >
+                            {/* Иконка + Название */}
+                            <TableCell sx={{ width: '60%', pl: 2, pr: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                    {getFileIcon(file.mime_type)}
+                                    <Box>
+                                        <Typography variant="body2" fontWeight={500}>
+                                            {file.name}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {formatBytes(file.file_size)}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </TableCell>
 
-                            <Tooltip title="Удалить">
-                                <IconButton
-                                    color="error"
-                                    onClick={() => dispatch(deleteDocumentFile(file.id))}
-                                >
-                                    <Delete fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
-                    }
-                >
-                    <ListItemIcon>{getFileIcon(file.mime_type)}</ListItemIcon>
-                    <ListItemText primary={file.name} secondary={formatBytes(file.file_size)} />
-                </ListItem>
-            ))}
-        </List>
+                            {/* Действия */}
+                            <TableCell>
+                                <Box sx={{ display: 'flex', justifyContent: 'end', gap: 1 }}>
+                                    <StyledTooltip title="Скачать">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                                dispatch(
+                                                    downloadDocumentFile({
+                                                        file_id: file.id,
+                                                        filename: file.name,
+                                                    }),
+                                                )
+                                            }
+                                            sx={{
+                                                width: 34,
+                                                height: 34,
+                                                '&:hover': {
+                                                    color: 'primary.main',
+                                                },
+                                            }}
+                                        >
+                                            <Download fontSize="small" />
+                                        </IconButton>
+                                    </StyledTooltip>
+                                    <StyledTooltip title="Удалить">
+                                        <IconButton
+                                            size="small"
+                                            color="error"
+                                            onClick={() => dispatch(deleteDocumentFile(file.id))}
+                                        >
+                                            <Delete fontSize="small" />
+                                        </IconButton>
+                                    </StyledTooltip>
+                                </Box>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </Paper>
     );
 }

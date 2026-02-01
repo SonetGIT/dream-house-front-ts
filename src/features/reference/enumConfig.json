@@ -106,5 +106,12 @@
             "name": ["name"]
         },
         "apiName": "/materialMovementStatuses/gets"
+    },
+    "8ba2b356-f147-4926-827c-113aafb7b2ff": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/documentStages/gets"
     }
 }

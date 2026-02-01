@@ -15,7 +15,8 @@ interface PropsType {
     onPrevPage: () => void;
     onNextPage: () => void;
     getRefName: {
-        [key: string]: (id: number | string) => string;
+        type: (id: number) => string;
+        status: (id: number) => string;
     };
 }
 
@@ -28,7 +29,7 @@ export default function ProjectsTable(props: PropsType) {
 
     /*******************************************************************************************************************************/
     return (
-        <table className="table-container">
+        <div className="table-container">
             {props.loading && (
                 <LinearProgress
                     style={{
@@ -95,6 +96,6 @@ export default function ProjectsTable(props: PropsType) {
                 onPrev={props.onPrevPage}
                 onNext={props.onNextPage}
             />
-        </table>
+        </div>
     );
 }
