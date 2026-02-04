@@ -52,9 +52,9 @@ export function AppButton({ variantType = 'outline', sx, ...props }: AppButtonPr
             sx={{
                 // width: 'auto',
                 // maxHeight: '43px',
-                m: 1,
+                m: '0.385rem',
                 px: 2,
-                py: 1,
+                py: 0.75,
                 borderRadius: 2,
                 fontSize: '0.975rem',
                 fontWeight: 500,

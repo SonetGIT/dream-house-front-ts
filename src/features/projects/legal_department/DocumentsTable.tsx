@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     CircularProgress,
@@ -13,11 +13,17 @@ import {
     TablePagination,
 } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchDocuments } from './documentsSlice';
+import { createDocuments, fetchDocuments, updateDocuments } from './documentsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { DocumentEditForm } from './DocumentEditForm';
+import { DocumentCreateEditForm, type DocumentFormData } from './DocumentCreateEditForm';
 import { useReference } from '@/features/reference/useReference';
+import toast from 'react-hot-toast';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { AppButton } from '@/components/ui/AppButton';
+import { MdOutlinePlaylistAdd } from 'react-icons/md';
+import { uploadDocumentFile } from './documentFilesSlice';
 
+/***********************************************************************************************************************/
 export function DocumentsTable() {
     const dispatch = useAppDispatch();
     const { data, pagination, loading, error } = useAppSelector((state) => state.documents);
@@ -25,60 +31,66 @@ export function DocumentsTable() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    // Для редактирования
-    const [editingDocId, setEditingDocId] = useState<number | null>(null);
-    const [editingValues, setEditingValues] = useState<any>(null);
+    const [openForm, setOpenForm] = useState(false);
+    const [editingDocId, setEditingDocId] = useState<number | undefined>(undefined);
+    const [initialData, setInitialData] = useState<DocumentFormData | null>(null);
+    const [saving, setSaving] = useState(false);
 
-    // Справочники
-    const { lookup: getdocStagesName } = useReference('8ba2b356-f147-4926-827c-113aafb7b2ff');
-    const getRefName = useMemo(
-        () => ({
-            docStagesName: getdocStagesName,
-        }),
-        [getdocStagesName],
-    );
+    const { lookup: getStatusName } = useReference('5c18ca4d-c9ab-41f3-936b-415f060b02b2');
 
     useEffect(() => {
-        dispatch(
-            fetchDocuments({
-                page: page + 1,
-                size: rowsPerPage,
-            }),
-        );
+        dispatch(fetchDocuments({ page: page + 1, size: rowsPerPage }));
     }, [dispatch, page, rowsPerPage]);
 
-    const handleChangePage = (_: any, newPage: number) => setPage(newPage);
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+    const openCreate = () => {
+        setEditingDocId(undefined);
+        setInitialData({
+            name: '',
+            price: 0,
+            description: '',
+            responsible_users: [],
+            deadline: null,
+            status: 0,
+        });
+        setOpenForm(true);
     };
 
-    const handleEditClick = (doc: any) => {
+    const openEdit = (doc: any) => {
         setEditingDocId(doc.id);
-        setEditingValues({
+        setInitialData({
             name: doc.name,
-            description: doc.description,
             price: doc.price,
+            description: doc.description,
+            responsible_users: doc.responsible_users,
+            deadline: doc.deadline,
             status: doc.status,
         });
+        setOpenForm(true);
     };
 
-    const handleSave = async (updatedValues: any) => {
+    const handleSave = async (data: DocumentFormData, files: File[]) => {
         try {
-            // PUT-запрос на обновление документа
-            await fetch(`/api/documents/${editingDocId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedValues),
-            });
+            setSaving(true);
+            let docId = editingDocId;
 
-            // Обновляем таблицу после сохранения
-            dispatch(fetchDocuments({ page: page + 1, size: rowsPerPage }));
-        } catch (err) {
-            console.error('Ошибка сохранения документа', err);
+            if (!docId) {
+                const created = await dispatch(createDocuments(data)).unwrap();
+                docId = created.id;
+            } else {
+                await dispatch(updateDocuments({ id: docId, data })).unwrap();
+            }
+
+            for (const file of files) {
+                await dispatch(uploadDocumentFile({ documentId: docId!, file })).unwrap();
+            }
+
+            toast.success('Документ сохранён');
+            await dispatch(fetchDocuments({ page: page + 1, size: rowsPerPage }));
+            setOpenForm(false);
+        } catch {
+            toast.error('Ошибка сохранения документа');
         } finally {
-            setEditingDocId(null);
-            setEditingValues(null);
+            setSaving(false);
         }
     };
 
@@ -94,21 +106,29 @@ export function DocumentsTable() {
         return <Typography color="error">{error}</Typography>;
     }
 
-    if (!data.length) {
-        return <Typography mt={2}>Документы не найдены</Typography>;
-    }
-
+    /****************************************************************************************************************************/
     return (
         <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <SectionHeader title="Список документов" />
+                <AppButton
+                    variant="outlined"
+                    startIcon={<MdOutlinePlaylistAdd />}
+                    onClick={openCreate}
+                >
+                    Добавить документ
+                </AppButton>
+            </Box>
+
             <TableContainer component={Paper} className="table-container">
                 <Table className="table">
                     <TableHead>
                         <TableRow>
                             <TableCell>ID</TableCell>
-                            <TableCell>Название</TableCell>
+                            <TableCell>Наименование</TableCell>
                             <TableCell>Статус</TableCell>
                             <TableCell>Цена</TableCell>
-                            <TableCell>Описание</TableCell>
+                            <TableCell>Крайний срок</TableCell>
                             <TableCell>Создан</TableCell>
                         </TableRow>
                     </TableHead>
@@ -117,41 +137,41 @@ export function DocumentsTable() {
                             <TableRow
                                 key={doc.id}
                                 hover
-                                sx={{
-                                    '& td': { textAlign: 'center' },
-                                    cursor: 'pointer',
-                                }}
-                                onClick={() => handleEditClick(doc)}
+                                sx={{ '& td': { textAlign: 'center' }, cursor: 'pointer' }}
+                                onClick={() => openEdit(doc)}
                             >
                                 <TableCell>{doc.id}</TableCell>
                                 <TableCell>{doc.name}</TableCell>
-                                <TableCell>{getRefName.docStagesName(doc.status)}</TableCell>
+                                <TableCell>{getStatusName(doc.status)}</TableCell>
                                 <TableCell>{doc.price}</TableCell>
-                                <TableCell>{doc.description}</TableCell>
+                                <TableCell>{doc.deadline}</TableCell>
                                 <TableCell>{formatDateTime(doc.created_at)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
+
                 <TablePagination
                     component="div"
                     count={pagination?.total ?? 0}
                     page={page}
-                    onPageChange={handleChangePage}
+                    onPageChange={(_, p) => setPage(p)}
                     rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    rowsPerPageOptions={[5, 10, 25, 50]}
+                    onRowsPerPageChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setPage(0);
+                    }}
                 />
             </TableContainer>
 
-            {/* Форма редактирования */}
-            {editingDocId && editingValues && (
-                <DocumentEditForm
-                    open={!!editingDocId}
-                    onClose={() => setEditingDocId(null)}
+            {openForm && initialData && (
+                <DocumentCreateEditForm
+                    open
                     documentId={editingDocId}
-                    initialData={editingValues}
-                    onSave={handleSave}
+                    initialData={initialData}
+                    submitting={saving}
+                    onSubmit={handleSave}
+                    onClose={() => setOpenForm(false)}
                 />
             )}
         </Box>

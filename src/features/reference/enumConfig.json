@@ -46,7 +46,8 @@
     "d0336075-e674-41ef-aa38-189de9adaeb4": {
         "data": {
             "id": "id",
-            "name": ["username"]
+            "name": ["username"],
+            "role_id": "role_id"
         },
         "apiName": "/users/gets"
     },
@@ -113,5 +114,12 @@
             "name": ["name"]
         },
         "apiName": "/documentStages/gets"
+    },
+    "5c18ca4d-c9ab-41f3-936b-415f060b02b2": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/documentStatuses/gets"
     }
 }

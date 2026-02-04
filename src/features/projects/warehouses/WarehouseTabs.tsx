@@ -87,7 +87,7 @@ export default function WarehouseTabs() {
 
     /******************************************************************************************************************************/
     return (
-        <Paper style={{ border: '1px solid red' }}>
+        <Paper>
             <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
                 <Tab label="📋 Список заявок" />
                 <Tab label="🏭 Запас материалов" />

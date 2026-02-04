@@ -6,6 +6,7 @@ import { Delete as DeleteIcon } from '@mui/icons-material';
 import type { EnumItem } from '@/features/reference/referenceService';
 import { RiAddLine } from 'react-icons/ri';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { AppButton } from '@/components/ui/AppButton';
 
 // Типы (без изменений)
 export interface MaterialRequestItemForm {
@@ -437,27 +438,14 @@ export default function MaterialReqCreateEditForm(props: Props) {
                     </Box>
 
                     {/* Кнопка добавления */}
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-                        <Button
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                        <AppButton
                             startIcon={<RiAddLine />}
                             onClick={handleAddItem}
                             variant="outlined"
-                            sx={{
-                                borderRadius: 2,
-                                px: 2,
-                                py: 1,
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                color: 'primary.main',
-                                borderColor: 'primary.main',
-                                '&:hover': {
-                                    bgcolor: 'primary.lighter',
-                                    borderColor: 'primary.dark',
-                                },
-                            }}
                         >
                             Добавить позицию
-                        </Button>
+                        </AppButton>
                     </Box>
 
                     <Divider sx={{ my: 2 }} />
