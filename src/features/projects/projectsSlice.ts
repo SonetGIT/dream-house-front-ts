@@ -38,7 +38,7 @@ export const fetchProjects = createAsyncThunk(
     'projects/fetch',
     async (
         params: { page?: number; size?: number; search?: string; filters?: any },
-        { rejectWithValue }
+        { rejectWithValue },
     ) => {
         try {
             const body = {
@@ -52,7 +52,7 @@ export const fetchProjects = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const getProjectById = createAsyncThunk(
@@ -64,7 +64,7 @@ export const getProjectById = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 // Slice
@@ -92,7 +92,7 @@ const projectsSlice = createSlice({
             .addCase(fetchProjects.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = action.payload.data;
-                state.pagination = action.payload.pagination;
+                // state.pagination = action.payload.pagination;
             })
             .addCase(fetchProjects.rejected, (state, action) => {
                 state.loading = false;

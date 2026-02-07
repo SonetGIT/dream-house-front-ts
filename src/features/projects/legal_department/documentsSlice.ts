@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { Pagination, Users } from '@/features/users/userSlice';
+import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 
 /* TYPES */
@@ -12,7 +12,7 @@ export interface Documents {
     price?: number;
     description: string;
     deadline: null;
-    responsible_users: Users[];
+    responsible_users: number[];
     created_at: string;
     updated_at: string;
     deleted: boolean;
@@ -101,7 +101,7 @@ const documentsSlice = createSlice({
             .addCase(fetchDocuments.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
-                state.pagination = action.payload.pagination;
+                // state.pagination = action.payload.pagination;
             })
             .addCase(fetchDocuments.rejected, (state, action) => {
                 state.loading = false;

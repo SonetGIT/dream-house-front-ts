@@ -12,14 +12,18 @@ import {
     Select,
     FormHelperText,
     MenuItem,
+    Checkbox,
+    ListItemText,
+    DialogTitle,
+    Button,
 } from '@mui/material';
 import { AiOutlineUpload } from 'react-icons/ai';
 import { DocumentFilesList } from './DocumentFilesList';
 import { AppButton } from '@/components/ui/AppButton';
 import { useReference } from '@/features/reference/useReference';
-import type { Users } from '@/features/users/userSlice';
-import { useAppSelector } from '@/app/store';
-import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox';
+import { useAppDispatch, useAppSelector } from '@/app/store';
+import { fetchAuditLog } from '@/features/auditLog/auditLogSlice';
+import AuditLogTimeline from '@/features/auditLog/AuditLogTimeline';
 
 export interface DocumentFormData {
     name: string;
@@ -27,13 +31,13 @@ export interface DocumentFormData {
     description: string;
     status: number;
     deadline: null;
-    responsible_users: Users[];
+    responsible_users: number[];
 }
 
 interface DocumentCreateEditFormProps {
     open: boolean;
     onClose: () => void;
-    documentId?: number;
+    documentId: number;
     initialData: DocumentFormData;
     submitting?: boolean;
     onSubmit: (data: DocumentFormData, files: File[]) => void | Promise<void>;
@@ -48,18 +52,19 @@ export function DocumentCreateEditForm({
     submitting = false,
     onSubmit,
 }: DocumentCreateEditFormProps) {
+    const dispatch = useAppDispatch();
     const [formData, setFormData] = useState<DocumentFormData>(initialData);
     const [errors, setErrors] = useState<Partial<Record<keyof DocumentFormData, string>>>({});
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+    const [openHistory, setOpenHistory] = useState(false);
 
     const { data: statuses } = useReference('5c18ca4d-c9ab-41f3-936b-415f060b02b2');
     const { data: users } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
     const currentUser = useAppSelector((state) => state.auth.user);
     const lawyers = users?.filter((u) => u.role_id === 14) ?? [];
     // const lawyers = users?.filter((u) => u.role_id === currentUser?.role_id) ?? [];
-    console.log('currentUser', currentUser);
-    console.log('lawyers', lawyers);
 
+    // const { data: auditLog } = useAppSelector((s) => s.auditLog);
     useEffect(() => {
         if (open) {
             setFormData({
@@ -99,6 +104,17 @@ export function DocumentCreateEditForm({
         setPendingFiles((prev) => [...prev, ...files]);
     };
 
+    // const handleFetchAuditLog = (documentId: number) => {
+    //     dispatch(
+    //         fetchAuditLog({
+    //             entity_type: 'document',
+    //             entity_id: doc.id,
+    //             page: 1, // если нужно
+    //             size: 20, // если нужно
+    //         }),
+    //     );
+    // };
+
     /****************************************************************************************************************************/
     return (
         <Dialog className="table" open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -114,7 +130,6 @@ export function DocumentCreateEditForm({
                         : 'Заполните информацию о новом документе'}
                 </Typography>
             </Box>
-
             <DialogContent dividers>
                 <Box
                     sx={{
@@ -155,28 +170,47 @@ export function DocumentCreateEditForm({
                         fullWidth
                         sx={{ gridColumn: '1 / -1' }}
                     />
-                    <FormControl error={!!errors.status} fullWidth required size="small">
+                    <FormControl error={!!errors.responsible_users} fullWidth required size="small">
                         <InputLabel>Соисполнители</InputLabel>
-                        <MultiSelectCheckbox
-                        // value={formData.responsible_users}
-                        // label="Соисполнители *"
-                        // onChange={(e) =>
-                        //     handleChange('responsible_users', Number(e.target.value))
-                        // }
+
+                        <Select
+                            multiple
+                            label="Соисполнители *"
+                            value={formData.responsible_users}
+                            onChange={(e) =>
+                                handleChange('responsible_users', e.target.value as number[])
+                            }
+                            renderValue={(selected) =>
+                                lawyers
+                                    ?.filter((u) => selected.includes(Number(u.id)))
+                                    .map((u) => u.name)
+                                    .join(', ')
+                            }
                         >
-                            {/* {lawyers?.map((u) => (
-                                <MenuItem key={u.id} value={u.id}>
-                                    {u.name}
-                                </MenuItem>
-                            ))} */}
-                        </MultiSelectCheckbox>
-                        {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
+                            {lawyers?.map((u) => {
+                                const id = Number(u.id);
+
+                                return (
+                                    <MenuItem key={id} value={id}>
+                                        <Checkbox
+                                            checked={formData.responsible_users.includes(id)}
+                                        />
+                                        <ListItemText primary={u.name} />
+                                    </MenuItem>
+                                );
+                            })}
+                        </Select>
+
+                        {errors.responsible_users && (
+                            <FormHelperText>{errors.responsible_users}</FormHelperText>
+                        )}
                     </FormControl>
+
                     <TextField
                         label="Крайний срок *"
                         type="date"
                         value={formData.deadline || ''}
-                        onChange={(e) => handleChange('deadline', Number(e.target.value))}
+                        onChange={(e) => handleChange('deadline', e.target.value)}
                         error={!!errors.deadline}
                         helperText={errors.deadline}
                         size="small"
@@ -279,8 +313,31 @@ export function DocumentCreateEditForm({
                     </Typography>
                 </Box>
             </DialogContent>
+            <Dialog
+                open={openHistory}
+                onClose={() => setOpenHistory(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>История изменений</DialogTitle>
+
+                <DialogContent dividers>
+                    <AuditLogTimeline entity_type={'document'} entity_id={documentId} />
+                </DialogContent>
+
+                <DialogActions>
+                    <Button onClick={() => setOpenHistory(false)}>Закрыть</Button>
+                </DialogActions>
+            </Dialog>
 
             <DialogActions>
+                <AppButton
+                    variant="outlined"
+                    onClick={() => setOpenHistory(true)}
+                    disabled={!documentId}
+                >
+                    Исторя изменений
+                </AppButton>
                 <AppButton onClick={onClose}>Отмена</AppButton>
                 <AppButton variantType="primary" onClick={handleSubmit} disabled={submitting}>
                     Сохранить

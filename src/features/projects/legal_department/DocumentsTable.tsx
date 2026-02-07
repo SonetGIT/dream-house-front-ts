@@ -144,7 +144,7 @@ export function DocumentsTable() {
                                 <TableCell>{doc.name}</TableCell>
                                 <TableCell>{getStatusName(doc.status)}</TableCell>
                                 <TableCell>{doc.price}</TableCell>
-                                <TableCell>{doc.deadline}</TableCell>
+                                <TableCell>{formatDateTime(doc.deadline, false)}</TableCell>
                                 <TableCell>{formatDateTime(doc.created_at)}</TableCell>
                             </TableRow>
                         ))}

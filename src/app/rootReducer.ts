@@ -14,6 +14,7 @@ import suppliersReducer from '@/features/suppliers/suppliersSlice';
 import documentStagesReducer from '@/features/projects/legal_department/documentStagesSlice';
 import documentsReducer from '@/features/projects/legal_department/documentsSlice';
 import documentFilesReducer from '@/features/projects/legal_department/documentFilesSlice';
+import auditLogReducer from '@/features/auditLog/auditLogSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -31,6 +32,7 @@ export const rootReducer = combineReducers({
     documentStages: documentStagesReducer,
     documents: documentsReducer,
     documentFiles: documentFilesReducer,
+    auditLog: auditLogReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

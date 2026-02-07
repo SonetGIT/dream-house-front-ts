@@ -65,24 +65,6 @@ interface SearchParams {
     // status?: number;
 }
 
-// export const fetchPurchasingAgentItems = createAsyncThunk<
-//     PurchasingAgentSearchResponse,
-//      ApiResponse<MaterialRequestItems[]>,
-//     SearchParams | void
-// >('materialRequestItems/purchasingAgentSearch', async (params, { rejectWithValue }) => {
-//     try {
-//         const response = await apiRequest<MaterialRequestItems[]>(
-//             `/materialRequestItems/purchasingAgentSearch`,
-//             'POST',
-//             params
-//         );
-//         console.log('');
-//         return response;
-//     } catch (error: any) {
-//         return rejectWithValue(error.response?.data || 'Ошибка загрузки');
-//     }
-// });
-
 export const fetchPurchasingAgentItems = createAsyncThunk<
     ApiResponse<MaterialRequestItems[]>,
     SearchParams,
@@ -92,7 +74,7 @@ export const fetchPurchasingAgentItems = createAsyncThunk<
         return await apiRequest<MaterialRequestItems[]>(
             '/materialRequestItems/purchasingAgentSearch',
             'POST',
-            params
+            params,
         );
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка при загрузке заявок на материалы');

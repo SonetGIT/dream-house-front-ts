@@ -1,10 +1,11 @@
 import { getToken } from '@/features/auth/getToken';
+import type { Pagination } from '@/features/users/userSlice';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
 
 export interface ApiResponse<T> {
     data: T;
-    pagination?: any;
+    pagination?: Pagination;
     success?: boolean;
     message?: string;
 }
@@ -14,78 +15,56 @@ export async function apiRequest<T = any>(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     body?: unknown,
 ): Promise<ApiResponse<T>> {
-    const token = getToken();
-    if (!token) {
-        throw new Error('Токен отсутствует');
-    }
+    try {
+        const token = getToken();
+        const isFormData = body instanceof FormData;
 
-    const isFormData = body instanceof FormData;
+        // Заголовки
+        const headers: HeadersInit = {};
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+        if (method !== 'GET' && !isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
 
-    const res = await fetch(`${API_URL}${endpoint}`, {
-        method,
-        headers: {
-            Authorization: `Bearer ${token}`,
-            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        },
-        body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-    });
+        // Обработка GET-параметров
+        if (method === 'GET' && body) {
+            const params = new URLSearchParams();
+            Object.entries(body as Record<string, any>).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    params.append(key, String(value));
+                }
+            });
+            endpoint = `${endpoint}?${params}`;
+        }
 
-    // ⛔️ для blob / download json не читаем
-    const contentType = res.headers.get('content-type');
+        const config: RequestInit = { method, headers };
+        if (method !== 'GET' && body) {
+            config.body = isFormData ? body : JSON.stringify(body);
+        }
 
-    if (contentType?.includes('application/json')) {
+        const res = await fetch(`${API_URL}${endpoint}`, config);
+
+        // Обработка не-JSON ответов (файлы, изображения)
+        const contentType = res.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+            if (!res.ok) throw new Error('Ошибка запроса');
+            const blob = await res.blob();
+            return { data: blob as unknown as T } as ApiResponse<T>;
+        }
+
+        // Обработка JSON
         const data = await res.json();
-
         if (!res.ok || data?.success === false) {
             throw new Error(data?.message || 'Ошибка запроса');
         }
 
         return data;
+    } catch (error) {
+        if (error instanceof TypeError) {
+            throw new Error('Нет подключения к интернету');
+        }
+        throw error;
     }
-
-    // fallback (редко, но безопасно)
-    if (!res.ok) {
-        throw new Error('Ошибка запроса');
-    }
-
-    return {} as ApiResponse<T>;
 }
-
-// import { getToken } from '@/features/auth/getToken';
-
-// const API_URL = import.meta.env.VITE_BASE_URL;
-
-// export interface ApiResponse<T> {
-//     data: T;
-//     pagination?: any;
-//     success?: boolean;
-//     message?: string;
-// }
-
-// export async function apiRequest<T = any>(
-//     endpoint: string,
-//     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-//     body?: unknown
-// ): Promise<ApiResponse<T>> {
-//     const token = getToken();
-//     if (!token) {
-//         throw new Error('Токен отсутствует');
-//     }
-
-//     const res = await fetch(`${API_URL}${endpoint}`, {
-//         method,
-//         headers: {
-//             'Content-Type': 'application/json',
-//             Authorization: `Bearer ${token}`,
-//         },
-//         body: body ? JSON.stringify(body) : undefined,
-//     });
-
-//     const data = await res.json().catch(() => ({}));
-
-//     if (!res.ok || data?.success === false) {
-//         throw new Error(data?.message || 'Ошибка запроса');
-//     }
-
-//     return data;
-// }
