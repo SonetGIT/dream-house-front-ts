@@ -72,14 +72,14 @@ export const getUserRoles = createAsyncThunk<UserRole[], void, { rejectValue: st
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const fetchUsers = createAsyncThunk(
     'users/fetch',
     async (
         params: { page?: number; size?: number; search?: string; filters?: any },
-        { rejectWithValue }
+        { rejectWithValue },
     ) => {
         try {
             const body = {
@@ -93,7 +93,7 @@ export const fetchUsers = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const createUser = createAsyncThunk<Users, Partial<Users>, { rejectValue: string }>(
@@ -105,7 +105,7 @@ export const createUser = createAsyncThunk<Users, Partial<Users>, { rejectValue:
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const deleteUser = createAsyncThunk(
@@ -117,7 +117,7 @@ export const deleteUser = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const getUserById = createAsyncThunk(
@@ -129,7 +129,7 @@ export const getUserById = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const updateUser = createAsyncThunk(
@@ -143,7 +143,7 @@ export const updateUser = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 export const resetPassword = createAsyncThunk(
@@ -157,7 +157,7 @@ export const resetPassword = createAsyncThunk(
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
-    }
+    },
 );
 
 /* SLICE ********************************************************************/
@@ -202,7 +202,7 @@ const usersSlice = createSlice({
             .addCase(fetchUsers.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = action.payload.data;
-                state.pagination = action.payload.pagination;
+                state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchUsers.rejected, (state, action) => {
                 state.loading = false;
@@ -225,7 +225,7 @@ const usersSlice = createSlice({
             // UPDATE USER
             .addCase(updateUser.fulfilled, (state, action) => {
                 state.items = state.items.map((u) =>
-                    u.id === action.payload.id ? action.payload : u
+                    u.id === action.payload.id ? action.payload : u,
                 );
             })
 

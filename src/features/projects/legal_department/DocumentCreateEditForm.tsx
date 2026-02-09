@@ -24,6 +24,8 @@ import { useReference } from '@/features/reference/useReference';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchAuditLog } from '@/features/auditLog/auditLogSlice';
 import AuditLogTimeline from '@/features/auditLog/AuditLogTimeline';
+import { documentFormData } from '@/features/auditLog/metaData/document';
+import { AuditLogTable } from '@/features/auditLog/AuditLogTable';
 
 export interface DocumentFormData {
     name: string;
@@ -103,17 +105,6 @@ export function DocumentCreateEditForm({
         const files = Array.from(e.target.files);
         setPendingFiles((prev) => [...prev, ...files]);
     };
-
-    // const handleFetchAuditLog = (documentId: number) => {
-    //     dispatch(
-    //         fetchAuditLog({
-    //             entity_type: 'document',
-    //             entity_id: doc.id,
-    //             page: 1, // если нужно
-    //             size: 20, // если нужно
-    //         }),
-    //     );
-    // };
 
     /****************************************************************************************************************************/
     return (
@@ -322,7 +313,11 @@ export function DocumentCreateEditForm({
                 <DialogTitle>История изменений</DialogTitle>
 
                 <DialogContent dividers>
-                    <AuditLogTimeline entity_type={'document'} entity_id={documentId} />
+                    <AuditLogTable
+                        entity_type={'document'}
+                        entity_id={documentId}
+                        formMetadata={documentFormData}
+                    />
                 </DialogContent>
 
                 <DialogActions>

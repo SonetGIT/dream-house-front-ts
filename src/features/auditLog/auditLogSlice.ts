@@ -19,9 +19,8 @@ export interface AuditLogItem {
 }
 
 export interface AuditLogResponse {
-    success: boolean;
     data: AuditLogItem[];
-    pagination: Pagination;
+    pagination: Pagination | null;
 }
 
 export interface FetchAuditLogParams {
@@ -39,7 +38,7 @@ interface AuditLogState {
     error: string | null;
 }
 
-/* ================= STATE ================= */
+/* STATE */
 
 const initialState: AuditLogState = {
     data: [],
@@ -48,44 +47,34 @@ const initialState: AuditLogState = {
     error: null,
 };
 
-/* ================= THUNK ================= */
+/* THUNK */
 
 export const fetchAuditLog = createAsyncThunk<
     AuditLogResponse,
     FetchAuditLogParams,
     { rejectValue: string }
->(
-    'auditLog/fetch',
-    async (
-        params: {
-            entity_type: string;
-            entity_id: number;
-            action?: string;
-            page?: number;
-            size?: number;
-        },
-        { rejectWithValue },
-    ) => {
-        try {
-            const body = {
-                ntity_type: params.entity_type,
-                entity_id: params.entity_id,
-                action: params.action,
-                page: params.page ?? 1,
-                size: params.size ?? 10,
-            };
-            const res = await apiRequest<AuditLogResponse>('/auditLog', 'GET', body);
+>('auditLog/fetch', async (params, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<AuditLogItem[]>('/auditLog', 'GET', {
+            entity_type: params.entity_type,
+            entity_id: params.entity_id,
+            action: params.action,
+            page: params.page ?? 1,
+            size: params.size ?? 10,
+        });
 
-            if (!res.success) {
-                return rejectWithValue(res.message || 'Ошибка запроса');
-            }
-            console.log('res.data', res.data);
-            return res.data;
-        } catch (e: any) {
-            return rejectWithValue(e?.message || 'Ошибка загрузки истории изменений');
+        if (!res.success) {
+            return rejectWithValue(res.message || 'Ошибка запроса');
         }
-    },
-);
+
+        return {
+            data: res.data,
+            pagination: res.pagination ?? null,
+        };
+    } catch (e: any) {
+        return rejectWithValue(e?.message || 'Ошибка загрузки истории изменений');
+    }
+});
 
 /* ================= SLICE ================= */
 
@@ -108,7 +97,7 @@ const auditLogSlice = createSlice({
             .addCase(fetchAuditLog.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
-                state.pagination = action.payload.pagination;
+                state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchAuditLog.rejected, (state, action) => {
                 state.loading = false;

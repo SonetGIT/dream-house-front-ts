@@ -101,7 +101,7 @@ const documentsSlice = createSlice({
             .addCase(fetchDocuments.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
-                // state.pagination = action.payload.pagination;
+                state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchDocuments.rejected, (state, action) => {
                 state.loading = false;

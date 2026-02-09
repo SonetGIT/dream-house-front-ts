@@ -92,7 +92,7 @@ const projectsSlice = createSlice({
             .addCase(fetchProjects.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = action.payload.data;
-                // state.pagination = action.payload.pagination;
+                state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchProjects.rejected, (state, action) => {
                 state.loading = false;
