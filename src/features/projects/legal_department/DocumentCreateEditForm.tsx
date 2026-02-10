@@ -21,11 +21,10 @@ import { AiOutlineUpload } from 'react-icons/ai';
 import { DocumentFilesList } from './DocumentFilesList';
 import { AppButton } from '@/components/ui/AppButton';
 import { useReference } from '@/features/reference/useReference';
-import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchAuditLog } from '@/features/auditLog/auditLogSlice';
-import AuditLogTimeline from '@/features/auditLog/AuditLogTimeline';
+import { useAppSelector } from '@/app/store';
 import { documentFormData } from '@/features/auditLog/metaData/document';
 import { AuditLogTable } from '@/features/auditLog/AuditLogTable';
+import { MdHistory } from 'react-icons/md';
 
 export interface DocumentFormData {
     name: string;
@@ -54,7 +53,6 @@ export function DocumentCreateEditForm({
     submitting = false,
     onSubmit,
 }: DocumentCreateEditFormProps) {
-    const dispatch = useAppDispatch();
     const [formData, setFormData] = useState<DocumentFormData>(initialData);
     const [errors, setErrors] = useState<Partial<Record<keyof DocumentFormData, string>>>({});
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -62,9 +60,8 @@ export function DocumentCreateEditForm({
 
     const { data: statuses } = useReference('5c18ca4d-c9ab-41f3-936b-415f060b02b2');
     const { data: users } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
-    const currentUser = useAppSelector((state) => state.auth.user);
-    const lawyers = users?.filter((u) => u.role_id === 14) ?? [];
-    // const lawyers = users?.filter((u) => u.role_id === currentUser?.role_id) ?? [];
+    const currentUser = useAppSelector((state) => state.auth.user); //users?.filter((u) => u.role_id === 14) ?? [];
+    const lawyers = users?.filter((u) => u.role_id === currentUser?.role_id) ?? [];
 
     // const { data: auditLog } = useAppSelector((s) => s.auditLog);
     useEffect(() => {
@@ -78,15 +75,6 @@ export function DocumentCreateEditForm({
         }
     }, [open, initialData, documentId]);
 
-    const validate = (): boolean => {
-        const newErrors: typeof errors = {};
-        if (!formData.name.trim()) newErrors.name = 'Обязательное поле';
-        if (formData.price <= 0) newErrors.price = 'Цена должна быть больше 0';
-        if (formData.status == null) newErrors.status = 'Выберите статус';
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
     const handleChange = (field: keyof DocumentFormData, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field]) {
@@ -95,9 +83,7 @@ export function DocumentCreateEditForm({
     };
 
     const handleSubmit = () => {
-        if (validate()) {
-            onSubmit(formData, pendingFiles);
-        }
+        onSubmit(formData, pendingFiles);
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,15 +310,17 @@ export function DocumentCreateEditForm({
                     <Button onClick={() => setOpenHistory(false)}>Закрыть</Button>
                 </DialogActions>
             </Dialog>
-
             <DialogActions>
                 <AppButton
                     variant="outlined"
+                    startIcon={<MdHistory />}
                     onClick={() => setOpenHistory(true)}
                     disabled={!documentId}
+                    sx={{ mr: 'auto' }}
                 >
-                    Исторя изменений
+                    История
                 </AppButton>
+
                 <AppButton onClick={onClose}>Отмена</AppButton>
                 <AppButton variantType="primary" onClick={handleSubmit} disabled={submitting}>
                     Сохранить

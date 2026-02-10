@@ -22,13 +22,13 @@ import type { Users } from '@/features/users/userSlice';
 
 interface PropsType {
     data: MaterialRequest[];
-    getRefName: {
-        materialType: (id: number) => string;
-        materialName: (id: number) => string;
-        unitName: (id: number) => string;
-        userName: (id: number) => string;
-        statusName: (id: number) => string;
-        statusItemName: (id: number) => string;
+    refs: {
+        materialTypes: (id: number) => string;
+        materials: (id: number) => string;
+        unitsOfMeasure: (id: number) => string;
+        users: (id: number) => string;
+        materialRequestStatuses: (id: number) => string;
+        materialRequestItemStatuses: (id: number) => string;
     };
 }
 
@@ -182,7 +182,9 @@ export default function MaterialRequestsTable(props: PropsType) {
                                     </TableCell>
                                     <TableCell>
                                         Статус заявки:{' '}
-                                        <strong>{props.getRefName.statusName(req.status)}</strong>
+                                        <strong>
+                                            {props.refs.materialRequestStatuses(req.status)}
+                                        </strong>
                                     </TableCell>
                                     <TableCell>
                                         Дата создание:{' '}
@@ -233,17 +235,17 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                 }}
                                                             >
                                                                 <TableCell>
-                                                                    {props.getRefName.materialType(
+                                                                    {props.refs.materialTypes(
                                                                         item.material_type,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.getRefName.materialName(
+                                                                    {props.refs.materials(
                                                                         item.material_id,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.getRefName.unitName(
+                                                                    {props.refs.unitsOfMeasure(
                                                                         item.unit_of_measure,
                                                                     )}
                                                                 </TableCell>
@@ -254,7 +256,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                     {item.comment ?? '—'}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.getRefName.statusItemName(
+                                                                    {props.refs.materialRequestItemStatuses(
                                                                         req.status,
                                                                     )}
                                                                 </TableCell>
@@ -291,9 +293,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                 fontStyle="italic"
                                                             >
                                                                 {s.userId
-                                                                    ? props.getRefName.userName(
-                                                                          s.userId,
-                                                                      )
+                                                                    ? props.refs.users(s.userId)
                                                                     : '—'}
                                                             </Typography>
                                                             <Typography

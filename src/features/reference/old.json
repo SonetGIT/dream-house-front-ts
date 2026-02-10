@@ -1,33 +1,33 @@
 {
-    "userRoles": {
+    "42ff2fe7-d54b-4eef-a13f-29c22bc7c789": {
         "data": {
             "id": "id",
             "name": ["description"]
         },
         "apiName": "/userRoles/gets"
     },
-    "projectTypes": {
+    "0e86b36a-aa48-4993-874f-1ce21cd3931d": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/projectTypes/gets"
     },
-    "projectStatuses": {
+    "231fec20-3f64-4343-8d49-b1d53e71ad4d": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/projectStatuses/gets"
     },
-    "unitsOfMeasure": {
+    "2198d87a-d834-4c5d-abf8-8925aeed784e": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/unitsOfMeasure/gets"
     },
-    "materials": {
+    "7c52acfc-843a-4242-80ba-08f7439a29a7": {
         "data": {
             "id": "id",
             "name": ["name"],
@@ -36,51 +36,49 @@
         },
         "apiName": "/materials/gets"
     },
-    "materialTypes": {
+    "681635e7-3eff-413f-9a07-990bfe7bc68a": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/materialTypes/gets"
     },
-    "users": {
+    "d0336075-e674-41ef-aa38-189de9adaeb4": {
         "data": {
             "id": "id",
-            "name": ["username"],
-            "userFIO": ["last_name", " ", "first_name"],
-            "role_id": "role_id"
+            "name": ["username"]
         },
         "apiName": "/users/gets"
     },
-    "materialRequestStatuses": {
+    "c1aa58c8-2419-4832-ba09-8c54f27b5bf3": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/materialRequestStatuses/gets"
     },
-    "materialRequestItemStatuses": {
+    "beaaf9c2-b0d1-4c1c-8861-5723b936c334": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/materialRequestItemStatuses/gets"
     },
-    "currencies": {
+    "52fc32f7-44dd-42f2-92d2-bfcbb56f466d": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/currencies/gets"
     },
-    "suppliers": {
+    "7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/suppliers/gets"
     },
-    "warehouses": {
+    "7ff6ec0d-46fe-a9cd-bc8a-d32f20fbfbcd": {
         "data": {
             "id": "id",
             "name": ["name"]
@@ -88,39 +86,32 @@
         "apiName": "/warehouses/gets"
     },
 
-    "purchaseOrderStatuses": {
+    "84242cf6-76a5-403a-bd87-63f58c539d2b": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/purchaseOrderStatuses/gets"
     },
-    "purchaseOrderItemStatuses": {
+    "2beaaf9c2-b0d1-4c1c-8861-6c3345723b93": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/purchaseOrderItemStatuses/gets"
     },
-    "materialMovementStatuses": {
+    "5f72a11c-ff64-452a-b650-d593811776b7": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/materialMovementStatuses/gets"
     },
-    "documentStages": {
+    "8ba2b356-f147-4926-827c-113aafb7b2ff": {
         "data": {
             "id": "id",
             "name": ["name"]
         },
         "apiName": "/documentStages/gets"
-    },
-    "documentStatuses": {
-        "data": {
-            "id": "id",
-            "name": ["name"]
-        },
-        "apiName": "/documentStatuses/gets"
     }
 }

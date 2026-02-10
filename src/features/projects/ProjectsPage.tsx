@@ -3,10 +3,10 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchProjects, setSearch, setFilters } from './projectsSlice';
 import ProjectsTable from './ProjectsTable';
 import InputSearch from '@/components/ui/InputSearch';
-import { useReference } from '../reference/useReference';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdOutlineRestartAlt } from 'react-icons/md';
+import { useReferenceMap } from '../reference/useReferenceMap';
 
 interface ProjectFilters {
     type?: string | number;
@@ -18,22 +18,10 @@ export default function ProjectsPage() {
     const { items, pagination, loading, error, search } = useAppSelector((state) => state.projects);
 
     // Справочники
-    const {
-        data: projectTypes,
-        lookup: getProjectTypeName,
-        loading: loadingTypes,
-    } = useReference('0e86b36a-aa48-4993-874f-1ce21cd3931d');
-
-    const {
-        data: projectStatuses,
-        lookup: getProjectStatusName,
-        loading: loadingStatuses,
-    } = useReference('231fec20-3f64-4343-8d49-b1d53e71ad4d');
-
-    const getRefName = {
-        type: getProjectTypeName,
-        status: getProjectStatusName,
-    };
+    const refs = useReferenceMap({
+        projectTypes: ['name'],
+        projectStatuses: ['name'],
+    });
 
     // Локальные состояния
     const [searchText, setSearchText] = useState('');
@@ -95,7 +83,7 @@ export default function ProjectsPage() {
                 size: pagination.size,
                 search,
                 filters: getCurrentFilters(),
-            })
+            }),
         );
     };
 
@@ -107,7 +95,7 @@ export default function ProjectsPage() {
                 size: pagination.size,
                 search,
                 filters: getCurrentFilters(),
-            })
+            }),
         );
     };
 
@@ -122,16 +110,16 @@ export default function ProjectsPage() {
                     label="Тип проекта"
                     value={projectTypeId || ''}
                     onChange={setProjectTypeId}
-                    options={projectTypes || []}
-                    loading={loadingTypes}
+                    options={refs.projectTypes.data || []}
+                    loading={refs.projectTypes.loading}
                 />
 
                 <ReferenceSelect
                     label="Статус проекта"
                     value={projectStatusId || ''}
                     onChange={setProjectStatusId}
-                    options={projectStatuses || []}
-                    loading={loadingStatuses}
+                    options={refs.projectStatuses.data || []}
+                    loading={refs.projectStatuses.loading}
                 />
 
                 <StyledTooltip title="Сбросить фильтры и поиск">
@@ -147,7 +135,7 @@ export default function ProjectsPage() {
                 pagination={pagination}
                 onPrevPage={handlePrevPage}
                 onNextPage={handleNextPage}
-                getRefName={getRefName}
+                refs={refs}
             />
         </div>
     );

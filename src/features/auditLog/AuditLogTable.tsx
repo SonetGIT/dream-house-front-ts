@@ -10,7 +10,6 @@ import {
     Typography,
     Collapse,
     IconButton,
-    Stack,
     CircularProgress,
 } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
@@ -18,7 +17,8 @@ import { Fragment, useEffect, useState } from 'react';
 import { fetchAuditLog } from './auditLogSlice';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { AuditLogMetadataTable } from './AuditLogMetadataTable';
+import { AuditLogMetadataList } from './AuditLogMetadataList';
+import { useReferenceMap } from '../reference/useReferenceMap';
 
 interface FormField {
     type: string;
@@ -39,16 +39,15 @@ export interface FormMetadata {
 interface PropsType {
     entity_type: string;
     entity_id: number;
-    formMetadata?: FormMetadata; // ← метаданные формы
+    formMetadata?: FormMetadata;
 }
 
 export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsType) {
     const dispatch = useAppDispatch();
+    const userRefs = useReferenceMap({ users: ['userFIO'] });
     const { data, loading, error } = useAppSelector((state) => state.auditLog);
     const [openRowId, setOpenRowId] = useState<number | null>(null);
 
-    //   const {  users } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
-    console.log('data', data);
     useEffect(() => {
         if (entity_id) {
             dispatch(fetchAuditLog({ entity_type, entity_id }));
@@ -123,7 +122,7 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                             {/* Основная строка */}
                             <TableRow hover>
                                 <TableCell>{formatDateTime(log.created_at)}</TableCell>
-                                <TableCell>{log.user_id}</TableCell>
+                                <TableCell>{userRefs.userFIO(log.user_id)}</TableCell>
                                 <TableCell>{log.action}</TableCell>
                                 <TableCell>{log.entity_type}</TableCell>
                                 <TableCell>
@@ -146,7 +145,7 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                                         timeout="auto"
                                         unmountOnExit
                                     >
-                                        <AuditLogMetadataTable
+                                        <AuditLogMetadataList
                                             formMetadata={formMetadata!}
                                             oldValues={log.old_values || {}}
                                             newValues={log.new_values || {}}

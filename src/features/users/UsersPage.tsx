@@ -5,7 +5,6 @@ import { MdGroupAdd, MdOutlineRestartAlt } from 'react-icons/md';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import InputSearch from '@/components/ui/InputSearch';
-import { useReference } from '../reference/useReference';
 import UserCreateEditFrm from './UserCreateEditFrm';
 
 import {
@@ -21,6 +20,7 @@ import {
 } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import UsersTable from './UsersTable';
+import { useReferenceMap } from '../reference/useReferenceMap';
 
 interface UsersFilters {
     role_id?: string | number;
@@ -31,13 +31,8 @@ export type ConfirmAction = 'delete' | 'resetPassword' | null;
 export default function UsersPage() {
     const dispatch = useAppDispatch();
     const { items, pagination, loading, error, search } = useAppSelector((state) => state.users);
-
-    //Справочник
-    const {
-        data: userRoles,
-        lookup: userRollName,
-        loading: loadingTypes,
-    } = useReference('42ff2fe7-d54b-4eef-a13f-29c22bc7c789');
+    // Справочники
+    const refs = useReferenceMap({ userRoles: ['name'] });
 
     //Локальные состояния
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -236,8 +231,8 @@ export default function UsersPage() {
                             label="Роли"
                             value={userRolesId || ''}
                             onChange={setUserRolesId}
-                            options={userRoles || []}
-                            loading={loadingTypes}
+                            options={refs.userRoles.data || []}
+                            loading={refs.userRoles.loading}
                         />
 
                         <StyledTooltip title="Сбросить фильтры и поиск">
@@ -247,7 +242,7 @@ export default function UsersPage() {
 
                     <UsersTable
                         items={items}
-                        userRollName={userRollName}
+                        refs={refs}
                         loading={loading}
                         error={error}
                         pagination={pagination}
@@ -262,7 +257,7 @@ export default function UsersPage() {
             {isFormOpen && (
                 <UserCreateEditFrm
                     user={editingUser || undefined} // для редактирования или создания
-                    userRoles={userRoles || []}
+                    userRoles={refs.userRoles.data || []}
                     onSubmit={handleSave}
                     onCancel={handleCancel}
                 />

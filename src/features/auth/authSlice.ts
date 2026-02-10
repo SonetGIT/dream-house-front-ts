@@ -71,7 +71,7 @@ export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { reject
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка сети');
         }
-    }
+    },
 );
 
 /**
@@ -92,7 +92,7 @@ export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValu
             localStorage.removeItem('token');
             return rejectWithValue(err.message || 'Ошибка загрузки профиля');
         }
-    }
+    },
 );
 
 /**
@@ -152,9 +152,6 @@ const authSlice = createSlice({
 
                 if (action.payload.data.required_action === 'RESET_PASSWORD') {
                     state.resetRequired = true;
-                    state.token = action.payload.token;
-                } else {
-                    state.resetRequired = false;
                     state.token = action.payload.token;
                     localStorage.setItem('token', action.payload.token);
                 }

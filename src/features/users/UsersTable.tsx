@@ -9,7 +9,7 @@ import { MdAdsClick } from 'react-icons/md';
 
 interface PropsType {
     items: Users[];
-    userRollName: (id: number | string) => string;
+    refs: { userRoles: (id: number) => string };
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
@@ -63,7 +63,7 @@ export default function UsersTable(props: PropsType) {
                                 <td>{item.middle_name}</td>
                                 <td>{item.email}</td>
                                 <td>{item.phone}</td>
-                                <td>{props.userRollName(item.role_id)}</td>
+                                <td>{props.refs.userRoles(item.role_id)}</td>
                                 <td className="action-container">
                                     <StyledTooltip title="Редактировать">
                                         <CiEdit

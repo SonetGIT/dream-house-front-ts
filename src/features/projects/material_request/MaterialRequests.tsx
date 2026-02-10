@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { MdOutlinePlaylistAdd } from 'react-icons/md';
@@ -12,12 +12,12 @@ import {
     updateMaterialRequest,
     type MaterialRequest,
 } from './materialRequestsSlice';
-import { useReference } from '@/features/reference/useReference';
 import { getProjectById } from '../projectsSlice';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import MaterialReqCreateEditForm from './MaterialReqCreateEditForm';
 import MaterialRequestsTable from './MaterialRequestsTable';
 import { TablePagination } from '@/components/ui/TablePagination';
+import { useReferenceMap } from '@/features/reference/useReferenceMap';
 
 export interface ProjectOutletContext {
     projectId: number;
@@ -41,51 +41,61 @@ export default function MaterialRequests() {
         pagination,
     } = useAppSelector((state) => state.materialRequests);
 
-    const { lookup: getProjectTypeName } = useReference('0e86b36a-aa48-4993-874f-1ce21cd3931d');
-    const { lookup: getProjectStatusName } = useReference('231fec20-3f64-4343-8d49-b1d53e71ad4d');
+    const refs = useReferenceMap({
+        projectTypes: ['name'],
+        projectStatuses: ['name'],
+        materialTypes: ['name'],
+        materials: ['name'],
+        unitsOfMeasure: ['name'],
+        users: ['name'],
+        materialRequestStatuses: ['name'],
+        materialRequestItemStatuses: ['name'],
+    });
+    // const { lookup: getProjectTypeName } = useReference('0e86b36a-aa48-4993-874f-1ce21cd3931d');
+    // const { lookup: getProjectStatusName } = useReference('231fec20-3f64-4343-8d49-b1d53e71ad4d');
 
-    const { data: materialTypes, lookup: getMaterialTypeName } = useReference(
-        '681635e7-3eff-413f-9a07-990bfe7bc68a',
-    );
-    const { data: materials, lookup: getMaterialName } = useReference(
-        '7c52acfc-843a-4242-80ba-08f7439a29a7',
-    );
-    const { data: unitTypes, lookup: getUnitOfMeasure } = useReference(
-        '2198d87a-d834-4c5d-abf8-8925aeed784e',
-    );
+    // const { data: materialTypes, lookup: getMaterialTypeName } = useReference(
+    //     '681635e7-3eff-413f-9a07-990bfe7bc68a',
+    // );
+    // const { data: materials, lookup: getMaterialName } = useReference(
+    //     '7c52acfc-843a-4242-80ba-08f7439a29a7',
+    // );
+    // const { data: unitTypes, lookup: getUnitOfMeasure } = useReference(
+    //     '2198d87a-d834-4c5d-abf8-8925aeed784e',
+    // );
 
-    const { lookup: getUserName } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
-    // const { lookup: getMatReqStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
-    const { lookup: getMatReqStatusName } = useReference('c1aa58c8-2419-4832-ba09-8c54f27b5bf3'); //api/materialRequestStatuses/gets
-    const { lookup: getMatReqItemStatusName } = useReference(
-        'beaaf9c2-b0d1-4c1c-8861-5723b936c334',
-    ); //api/materialRequestItemStatuses/gets
+    // const { lookup: getUserName } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
+    // // const { lookup: getMatReqStatusName } = useReference('beaaf9c2-b0d1-4c1c-8861-5723b936c334');
+    // const { lookup: getMatReqStatusName } = useReference('c1aa58c8-2419-4832-ba09-8c54f27b5bf3'); //api/materialRequestStatuses/gets
+    // const { lookup: getMatReqItemStatusName } = useReference(
+    //     'beaaf9c2-b0d1-4c1c-8861-5723b936c334',
+    // ); //api/materialRequestItemStatuses/gets
 
-    const getRefName = useMemo(
-        () => ({
-            projectType: getProjectTypeName,
-            projectStatus: getProjectStatusName,
-            unitName: getUnitOfMeasure,
-            materialType: getMaterialTypeName,
-            materialName: getMaterialName,
-            userName: getUserName,
-            statusName: getMatReqStatusName,
-            statusItemName: getMatReqItemStatusName,
-            materialTypes,
-            materials,
-            unitTypes,
-        }),
-        [
-            getUnitOfMeasure,
-            getMaterialTypeName,
-            getMaterialName,
-            getUserName,
-            getMatReqStatusName,
-            materialTypes,
-            materials,
-            unitTypes,
-        ],
-    );
+    // const getRefName = useMemo(
+    //     () => ({
+    //         projectType: getProjectTypeName,
+    //         projectStatus: getProjectStatusName,
+    //         unitName: getUnitOfMeasure,
+    //         materialType: getMaterialTypeName,
+    //         materialName: getMaterialName,
+    //         userName: getUserName,
+    //         statusName: getMatReqStatusName,
+    //         statusItemName: getMatReqItemStatusName,
+    //         materialTypes,
+    //         materials,
+    //         unitTypes,
+    //     }),
+    //     [
+    //         getUnitOfMeasure,
+    //         getMaterialTypeName,
+    //         getMaterialName,
+    //         getUserName,
+    //         getMatReqStatusName,
+    //         materialTypes,
+    //         materials,
+    //         unitTypes,
+    //     ],
+    // );
 
     // Загрузка проекта
     useEffect(() => {
@@ -195,7 +205,7 @@ export default function MaterialRequests() {
                     <div>
                         <MaterialRequestsTable
                             data={materialRequests.filter((req) => req.project_id === project.id)}
-                            getRefName={getRefName}
+                            refs={refs}
                         />
                     </div>
 
@@ -210,7 +220,7 @@ export default function MaterialRequests() {
             {isFormOpen && (
                 <MaterialReqCreateEditForm
                     request={editingMatReq || undefined}
-                    getRefName={getRefName}
+                    refs={refs}
                     projectId={project.id}
                     statusId={project.status}
                     onSubmit={handleSave}

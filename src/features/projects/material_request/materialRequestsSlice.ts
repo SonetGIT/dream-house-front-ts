@@ -105,7 +105,7 @@ export const createMaterialReq = createAsyncThunk<
         const res = await apiRequest<MaterialRequest>(
             '/materialRequests/create',
             'POST',
-            materialRequest
+            materialRequest,
         );
 
         return res.data;
@@ -123,7 +123,7 @@ export const updateMaterialRequest = createAsyncThunk<
         const res = await apiRequest<MaterialRequest>(
             `/materialRequests/update/${id}`,
             'PUT',
-            data
+            data,
         );
 
         return res.data;
@@ -201,7 +201,7 @@ export const signMaterialRequest = createAsyncThunk<
         const res = await apiRequest<MaterialRequest>(
             `/materialRequests/update/${id}`,
             'PUT',
-            update
+            update,
         );
 
         return res.data;
@@ -240,7 +240,7 @@ export const materialRequestsSlice = createSlice({
 
                 state.loading = false;
                 state.data = action.payload.data;
-                state.pagination = action.payload.pagination;
+                state.pagination = action.payload.pagination ?? null;
             })
             // Rejected
             .addCase(fetchSearchMaterialReq.rejected, (state, action) => {
@@ -262,7 +262,7 @@ export const materialRequestsSlice = createSlice({
 
             .addCase(updateMaterialRequest.fulfilled, (state, action) => {
                 state.data = state.data.map((u) =>
-                    u.id === action.payload.id ? action.payload : u
+                    u.id === action.payload.id ? action.payload : u,
                 );
             })
 

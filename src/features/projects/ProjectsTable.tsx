@@ -14,9 +14,9 @@ interface PropsType {
     pagination: Pagination | null;
     onPrevPage: () => void;
     onNextPage: () => void;
-    getRefName: {
-        type: (id: number) => string;
-        status: (id: number) => string;
+    refs: {
+        projectTypes: (id: number) => string;
+        projectStatuses: (id: number) => string;
     };
 }
 
@@ -63,8 +63,8 @@ export default function ProjectsTable(props: PropsType) {
                             >
                                 <td>{item.name}</td>
                                 <td>{item.code}</td>
-                                <td>{props.getRefName.type(item.type)}</td>
-                                <td>{props.getRefName.status(item.status)}</td>
+                                <td>{props.refs.projectTypes(item.type)}</td>
+                                <td>{props.refs.projectStatuses(item.status)}</td>
                                 <td>{item.address}</td>
                                 <td className="action-container">
                                     <StyledTooltip title="Открыть">

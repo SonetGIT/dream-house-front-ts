@@ -3,10 +3,10 @@ import type { MaterialRequest } from './materialRequestsSlice';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { TextField, Box, Button, Paper, Typography, Divider } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import type { EnumItem } from '@/features/reference/referenceService';
 import { RiAddLine } from 'react-icons/ri';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { AppButton } from '@/components/ui/AppButton';
+import type { RefItem } from '@/features/reference/useReferenceMap';
 
 // Типы (без изменений)
 export interface MaterialRequestItemForm {
@@ -28,11 +28,12 @@ interface Props {
     request?: MaterialRequest;
     projectId?: number;
     statusId: number;
-    getRefName: {
-        materialTypes?: EnumItem[];
-        materials?: EnumItem[];
-        unitTypes?: EnumItem[];
-    };
+    refs: Record<string, RefItem>;
+    // refs: {
+    //     materialTypes?: EnumItem[];
+    //     materials?: EnumItem[];
+    //     unitsOfMeasure?: EnumItem[];
+    // };
     onSubmit: (data: MaterialRequestCreatePayload) => void;
     onCancel: () => void;
 }
@@ -239,7 +240,7 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                             );
                                                         }}
                                                         options={
-                                                            props.getRefName.materialTypes || []
+                                                            props.refs.materialTypes.data || []
                                                         }
                                                         error={!!fieldState.error}
                                                         helperText={fieldState.error?.message}
@@ -271,8 +272,8 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                     const selectedType =
                                                         items[index]?.material_type;
                                                     const materials =
-                                                        selectedType && props.getRefName.materials
-                                                            ? props.getRefName.materials.filter(
+                                                        selectedType && props.refs.materials
+                                                            ? props.refs.materials.data?.filter(
                                                                   (m) =>
                                                                       Number(m.type) ===
                                                                       Number(selectedType),
@@ -291,7 +292,7 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                             onChange={(value) => {
                                                                 field.onChange(value);
                                                                 const material =
-                                                                    props.getRefName.materials?.find(
+                                                                    props.refs.materials.data?.find(
                                                                         (m) => m.id === value,
                                                                     );
                                                                 setValue(
@@ -300,7 +301,7 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                                     { shouldValidate: true },
                                                                 );
                                                             }}
-                                                            options={materials}
+                                                            options={materials || []}
                                                             disabled={!selectedType}
                                                             error={!!fieldState.error}
                                                             helperText={fieldState.error?.message}
@@ -327,7 +328,7 @@ export default function MaterialReqCreateEditForm(props: Props) {
                                                 rules={{ required: 'Обязательно' }}
                                                 render={({ field, fieldState }) => {
                                                     const unitName =
-                                                        props.getRefName.unitTypes?.find(
+                                                        props.refs.unitsOfMeasure.data?.find(
                                                             (u) => u.id === field.value,
                                                         )?.name ?? '';
 
