@@ -2,7 +2,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { ReferenceService, type EnumItem } from '../reference/referenceService';
 import type { RootAppState } from '@/app/store';
-
+import type { useReference } from './useReference';
+import { getToken } from '../auth/getToken';
+export type ReferenceResult = ReturnType<typeof useReference>;
 interface ExtraArgs {
     config: any; // передаем конфиг справочников через extraArgument
 }
@@ -11,24 +13,19 @@ export const fetchEnum = createAsyncThunk<
     EnumItem[],
     string,
     { extra: ExtraArgs; state: RootAppState }
->('enums/fetchEnum', async (enumName, { getState, extra, rejectWithValue }) => {
-    const state = getState();
-    const token = state.auth.token;
+>('reference/fetchEnum', async (enumName, { extra, rejectWithValue }) => {
+    const token = getToken();
 
+    // 🔥 ВОТ ЗДЕСЬ — ПРАВИЛЬНОЕ МЕСТО
     if (!token) {
-        // Если токена нет — прерываем запрос
-        return rejectWithValue('Токен отсутствует');
+        return rejectWithValue(null); // ⬅️ НЕ ошибка, просто нет токена
     }
 
     const API_URL = import.meta.env.VITE_BASE_URL;
     const service = new ReferenceService(API_URL, token, extra.config);
 
-    // Если данные уже есть — возвращаем их
-    if (state.reference.data[enumName]) return state.reference.data[enumName];
-
     try {
         const items = await service.getEnum(enumName);
-        // console.log('items', items);
         return items;
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка при загрузке справочника');
@@ -48,7 +45,7 @@ const initialState: EnumsState = {
 };
 
 const enumsSlice = createSlice({
-    name: 'enums',
+    name: 'reference',
     initialState,
     reducers: {},
     extraReducers: (builder) => {
@@ -59,11 +56,14 @@ const enumsSlice = createSlice({
             })
             .addCase(fetchEnum.fulfilled, (state, action) => {
                 state.loading[action.meta.arg] = false;
-                state.data[action.meta.arg] = action.payload;
+                state.data[action.meta.arg] = action.payload; // 🔥 ОБЯЗАТЕЛЬНО
             })
+
             .addCase(fetchEnum.rejected, (state, action) => {
                 state.loading[action.meta.arg] = false;
-                state.error[action.meta.arg] = action.payload as string;
+                if (action.payload) {
+                    state.error[action.meta.arg] = action.payload as string;
+                }
             });
     },
 });

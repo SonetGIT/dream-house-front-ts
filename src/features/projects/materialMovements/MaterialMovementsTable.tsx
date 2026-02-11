@@ -11,16 +11,12 @@ import {
     TableHead,
     TableRow,
 } from '@mui/material';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface PropsType {
     data: MaterialMovement[];
     pagination: Pagination | null | undefined;
-    getRefName: {
-        materialName: (id: number) => string;
-        wareHouseName: (id: number) => string;
-        userName: (id: number) => string;
-        movementsName: (id: number) => string;
-    };
+    refs: Record<string, ReferenceResult>;
 }
 
 /*******************************************************************************************************************************/
@@ -57,23 +53,25 @@ export default function MaterialMovementsTable(props: PropsType) {
                                 <TableCell> {formatDateTime(item.date)}</TableCell>
                                 <TableCell>
                                     {item.from_warehouse_id !== null
-                                        ? props.getRefName.wareHouseName(item.from_warehouse_id)
+                                        ? props.refs.warehouses.lookup(item.from_warehouse_id)
                                         : '-'}
                                 </TableCell>
                                 <TableCell>
                                     {item.to_warehouse_id !== null
-                                        ? props.getRefName.wareHouseName(item.to_warehouse_id)
+                                        ? props.refs.warehouses.lookup(item.to_warehouse_id)
                                         : '-'}
                                 </TableCell>
-                                <TableCell>{props.getRefName.userName(item.user_id)}</TableCell>
+                                <TableCell>{props.refs.users.lookup(item.user_id)}</TableCell>
                                 <TableCell>{item.note}</TableCell>
                                 <TableCell>
-                                    {props.getRefName.materialName(item.material_id)}
+                                    {props.refs.materials.lookup(item.material_id)}
                                 </TableCell>
 
                                 <TableCell>{item.quantity}</TableCell>
                                 <TableCell>{item.operation}</TableCell>
-                                <TableCell>{props.getRefName.movementsName(item.status)}</TableCell>
+                                <TableCell>
+                                    {props.refs.materialMovementStatuses.lookup(item.status)}
+                                </TableCell>
                             </TableRow>
                         ))
                     ) : (

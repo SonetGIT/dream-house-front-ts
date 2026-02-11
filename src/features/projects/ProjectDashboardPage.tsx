@@ -10,7 +10,7 @@ import {
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { CgPlayBackwards } from 'react-icons/cg';
 import Dashboard from '@/components/ui/dashboard/Dashboard';
-import { useReferenceMap } from '../reference/useReferenceMap';
+import { useReference } from '../reference/useReference';
 
 export default function ProjectDashboardPage() {
     const navigate = useNavigate();
@@ -21,10 +21,8 @@ export default function ProjectDashboardPage() {
     const { currentProject: project, loading: projectLoading } = useAppSelector(
         (state) => state.projects,
     );
-    const refs = useReferenceMap({
-        projectTypes: ['name'],
-        projectStatuses: ['name'],
-    });
+    const projectTypes = useReference('projectTypes');
+    const projectStatuses = useReference('projectStatuses');
 
     useEffect(() => {
         if (projectId) {
@@ -62,12 +60,15 @@ export default function ProjectDashboardPage() {
                     </span>
 
                     <span>
-                        Тип: <span className="text-strong">{refs.projectTypes(project.type)}</span>
+                        Тип:{' '}
+                        <span className="text-strong">{projectTypes.lookup(project.type)}</span>
                     </span>
 
                     <span>
                         Статус:{' '}
-                        <span className="text-strong">{refs.projectStatuses(project.status)}</span>
+                        <span className="text-strong">
+                            {projectStatuses.lookup(project.status)}
+                        </span>
                     </span>
 
                     <span>

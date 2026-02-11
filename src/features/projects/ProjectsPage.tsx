@@ -6,7 +6,7 @@ import InputSearch from '@/components/ui/InputSearch';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdOutlineRestartAlt } from 'react-icons/md';
-import { useReferenceMap } from '../reference/useReferenceMap';
+import { useReference } from '../reference/useReference';
 
 interface ProjectFilters {
     type?: string | number;
@@ -18,11 +18,11 @@ export default function ProjectsPage() {
     const { items, pagination, loading, error, search } = useAppSelector((state) => state.projects);
 
     // Справочники
-    const refs = useReferenceMap({
-        projectTypes: ['name'],
-        projectStatuses: ['name'],
-    });
-
+    const refs = {
+        projectTypes: useReference('projectTypes'),
+        projectStatuses: useReference('projectStatuses'),
+    };
+    console.log('refs', refs);
     // Локальные состояния
     const [searchText, setSearchText] = useState('');
     const [projectTypeId, setProjectTypeId] = useState<string | number | null>(null);

@@ -20,7 +20,7 @@ import {
 } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import UsersTable from './UsersTable';
-import { useReferenceMap } from '../reference/useReferenceMap';
+import { useReference } from '../reference/useReference';
 
 interface UsersFilters {
     role_id?: string | number;
@@ -32,7 +32,7 @@ export default function UsersPage() {
     const dispatch = useAppDispatch();
     const { items, pagination, loading, error, search } = useAppSelector((state) => state.users);
     // Справочники
-    const refs = useReferenceMap({ userRoles: ['name'] });
+    const refs = { userRoles: useReference('userRoles') };
 
     //Локальные состояния
     const [isFormOpen, setIsFormOpen] = useState(false);

@@ -1,3 +1,4 @@
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { WarehouseStocks } from './warehouseStocksSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 import type { Pagination } from '@/features/users/userSlice';
@@ -14,11 +15,7 @@ import {
 interface PropsType {
     data: WarehouseStocks[];
     pagination: Pagination | null | undefined;
-    getRefName: {
-        materialTypeName: (id: number) => string;
-        materialName: (id: number) => string;
-        unitName: (id: number) => string;
-    };
+    refs: Record<string, ReferenceResult>;
 }
 
 /*******************************************************************************************************************************/
@@ -48,13 +45,13 @@ export default function WarehouseStocksTable(props: PropsType) {
                                 }}
                             >
                                 <TableCell>
-                                    {props.getRefName.materialTypeName(item.material_type)}
+                                    {props.refs.materialTypes.lookup(item.material_type)}
                                 </TableCell>
                                 <TableCell>
-                                    {props.getRefName.materialName(item.material_id)}
+                                    {props.refs.materials.lookup(item.material_id)}
                                 </TableCell>
                                 <TableCell>
-                                    {props.getRefName.unitName(item.unit_of_measure)}
+                                    {props.refs.unitsOfMeasure.lookup(item.unit_of_measure)}
                                 </TableCell>
                                 <TableCell>{item.quantity}</TableCell>
                             </TableRow>

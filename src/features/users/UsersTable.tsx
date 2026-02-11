@@ -6,10 +6,11 @@ import type { Pagination, Users } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { MdAdsClick } from 'react-icons/md';
+import type { ReferenceResult } from '../reference/referenceSlice';
 
 interface PropsType {
     items: Users[];
-    refs: { userRoles: (id: number) => string };
+    refs: Record<string, ReferenceResult>;
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
@@ -63,7 +64,7 @@ export default function UsersTable(props: PropsType) {
                                 <td>{item.middle_name}</td>
                                 <td>{item.email}</td>
                                 <td>{item.phone}</td>
-                                <td>{props.refs.userRoles(item.role_id)}</td>
+                                <td>{props.refs.userRoles.lookup(item.role_id)}</td>
                                 <td className="action-container">
                                     <StyledTooltip title="Редактировать">
                                         <CiEdit

@@ -6,7 +6,7 @@ import { Delete as DeleteIcon } from '@mui/icons-material';
 import { RiAddLine } from 'react-icons/ri';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { AppButton } from '@/components/ui/AppButton';
-import type { RefItem } from '@/features/reference/useReferenceMap';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 // Типы (без изменений)
 export interface MaterialRequestItemForm {
@@ -28,7 +28,7 @@ interface Props {
     request?: MaterialRequest;
     projectId?: number;
     statusId: number;
-    refs: Record<string, RefItem>;
+    refs: Record<string, ReferenceResult>;
     // refs: {
     //     materialTypes?: EnumItem[];
     //     materials?: EnumItem[];

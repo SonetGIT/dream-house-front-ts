@@ -22,7 +22,6 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { AppButton } from '@/components/ui/AppButton';
 import { MdOutlinePlaylistAdd } from 'react-icons/md';
 import { uploadDocumentFile } from './documentFilesSlice';
-
 /***********************************************************************************************************************/
 export function DocumentsTable() {
     const dispatch = useAppDispatch();
@@ -36,7 +35,7 @@ export function DocumentsTable() {
     const [initialData, setInitialData] = useState<DocumentFormData | null>(null);
     const [saving, setSaving] = useState(false);
 
-    const { lookup: getStatusName } = useReference('5c18ca4d-c9ab-41f3-936b-415f060b02b2');
+    const documentStatuses = useReference('documentStatuses');
 
     useEffect(() => {
         dispatch(fetchDocuments({ page: page + 1, size: rowsPerPage }));
@@ -142,7 +141,7 @@ export function DocumentsTable() {
                             >
                                 <TableCell>{doc.id}</TableCell>
                                 <TableCell>{doc.name}</TableCell>
-                                <TableCell>{getStatusName(doc.status)}</TableCell>
+                                <TableCell>{documentStatuses.lookup(doc.status)}</TableCell>
                                 <TableCell>{doc.price}</TableCell>
                                 <TableCell>{formatDateTime(doc.deadline, false)}</TableCell>
                                 <TableCell>{formatDateTime(doc.created_at)}</TableCell>

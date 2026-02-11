@@ -6,6 +6,7 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdAdsClick } from 'react-icons/md';
 import type { Pagination } from '../users/userSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
+import type { ReferenceResult } from '../reference/referenceSlice';
 
 interface PropsType {
     items: Project[];
@@ -14,10 +15,7 @@ interface PropsType {
     pagination: Pagination | null;
     onPrevPage: () => void;
     onNextPage: () => void;
-    refs: {
-        projectTypes: (id: number) => string;
-        projectStatuses: (id: number) => string;
-    };
+    refs: Record<string, ReferenceResult>;
 }
 
 /*******************************************************************************************************************************/
@@ -63,8 +61,8 @@ export default function ProjectsTable(props: PropsType) {
                             >
                                 <td>{item.name}</td>
                                 <td>{item.code}</td>
-                                <td>{props.refs.projectTypes(item.type)}</td>
-                                <td>{props.refs.projectStatuses(item.status)}</td>
+                                <td>{props.refs.projectTypes.lookup(item.type)}</td>
+                                <td>{props.refs.projectStatuses.lookup(item.status)}</td>
                                 <td>{item.address}</td>
                                 <td className="action-container">
                                     <StyledTooltip title="Открыть">

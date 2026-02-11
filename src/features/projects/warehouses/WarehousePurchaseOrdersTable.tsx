@@ -26,25 +26,15 @@ import {
 } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { AppButton } from '@/components/ui/AppButton';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface PropsType {
     orders: PurchaseOrder[];
     warehouseId: string | undefined;
-    getRefName: {
-        materialTypeName: (id: number) => string;
-        materialName: (id: number) => string;
-        unitName: (id: number) => string;
-        suppliersName: (id: number) => string;
-        statusName: (id: number) => string;
-        statusItemName: (id: number) => string;
-    };
+    refs: Record<string, ReferenceResult>;
 }
 
-export default function WarehousePurchaseOrdersTable({
-    orders,
-    warehouseId,
-    getRefName,
-}: PropsType) {
+export default function WarehousePurchaseOrdersTable({ orders, warehouseId, refs }: PropsType) {
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const [receivedMap, setReceivedMap] = useState<Record<number, number | ''>>({});
@@ -127,12 +117,9 @@ export default function WarehousePurchaseOrdersTable({
             if (checkedMap[item.id]) {
                 const rawValue = receivedMap[item.id];
                 const available = getAvailableToReceive(item);
-
                 if (rawValue === '' || rawValue === undefined) {
                     toast.error(
-                        `Укажите количество прихода для "${getRefName.materialName(
-                            item.material_id,
-                        )}"`,
+                        `Укажите количество прихода для "${refs.materials.lookup(item.material_id)}"`,
                     );
                     hasError = true;
                     return;
@@ -141,9 +128,7 @@ export default function WarehousePurchaseOrdersTable({
                 const received_quantity = Number(rawValue);
                 if (isNaN(received_quantity) || received_quantity <= 0) {
                     toast.error(
-                        `Количество должно быть > 0 для "${getRefName.materialName(
-                            item.material_id,
-                        )}"`,
+                        `Количество должно быть > 0 для "${refs.materials.lookup(item.material_id)}"`,
                     );
                     hasError = true;
                     return;
@@ -151,9 +136,7 @@ export default function WarehousePurchaseOrdersTable({
 
                 if (received_quantity > available) {
                     toast.error(
-                        `Макс. приход: ${available} для "${getRefName.materialName(
-                            item.material_id,
-                        )}"`,
+                        `Макс. приход: ${available} для "${refs.materials.lookup(item.material_id)}"`,
                     );
                     hasError = true;
                     return;
@@ -231,10 +214,11 @@ export default function WarehousePurchaseOrdersTable({
                                 </TableCell>
                                 <TableCell>
                                     Поставщик:{' '}
-                                    <strong>{getRefName.suppliersName(req.supplier_id)}</strong>
+                                    <strong>{refs.suppliers.lookup(req.supplier_id)}</strong>
                                 </TableCell>
                                 <TableCell>
-                                    Статус: <strong>{getRefName.statusName(req.status)}</strong>
+                                    Статус:{' '}
+                                    <strong>{refs.purchaseOrderStatuses.lookup(req.status)}</strong>
                                 </TableCell>
                             </TableRow>
 
@@ -302,12 +286,12 @@ export default function WarehousePurchaseOrdersTable({
                                                                 }}
                                                             >
                                                                 <TableCell>
-                                                                    {getRefName.materialTypeName(
+                                                                    {refs.materialTypes.lookup(
                                                                         item.material_type,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {getRefName.materialName(
+                                                                    {refs.materials.lookup(
                                                                         item.material_id,
                                                                     )}
                                                                 </TableCell>
@@ -315,7 +299,7 @@ export default function WarehousePurchaseOrdersTable({
                                                                     {item.quantity}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {getRefName.unitName(
+                                                                    {refs.unitsOfMeasure.lookup(
                                                                         item.unit_of_measure,
                                                                     )}
                                                                 </TableCell>
@@ -326,7 +310,7 @@ export default function WarehousePurchaseOrdersTable({
                                                                     {item.summ ?? '—'}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {getRefName.statusItemName(
+                                                                    {refs.purchaseOrderItemStatuses.lookup(
                                                                         item.status,
                                                                     )}
                                                                 </TableCell>

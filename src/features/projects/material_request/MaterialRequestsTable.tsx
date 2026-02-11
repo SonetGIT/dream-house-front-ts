@@ -19,17 +19,11 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { signMaterialRequest, type MaterialRequest } from './materialRequestsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { Users } from '@/features/users/userSlice';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface PropsType {
     data: MaterialRequest[];
-    refs: {
-        materialTypes: (id: number) => string;
-        materials: (id: number) => string;
-        unitsOfMeasure: (id: number) => string;
-        users: (id: number) => string;
-        materialRequestStatuses: (id: number) => string;
-        materialRequestItemStatuses: (id: number) => string;
-    };
+    refs: Record<string, ReferenceResult>;
 }
 
 /*************************************************************************************************************************/
@@ -183,7 +177,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                     <TableCell>
                                         Статус заявки:{' '}
                                         <strong>
-                                            {props.refs.materialRequestStatuses(req.status)}
+                                            {props.refs.materialRequestStatuses.lookup(req.status)}
                                         </strong>
                                     </TableCell>
                                     <TableCell>
@@ -235,17 +229,17 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                 }}
                                                             >
                                                                 <TableCell>
-                                                                    {props.refs.materialTypes(
+                                                                    {props.refs.materialTypes.lookup(
                                                                         item.material_type,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.refs.materials(
+                                                                    {props.refs.materials.lookup(
                                                                         item.material_id,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.refs.unitsOfMeasure(
+                                                                    {props.refs.unitsOfMeasure.lookup(
                                                                         item.unit_of_measure,
                                                                     )}
                                                                 </TableCell>
@@ -256,7 +250,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                     {item.comment ?? '—'}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {props.refs.materialRequestItemStatuses(
+                                                                    {props.refs.materialRequestItemStatuses.lookup(
                                                                         req.status,
                                                                     )}
                                                                 </TableCell>
@@ -293,7 +287,9 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                 fontStyle="italic"
                                                             >
                                                                 {s.userId
-                                                                    ? props.refs.users(s.userId)
+                                                                    ? props.refs.users.lookup(
+                                                                          s.userId,
+                                                                      )
                                                                     : '—'}
                                                             </Typography>
                                                             <Typography

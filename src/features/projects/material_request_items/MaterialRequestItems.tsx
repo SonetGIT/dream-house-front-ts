@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { setFilters } from '../projectsSlice';
-import { useReference } from '../../reference/useReference';
 import PurchasingAgentItemsTable from './PurchasingAgentItemsTable';
 import { Box } from '@mui/material';
 import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
+import { useReference } from '@/features/reference/useReference';
 
 interface MaterialFilters {
     mType?: string | number;
@@ -18,63 +18,21 @@ export default function MaterialRequestItems() {
     const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
     const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
-    console.log('ITEMS', items);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     // Справочники
-    const { data: statusType, lookup: getMatReqItemStatusName } = useReference(
-        'beaaf9c2-b0d1-4c1c-8861-5723b936c334',
-    ); //api/materialRequestItemStatuses/gets
-    const { data: materialTypes, lookup: getMaterialTypeName } = useReference(
-        '681635e7-3eff-413f-9a07-990bfe7bc68a',
-    );
-    const { data: materials, lookup: getMaterialName } = useReference(
-        '7c52acfc-843a-4242-80ba-08f7439a29a7',
-    );
-    const { data: unitTypes, lookup: getUnitOfMeasure } = useReference(
-        '2198d87a-d834-4c5d-abf8-8925aeed784e',
-    );
-    const { data: currency, lookup: getCurrencies } = useReference(
-        '52fc32f7-44dd-42f2-92d2-bfcbb56f466d',
-    );
-    const { data: suppliers, lookup: getSuppliersName } = useReference(
-        '7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf',
-    );
+    const refs = {
+        materialRequestItemStatuses: useReference('materialRequestItemStatuses'),
+        materialTypes: useReference('materialTypes'),
+        materials: useReference('materials'),
+        unitsOfMeasure: useReference('unitsOfMeasure'),
+        currencies: useReference('currencies'),
+        suppliers: useReference('suppliers'),
+    };
 
     const fullyOrderedStatusId = useMemo(() => {
-        return statusType?.find((s) => s.id === 4)?.id;
-    }, [statusType]);
-
-    const getRefName = useMemo(
-        () => ({
-            unitName: getUnitOfMeasure,
-            materialType: getMaterialTypeName,
-            materialName: getMaterialName,
-            statusName: getMatReqItemStatusName,
-            currencies: getCurrencies,
-            suppliersName: getSuppliersName,
-            materialTypes,
-            materials,
-            unitTypes,
-            statusType,
-            currency,
-            suppliers,
-        }),
-        [
-            getUnitOfMeasure,
-            getMaterialTypeName,
-            getMaterialName,
-            getMatReqItemStatusName,
-            getCurrencies,
-            getSuppliersName,
-            materialTypes,
-            materials,
-            unitTypes,
-            statusType,
-            currency,
-            suppliers,
-        ],
-    );
+        return refs.materialRequestItemStatuses.data?.find((s) => s.id === 4)?.id;
+    }, [refs.materialRequestItemStatuses.data]);
 
     // Локальные состояния
     const [materialTypeId, setMaterialTypeId] = useState<string | number | null>(null);
@@ -112,20 +70,6 @@ export default function MaterialRequestItems() {
         setMaterialId(null);
     }, [materialTypeId]);
 
-    const filteredMaterials = useMemo(() => {
-        if (!materialTypeId) return [];
-        return (materials || []).filter((m) => m.type === materialTypeId);
-    }, [materials, materialTypeId]);
-
-    // ===== 5. Сброс данные поиска и фильтра =====
-    const handleReset = () => {
-        setMaterialTypeId(null);
-        setMaterialId(null);
-
-        dispatch(setFilters({}));
-        dispatch(fetchPurchasingAgentItems({ page: 1, size: 10, project_id: projectId }));
-    };
-
     // ===== 6. Пагинация =====
     const handleNextPage = () => {
         if (!pagination?.hasNext) return;
@@ -161,7 +105,7 @@ export default function MaterialRequestItems() {
                     {/* ======= ТАБЛИЦА ======= */}
                     <PurchasingAgentItemsTable
                         items={items}
-                        getRefName={getRefName}
+                        refs={refs}
                         pagination={pagination}
                         onPrevPage={handlePrevPage}
                         onNextPage={handleNextPage}

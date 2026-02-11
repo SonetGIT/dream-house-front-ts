@@ -1,14 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import { rootReducer } from './rootReducer';
-import configJson from '../features/reference/enumConfig.json';
+import enumConfig from '../features/reference/enumConfig.json';
 
 export const store = configureStore({
     reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             thunk: {
-                extraArgument: { config: configJson },
+                extraArgument: { config: enumConfig },
             },
             serializableCheck: false,
         }),

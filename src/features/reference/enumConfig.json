@@ -46,8 +46,8 @@
     "users": {
         "data": {
             "id": "id",
-            "name": ["username"],
-            "userFIO": ["last_name", " ", "first_name"],
+            "name": ["last_name", " ", "first_name"],
+            "username": ["username"],
             "role_id": "role_id"
         },
         "apiName": "/users/gets"
@@ -87,7 +87,6 @@
         },
         "apiName": "/warehouses/gets"
     },
-
     "purchaseOrderStatuses": {
         "data": {
             "id": "id",

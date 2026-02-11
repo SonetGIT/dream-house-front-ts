@@ -38,7 +38,7 @@ export interface DocumentFormData {
 interface DocumentCreateEditFormProps {
     open: boolean;
     onClose: () => void;
-    documentId: number;
+    documentId?: number;
     initialData: DocumentFormData;
     submitting?: boolean;
     onSubmit: (data: DocumentFormData, files: File[]) => void | Promise<void>;
@@ -301,7 +301,7 @@ export function DocumentCreateEditForm({
                 <DialogContent dividers>
                     <AuditLogTable
                         entity_type={'document'}
-                        entity_id={documentId}
+                        entity_id={documentId || 0}
                         formMetadata={documentFormData}
                     />
                 </DialogContent>

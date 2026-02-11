@@ -16,48 +16,39 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchPurchaseOrders } from './purchaseOrdersSlice';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { useReference } from '@/features/reference/useReference';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 import { formatDateTime } from '@/utils/formatDateTime';
+import { useReference } from '@/features/reference/useReference';
 
 /***********************************************************************************************************************************/
 export default function PurchaseOrdersTable() {
     const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    const { lookup: getPurchaseOrderStatusesName } = useReference(
-        '84242cf6-76a5-403a-bd87-63f58c539d2b',
-    ); //purchaseOrderStatuses/gets
-    const { lookup: getPurchaseOrderItemStatusesName } = useReference(
-        '2beaaf9c2-b0d1-4c1c-8861-6c3345723b93',
-    ); //purchaseOrderItemStatuses/gets
-    const { lookup: getSuppliersName } = useReference('7ec0dff6-a9cd-46fe-bc8a-d32f20bcdfbf');
-    const { lookup: getMaterialTypeName } = useReference('681635e7-3eff-413f-9a07-990bfe7bc68a');
-    const { lookup: getMaterialName } = useReference('7c52acfc-843a-4242-80ba-08f7439a29a7');
-    const { lookup: getUnitOfMeasure } = useReference('2198d87a-d834-4c5d-abf8-8925aeed784e');
+
+    const refs = {
+        purchaseOrderStatuses: useReference('purchaseOrderStatuses'),
+        purchaseOrderItemStatuses: useReference('purchaseOrderItemStatuses'),
+        suppliers: useReference('suppliers'),
+        materialTypes: useReference('materialTypes'),
+        materials: useReference('materials'),
+        unitsOfMeasure: useReference('unitsOfMeasure'),
+    };
 
     const toggleRow = (id: number) => {
         setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
     };
     const { data: orders, loading } = useAppSelector((state) => state.purchaseOrders);
 
-    // 🔥 Загрузка списка при монтировании
+    //Загрузка списка при монтировании
     useEffect(() => {
         dispatch(fetchPurchaseOrders({ page: 1, size: 10, project_id: projectId }));
     }, [dispatch]);
 
     if (loading) return <Typography>Загрузка заявок...</Typography>;
 
-    const getRefName = {
-        materialTypeName: getMaterialTypeName,
-        materialName: getMaterialName,
-        unitName: getUnitOfMeasure,
-        suppliersName: getSuppliersName,
-        statusName: getPurchaseOrderStatusesName,
-        statusItemName: getPurchaseOrderItemStatusesName,
-    };
-
+    /***********************************************************************************************************************************/
     return (
         <TableContainer component={Paper} className="table-container">
             <Table className="table">
@@ -95,11 +86,13 @@ export default function PurchaseOrdersTable() {
                                     </TableCell>
                                     <TableCell>
                                         Поставщик:
-                                        <strong>{getRefName.suppliersName(req.supplier_id)}</strong>
+                                        <strong>{refs.suppliers.lookup(req.supplier_id)}</strong>
                                     </TableCell>
                                     <TableCell>
                                         Статус:
-                                        <strong>{getRefName.statusName(req.status)}</strong>
+                                        <strong>
+                                            {refs.purchaseOrderStatuses.lookup(req.status)}
+                                        </strong>
                                     </TableCell>
                                 </TableRow>
 
@@ -143,12 +136,12 @@ export default function PurchaseOrdersTable() {
                                                                     {item.purchase_order_id}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {getRefName.materialTypeName(
+                                                                    {refs.materialTypes.lookup(
                                                                         item.material_type,
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {getRefName.materialName(
+                                                                    {refs.materials.lookup(
                                                                         item.material_id,
                                                                     )}
                                                                 </TableCell>
@@ -156,7 +149,7 @@ export default function PurchaseOrdersTable() {
                                                                     {item.quantity}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {getRefName.unitName(
+                                                                    {refs.unitsOfMeasure.lookup(
                                                                         item.unit_of_measure,
                                                                     )}
                                                                 </TableCell>
@@ -169,7 +162,7 @@ export default function PurchaseOrdersTable() {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <strong>
-                                                                        {getRefName.statusItemName(
+                                                                        {refs.purchaseOrderItemStatuses.lookup(
                                                                             item.status,
                                                                         )}
                                                                     </strong>

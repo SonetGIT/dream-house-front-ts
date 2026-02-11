@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '../../reference/useReference';
 import { fetchWarehouses } from './warehousesSlice';
@@ -13,14 +13,8 @@ export default function WarehousesPage() {
     const { data, pagination } = useAppSelector((state) => state.warehouses);
 
     // Справочники
-    const { lookup: getUserName } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
+    const refs = { users: useReference('users') };
 
-    const getRefName = useMemo(
-        () => ({
-            userName: getUserName,
-        }),
-        [getUserName],
-    );
     //Первичная загрузка =====
     useEffect(() => {
         dispatch(fetchWarehouses({ page: 1, size: 10, project_id: projectId }));
@@ -30,7 +24,7 @@ export default function WarehousesPage() {
     return (
         <div>
             {/* Список складов */}
-            <WarehousesList items={data} pagination={pagination} getRefName={getRefName} />
+            <WarehousesList items={data} pagination={pagination} refs={refs} />
         </div>
     );
 }

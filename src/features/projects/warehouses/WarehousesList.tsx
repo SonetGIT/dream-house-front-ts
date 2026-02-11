@@ -14,13 +14,12 @@ import {
     TableHead,
     TableRow,
 } from '@mui/material';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface PropsType {
     items: Warehouse[];
     pagination: Pagination | null;
-    getRefName: {
-        userName: (id: number) => string;
-    };
+    refs: Record<string, ReferenceResult>;
 }
 
 /*******************************************************************************************************************************/
@@ -63,7 +62,7 @@ export default function WarehousesList(props: PropsType) {
                                 <TableCell>{item.name}</TableCell>
                                 <TableCell>{item.code}</TableCell>
                                 <TableCell>{item.address}</TableCell>
-                                <TableCell>{props.getRefName.userName(item.manager_id)}</TableCell>
+                                <TableCell>{props.refs.users.lookup(item.manager_id)}</TableCell>
                                 <TableCell>{item.phone}</TableCell>
                                 <TableCell className="action-container">
                                     <StyledTooltip title="Открыть">

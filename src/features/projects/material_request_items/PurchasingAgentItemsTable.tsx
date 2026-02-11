@@ -17,7 +17,6 @@ import {
     fetchPurchasingAgentItems,
     type MaterialRequestItems,
 } from '@/features/projects/material_request_items/materialRequestItemsSlice';
-import type { EnumItem } from '@/features/reference/referenceService';
 import { compactTextFieldSx } from '@/styles/ui_style';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { TablePagination } from '@/components/ui/TablePagination';
@@ -28,17 +27,11 @@ import toast from 'react-hot-toast';
 import type { Pagination } from '@/features/users/userSlice';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 import { AppButton } from '@/components/ui/AppButton';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface PurchasingAgentItemsProps {
     items: MaterialRequestItems[];
-    getRefName: {
-        materialType: (id: number) => string;
-        materialName: (id: number) => string;
-        unitName: (id: number) => string;
-        statusName: (id: number) => string;
-        currency?: EnumItem[];
-        suppliers?: EnumItem[];
-    };
+    refs: Record<string, ReferenceResult>;
     pagination: Pagination | null;
     onPrevPage: () => void;
     onNextPage: () => void;
@@ -51,7 +44,7 @@ interface FormValues {
 
 export default function PurchasingAgentItemsTable({
     items,
-    getRefName,
+    refs,
     pagination,
     onPrevPage,
     onNextPage,
@@ -199,10 +192,16 @@ export default function PurchasingAgentItemsTable({
                                     opacity: readonly ? 0.5 : 1,
                                 }}
                             >
-                                <TableCell>{getRefName.statusName(item.status)}</TableCell>
-                                <TableCell>{getRefName.materialType(item.material_type)}</TableCell>
-                                <TableCell>{getRefName.materialName(item.material_id)}</TableCell>
-                                <TableCell>{getRefName.unitName(item.unit_of_measure)}</TableCell>
+                                <TableCell>
+                                    {refs.materialRequestItemStatuses.lookup(item.status)}
+                                </TableCell>
+                                <TableCell>
+                                    {refs.materialTypes.lookup(item.material_type)}
+                                </TableCell>
+                                <TableCell>{refs.materials.lookup(item.material_id)}</TableCell>
+                                <TableCell>
+                                    {refs.unitsOfMeasure.lookup(item.unit_of_measure)}
+                                </TableCell>
                                 <TableCell>{item.quantity}</TableCell>
 
                                 {/* Цена */}
@@ -249,7 +248,7 @@ export default function PurchasingAgentItemsTable({
                                                     label=""
                                                     value={field.value ?? ''}
                                                     onChange={field.onChange}
-                                                    options={getRefName.currency || []}
+                                                    options={refs.currencies.data || []}
                                                     disabled={readonly}
                                                     error={!!fieldState.error}
                                                     minWidth={10}
@@ -310,7 +309,7 @@ export default function PurchasingAgentItemsTable({
                 <ReferenceSelect
                     label=""
                     placeholder="Выберите поставщика"
-                    options={getRefName.suppliers || []}
+                    options={refs.suppliers.data || []}
                     value={suppliersId || ''}
                     onChange={setSuppliersId}
                     error={!!supplierError}

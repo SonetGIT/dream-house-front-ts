@@ -3,7 +3,6 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableContainer,
     TableHead,
     TableRow,
     Paper,
@@ -17,8 +16,8 @@ import { Fragment, useEffect, useState } from 'react';
 import { fetchAuditLog } from './auditLogSlice';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
+import { useReference } from '../reference/useReference';
 import { AuditLogMetadataList } from './AuditLogMetadataList';
-import { useReferenceMap } from '../reference/useReferenceMap';
 
 interface FormField {
     type: string;
@@ -44,9 +43,11 @@ interface PropsType {
 
 export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsType) {
     const dispatch = useAppDispatch();
-    const userRefs = useReferenceMap({ users: ['userFIO'] });
+
     const { data, loading, error } = useAppSelector((state) => state.auditLog);
     const [openRowId, setOpenRowId] = useState<number | null>(null);
+
+    const users = useReference('users');
 
     useEffect(() => {
         if (entity_id) {
@@ -92,27 +93,25 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
 
     const handleToggle = (id: number) => setOpenRowId(openRowId === id ? null : id);
 
+    /******************************************************************************************************************************/
     return (
-        <TableContainer component={Paper}>
-            <Table>
+        <Paper variant="outlined">
+            <Table className="table">
                 <TableHead>
                     <TableRow>
                         <TableCell>Дата</TableCell>
                         <TableCell>Пользователь</TableCell>
-                        <TableCell>Вид</TableCell>
-                        <TableCell>Item affected</TableCell>
-                        <TableCell>Change</TableCell>
-                        <TableCell>Actions</TableCell>
+                        <TableCell>Сущность</TableCell>
+                        <TableCell>Действие</TableCell>
+                        <TableCell>Свернуть</TableCell>
                     </TableRow>
                 </TableHead>
 
                 <TableBody>
                     {data?.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={6} align="center">
-                                <Typography variant="body2" color="text.secondary">
-                                    История изменений отсутствует
-                                </Typography>
+                            <TableCell>
+                                <Typography>История изменений отсутствует</Typography>
                             </TableCell>
                         </TableRow>
                     )}
@@ -120,12 +119,18 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                     {data?.map((log) => (
                         <Fragment key={log.id}>
                             {/* Основная строка */}
-                            <TableRow hover>
-                                <TableCell>{formatDateTime(log.created_at)}</TableCell>
-                                <TableCell>{userRefs.userFIO(log.user_id)}</TableCell>
-                                <TableCell>{log.action}</TableCell>
-                                <TableCell>{log.entity_type}</TableCell>
-                                <TableCell>
+                            <TableRow
+                                hover
+                                sx={{ cursor: 'pointer' }}
+                                onClick={() => handleToggle(log.id)}
+                            >
+                                <TableCell align="center">
+                                    {formatDateTime(log.created_at)}
+                                </TableCell>
+                                <TableCell align="center">{users.lookup(log.user_id)}</TableCell>
+                                <TableCell align="center">{log.entity_type}</TableCell>
+                                <TableCell align="center">{log.action}</TableCell>
+                                <TableCell align="center">
                                     {Object.keys(log.old_values || {}).length > 0 ? (
                                         <IconButton
                                             size="small"
@@ -138,25 +143,34 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                                     )}
                                 </TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell colSpan={6} sx={{ p: 0 }}>
+                            {/* <TableRow>
+                                <TableCell colSpan={5} sx={{ p: 0 }}>
                                     <Collapse
                                         in={openRowId === log.id}
                                         timeout="auto"
                                         unmountOnExit
                                     >
-                                        <AuditLogMetadataList
-                                            formMetadata={formMetadata!}
-                                            oldValues={log.old_values || {}}
-                                            newValues={log.new_values || {}}
-                                        />
+                                        <Box
+                                            sx={{
+                                                all: 'unset',
+                                                display: 'block',
+                                                width: '100%',
+                                                isolation: 'isolate',
+                                            }}
+                                        >
+                                            <AuditLogMetadataList
+                                                formMetadata={formMetadata!}
+                                                oldValues={log.old_values || {}}
+                                                newValues={log.new_values || {}}
+                                            />
+                                        </Box>
                                     </Collapse>
                                 </TableCell>
-                            </TableRow>
+                            </TableRow> */}
                         </Fragment>
                     ))}
                 </TableBody>
             </Table>
-        </TableContainer>
+        </Paper>
     );
 }

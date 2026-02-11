@@ -1,7 +1,6 @@
 export interface EnumItem {
     id: number | string;
     name?: string;
-    userFIO?: string;
     type?: number;
     unit_of_measure?: number;
     currency?: string;
@@ -59,62 +58,24 @@ export class ReferenceService {
 
     private transformItem(item: Record<string, unknown>, mapping: EnumFieldMapping): EnumItem {
         const result: EnumItem = {
-            id: (item[mapping.id] as string | number) ?? '',
+            id: String(item[mapping.id]),
         };
 
         for (const [key, path] of Object.entries(mapping)) {
             if (key === 'id') continue;
 
             if (Array.isArray(path)) {
-                // 🔹 Собираем несколько полей в одну строку
-                result[key] =
-                    path
-                        .map((part) => {
-                            if (part === ' ') return ' ';
-                            if (part === '-') return '-';
-                            return String(item[part] ?? '');
-                        })
-                        .join('')
-                        .trim() || null;
+                const value = path
+                    .map((p) => (p === ' ' || p === '-' ? p : String(item[p] ?? '')))
+                    .join('')
+                    .trim();
+
+                result[key] = value || null;
             } else {
-                // Обычное поле
-                const value = item[path];
-                result[key] = (value as string | number | boolean | null | undefined) ?? null;
+                result[key] = item[path] != null ? String(item[path]) : null;
             }
         }
 
         return result;
     }
-
-    // private transformItem(item: Record<string, unknown>, mapping: EnumFieldMapping): EnumItem {
-    //     // Создаём корректно типизированный EnumItem
-
-    //     const result: EnumItem = {
-    //         id: (item[mapping.id] as string | number) ?? '',
-    //     };
-    //     // console.log('item2', item);
-    //     // console.log('result2', result);
-
-    //     for (const [key, path] of Object.entries(mapping)) {
-    //         if (key === 'id') continue;
-
-    //         if (Array.isArray(path)) {
-    //             // поддержка массива строк (например ["name_ru", " ", "name_kg"])
-    //             result[key] =
-    //                 path
-    //                     .map((part) =>
-    //                         part === '-' || part === ' '
-    //                             ? part
-    //                             : ((item[part] as string | number | null) ?? ''),
-    //                     )
-    //                     .join('')
-    //                     .trim() || null;
-    //         } else {
-    //             // обычная строка
-    //             const value = item[path];
-    //             result[key] = (value as string | number | boolean | null | undefined) ?? null;
-    //         }
-    //     }
-    //     return result;
-    // }
 }
