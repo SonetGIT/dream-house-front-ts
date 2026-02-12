@@ -21,11 +21,10 @@ interface PropsType {
     pagination: Pagination | null;
 }
 
-export function DocumentStagesTable(props: PropsType) {
+export default function DocumentStagesTable(props: PropsType) {
     const navigate = useNavigate();
     const handleRowClick = (docStage: DocumentStages) => {
         navigate(`${docStage.id}`, { state: { docStage } });
-        console.log('docStages', docStage);
     };
 
     /*******************************************************************************************************************************/

@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchDocumentStages } from './documentStagesSlice';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { DocumentStagesTable } from './DocumentStagesTable';
+import DocumentStagesTable from './DocumentStagesTable';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 
 /*******************************************************************************************************************************************************************/
-export default function DocumentsPage() {
+export default function DocumentStagesPage() {
     const dispatch = useAppDispatch();
     const { data, pagination, loading, error } = useAppSelector((state) => state.documentStages);
 
@@ -28,9 +28,9 @@ export default function DocumentsPage() {
 
     /********************************************************************************************************************************************/
     return (
-        <div>
+        <>
             <SectionHeader title="Список этапов юр. отдела" />
             <DocumentStagesTable items={data} pagination={pagination} />
-        </div>
+        </>
     );
 }

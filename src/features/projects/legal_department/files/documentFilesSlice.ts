@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
-import { downloadFile } from '@/utils/downloadFile';
+import { downloadFile } from '@/features/projects/legal_department/files/downloadFile';
 
 export interface DocumentFile {
     id: number;

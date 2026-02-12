@@ -9,6 +9,7 @@ import {
     Stack,
 } from '@mui/material';
 import type { FormMetadata } from './AuditLogTable';
+import { useReference } from '../reference/useReference';
 
 interface Props {
     formMetadata: FormMetadata;
@@ -18,13 +19,22 @@ interface Props {
 
 /****************************************************************************************************************************/
 export function AuditLogMetadataList({ formMetadata, oldValues, newValues }: Props) {
+    const users = useReference('users');
+
     if (!formMetadata) return null;
 
     const fields = formMetadata.sections.flatMap((s) => s.contents);
 
-    const renderValue = (value: any) => {
+    const renderValue = (fieldName: string, value: any) => {
         if (value === null || value === undefined) {
             return <Typography color="info">—</Typography>;
+        }
+
+        //responsible_users - ФИО через запятую
+        if (fieldName === 'responsible_users' && Array.isArray(value)) {
+            const names = value.map((id) => users.lookup(id)).join(', ');
+
+            return <Typography variant="body2">{names || '—'}</Typography>;
         }
 
         if (Array.isArray(value)) {
@@ -42,11 +52,12 @@ export function AuditLogMetadataList({ formMetadata, oldValues, newValues }: Pro
         return <Typography variant="body2">{String(value)}</Typography>;
     };
 
+    /***********************************************************************************************************************/
     return (
-        <Paper variant="outlined" sx={{ m: 2, overflowX: 'auto' }}>
+        <Paper variant="outlined" sx={{ m: 1 }}>
             <Table size="small">
                 <TableHead>
-                    <TableRow>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
                         <TableCell />
                         {fields.map((field) => (
                             <TableCell key={field.name}>
@@ -62,7 +73,9 @@ export function AuditLogMetadataList({ formMetadata, oldValues, newValues }: Pro
                     {/* Строка: Было */}
                     <TableRow>
                         <TableCell>
-                            <Typography variant="body2">Было</Typography>
+                            <Typography variant="body2" fontWeight={500}>
+                                Было:
+                            </Typography>
                         </TableCell>
 
                         {fields.map((field) => {
@@ -74,10 +87,10 @@ export function AuditLogMetadataList({ formMetadata, oldValues, newValues }: Pro
                                 <TableCell
                                     key={field.name}
                                     sx={{
-                                        bgcolor: isChanged ? 'error.light' : undefined,
+                                        bgcolor: isChanged ? '#ef444496' : undefined,
                                     }}
                                 >
-                                    {renderValue(oldVal)}
+                                    {renderValue(field.name, oldVal)}
                                 </TableCell>
                             );
                         })}
@@ -86,7 +99,9 @@ export function AuditLogMetadataList({ formMetadata, oldValues, newValues }: Pro
                     {/* Строка: Стало */}
                     <TableRow>
                         <TableCell>
-                            <Typography variant="body2">Стало</Typography>
+                            <Typography variant="body2" fontWeight={500}>
+                                Стало:
+                            </Typography>
                         </TableCell>
 
                         {fields.map((field) => {
@@ -98,10 +113,10 @@ export function AuditLogMetadataList({ formMetadata, oldValues, newValues }: Pro
                                 <TableCell
                                     key={field.name}
                                     sx={{
-                                        bgcolor: isChanged ? 'success.light' : undefined,
+                                        bgcolor: isChanged ? '	#10b981a7 ' : undefined,
                                     }}
                                 >
-                                    {renderValue(newVal)}
+                                    {renderValue(field.name, newVal)}
                                 </TableCell>
                             );
                         })}

@@ -18,13 +18,16 @@ import {
     Button,
 } from '@mui/material';
 import { AiOutlineUpload } from 'react-icons/ai';
-import { DocumentFilesList } from './DocumentFilesList';
 import { AppButton } from '@/components/ui/AppButton';
 import { useReference } from '@/features/reference/useReference';
-import { useAppSelector } from '@/app/store';
+import { useAppDispatch, useAppSelector } from '@/app/store';
 import { documentFormData } from '@/features/auditLog/metaData/document';
 import { AuditLogTable } from '@/features/auditLog/AuditLogTable';
 import { MdHistory } from 'react-icons/md';
+import { DocumentFilesList } from '../files/DocumentFilesList';
+import { fetchDocuments, signDocument } from './documentsSlice';
+import toast from 'react-hot-toast';
+import StatusChip from '@/components/ui/StatusChip';
 
 export interface DocumentFormData {
     name: string;
@@ -53,17 +56,17 @@ export function DocumentCreateEditForm({
     submitting = false,
     onSubmit,
 }: DocumentCreateEditFormProps) {
+    const dispatch = useAppDispatch();
     const [formData, setFormData] = useState<DocumentFormData>(initialData);
     const [errors, setErrors] = useState<Partial<Record<keyof DocumentFormData, string>>>({});
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [openHistory, setOpenHistory] = useState(false);
 
-    const { data: statuses } = useReference('5c18ca4d-c9ab-41f3-936b-415f060b02b2');
-    const { data: users } = useReference('d0336075-e674-41ef-aa38-189de9adaeb4');
+    const documentStatuses = useReference('documentStatuses');
+    const users = useReference('users');
     const currentUser = useAppSelector((state) => state.auth.user); //users?.filter((u) => u.role_id === 14) ?? [];
-    const lawyers = users?.filter((u) => u.role_id === currentUser?.role_id) ?? [];
+    const lawyers = users.data?.filter((u) => u.role_id === String(currentUser?.role_id)) ?? [];
 
-    // const { data: auditLog } = useAppSelector((s) => s.auditLog);
     useEffect(() => {
         if (open) {
             setFormData({
@@ -92,20 +95,68 @@ export function DocumentCreateEditForm({
         setPendingFiles((prev) => [...prev, ...files]);
     };
 
+    const handleSign = (documentId: number) => {
+        const roleId = Number(currentUser?.role_id);
+
+        // роли, которые могут подписывать - админ, директор
+        if (roleId !== 1 && roleId !== 2) {
+            toast.error('У вас нет прав на подписание документа');
+            return;
+        }
+
+        dispatch(signDocument(documentId))
+            .unwrap()
+            .then(() => {
+                dispatch(fetchDocuments({ page: 1, size: 10 }));
+                toast.success('Документ успешно подписан');
+            })
+            .catch((err) => {
+                toast.error(err || 'Ошибка при подписании');
+            });
+    };
+
     /****************************************************************************************************************************/
     return (
         <Dialog className="table" open={open} onClose={onClose} fullWidth maxWidth="md">
-            <Box sx={{ m: 2 }}>
-                <Typography sx={{ textTransform: 'uppercase', color: '#1f4774', fontWeight: 600 }}>
-                    {documentId
-                        ? `Редактировать документ № ${documentId}`
-                        : 'Создать новый документ'}
-                </Typography>
-                <Typography variant="body2" mt={1} sx={{ color: '#888787' }}>
-                    {documentId
-                        ? 'Обновите информацию о документе и управляйте файлами'
-                        : 'Заполните информацию о новом документе'}
-                </Typography>
+            <Box
+                sx={{
+                    m: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                }}
+            >
+                <Box>
+                    <Typography
+                        sx={{ textTransform: 'uppercase', color: '#1f4774', fontWeight: 600 }}
+                    >
+                        {documentId
+                            ? `Редактировать документ № ${documentId}`
+                            : 'Создать новый документ'}
+                    </Typography>
+                    <Typography variant="body2" mt={1} sx={{ color: '#888787' }}>
+                        {documentId
+                            ? 'Обновите информацию о документе и управляйте файлами'
+                            : 'Заполните информацию о новом документе'}
+                    </Typography>
+                </Box>
+
+                {/* История */}
+                {documentId && (
+                    <Box>
+                        <AppButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<MdHistory />}
+                            onClick={() => setOpenHistory(true)}
+                            sx={{ border: 'none', fontWeight: '500' }}
+                        >
+                            История
+                        </AppButton>
+                    </Box>
+                )}
             </Box>
             <DialogContent dividers>
                 <Box
@@ -148,11 +199,11 @@ export function DocumentCreateEditForm({
                         sx={{ gridColumn: '1 / -1' }}
                     />
                     <FormControl error={!!errors.responsible_users} fullWidth required size="small">
-                        <InputLabel>Соисполнители</InputLabel>
+                        <InputLabel>Исполнители</InputLabel>
 
                         <Select
                             multiple
-                            label="Соисполнители *"
+                            label="Исполнители *"
                             value={formData.responsible_users}
                             onChange={(e) =>
                                 handleChange('responsible_users', e.target.value as number[])
@@ -192,7 +243,11 @@ export function DocumentCreateEditForm({
                         helperText={errors.deadline}
                         size="small"
                         fullWidth
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
                     />
+
                     {/* Статус — занимает всю ширину, но контент выровнен по правому краю */}
                     <Box
                         sx={{
@@ -211,9 +266,10 @@ export function DocumentCreateEditForm({
                             }}
                         >
                             <Typography variant="body2">Статус документа:</Typography>
-                            <Typography variant="body2" fontWeight={500}>
-                                {statuses?.find((s) => s.id === formData.status)?.name ?? ''}
-                            </Typography>
+                            <StatusChip
+                                label={documentStatuses.lookup(formData.status)}
+                                status={formData.status}
+                            />
                         </Box>
                     </Box>
                 </Box>
@@ -312,13 +368,17 @@ export function DocumentCreateEditForm({
             </Dialog>
             <DialogActions>
                 <AppButton
-                    variant="outlined"
-                    startIcon={<MdHistory />}
-                    onClick={() => setOpenHistory(true)}
+                    variantType="primary"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (documentId) {
+                            handleSign(documentId);
+                        }
+                    }}
                     disabled={!documentId}
                     sx={{ mr: 'auto' }}
                 >
-                    История
+                    Подписать
                 </AppButton>
 
                 <AppButton onClick={onClose}>Отмена</AppButton>

@@ -3,11 +3,9 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableHead,
     TableRow,
     Paper,
     Typography,
-    Collapse,
     IconButton,
     CircularProgress,
 } from '@mui/material';
@@ -18,6 +16,8 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '../reference/useReference';
 import { AuditLogMetadataList } from './AuditLogMetadataList';
+
+/* ===================== types ===================== */
 
 interface FormField {
     type: string;
@@ -35,25 +35,30 @@ export interface FormMetadata {
     label: string;
     sections: FormSection[];
 }
+
 interface PropsType {
     entity_type: string;
     entity_id: number;
     formMetadata?: FormMetadata;
 }
 
+/********************************************************************************************************************************/
 export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsType) {
     const dispatch = useAppDispatch();
-
     const { data, loading, error } = useAppSelector((state) => state.auditLog);
-    const [openRowId, setOpenRowId] = useState<number | null>(null);
 
     const users = useReference('users');
+    const [openRowId, setOpenRowId] = useState<number | null>(null);
 
     useEffect(() => {
         if (entity_id) {
             dispatch(fetchAuditLog({ entity_type, entity_id }));
         }
     }, [dispatch, entity_type, entity_id]);
+
+    const handleToggle = (id: number) => {
+        setOpenRowId((prev) => (prev === id ? null : id));
+    };
 
     if (loading) {
         return (
@@ -91,86 +96,73 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
         );
     }
 
-    const handleToggle = (id: number) => setOpenRowId(openRowId === id ? null : id);
-
-    /******************************************************************************************************************************/
+    /****************************************************************************************************************************/
     return (
-        <Paper>
-            <Table className="table">
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Дата</TableCell>
-                        <TableCell>Пользователь</TableCell>
-                        <TableCell>Сущность</TableCell>
-                        <TableCell>Действие</TableCell>
-                        <TableCell>Свернуть</TableCell>
-                    </TableRow>
-                </TableHead>
-
-                <TableBody>
-                    {data?.length === 0 && (
-                        <TableRow>
-                            <TableCell>
-                                <Typography>История изменений отсутствует</Typography>
-                            </TableCell>
-                        </TableRow>
-                    )}
-
-                    {data?.map((log) => (
-                        <Fragment key={log.id}>
-                            {/* Основная строка */}
-                            <TableRow
-                                hover
-                                sx={{ cursor: 'pointer' }}
-                                onClick={() => handleToggle(log.id)}
-                            >
-                                <TableCell align="center">
-                                    {formatDateTime(log.created_at)}
-                                </TableCell>
-                                <TableCell align="center">{users.lookup(log.user_id)}</TableCell>
-                                <TableCell align="center">{log.entity_type}</TableCell>
-                                <TableCell align="center">{log.action}</TableCell>
-                                <TableCell align="center">
-                                    {Object.keys(log.old_values || {}).length > 0 ? (
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleToggle(log.id)}
-                                        >
-                                            {openRowId === log.id ? <ExpandLess /> : <ExpandMore />}
-                                        </IconButton>
-                                    ) : (
-                                        '-'
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell colSpan={5} sx={{ p: 0 }}>
-                                    <Collapse
-                                        in={openRowId === log.id}
-                                        timeout="auto"
-                                        unmountOnExit
+        <Box>
+            {data.map((log) => {
+                const isOpen = openRowId === log.id;
+                return (
+                    <Fragment key={log.id}>
+                        {/* ===== ROW TABLE ===== */}
+                        <Paper variant="outlined" sx={{ mb: isOpen ? 0 : 1 }}>
+                            <Table size="small">
+                                <TableBody>
+                                    <TableRow
+                                        hover
+                                        sx={{ cursor: 'pointer' }}
+                                        onClick={() => handleToggle(log.id)}
                                     >
-                                        <Box
-                                            sx={{
-                                                all: 'unset',
-                                                display: 'block',
-                                                width: '100%',
-                                                isolation: 'isolate',
-                                            }}
-                                        >
-                                            <AuditLogMetadataList
-                                                formMetadata={formMetadata!}
-                                                oldValues={log.old_values || {}}
-                                                newValues={log.new_values || {}}
-                                            />
-                                        </Box>
-                                    </Collapse>
-                                </TableCell>
-                            </TableRow>
-                        </Fragment>
-                    ))}
-                </TableBody>
-            </Table>
-        </Paper>
+                                        <TableCell width={160}>
+                                            <Typography variant="caption">
+                                                {formatDateTime(log.created_at)}
+                                            </Typography>
+                                        </TableCell>
+
+                                        <TableCell>
+                                            <Typography variant="body2">
+                                                {users.lookup(log.user_id)}
+                                            </Typography>
+                                        </TableCell>
+
+                                        <TableCell>
+                                            <Typography variant="body2">
+                                                {log.entity_type}
+                                            </Typography>
+                                        </TableCell>
+
+                                        <TableCell>
+                                            <Typography variant="body2">{log.action}</Typography>
+                                        </TableCell>
+
+                                        <TableCell width={48} align="right">
+                                            {Object.keys(log.old_values || {}).length > 0 && (
+                                                <IconButton size="small">
+                                                    {isOpen ? (
+                                                        <ExpandLess fontSize="small" />
+                                                    ) : (
+                                                        <ExpandMore fontSize="small" />
+                                                    )}
+                                                </IconButton>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </Paper>
+
+                        {/* Детали истории */}
+                        {isOpen && (
+                            <Box mb={2}>
+                                <AuditLogMetadataList
+                                    formMetadata={formMetadata!}
+                                    oldValues={log.old_values || {}}
+                                    newValues={log.new_values || {}}
+                                />
+                            </Box>
+                        )}
+                    </Fragment>
+                );
+            })}
+        </Box>
     );
 }

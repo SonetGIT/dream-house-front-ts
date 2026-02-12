@@ -20,10 +20,18 @@ import { useReference } from '@/features/reference/useReference';
 import toast from 'react-hot-toast';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { AppButton } from '@/components/ui/AppButton';
-import { MdOutlinePlaylistAdd } from 'react-icons/md';
-import { uploadDocumentFile } from './documentFilesSlice';
+import { MdOutlinePlaylistAdd, MdOutlineSendTimeExtension } from 'react-icons/md';
+import { uploadDocumentFile } from '../files/documentFilesSlice';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { RiDeleteBin3Fill } from 'react-icons/ri';
+import StatusChip from '@/components/ui/StatusChip';
+
+interface PropsType {
+    onDelete: (id: number) => void;
+    handleSendUnderReview: (id: number) => void;
+}
 /***********************************************************************************************************************/
-export function DocumentsTable() {
+export function DocumentsTable(props: PropsType) {
     const dispatch = useAppDispatch();
     const { data, pagination, loading, error } = useAppSelector((state) => state.documents);
 
@@ -129,6 +137,7 @@ export function DocumentsTable() {
                             <TableCell>Цена</TableCell>
                             <TableCell>Крайний срок</TableCell>
                             <TableCell>Создан</TableCell>
+                            <TableCell>Действие</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -141,10 +150,39 @@ export function DocumentsTable() {
                             >
                                 <TableCell>{doc.id}</TableCell>
                                 <TableCell>{doc.name}</TableCell>
-                                <TableCell>{documentStatuses.lookup(doc.status)}</TableCell>
+                                <TableCell>
+                                    <StatusChip
+                                        label={documentStatuses.lookup(doc.status)}
+                                        status={doc.status}
+                                    />
+                                </TableCell>
                                 <TableCell>{doc.price}</TableCell>
                                 <TableCell>{formatDateTime(doc.deadline, false)}</TableCell>
                                 <TableCell>{formatDateTime(doc.created_at)}</TableCell>
+                                <TableCell>
+                                    <StyledTooltip title="На подпись">
+                                        <MdOutlineSendTimeExtension
+                                            size={22}
+                                            color="#2c7ecb"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.handleSendUnderReview(doc.id);
+                                            }}
+                                            style={{ marginRight: '1rem' }}
+                                        />
+                                    </StyledTooltip>
+
+                                    <StyledTooltip title="Удалить">
+                                        <RiDeleteBin3Fill
+                                            size={22}
+                                            color="#c96161"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onDelete(doc.id);
+                                            }}
+                                        />
+                                    </StyledTooltip>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

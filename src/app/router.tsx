@@ -10,8 +10,8 @@ import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequ
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
-import DocumentsPage from '@/features/projects/legal_department/DocumentsPage';
-import { DocumentsTable } from '@/features/projects/legal_department/DocumentsTable';
+import DocumentStagesPage from '@/features/projects/legal_department/stages/DocumentStagesPage';
+import DocumentsPage from '@/features/projects/legal_department/documents/DocumentsPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -28,8 +28,8 @@ export const router = createBrowserRouter([
                 element: <ProjectDashboardPage />,
                 children: [
                     { index: true, element: null }, //дашборд
-                    { path: 'documentStages', element: <DocumentsPage /> },
-                    { path: 'documentStages/:documentStagesId', element: <DocumentsTable /> },
+                    { path: 'documentStages', element: <DocumentStagesPage /> },
+                    { path: 'documentStages/:documentStagesId', element: <DocumentsPage /> },
                     { path: 'materialRequests', element: <MaterialRequests /> },
                     { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
                     { path: 'warehouses', element: <WarehousesPage /> },

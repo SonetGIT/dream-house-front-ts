@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
+import { DOCUMENT_STATUS } from './documentStatus';
 
 /* TYPES */
 export interface Documents {
@@ -80,6 +81,40 @@ export const updateDocuments = createAsyncThunk<
         return rejectWithValue(err.message);
     }
 });
+
+export const setDocumentStatus = createAsyncThunk<
+    number,
+    { id: number; status: number },
+    { rejectValue: string }
+>('documents/setStatus', async ({ id, status }, { rejectWithValue }) => {
+    try {
+        await apiRequest(`/documents/update/${id}`, 'PUT', { status });
+        return id;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка смены статуса');
+    }
+});
+export const archiveDocument = (id: number) =>
+    setDocumentStatus({ id, status: DOCUMENT_STATUS.ARCHIVED });
+
+export const underReviewDocument = (id: number) =>
+    setDocumentStatus({ id, status: DOCUMENT_STATUS.UNDER_REVIEW });
+
+export const signDocument = (id: number) =>
+    setDocumentStatus({ id, status: DOCUMENT_STATUS.SIGNED });
+
+//ПОКА НЕ ИСПОЛЬЗУЕТСЯ
+// export const deleteDocuments = createAsyncThunk(
+//     'documents/delete',
+//     async (id: number, { rejectWithValue }) => {
+//         try {
+//             await apiRequest<Documents>(`/documents/delete/${id}`, 'DELETE');
+//             return id;
+//         } catch (err: any) {
+//             return rejectWithValue(err.message);
+//         }
+//     },
+// );
 
 /* SLICE */
 const documentsSlice = createSlice({
