@@ -95,7 +95,7 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
 
     /******************************************************************************************************************************/
     return (
-        <Paper variant="outlined">
+        <Paper>
             <Table className="table">
                 <TableHead>
                     <TableRow>
@@ -143,7 +143,7 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                                     )}
                                 </TableCell>
                             </TableRow>
-                            {/* <TableRow>
+                            <TableRow>
                                 <TableCell colSpan={5} sx={{ p: 0 }}>
                                     <Collapse
                                         in={openRowId === log.id}
@@ -166,7 +166,7 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                                         </Box>
                                     </Collapse>
                                 </TableCell>
-                            </TableRow> */}
+                            </TableRow>
                         </Fragment>
                     ))}
                 </TableBody>
