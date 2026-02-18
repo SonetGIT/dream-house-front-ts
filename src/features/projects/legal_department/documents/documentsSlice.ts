@@ -20,7 +20,7 @@ export interface Documents {
 }
 
 interface DocumentsSearchParams {
-    project_id?: number;
+    project_id: number;
     stage_id?: number;
     status?: number;
     name?: string;
@@ -63,6 +63,7 @@ export const createDocuments = createAsyncThunk<
 >('documents/create', async (documents, { rejectWithValue }) => {
     try {
         const res = await apiRequest<Documents>('/documents/create', 'POST', documents);
+        console.log('documents', documents);
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);

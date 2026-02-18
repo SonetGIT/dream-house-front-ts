@@ -25,7 +25,7 @@ const createReferenceSelectSx = (minWidth: number = 280) => ({
     },
 
     [`& .${autocompleteClasses.option}`]: {
-        minHeight: 9,
+        // height: 24,
         padding: '4px 10px',
         overflow: 'hidden',
         textOverflow: 'ellipsis',

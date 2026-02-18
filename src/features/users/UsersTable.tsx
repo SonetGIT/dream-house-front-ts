@@ -1,12 +1,10 @@
 import { LinearProgress } from '@mui/material';
-import { RiDeleteBin2Fill } from 'react-icons/ri';
-import { BiReset } from 'react-icons/bi';
-import { CiEdit } from 'react-icons/ci';
 import type { Pagination, Users } from './userSlice';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { TablePagination } from '@/components/ui/TablePagination';
-import { MdAdsClick } from 'react-icons/md';
+import { MdAdsClick, MdDelete, MdEdit } from 'react-icons/md';
 import type { ReferenceResult } from '../reference/referenceSlice';
+import { TableRowActions } from '@/components/ui/TableRowActions';
+import { BiReset } from 'react-icons/bi';
 
 interface PropsType {
     items: Users[];
@@ -66,37 +64,29 @@ export default function UsersTable(props: PropsType) {
                                 <td>{item.phone}</td>
                                 <td>{props.refs.userRoles.lookup(item.role_id)}</td>
                                 <td className="action-container">
-                                    <StyledTooltip title="Редактировать">
-                                        <CiEdit
-                                            size={20}
-                                            color="#2c7ecb"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                props.onEdit(item.id);
-                                            }}
-                                        />
-                                    </StyledTooltip>
-
-                                    <StyledTooltip title="Удалить">
-                                        <RiDeleteBin2Fill
-                                            size={20}
-                                            color="#c96161"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                props.onDelete(item.id);
-                                            }}
-                                        />
-                                    </StyledTooltip>
-                                    <StyledTooltip title="Сброс пароля">
-                                        <BiReset
-                                            size={20}
-                                            color="#66a7da"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                props.onResetPass(item.id);
-                                            }}
-                                        />
-                                    </StyledTooltip>
+                                    <TableRowActions
+                                        actions={[
+                                            {
+                                                key: 'edit',
+                                                label: 'Редактировать',
+                                                icon: <MdEdit size={18} />,
+                                                onClick: () => props.onEdit(item.id),
+                                            },
+                                            {
+                                                key: 'reset',
+                                                label: 'Сброс пароля',
+                                                icon: <BiReset size={18} />,
+                                                onClick: () => props.onResetPass(item.id),
+                                            },
+                                            {
+                                                key: 'delete',
+                                                label: 'Удалить',
+                                                icon: <MdDelete size={18} />,
+                                                onClick: () => props.onDelete(item.id),
+                                                color: 'error',
+                                            },
+                                        ]}
+                                    />
                                 </td>
                             </tr>
                         ))

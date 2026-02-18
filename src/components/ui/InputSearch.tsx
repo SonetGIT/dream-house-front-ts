@@ -13,9 +13,9 @@ const Search = styled('div')({
         backgroundColor: '#f5fbff',
         borderColor: '#8eb9ed',
     },
-    width: '100%',
-    maxWidth: 280,
-    height: 36,
+    // width: '100%',
+    width: 280,
+    height: 37,
     display: 'flex',
     alignItems: 'center',
 });

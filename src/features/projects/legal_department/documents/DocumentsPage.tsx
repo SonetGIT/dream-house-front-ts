@@ -4,8 +4,11 @@ import { archiveDocument, fetchDocuments, underReviewDocument } from './document
 import toast from 'react-hot-toast';
 import { DocumentsTable } from './DocumentsTable';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useOutletContext } from 'react-router-dom';
+import type { ProjectOutletContext } from '../../material_request/MaterialRequests';
 
 export default function DocumentsPage() {
+    const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
 
     const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
@@ -15,7 +18,7 @@ export default function DocumentsPage() {
         dispatch(underReviewDocument(id))
             .unwrap()
             .then(() => {
-                dispatch(fetchDocuments({ page: 1, size: 10 }));
+                dispatch(fetchDocuments({ page: 1, size: 10, project_id: projectId }));
                 toast.success('Документ на проверке');
             })
             .catch((err) => {
@@ -34,7 +37,7 @@ export default function DocumentsPage() {
         dispatch(archiveDocument(selectedDocumentId))
             .unwrap()
             .then(() => {
-                dispatch(fetchDocuments({ page: 1, size: 10 }));
+                dispatch(fetchDocuments({ page: 1, size: 10, project_id: projectId }));
                 toast.success('Документ успешно перенесен в архив');
             });
 
@@ -44,7 +47,11 @@ export default function DocumentsPage() {
 
     return (
         <>
-            <DocumentsTable onDelete={handleDelete} handleSendUnderReview={handleSendUnderReview} />
+            <DocumentsTable
+                onDelete={handleDelete}
+                handleSendUnderReview={handleSendUnderReview}
+                project_id={projectId}
+            />
 
             {/* Диалог подтверждения */}
             <ConfirmDialog

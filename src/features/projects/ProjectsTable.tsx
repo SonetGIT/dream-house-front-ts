@@ -1,12 +1,11 @@
 import { LinearProgress } from '@mui/material';
 import type { Project } from './projectsSlice';
-import { RiArrowRightUpBoxFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { MdAdsClick } from 'react-icons/md';
+import { MdAdsClick, MdDelete, MdEdit } from 'react-icons/md';
 import type { Pagination } from '../users/userSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 import type { ReferenceResult } from '../reference/referenceSlice';
+import { TableRowActions } from '@/components/ui/TableRowActions';
 
 interface PropsType {
     items: Project[];
@@ -15,6 +14,8 @@ interface PropsType {
     pagination: Pagination | null;
     onPrevPage: () => void;
     onNextPage: () => void;
+    onEdit: (project: Project) => void;
+    onDelete: (id: number) => void;
     refs: Record<string, ReferenceResult>;
 }
 
@@ -25,7 +26,6 @@ export default function ProjectsTable(props: PropsType) {
         navigate(`/projects/${project.id}`, { state: { project } });
     };
 
-    /*******************************************************************************************************************************/
     return (
         <div className="table-container">
             {props.loading && (
@@ -65,16 +65,24 @@ export default function ProjectsTable(props: PropsType) {
                                 <td>{props.refs.projectStatuses.lookup(item.status)}</td>
                                 <td>{item.address}</td>
                                 <td className="action-container">
-                                    <StyledTooltip title="Открыть">
-                                        <RiArrowRightUpBoxFill
-                                            size={20}
-                                            color="#66a7da"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRowClick(item);
-                                            }}
-                                        />
-                                    </StyledTooltip>
+                                    {' '}
+                                    <TableRowActions
+                                        actions={[
+                                            {
+                                                key: 'edit',
+                                                label: 'Редактировать',
+                                                icon: <MdEdit size={18} />,
+                                                onClick: () => props.onEdit(item),
+                                            },
+                                            {
+                                                key: 'delete',
+                                                label: 'Удалить',
+                                                icon: <MdDelete size={18} />,
+                                                onClick: () => props.onDelete(item.id),
+                                                color: 'error',
+                                            },
+                                        ]}
+                                    />
                                 </td>
                             </tr>
                         ))

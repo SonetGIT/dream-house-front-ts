@@ -20,13 +20,14 @@ import { useReference } from '@/features/reference/useReference';
 import toast from 'react-hot-toast';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { AppButton } from '@/components/ui/AppButton';
-import { MdOutlinePlaylistAdd, MdOutlineSendTimeExtension } from 'react-icons/md';
+import { MdDelete, MdOutlinePlaylistAdd, MdOutlineSendTimeExtension } from 'react-icons/md';
 import { uploadDocumentFile } from '../files/documentFilesSlice';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { RiDeleteBin3Fill } from 'react-icons/ri';
 import StatusChip from '@/components/ui/StatusChip';
+import { TableRowActions } from '@/components/ui/TableRowActions';
 
 interface PropsType {
+    project_id: number;
+    // stage_id: number;
     onDelete: (id: number) => void;
     handleSendUnderReview: (id: number) => void;
 }
@@ -46,12 +47,16 @@ export function DocumentsTable(props: PropsType) {
     const documentStatuses = useReference('documentStatuses');
 
     useEffect(() => {
-        dispatch(fetchDocuments({ page: page + 1, size: rowsPerPage }));
+        dispatch(
+            fetchDocuments({ page: page + 1, size: rowsPerPage, project_id: props.project_id }),
+        );
     }, [dispatch, page, rowsPerPage]);
 
     const openCreate = () => {
         setEditingDocId(undefined);
         setInitialData({
+            project_id: props.project_id,
+            // stage_id: props.stage_id,
             name: '',
             price: 0,
             description: '',
@@ -65,6 +70,7 @@ export function DocumentsTable(props: PropsType) {
     const openEdit = (doc: any) => {
         setEditingDocId(doc.id);
         setInitialData({
+            project_id: props.project_id,
             name: doc.name,
             price: doc.price,
             description: doc.description,
@@ -92,7 +98,9 @@ export function DocumentsTable(props: PropsType) {
             }
 
             toast.success('Документ сохранён');
-            await dispatch(fetchDocuments({ page: page + 1, size: rowsPerPage }));
+            await dispatch(
+                fetchDocuments({ page: page + 1, size: rowsPerPage, project_id: props.project_id }),
+            );
             setOpenForm(false);
         } catch {
             toast.error('Ошибка сохранения документа');
@@ -160,7 +168,24 @@ export function DocumentsTable(props: PropsType) {
                                 <TableCell>{formatDateTime(doc.deadline, false)}</TableCell>
                                 <TableCell>{formatDateTime(doc.created_at)}</TableCell>
                                 <TableCell>
-                                    <StyledTooltip title="На подпись">
+                                    <TableRowActions
+                                        actions={[
+                                            {
+                                                key: 'edit',
+                                                label: 'На подпись',
+                                                icon: <MdOutlineSendTimeExtension size={18} />,
+                                                onClick: () => props.handleSendUnderReview(doc.id),
+                                            },
+                                            {
+                                                key: 'delete',
+                                                label: 'Удалить',
+                                                icon: <MdDelete size={18} />,
+                                                onClick: () => props.onDelete(doc.id),
+                                                color: 'error',
+                                            },
+                                        ]}
+                                    />
+                                    {/* <StyledTooltip title="На подпись">
                                         <MdOutlineSendTimeExtension
                                             size={22}
                                             color="#2c7ecb"
@@ -181,7 +206,7 @@ export function DocumentsTable(props: PropsType) {
                                                 props.onDelete(doc.id);
                                             }}
                                         />
-                                    </StyledTooltip>
+                                    </StyledTooltip> */}
                                 </TableCell>
                             </TableRow>
                         ))}

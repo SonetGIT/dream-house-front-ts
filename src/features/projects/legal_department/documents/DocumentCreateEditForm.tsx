@@ -30,6 +30,8 @@ import toast from 'react-hot-toast';
 import StatusChip from '@/components/ui/StatusChip';
 
 export interface DocumentFormData {
+    project_id: number;
+    stage_id?: number;
     name: string;
     price: number;
     description: string;
@@ -107,7 +109,7 @@ export function DocumentCreateEditForm({
         dispatch(signDocument(documentId))
             .unwrap()
             .then(() => {
-                dispatch(fetchDocuments({ page: 1, size: 10 }));
+                dispatch(fetchDocuments({ page: 1, size: 10, project_id: initialData.project_id }));
                 toast.success('Документ успешно подписан');
             })
             .catch((err) => {

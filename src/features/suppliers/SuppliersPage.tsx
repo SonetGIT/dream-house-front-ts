@@ -14,7 +14,7 @@ import type { ConfirmAction } from '../users/UsersPage';
 export default function SuppliersPage() {
     const dispatch = useAppDispatch();
     const suppliersState = useAppSelector((state) => state.suppliers);
-
+    console.log('suppliersState', suppliersState);
     //Локальные состояния
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);

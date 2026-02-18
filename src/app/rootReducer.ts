@@ -11,10 +11,13 @@ import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehous
 import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
 import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
 import suppliersReducer from '@/features/suppliers/suppliersSlice';
-import documentStagesReducer from '@/features/projects/legal_department/stages/documentStagesSlice';
+import documentStagesReducer from '@/features/projects/legal_department/documentStages/documentStagesSlice';
 import documentsReducer from '@/features/projects/legal_department/documents/documentsSlice';
 import documentFilesReducer from '@/features/projects/legal_department/files/documentFilesSlice';
 import auditLogReducer from '@/features/auditLog/auditLogSlice';
+import materialsReducer from '@/features/materials/materialsSlice';
+import projectBlocksReducer from '@/features/projects/pto/projectBlocks/projectBlocksSlice';
+import blockStagesReducer from '@/features/projects/pto/projectBlocks/blockStages/blockStagesSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -33,6 +36,9 @@ export const rootReducer = combineReducers({
     documents: documentsReducer,
     documentFiles: documentFilesReducer,
     auditLog: auditLogReducer,
+    materials: materialsReducer,
+    projectBlocks: projectBlocksReducer,
+    blockStages: blockStagesReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

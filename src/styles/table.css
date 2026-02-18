@@ -15,6 +15,7 @@
     --transform: scale(1.1);
 }
 .icon {
+    /* display: flex; */
     font-size: 2.3rem;
     color: #66a7da;
     cursor: pointer;
@@ -28,13 +29,39 @@
 }
 
 /*СТИЛИ ДЛЯ ФИЛЬТР*/
-.filter-container {
-    margin-left: 7px;
-    display: flex;
+/*.filter-container {
+     margin-left: 7px; ← УДАЛИТЬ ЭТУ СТРОКУ */
+/* display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 10px;
+    align-items: center; 
+}*/
+
+.filter-container {
+    display: flex;
+    justify-content: space-between; /* ← распределяет элементы по краям */
     align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap; /* ← для мобильных */
+    width: 90%;
+}
+
+/* Фильтры и поиск */
+.filter-search {
+    display: flex;
+    gap: 12px;
+    /* flex-wrap: wrap; */
+    align-items: center;
+    min-width: 0; /* ← важно для flex */
+}
+
+/* Кнопка действий */
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0; /* ← не сжимается на мобильных */
 }
 
 /* СТИЛИ ТАБЛИЦЫ И ЕЕ ЭЛЕМЕНТОВ */

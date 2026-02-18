@@ -3,16 +3,25 @@ import { Cards } from './Cards';
 import { CustomerPreview } from './CustomerPreview';
 import { StatusOverview } from './StatusOverview';
 import { IoDocumentsSharp } from 'react-icons/io5';
+import WidgetsIcon from '@mui/icons-material/Widgets';
 
 export default function Dashboard() {
     const dashboardCards = [
         {
-            title: 'Документы',
+            title: 'Документы (юр.)',
             label: 'Инфо',
             value: '',
             color: '#117394',
             to: 'documentStages',
             icon: <IoDocumentsSharp />,
+        },
+        {
+            title: 'ПТО',
+            color: '#e11d48',
+            label: '',
+            value: '',
+            to: 'pto',
+            icon: <WidgetsIcon />,
         },
         {
             title: 'Заявка на материалы',
@@ -37,13 +46,6 @@ export default function Dashboard() {
             color: '#f59e0b',
             to: 'warehouses',
             icon: <MdWarehouse />,
-        },
-        {
-            title: 'Заявка на закупку',
-            label: 'Этот месяц',
-            value: '34 000 $',
-            color: '#e11d48',
-            to: 'materialRequestItems1',
         },
     ];
 

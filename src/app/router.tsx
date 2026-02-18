@@ -10,8 +10,10 @@ import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequ
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
-import DocumentStagesPage from '@/features/projects/legal_department/stages/DocumentStagesPage';
+import DocumentStagesPage from '@/features/projects/legal_department/documentStages/DocumentStagesPage';
 import DocumentsPage from '@/features/projects/legal_department/documents/DocumentsPage';
+import MaterialsPage from '@/features/materials/MaterialsPage';
+import BlocksManager from '@/features/projects/pto/PtoManager';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -19,10 +21,10 @@ export const router = createBrowserRouter([
         path: '/',
         element: <App />,
         children: [
-            { index: true, element: <ProjectsPage /> },
             { path: 'users', element: <UsersPage /> },
             { path: 'projects', element: <ProjectsPage /> },
             { path: 'suppliers', element: <SuppliersPage /> },
+            { path: 'materials', element: <MaterialsPage /> },
             {
                 path: 'projects/:projectId',
                 element: <ProjectDashboardPage />,
@@ -30,6 +32,7 @@ export const router = createBrowserRouter([
                     { index: true, element: null }, //дашборд
                     { path: 'documentStages', element: <DocumentStagesPage /> },
                     { path: 'documentStages/:documentStagesId', element: <DocumentsPage /> },
+                    { path: 'pto', element: <BlocksManager /> },
                     { path: 'materialRequests', element: <MaterialRequests /> },
                     { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
                     { path: 'warehouses', element: <WarehousesPage /> },

@@ -12,9 +12,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import SwitchAccountSharpIcon from '@mui/icons-material/SwitchAccountSharp';
 import SupervisedUserCircleSharpIcon from '@mui/icons-material/SupervisedUserCircleSharp';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import { VscReferences } from 'react-icons/vsc';
 
 interface SubItem {
     label: string;
+    path: string;
 }
 
 interface DrawerItem {
@@ -34,17 +36,24 @@ const drawerItems: DrawerItem[] = [
         label: 'Пользователи',
         path: '/users',
         icon: <SwitchAccountSharpIcon />,
-        // subItems: [{ label: 'Администраторы' }, { label: 'Клиенты' }, { label: 'Гости' }],
     },
     {
         label: 'Проекты',
         path: '/projects',
         icon: <AssessmentOutlinedIcon />,
-        // subItems: [{ label: 'Видео' }, { label: 'PDF' }, { label: 'Презентации' }],
     },
     { label: 'Поставщики', path: '/suppliers', icon: <SupervisedUserCircleSharpIcon /> },
+    {
+        label: 'Справочники',
+        icon: <VscReferences />,
+        subItems: [
+            { label: 'Материалы', path: '/materials' },
+            { label: 'Презентации', path: '/materials' },
+        ],
+    },
 ];
 
+/****************************************************************************************************************************/
 export default function Menu({ open, onClose }: DrawerProps) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -65,7 +74,6 @@ export default function Menu({ open, onClose }: DrawerProps) {
     return (
         <Drawer anchor="left" open={open} onClose={onClose}>
             <Box sx={{ width: 240 }} role="presentation">
-                {/* ↑ убрали onClick/onKeyDown с Box */}
                 <List disablePadding>
                     {drawerItems.map((item) => {
                         const isOpen = openSubmenus[item.label] ?? false;
@@ -77,8 +85,8 @@ export default function Menu({ open, onClose }: DrawerProps) {
                                 <ListItem disablePadding>
                                     <ListItemButton
                                         sx={{
-                                            py: 0.9,
-                                            pl: 1.9,
+                                            // py: 0.9,
+                                            // pl: 1.9,
                                             bgcolor: isActive ? 'action.selected' : 'inherit',
                                         }}
                                         onClick={(e) => {
@@ -102,9 +110,9 @@ export default function Menu({ open, onClose }: DrawerProps) {
                                                 sx={{ minWidth: 24, justifyContent: 'center' }}
                                             >
                                                 {isOpen ? (
-                                                    <BiChevronUp size={14} />
+                                                    <BiChevronUp size={24} />
                                                 ) : (
-                                                    <BiChevronDown size={14} />
+                                                    <BiChevronDown size={24} />
                                                 )}
                                             </ListItemIcon>
                                         )}
@@ -116,7 +124,13 @@ export default function Menu({ open, onClose }: DrawerProps) {
                                         <List disablePadding>
                                             {item.subItems!.map((subItem) => (
                                                 <ListItem key={subItem.label} disablePadding>
-                                                    <ListItemButton sx={{ py: 0.3, pl: 4.5 }}>
+                                                    <ListItemButton
+                                                        sx={{ py: 0.5, pl: 8 }}
+                                                        onClick={() => {
+                                                            onClose();
+                                                            navigate(subItem.path);
+                                                        }}
+                                                    >
                                                         <ListItemText
                                                             primary={
                                                                 <span className="text-[12px] text-gray-600">

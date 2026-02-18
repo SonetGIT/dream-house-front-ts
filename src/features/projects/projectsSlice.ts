@@ -67,6 +67,43 @@ export const getProjectById = createAsyncThunk(
     },
 );
 
+export const createProject = createAsyncThunk<Project, Partial<Project>, { rejectValue: string }>(
+    'projects/create',
+    async (projects, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<Project>('/projects/create', 'POST', projects);
+            return res.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message);
+        }
+    },
+);
+
+export const updateProject = createAsyncThunk<
+    Project,
+    { id: number; data: Partial<Project> },
+    { rejectValue: string }
+>('projects/update', async ({ id, data }, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<Project>(`/projects/update/${id}`, 'PUT', data);
+        return res.data;
+    } catch (err: any) {
+        return rejectWithValue(err.message);
+    }
+});
+
+export const deleteProject = createAsyncThunk(
+    'projects/delete',
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiRequest<Project>(`/projects/delete/${id}`, 'DELETE');
+            return id;
+        } catch (err: any) {
+            return rejectWithValue(err.message);
+        }
+    },
+);
+
 // Slice
 const projectsSlice = createSlice({
     name: 'projects',
@@ -109,6 +146,17 @@ const projectsSlice = createSlice({
             .addCase(getProjectById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+            .addCase(createProject.fulfilled, (state, action) => {
+                state.items.unshift(action.payload);
+            })
+            .addCase(updateProject.fulfilled, (state, action) => {
+                const index = state.items.findIndex((s) => s.id === action.payload.id);
+                if (index !== -1) state.items[index] = action.payload;
+            })
+            // DELETE
+            .addCase(deleteProject.fulfilled, (state, action) => {
+                state.items = state.items.filter((u) => u.id !== action.payload);
             });
     },
 });
