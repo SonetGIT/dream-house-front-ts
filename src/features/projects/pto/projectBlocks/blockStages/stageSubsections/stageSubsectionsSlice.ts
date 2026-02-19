@@ -25,15 +25,15 @@ interface FetchStageSubsectionsParams {
 }
 
 interface StageSubsectionsState {
-    bySectionId: Record<number, StageSubsection[]>;
-    paginationBySectionId: Record<number, Pagination | null>;
+    byStageId: Record<number, StageSubsection[]>;
+    paginationByStageId: Record<number, Pagination | null>;
     loading: boolean;
     error: string | null;
 }
 
 const initialState: StageSubsectionsState = {
-    bySectionId: {},
-    paginationBySectionId: {},
+    byStageId: {},
+    paginationByStageId: {},
     loading: false,
     error: null,
 };
@@ -41,7 +41,7 @@ const initialState: StageSubsectionsState = {
 /* FETCH */
 export const fetchStageSubsections = createAsyncThunk<
     {
-        sectionId: number;
+        stageId: number;
         data: StageSubsection[];
         pagination?: Pagination;
     },
@@ -53,7 +53,7 @@ export const fetchStageSubsections = createAsyncThunk<
 
         console.log('fetchStageSubsections res', res.data);
         return {
-            sectionId: params.stage_id,
+            stageId: params.stage_id,
             data: res.data,
             pagination: res.pagination ?? undefined,
         };
@@ -96,13 +96,13 @@ export const updateStageSubsection = createAsyncThunk<
 
 /* DELETE */
 export const deleteStageSubsection = createAsyncThunk<
-    { id: number; sectionId: number },
-    { id: number; sectionId: number },
+    { id: number; stageId: number },
+    { id: number; stageId: number },
     { rejectValue: string }
->('stageSubsections/delete', async ({ id, sectionId }, { rejectWithValue }) => {
+>('stageSubsections/delete', async ({ id, stageId }, { rejectWithValue }) => {
     try {
         await apiRequest(`/stageSubsections/delete/${id}`, 'DELETE');
-        return { id, sectionId };
+        return { id, stageId };
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка удаления подраздела');
     }
@@ -113,9 +113,9 @@ const stageSubsectionsSlice = createSlice({
     name: 'stageSubsections',
     initialState,
     reducers: {
-        clearStageSubsectionsBySection: (state, action) => {
-            delete state.bySectionId[action.payload];
-            delete state.paginationBySectionId[action.payload];
+        clearStageSubsectionsByStage: (state, action) => {
+            delete state.byStageId[action.payload];
+            delete state.paginationByStageId[action.payload];
         },
     },
     extraReducers: (builder) => {
@@ -128,9 +128,9 @@ const stageSubsectionsSlice = createSlice({
             .addCase(fetchStageSubsections.fulfilled, (state, action) => {
                 state.loading = false;
 
-                state.bySectionId[action.payload.sectionId] = action.payload.data;
+                state.byStageId[action.payload.stageId] = action.payload.data;
 
-                state.paginationBySectionId[action.payload.sectionId] =
+                state.paginationByStageId[action.payload.stageId] =
                     action.payload.pagination ?? null;
             })
             .addCase(fetchStageSubsections.rejected, (state, action) => {
@@ -139,23 +139,23 @@ const stageSubsectionsSlice = createSlice({
             })
 
             .addCase(createStageSubsection.fulfilled, (state, action) => {
-                const sectionId = action.payload.stage_id;
+                const stageId = action.payload.stage_id;
 
-                if (!state.bySectionId[sectionId]) {
-                    state.bySectionId[sectionId] = [];
+                if (!state.byStageId[stageId]) {
+                    state.byStageId[stageId] = [];
                 }
 
-                state.bySectionId[sectionId].unshift(action.payload);
+                state.byStageId[stageId].unshift(action.payload);
 
-                const pagination = state.paginationBySectionId[sectionId];
+                const pagination = state.paginationByStageId[stageId];
                 if (pagination) {
                     pagination.total += 1;
                 }
             })
 
             .addCase(updateStageSubsection.fulfilled, (state, action) => {
-                const sectionId = action.payload.stage_id;
-                const list = state.bySectionId[sectionId];
+                const stageId = action.payload.stage_id;
+                const list = state.byStageId[stageId];
                 if (!list) return;
 
                 const index = list.findIndex((s) => s.id === action.payload.id);
@@ -166,13 +166,12 @@ const stageSubsectionsSlice = createSlice({
             })
 
             .addCase(deleteStageSubsection.fulfilled, (state, action) => {
-                const { id, sectionId } = action.payload;
-                const list = state.bySectionId[sectionId];
+                const { id, stageId } = action.payload;
+                const list = state.byStageId[stageId];
                 if (!list) return;
 
-                state.bySectionId[sectionId] = list.filter((s) => s.id !== id);
-
-                const pagination = state.paginationBySectionId[sectionId];
+                state.byStageId[stageId] = list.filter((s) => s.id !== id);
+                const pagination = state.paginationByStageId[stageId];
                 if (pagination) {
                     pagination.total -= 1;
                 }
@@ -180,6 +179,7 @@ const stageSubsectionsSlice = createSlice({
     },
 });
 
-export const { clearStageSubsectionsBySection } = stageSubsectionsSlice.actions;
+export const { clearStageSubsectionsByStage: clearStageSubsectionsBySection } =
+    stageSubsectionsSlice.actions;
 
 export default stageSubsectionsSlice.reducer;

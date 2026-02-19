@@ -199,9 +199,7 @@ export default function BlockStagesList({ blockId }: Props) {
                                             >
                                                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
                                                     <Box sx={{ margin: 2 }}>
-                                                        <StageSubsectionsList
-                                                            sectionId={stage.id}
-                                                        />
+                                                        <StageSubsectionsList stageId={stage.id} />
                                                     </Box>
                                                 </Collapse>
                                             </TableCell>

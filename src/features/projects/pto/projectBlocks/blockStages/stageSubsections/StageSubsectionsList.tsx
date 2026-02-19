@@ -5,19 +5,19 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchStageSubsections, deleteStageSubsection } from './stageSubsectionsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { TableRowActions } from '@/components/ui/TableRowActions';
+import { MdDelete, MdEdit } from 'react-icons/md';
 
 interface Props {
-    sectionId: number;
+    stageId: number;
 }
 
-export default function StageSubsectionsList({ sectionId }: Props) {
+export default function StageSubsectionsList({ stageId }: Props) {
     const dispatch = useAppDispatch();
-    const { bySectionId, paginationBySectionId } = useAppSelector(
-        (state) => state.stageSubsections,
-    );
+    const { byStageId, paginationByStageId } = useAppSelector((state) => state.stageSubsections);
 
-    const data = bySectionId[sectionId] ?? [];
-    const pagination = paginationBySectionId[sectionId];
+    const data = byStageId[stageId] ?? [];
+    const pagination = paginationByStageId[stageId];
 
     const [searchText, setSearchText] = useState('');
     const [page, setPage] = useState(1);
@@ -26,26 +26,26 @@ export default function StageSubsectionsList({ sectionId }: Props) {
 
     useEffect(() => {
         setPage(1);
-    }, [sectionId]);
+    }, [stageId]);
 
     useEffect(() => {
-        if (sectionId) {
+        if (stageId) {
             dispatch(
                 fetchStageSubsections({
-                    stage_id: sectionId,
+                    stage_id: stageId,
                     page,
                     size,
                     search: searchText,
                 }),
             );
         }
-    }, [dispatch, sectionId, page, size, searchText]);
+    }, [dispatch, stageId, page, size, searchText]);
 
     const confirmDelete = async () => {
         if (!deleteId) return;
 
         try {
-            await dispatch(deleteStageSubsection({ id: deleteId, sectionId })).unwrap();
+            await dispatch(deleteStageSubsection({ id: deleteId, stageId })).unwrap();
             toast.success('Подраздел удалён');
         } catch {
             toast.error('Ошибка удаления');
@@ -62,7 +62,7 @@ export default function StageSubsectionsList({ sectionId }: Props) {
             sx={{
                 borderRadius: 2,
                 overflow: 'hidden',
-                // bgcolor: 'grey.50',
+                bgcolor: 'grey.50',
             }}
         >
             {/* Поиск + кнопка */}
@@ -130,9 +130,26 @@ export default function StageSubsectionsList({ sectionId }: Props) {
                             <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
                                 {sub.name}
                             </Typography>
-
-                            <Box>
-                                <IconButton
+                            <Box className="action-container">
+                                {' '}
+                                <TableRowActions
+                                    actions={[
+                                        {
+                                            key: 'edit',
+                                            label: 'Редактировать',
+                                            icon: <MdEdit size={18} />,
+                                            onClick: () => setDeleteId(sub.id),
+                                        },
+                                        {
+                                            key: 'delete',
+                                            label: 'Удалить',
+                                            icon: <MdDelete size={18} />,
+                                            onClick: () => setDeleteId(sub.id),
+                                            color: 'error',
+                                        },
+                                    ]}
+                                />
+                                {/* <IconButton
                                     size="small"
                                     onClick={() => toast.error('Редактирование...')}
                                 >
@@ -145,7 +162,7 @@ export default function StageSubsectionsList({ sectionId }: Props) {
                                     onClick={() => setDeleteId(sub.id)}
                                 >
                                     <Delete fontSize="small" />
-                                </IconButton>
+                                </IconButton> */}
                             </Box>
                         </Box>
                     ))}
