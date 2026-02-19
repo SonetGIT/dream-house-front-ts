@@ -5,9 +5,11 @@ import BlockStagesList from './blockStages/BlockStagesList';
 
 interface Props {
     blockId: number | null;
+    blockName?: string;
 }
 
-export default function ProjectBlockDetails({ blockId }: Props) {
+/*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
+export default function ProjectBlockDetails({ blockId, blockName }: Props) {
     const [tabIndex, setTabIndex] = useState(0);
 
     if (!blockId) {
@@ -21,7 +23,7 @@ export default function ProjectBlockDetails({ blockId }: Props) {
     return (
         <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }}>
             <Typography variant="h5" sx={{ mb: 2 }}>
-                Блок #{blockId}
+                {blockName}
             </Typography>
 
             <Tabs value={tabIndex} onChange={(_, value) => setTabIndex(value)} sx={{ mb: 2 }}>

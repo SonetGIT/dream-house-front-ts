@@ -9,7 +9,6 @@ import {
     IconButton,
     Menu,
     MenuItem,
-    Box,
 } from '@mui/material';
 import type { ProjectBlock } from './projectBlocksSlice';
 import { Add, MoreVert } from '@mui/icons-material';
@@ -25,6 +24,7 @@ interface Props {
     loading: boolean;
 }
 
+/*БЛОКИ***************************************************************************************************************************/
 export default function ProjectBlocksSidebar({
     blocks,
     selectedBlockId,

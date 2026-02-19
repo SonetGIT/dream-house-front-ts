@@ -10,13 +10,20 @@ import {
     TableCell,
     TableHead,
     TableRow,
-    TablePagination,
     IconButton,
     Button,
 } from '@mui/material';
 import { Add, Edit, Delete } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchBlockStages, deleteBlockStage } from './blockStagesSlice';
+import { fetchBlockStages, deleteBlockStage, type BlockStage } from './blockStagesSlice';
+import { TablePagination } from '@/components/ui/TablePagination';
+import toast from 'react-hot-toast';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import BlockStageCreateEditForm from './BlockStageCreateEditForm';
+import { Collapse } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import StageSubsectionsList from './stageSubsections/StageSubsectionsList';
 
 interface Props {
     blockId: number;
@@ -26,33 +33,70 @@ export default function BlockStagesList({ blockId }: Props) {
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.blockStages);
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [search, setSearch] = useState('');
+    const [searchText, setSearchText] = useState('');
+    const [page, setPage] = useState(1);
+    const size = 10;
+
+    const [openForm, setOpenForm] = useState(false);
+    const [editingStage, setEditingStage] = useState<BlockStage | null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [expandedStageId, setExpandedStageId] = useState<number | null>(null);
+
+    /* RESET PAGE WHEN BLOCK CHANGES */
+    useEffect(() => {
+        setPage(1);
+    }, [blockId]);
 
     /* FETCH */
-
     useEffect(() => {
         dispatch(
             fetchBlockStages({
                 block_id: blockId,
-                page: page + 1,
-                size: rowsPerPage,
-                search,
+                page,
+                size,
+                search: searchText,
             }),
         );
-    }, [dispatch, blockId, page, rowsPerPage, search]);
+    }, [dispatch, blockId, page, size, searchText]);
 
-    /* RESET PAGE WHEN BLOCK CHANGES */
-
-    useEffect(() => {
-        setPage(0);
-    }, [blockId]);
-
+    /* DELETE */
     const handleDelete = (id: number) => {
-        if (window.confirm('Удалить этап?')) {
-            dispatch(deleteBlockStage(id));
-        }
+        setDeleteId(id);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!deleteId) return;
+
+        dispatch(deleteBlockStage(deleteId))
+            .unwrap()
+            .then(() => {
+                toast.success('Этап удалён');
+
+                dispatch(
+                    fetchBlockStages({
+                        block_id: blockId,
+                        page,
+                        size,
+                        search: searchText,
+                    }),
+                );
+            })
+            .catch((err: string) => {
+                toast.error(err || 'Ошибка удаления');
+            });
+
+        setDeleteId(null);
+    };
+
+    /* PAGINATION */
+    const handleNextPage = () => {
+        if (!pagination?.hasNext) return;
+        setPage((prev) => prev + 1);
+    };
+
+    const handlePrevPage = () => {
+        if (!pagination?.hasPrev) return;
+        setPage((prev) => prev - 1);
     };
 
     return (
@@ -65,14 +109,24 @@ export default function BlockStagesList({ blockId }: Props) {
                     gap: 2,
                 }}
             >
-                {/* <TextField
+                <TextField
                     size="small"
                     label="Поиск"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                /> */}
+                    value={searchText}
+                    onChange={(e) => {
+                        setSearchText(e.target.value);
+                        setPage(1);
+                    }}
+                />
 
-                <Button variant="contained" startIcon={<Add />}>
+                <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => {
+                        setEditingStage(null);
+                        setOpenForm(true);
+                    }}
+                >
                     Добавить этап
                 </Button>
             </Box>
@@ -94,42 +148,95 @@ export default function BlockStagesList({ blockId }: Props) {
                         </TableHead>
 
                         <TableBody>
-                            {data.map((stage) => (
-                                <TableRow key={stage.id} hover>
-                                    <TableCell>{stage.name}</TableCell>
+                            {data.map((stage) => {
+                                const isOpen = expandedStageId === stage.id;
 
-                                    <TableCell align="right">
-                                        <IconButton size="small">
-                                            <Edit fontSize="small" />
-                                        </IconButton>
+                                return (
+                                    <>
+                                        <TableRow key={stage.id} hover>
+                                            <TableCell width={50}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() =>
+                                                        setExpandedStageId(isOpen ? null : stage.id)
+                                                    }
+                                                >
+                                                    {isOpen ? (
+                                                        <KeyboardArrowUpIcon fontSize="small" />
+                                                    ) : (
+                                                        <KeyboardArrowDownIcon fontSize="small" />
+                                                    )}
+                                                </IconButton>
+                                            </TableCell>
 
-                                        <IconButton
-                                            size="small"
-                                            color="error"
-                                            onClick={() => handleDelete(stage.id)}
-                                        >
-                                            <Delete fontSize="small" />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                            <TableCell>{stage.name}</TableCell>
+
+                                            <TableCell align="right">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                        setEditingStage(stage);
+                                                        setOpenForm(true);
+                                                    }}
+                                                >
+                                                    <Edit fontSize="small" />
+                                                </IconButton>
+
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleDelete(stage.id)}
+                                                >
+                                                    <Delete fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+
+                                        <TableRow>
+                                            <TableCell
+                                                style={{ paddingBottom: 0, paddingTop: 0 }}
+                                                colSpan={3}
+                                            >
+                                                <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                                                    <Box sx={{ margin: 2 }}>
+                                                        <StageSubsectionsList
+                                                            sectionId={stage.id}
+                                                        />
+                                                    </Box>
+                                                </Collapse>
+                                            </TableCell>
+                                        </TableRow>
+                                    </>
+                                );
+                            })}
                         </TableBody>
                     </Table>
 
                     <TablePagination
-                        component="div"
-                        count={pagination?.total ?? 0}
-                        page={page}
-                        onPageChange={(_, newPage) => setPage(newPage)}
-                        rowsPerPage={rowsPerPage}
-                        onRowsPerPageChange={(e) => {
-                            setRowsPerPage(parseInt(e.target.value, 10));
-                            setPage(0);
-                        }}
-                        rowsPerPageOptions={[5, 10, 25]}
+                        pagination={pagination}
+                        onPrev={handlePrevPage}
+                        onNext={handleNextPage}
                     />
                 </>
             )}
+
+            <BlockStageCreateEditForm
+                open={openForm}
+                onClose={() => {
+                    setOpenForm(false);
+                    setEditingStage(null);
+                }}
+                blockId={blockId}
+                stage={editingStage}
+            />
+
+            <ConfirmDialog
+                open={Boolean(deleteId)}
+                title="Удалить этап?"
+                message="Вы уверены, что хотите удалить этап?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setDeleteId(null)}
+            />
         </Paper>
     );
 }

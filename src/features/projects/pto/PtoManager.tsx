@@ -36,7 +36,7 @@ export default function PtoManager() {
             dispatch(
                 fetchProjectBlocks({
                     page: 1,
-                    size: 100,
+                    size: 10,
                     project_id: projectId,
                 }),
             );
@@ -86,7 +86,10 @@ export default function PtoManager() {
                 loading={loading}
             />
 
-            <ProjectBlockDetails blockId={selectedProjectBlockId} />
+            <ProjectBlockDetails
+                blockId={selectedProjectBlockId}
+                blockName={blocks.find((b) => b.id === selectedProjectBlockId)?.name || ''}
+            />
 
             <ProjectBlockCreateEditForm
                 open={openCreate || !!editingBlock}

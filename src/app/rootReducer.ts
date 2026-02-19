@@ -18,6 +18,7 @@ import auditLogReducer from '@/features/auditLog/auditLogSlice';
 import materialsReducer from '@/features/materials/materialsSlice';
 import projectBlocksReducer from '@/features/projects/pto/projectBlocks/projectBlocksSlice';
 import blockStagesReducer from '@/features/projects/pto/projectBlocks/blockStages/blockStagesSlice';
+import stageSubsectionsReducer from '@/features/projects/pto/projectBlocks/blockStages/stageSubsections/stageSubsectionsSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -39,6 +40,7 @@ export const rootReducer = combineReducers({
     materials: materialsReducer,
     projectBlocks: projectBlocksReducer,
     blockStages: blockStagesReducer,
+    stageSubsections: stageSubsectionsReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

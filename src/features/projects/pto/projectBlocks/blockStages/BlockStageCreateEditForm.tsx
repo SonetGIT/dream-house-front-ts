@@ -1,75 +1,76 @@
 import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogActions, TextField, Box, Typography } from '@mui/material';
 import { useForm } from 'react-hook-form';
-import {
-    createProjectBlock,
-    updateProjectBlock,
-    type ProjectBlock,
-    type ProjectBlockFormData,
-} from './projectBlocksSlice';
 import { useAppDispatch } from '@/app/store';
+import {
+    createBlockStage,
+    updateBlockStage,
+    type BlockStage,
+    type BlockStageFormData,
+} from './blockStagesSlice';
 import { AppButton } from '@/components/ui/AppButton';
 
 interface Props {
     open: boolean;
     onClose: () => void;
-    projectId: number;
-    block?: ProjectBlock | null;
+    blockId: number;
+    stage?: BlockStage | null;
 }
 
 /*************************************************************************************************************/
-export default function ProjectBlockCreateEditForm({ open, onClose, projectId, block }: Props) {
+export default function BlockStageCreateEditForm({ open, onClose, blockId, stage }: Props) {
     const dispatch = useAppDispatch();
-    const isEdit = Boolean(block);
+    const isEdit = Boolean(stage);
 
     const {
         register,
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
-    } = useForm<ProjectBlockFormData>({
+    } = useForm<BlockStageFormData>({
         mode: 'onChange',
         reValidateMode: 'onChange',
     });
 
-    // Заполнение формы при открытии
+    // Заполнение формы при редактировании
     useEffect(() => {
         if (open) {
-            if (block) {
+            if (stage) {
                 reset({
-                    name: block.name,
-                    project_id: block.project_id,
+                    name: stage.name,
+                    block_id: stage.block_id,
                 });
             } else {
                 reset({
                     name: '',
-                    project_id: projectId,
+                    block_id: blockId,
                 });
             }
         }
-    }, [open, block, projectId, reset]);
+    }, [open, stage, blockId, reset]);
 
-    const onSubmit = async (data: ProjectBlockFormData) => {
+    const onSubmit = async (data: BlockStageFormData) => {
         try {
-            if (isEdit && block) {
+            if (isEdit && stage) {
                 await dispatch(
-                    updateProjectBlock({
-                        id: block.id,
+                    updateBlockStage({
+                        id: stage.id,
                         data,
                     }),
                 ).unwrap();
             } else {
                 await dispatch(
-                    createProjectBlock({
+                    createBlockStage({
                         ...data,
-                        project_id: projectId,
+                        block_id: blockId,
                     }),
                 ).unwrap();
             }
 
             onClose();
         } catch (error) {
-            console.error('Error saving project block:', error);
+            // Ошибки обрабатываются в slice, но можно добавить toast здесь
+            console.error('Error saving block stage:', error);
         }
     };
 
@@ -100,21 +101,21 @@ export default function ProjectBlockCreateEditForm({ open, onClose, projectId, b
                 }}
             >
                 <Typography variant="h6" fontWeight={600} color="text.primary">
-                    {isEdit ? 'Редактировать блок проекта' : 'Создать новый блок проекта'}
+                    {isEdit ? 'Редактировать этап' : 'Создать новый этап'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" mt={0.5}>
                     {isEdit
-                        ? 'Обновите информацию о строительном блоке'
-                        : 'Заполните информацию для нового блока'}
+                        ? 'Обновите информацию об этапе строительного блока'
+                        : 'Заполните информацию для нового этапа'}
                 </Typography>
             </Box>
 
             {/* Content */}
             <DialogContent sx={{ p: 3 }}>
                 <TextField
-                    label="Название блока *"
+                    label="Название этапа *"
                     fullWidth
-                    placeholder="Введите название блока..."
+                    placeholder="Введите название этапа..."
                     {...register('name', {
                         required: 'Обязательное поле',
                         minLength: {
