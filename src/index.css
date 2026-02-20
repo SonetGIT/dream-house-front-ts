@@ -126,11 +126,8 @@ button {
 
 main {
     flex: 1;
-    /* padding: 70px 0 0 170px; */
-    padding: 50px 0 0 150px;
+    padding: 50px 0 0 135px;
     overflow-y: auto;
-
-    /* display: block; */
     justify-content: left;
 }
 /* TOAST */

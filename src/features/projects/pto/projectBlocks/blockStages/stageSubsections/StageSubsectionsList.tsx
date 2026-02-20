@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper, Typography, TextField, IconButton, Button } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Box, Paper, Typography, TextField, Button } from '@mui/material';
+import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchStageSubsections, deleteStageSubsection } from './stageSubsectionsSlice';
+import {
+    fetchStageSubsections,
+    deleteStageSubsection,
+    type StageSubsection,
+} from './stageSubsectionsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { TableRowActions } from '@/components/ui/TableRowActions';
 import { MdDelete, MdEdit } from 'react-icons/md';
+import StageSubsectionsCreateEditForm from './StageSubsectionsCreateEditForm';
 
 interface Props {
     stageId: number;
@@ -23,6 +28,8 @@ export default function StageSubsectionsList({ stageId }: Props) {
     const [page, setPage] = useState(1);
     const size = 10;
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [openForm, setOpenForm] = useState(false);
+    const [editingSubsection, setEditingSubsection] = useState<StageSubsection | null>(null);
 
     useEffect(() => {
         setPage(1);
@@ -95,7 +102,10 @@ export default function StageSubsectionsList({ stageId }: Props) {
                     size="small"
                     startIcon={<Add />}
                     sx={{ height: 30, fontSize: '0.8rem' }}
-                    onClick={() => toast.error('Добавление подразделов скоро будет')}
+                    onClick={() => {
+                        setEditingSubsection(null);
+                        setOpenForm(true);
+                    }}
                 >
                     Добавить
                 </Button>
@@ -138,7 +148,10 @@ export default function StageSubsectionsList({ stageId }: Props) {
                                             key: 'edit',
                                             label: 'Редактировать',
                                             icon: <MdEdit size={18} />,
-                                            onClick: () => setDeleteId(sub.id),
+                                            onClick: () => {
+                                                setEditingSubsection(sub);
+                                                setOpenForm(true);
+                                            },
                                         },
                                         {
                                             key: 'delete',
@@ -200,6 +213,15 @@ export default function StageSubsectionsList({ stageId }: Props) {
                     </Box>
                 </>
             )}
+            <StageSubsectionsCreateEditForm
+                open={openForm}
+                onClose={() => {
+                    setOpenForm(false);
+                    setEditingSubsection(null);
+                }}
+                stageId={stageId}
+                subsection={editingSubsection}
+            />
 
             <ConfirmDialog
                 open={!!deleteId}

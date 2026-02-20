@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
 import BlockStagesList from './blockStages/BlockStagesList';
+import MaterialEstimatesList from './estimates/materialEstimatesList';
 // import EstimateList from './estimates/EstimateList';
 
 interface Props {
@@ -35,7 +36,7 @@ export default function ProjectBlockDetails({ blockId, blockName }: Props) {
 
             <Box>
                 {tabIndex === 0 && <BlockStagesList blockId={blockId} />}
-                {/* {tabIndex === 1 && <EstimateList blockId={blockId} />} */}
+                {tabIndex === 1 && <MaterialEstimatesList blockId={blockId} />}
             </Box>
         </Paper>
     );
