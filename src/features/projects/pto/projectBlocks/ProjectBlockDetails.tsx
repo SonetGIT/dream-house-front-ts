@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
 import BlockStagesList from './blockStages/BlockStagesList';
-import MaterialEstimatesList from './estimates/materialEstimatesList';
-// import EstimateList from './estimates/EstimateList';
+import MaterialEstimatesList from './estimates/MaterialEstimatesPage';
 
 interface Props {
     blockId: number | null;

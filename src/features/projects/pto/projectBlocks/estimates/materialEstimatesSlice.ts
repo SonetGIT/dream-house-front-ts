@@ -1,36 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
+import type { MaterialEstimateItem } from './estimateItems/materialEstimateItemsSlice';
 
 /* ================= TYPES ================= */
-
-export interface MaterialEstimateItem {
-    id: number;
-    material_estimate_id: number;
-    subsection_id: number;
-    item_type: number;
-    service_type: number | null;
-    service_id: number | null;
-    material_type: number | null;
-    material_id: number | null;
-    unit_of_measure: number | null;
-    quantity_planned: number;
-    coefficient: number | null;
-    currency: number | null;
-    price: number;
-    comment: string | null;
-    created_at?: string;
-    updated_at?: string;
-    deleted: boolean;
-}
-
 export interface MaterialEstimate {
     id: number;
     block_id: number;
     planned_budget: number | null;
     total_area: number | null;
     sale_area: number | null;
-    status: number;
+    status: number | null;
     created_user_id: number;
     approved_user_id: number | null;
     approved_at: string | null;
@@ -46,11 +26,11 @@ export interface MaterialEstimate {
 }
 
 export interface MaterialEstimateFormData {
-    block_id: number;
+    block_id?: number;
     planned_budget?: number | null;
     total_area?: number | null;
     sale_area?: number | null;
-    status: number;
+    status?: number;
 }
 
 /* ================= SEARCH PARAMS ================= */

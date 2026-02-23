@@ -121,5 +121,26 @@
             "name": ["name"]
         },
         "apiName": "/documentStatuses/gets"
+    },
+    "generalStatuses": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/generalStatuses/gets"
+    },
+    "services": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/services/gets"
+    },
+    "serviceTypes": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/serviceTypes/gets"
     }
 }
