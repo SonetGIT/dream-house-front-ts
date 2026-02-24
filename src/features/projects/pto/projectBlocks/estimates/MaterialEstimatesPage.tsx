@@ -22,7 +22,7 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
     const [openEstimateDialog, setOpenEstimateDialog] = useState(false);
     const [editingEstimate, setEditingEstimate] = useState(null);
 
-    /* ================= FETCH ================= */
+    /* FETCH */
     useEffect(() => {
         if (!blockId) return;
 
@@ -35,7 +35,7 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
         );
     }, [dispatch, blockId, page]);
 
-    /* ================= DELETE ================= */
+    /* DELETE */
     const handleDelete = (id: number) => {
         setDeleteId(id);
     };
@@ -62,24 +62,23 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
         }
     };
 
-    /* ================= PAGINATION ================= */
+    /* PAGINATION */
     const handlePrev = () => pagination?.hasPrev && setPage((p) => p - 1);
     const handleNext = () => pagination?.hasNext && setPage((p) => p + 1);
 
+    /******************************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* Header */}
             <Box
                 sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-end',
                     mb: 2,
                 }}
             >
-                {/* <Typography variant="h6">Сметы</Typography> */}
-
                 <Button
-                    variant="contained"
+                    variant="outlined"
                     startIcon={<Add />}
                     onClick={() => {
                         setEditingEstimate(null);

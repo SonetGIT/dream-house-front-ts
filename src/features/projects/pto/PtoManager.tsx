@@ -25,12 +25,12 @@ export default function PtoManager() {
 
     const [selectedProjectBlockId, setSelectedProjectBlockId] = useState<number | null>(null);
 
-    /* DIALOG STATE */
+    /* STATE */
     const [openCreate, setOpenCreate] = useState(false);
     const [editingBlock, setEditingBlock] = useState<ProjectBlock | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
 
-    /* ================= FETCH ================= */
+    /* FETCH */
     useEffect(() => {
         if (projectId) {
             dispatch(
@@ -43,7 +43,7 @@ export default function PtoManager() {
         }
     }, [dispatch, projectId]);
 
-    /* ================= AUTO SELECT ================= */
+    /* AUTO SELECT */
     useEffect(() => {
         if (blocks.length > 0 && !selectedProjectBlockId) {
             setSelectedProjectBlockId(blocks[0].id);
@@ -54,7 +54,7 @@ export default function PtoManager() {
         }
     }, [blocks]);
 
-    /* ================= DELETE ================= */
+    /* DELETE */
     const handleDelete = (id: number) => {
         setSelectedProjectBlockId(id);
         setConfirmOpen(true);
@@ -74,6 +74,7 @@ export default function PtoManager() {
         setSelectedProjectBlockId(null);
     };
 
+    /*****************************************************************************************************************************/
     return (
         <Box sx={{ display: 'flex', gap: 2, height: '100%' }}>
             <ProjectBlocksSidebar

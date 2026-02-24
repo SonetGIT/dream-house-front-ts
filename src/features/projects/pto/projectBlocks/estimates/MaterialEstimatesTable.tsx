@@ -9,12 +9,14 @@ import {
     Box,
     CircularProgress,
     Chip,
+    Button,
 } from '@mui/material';
-import { KeyboardArrowDown, KeyboardArrowUp, Edit, Delete } from '@mui/icons-material';
+import { KeyboardArrowDown, KeyboardArrowUp, Edit, Delete, Add } from '@mui/icons-material';
 import { Fragment, useState } from 'react';
 import type { MaterialEstimate } from './materialEstimatesSlice';
 import MaterialEstimateItemsTable from './estimateItems/MaterialEstimateItemsTable';
 import { useReference } from '@/features/reference/useReference';
+import MaterialEstimateItemCreateEditDialog from './estimateItems/estimateItemsCreateEdit/MaterialEstimateItemCreateEditDialog';
 
 interface Props {
     data: MaterialEstimate[];
@@ -26,6 +28,7 @@ interface Props {
 export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props) {
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [openItemDialogId, setOpenItemDialogId] = useState<number | null>(null);
 
     // Справочники
     const refs = {
@@ -74,7 +77,6 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
                         bgcolor: '#f0f9ff',
                         color: '#0c4a6e',
                         textAlign: 'center',
-                        // py: 1,
                         borderBottom: '2px solid #bae6fd',
                     },
                     '& td': {
@@ -144,7 +146,7 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
                                             sx={{
                                                 px: 1,
                                                 bgcolor: 'white',
-                                                border: '1px solid #508ef3',
+                                                border: '1px solid #89b5fc',
                                                 color: '#3b82f6',
                                                 borderRadius: '2px',
                                                 height: '20px',
@@ -195,7 +197,28 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
                                 <TableRow>
                                     <TableCell colSpan={12} sx={{ p: 0, border: 0 }}>
                                         <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                                            <Box sx={{ bgcolor: '#fafafa', p: 1 }}>
+                                            <Box sx={{ bgcolor: '#fafafa', p: 2 }}>
+                                                {/* HEADER */}
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        justifyContent: 'flex-end',
+                                                        alignItems: 'center',
+                                                        mb: 2,
+                                                    }}
+                                                >
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        startIcon={<Add />}
+                                                        onClick={() =>
+                                                            setOpenItemDialogId(estimate.id)
+                                                        }
+                                                    >
+                                                        Добавить позицию
+                                                    </Button>
+                                                </Box>
+
                                                 <MaterialEstimateItemsTable
                                                     items={estimate.items}
                                                 />
@@ -208,6 +231,11 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
                     })}
                 </TableBody>
             </Table>
+            <MaterialEstimateItemCreateEditDialog
+                open={openItemDialogId !== null}
+                onClose={() => setOpenItemDialogId(null)}
+                estimateId={openItemDialogId ?? 0}
+            />
         </Box>
     );
 }

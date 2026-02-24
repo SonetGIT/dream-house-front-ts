@@ -99,6 +99,7 @@ export default function BlockStagesList({ blockId }: Props) {
         setPage((prev) => prev - 1);
     };
 
+    /*******************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             <Box
