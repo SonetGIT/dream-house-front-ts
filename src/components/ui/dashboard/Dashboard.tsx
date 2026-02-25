@@ -6,6 +6,7 @@ import { IoDocumentsSharp } from 'react-icons/io5';
 import WidgetsIcon from '@mui/icons-material/Widgets';
 
 export default function Dashboard() {
+    // console.log('Dashboard');
     const dashboardCards = [
         {
             title: 'Документы (юр.)',

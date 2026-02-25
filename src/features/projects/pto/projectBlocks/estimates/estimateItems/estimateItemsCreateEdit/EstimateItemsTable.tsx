@@ -1,32 +1,31 @@
 import { Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material';
-import type { TypeMaterialEstimateItemFormRow } from './useMaterialEstimateItemsForm';
-import MaterialEstimateItemFormRow from './MaterialEstimateItemFormRow';
-import { useReference } from '@/features/reference/useReference';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
+import type { EstimateItemRowType } from './useMaterialEstimateItemsForm';
+import EstimateItemRow from './EstimateItemRow';
 
 interface Props {
-    rows: TypeMaterialEstimateItemFormRow[];
-    updateField: any;
-    removeRow: any;
-    rowTotal: any;
-    isEditMode: boolean;
+    rows: EstimateItemRowType[];
+    updateField: (index: number, field: keyof EstimateItemRowType, value: any) => void;
+    removeRow: (index: number) => void;
+    rowTotal: (row: EstimateItemRowType) => number;
+    refs: {
+        serviceTypes: ReferenceResult;
+        services: ReferenceResult;
+        materialTypes: ReferenceResult;
+        materials: ReferenceResult;
+        unitsOfMeasure: ReferenceResult;
+        currencies: ReferenceResult;
+        materialEstimateItemTypes: ReferenceResult;
+    };
 }
 
-export default function MaterialEstimateItemsFormTable({
+export default function EstimateItemsTable({
     rows,
     updateField,
     removeRow,
     rowTotal,
-    isEditMode,
+    refs,
 }: Props) {
-    const refs = {
-        serviceTypes: useReference('serviceTypes'),
-        services: useReference('services'),
-        materialTypes: useReference('materialTypes'),
-        materials: useReference('materials'),
-        currencies: useReference('currencies'),
-        unitsOfMeasure: useReference('unitsOfMeasure'),
-    };
-
     return (
         <Table
             size="small"
@@ -43,36 +42,45 @@ export default function MaterialEstimateItemsFormTable({
                         '& th': {
                             padding: '6px 8px',
                             fontWeight: 600,
-                            fontSize: '0.8rem',
+                            fontSize: '0.825rem',
                             lineHeight: 1.2,
-                            whiteSpace: 'nowrap', // ❗ заголовки в одну строку
+                            whiteSpace: 'nowrap',
+                            textAlign: 'center',
+                            color: '#2c7ecb',
                         },
                     }}
                 >
+                    {/* Новый столбец Тип позиции */}
+                    <TableCell>Тип позиции</TableCell>
+
                     <TableCell>Группа услуг</TableCell>
                     <TableCell>Услуга</TableCell>
-                    <TableCell>Тип</TableCell>
+
+                    <TableCell>Тип материала</TableCell>
                     <TableCell>Материал</TableCell>
-                    <TableCell>ед. изм</TableCell>
+
+                    <TableCell>Ед. изм</TableCell>
                     <TableCell>Кол-во</TableCell>
                     <TableCell>Коэффициент</TableCell>
+
                     <TableCell>Валюта</TableCell>
-                    <TableCell align="right">Цена</TableCell>
+                    <TableCell>Цена</TableCell>
+                    <TableCell align="right">Сумма</TableCell>
                     <TableCell>Примечание</TableCell>
-                    {!isEditMode && <TableCell />}
+
+                    <TableCell />
                 </TableRow>
             </TableHead>
 
             <TableBody>
                 {rows?.map((row, index) => (
-                    <MaterialEstimateItemFormRow
+                    <EstimateItemRow
                         key={index}
                         row={row}
                         index={index}
                         updateField={updateField}
                         removeRow={removeRow}
                         rowTotal={rowTotal}
-                        isEditMode={isEditMode}
                         refs={refs}
                     />
                 ))}

@@ -33,12 +33,11 @@ export function useReference(enumName: string) {
     useEffect(() => {
         if (!token) return;
 
-        // 🔥 КЛЮЧЕВОЕ УСЛОВИЕ
         if (!data && !loading && !error) {
             dispatch(fetchEnum(enumName));
         }
     }, [token, data, loading, error, enumName, dispatch]);
-
+    console.log('SERVICES', data);
     const lookup = useMemo(() => createLookup(data), [data]);
 
     return { data, loading, error, lookup };

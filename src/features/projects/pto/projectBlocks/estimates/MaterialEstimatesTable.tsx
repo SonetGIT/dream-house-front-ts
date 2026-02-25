@@ -16,7 +16,7 @@ import { Fragment, useState } from 'react';
 import type { MaterialEstimate } from './materialEstimatesSlice';
 import MaterialEstimateItemsTable from './estimateItems/MaterialEstimateItemsTable';
 import { useReference } from '@/features/reference/useReference';
-import MaterialEstimateItemCreateEditDialog from './estimateItems/estimateItemsCreateEdit/MaterialEstimateItemCreateEditDialog';
+import EstimateItemDialog from './estimateItems/estimateItemsCreateEdit/EstimateItemDialog';
 
 interface Props {
     data: MaterialEstimate[];
@@ -29,7 +29,7 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [openItemDialogId, setOpenItemDialogId] = useState<number | null>(null);
-
+    console.log('Component render1');
     // Справочники
     const refs = {
         users: useReference('users'),
@@ -231,9 +231,11 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
                     })}
                 </TableBody>
             </Table>
-            <MaterialEstimateItemCreateEditDialog
+            <EstimateItemDialog
                 open={openItemDialogId !== null}
                 onClose={() => setOpenItemDialogId(null)}
+                // materialEstimateId={materialEstimateId}
+                // estimateType={'material'}
                 estimateId={openItemDialogId ?? 0}
             />
         </Box>

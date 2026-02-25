@@ -63,7 +63,7 @@ export const fetchMaterialEstimateItems = createAsyncThunk<
             'POST',
             { material_estimate_id: estimateId },
         );
-
+        console.log('RES', res);
         return {
             estimateId,
             data: res.data,
@@ -81,12 +81,12 @@ export const createMaterialEstimateItem = createAsyncThunk<
     { rejectValue: string }
 >('materialEstimateItems/create', async (data, { rejectWithValue }) => {
     try {
+        console.log('data', data);
         const res = await apiRequest<MaterialEstimateItem>(
             '/materialEstimateItems/create',
             'POST',
             data,
         );
-
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка создания позиции');

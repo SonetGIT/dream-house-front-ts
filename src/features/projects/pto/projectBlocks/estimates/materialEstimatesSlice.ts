@@ -26,7 +26,7 @@ export interface MaterialEstimate {
 }
 
 export interface MaterialEstimateFormData {
-    block_id?: number;
+    block_id: number;
     planned_budget?: number | null;
     total_area?: number | null;
     sale_area?: number | null;
