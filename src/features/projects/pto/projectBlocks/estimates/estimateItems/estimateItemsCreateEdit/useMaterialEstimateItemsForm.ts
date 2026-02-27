@@ -58,7 +58,7 @@ export function useMaterialEstimateItemsForm({
         unit_of_measure: '',
 
         quantity: 1,
-        coefficient: '',
+        coefficient: 1,
         price: 0,
         currency: '',
 
@@ -106,16 +106,19 @@ export function useMaterialEstimateItemsForm({
                 // ────────────────
 
                 if (field === 'item_type') {
-                    // очищаем всё несовместимое
-                    row.service_type = '';
-                    row.service_id = '';
+                    const selectedType = Number(value);
 
-                    row.material_type = '';
-                    row.material_id = '';
-                    row.unit_of_measure = '';
+                    if (selectedType === materialTypeId) {
+                        // если Материал → очищаем только service
+                        row.service_type = '';
+                        row.service_id = '';
+                    }
 
-                    row.quantity = '';
-                    row.coefficient = '';
+                    if (selectedType === serviceTypeId) {
+                        // если Услуга → очищаем только material
+                        row.material_type = '';
+                        row.material_id = '';
+                    }
                 }
 
                 // ────────────────
@@ -132,7 +135,6 @@ export function useMaterialEstimateItemsForm({
 
                 if (field === 'material_type') {
                     row.material_id = '';
-                    row.unit_of_measure = '';
                 }
 
                 if (field === 'material_id') {
@@ -144,24 +146,26 @@ export function useMaterialEstimateItemsForm({
                         ? Number(material.unit_of_measure)
                         : '';
 
-                    row.coefficient = material?.coefficient ? Number(material.coefficient) : '';
+                    row.coefficient =
+                        material?.coefficient !== undefined && material?.coefficient !== null
+                            ? Number(material.coefficient)
+                            : 1;
                 }
 
                 updated[index] = row;
                 return updated;
             });
         },
-        [refs.materials.data],
+        [refs.materials.data, materialTypeId, serviceTypeId],
     );
 
     // ─────────────────────────────────────────────
     // ROW TOTAL
     // ─────────────────────────────────────────────
+
     const rowTotal = (row: EstimateItemRowType) => {
         const qty = Number(row.quantity) || 0;
         const price = Number(row.price) || 0;
-
-        // если коэффициента нет → берём 1
         const coef =
             row.coefficient === undefined || row.coefficient === null || row.coefficient === ''
                 ? 1
@@ -169,32 +173,10 @@ export function useMaterialEstimateItemsForm({
 
         return qty * price * coef;
     };
-    // const rowTotal = useCallback(
-    //     (row: EstimateItemRowType) => {
-    //         if (!row.item_type) return 0;
-
-    //         // Если это услуга
-    //         if (row.item_type === serviceTypeId) {
-    //             return row.price || 0;
-    //         }
-
-    //         // Если это материал
-    //         if (row.item_type === materialTypeId) {
-    //             return (row.quantity || 0) * (row.coefficient || 1) * (row.price || 0);
-    //         }
-
-    //         return 0;
-    //     },
-    //     [materialTypeId, serviceTypeId],
-    // );
-
-    // ─────────────────────────────────────────────
-    // GRAND TOTAL
-    // ─────────────────────────────────────────────
 
     const grandTotal = useMemo(() => {
         return rows.reduce((sum, row) => sum + rowTotal(row), 0);
-    }, [rows, rowTotal]);
+    }, [rows]);
 
     return {
         rows,

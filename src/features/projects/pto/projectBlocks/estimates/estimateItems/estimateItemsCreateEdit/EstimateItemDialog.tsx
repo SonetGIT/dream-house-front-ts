@@ -76,12 +76,11 @@ export default function EstimateItemDialog({ open, onClose, estimateId }: Props)
                     material_type: row.material_type ? Number(row.material_type) : null,
                     material_id: row.material_id ? Number(row.material_id) : null,
 
-                    unit_of_measure: row.unit_of_measure ? Number(row.unit_of_measure) : null,
+                    unit_of_measure: row.unit_of_measure ? Number(row.unit_of_measure) : 1, // временно шт
 
-                    quantity_planned:
-                        Number(row.item_type) === MATERIAL_TYPE_ID ? Number(row.quantity) || 0 : 1,
+                    quantity_planned: Number(row.quantity) || 1,
 
-                    coefficient: row.coefficient === '' ? null : Number(row.coefficient),
+                    coefficient: Number(row.coefficient) || 1,
 
                     currency: row.currency ? Number(row.currency) : null,
 

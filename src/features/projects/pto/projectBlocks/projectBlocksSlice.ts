@@ -8,6 +8,9 @@ export interface ProjectBlock {
     id: number;
     name: string;
     project_id: number;
+    planned_budget: number;
+    total_area: number;
+    sale_area: number;
     created_at?: string;
     updated_at?: string;
     deleted: boolean;
@@ -16,6 +19,9 @@ export interface ProjectBlock {
 export interface ProjectBlockFormData {
     name: string;
     project_id: number;
+    planned_budget: number;
+    total_area: number;
+    sale_area: number;
 }
 
 interface FetchProjectBlocksParams {

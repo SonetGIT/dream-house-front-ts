@@ -5,13 +5,12 @@ import {
     ListItemText,
     Typography,
     CircularProgress,
-    Button,
     IconButton,
     Menu,
-    MenuItem,
 } from '@mui/material';
 import type { ProjectBlock } from './projectBlocksSlice';
-import { Add, MoreVert } from '@mui/icons-material';
+import { MoreVert } from '@mui/icons-material';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -54,9 +53,10 @@ export default function ProjectBlocksSidebar({
                 width: 280,
                 p: 2,
                 borderRadius: 3,
-                display: 'flex',
+                // display: 'flex',
                 flexDirection: 'column',
             }}
+            title="ProjectBlocksSidebar.tsx"
         >
             <Typography variant="h6" sx={{ mb: 2 }}>
                 Блоки проекта
@@ -86,30 +86,37 @@ export default function ProjectBlocksSidebar({
                 ))}
             </List>
 
-            <Button variant="outlined" startIcon={<Add />} sx={{ mt: 2 }} onClick={onCreate}>
-                Добавить блок
-            </Button>
-
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-                <MenuItem
+                <button
                     onClick={() => {
                         if (activeBlock) onEdit(activeBlock);
                         closeMenu();
                     }}
                 >
-                    Редактировать
-                </MenuItem>
+                    <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-colors">
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                </button>
 
-                <MenuItem
+                <button
                     onClick={() => {
                         if (activeBlock) onDelete(activeBlock.id);
                         closeMenu();
                     }}
-                    sx={{ color: 'error.main' }}
                 >
-                    Удалить
-                </MenuItem>
+                    <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </button>
             </Menu>
+
+            <button
+                onClick={onCreate}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm">ДОБАВИТЬ БЛОК</span>
+            </button>
         </Paper>
     );
 }

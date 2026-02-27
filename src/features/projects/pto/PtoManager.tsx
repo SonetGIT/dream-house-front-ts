@@ -8,10 +8,10 @@ import {
     type ProjectBlock,
 } from './projectBlocks/projectBlocksSlice';
 import ProjectBlocksSidebar from './projectBlocks/ProjectBlocksSidebar';
-import ProjectBlockDetails from './projectBlocks/ProjectBlockDetails';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import ProjectBlockCreateEditForm from './projectBlocks/ProjectBlockCreateEditForm';
+import ProjectBlockPage from './projectBlocks/ProjectBlockPage';
 
 interface ProjectOutletContext {
     projectId: number;
@@ -87,9 +87,10 @@ export default function PtoManager() {
                 loading={loading}
             />
 
-            <ProjectBlockDetails
+            <ProjectBlockPage
                 blockId={selectedProjectBlockId}
                 blockName={blocks.find((b) => b.id === selectedProjectBlockId)?.name || ''}
+                blocks={blocks}
             />
 
             <ProjectBlockCreateEditForm

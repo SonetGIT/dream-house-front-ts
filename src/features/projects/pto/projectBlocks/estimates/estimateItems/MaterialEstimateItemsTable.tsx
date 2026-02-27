@@ -17,7 +17,7 @@ export default function MaterialEstimateItemsTable({ items }: Props) {
         currencies: useReference('currencies'),
     };
 
-    if (items.length === 0) {
+    if (items?.length === 0) {
         return (
             <Typography sx={{ p: 1.5, color: '#64748b', fontSize: '0.875rem' }} variant="body2">
                 Нет позиций
@@ -87,7 +87,7 @@ export default function MaterialEstimateItemsTable({ items }: Props) {
                 </TableHead>
 
                 <TableBody>
-                    {items.map((item) => (
+                    {items?.map((item) => (
                         <TableRow key={item.id}>
                             <TableCell>
                                 {item.service_type != null

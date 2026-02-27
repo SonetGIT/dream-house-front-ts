@@ -51,7 +51,6 @@ const initialState: MaterialEstimateItemsState = {
 };
 
 /* FETCH */
-
 export const fetchMaterialEstimateItems = createAsyncThunk<
     { estimateId: number; data: MaterialEstimateItem[] },
     number,
@@ -74,7 +73,6 @@ export const fetchMaterialEstimateItems = createAsyncThunk<
 });
 
 /* CREATE */
-
 export const createMaterialEstimateItem = createAsyncThunk<
     MaterialEstimateItem,
     MaterialEstimateItemFormData,
@@ -94,7 +92,6 @@ export const createMaterialEstimateItem = createAsyncThunk<
 });
 
 /* UPDATE */
-
 export const updateMaterialEstimateItem = createAsyncThunk<
     MaterialEstimateItem,
     { id: number; data: MaterialEstimateItemFormData },

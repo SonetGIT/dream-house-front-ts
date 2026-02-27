@@ -42,7 +42,8 @@ export default function ProjectDashboardPage() {
     const isIndexRoute = location.pathname === `/projects/${projectId}`;
 
     return (
-        <Box component="main" className="project-details-container">
+        <div>
+            {/* <Box component="main" className="project-details-container"> */}
             {/* BACK BUTTON */}
             <div>
                 <StyledTooltip title="Назад">
@@ -81,6 +82,6 @@ export default function ProjectDashboardPage() {
             <section className="dashboard-grid">
                 {isIndexRoute ? <Dashboard /> : <Outlet context={{ projectId: project.id }} />}
             </section>
-        </Box>
+        </div>
     );
 }

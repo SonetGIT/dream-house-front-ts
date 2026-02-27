@@ -51,8 +51,8 @@ export default function EstimateItemsTable({
                     }}
                 >
                     {/* Новый столбец Тип позиции */}
+                    {/* <TableCell>Под этапы</TableCell> */}
                     <TableCell>Тип позиции</TableCell>
-
                     <TableCell>Группа услуг</TableCell>
                     <TableCell>Услуга</TableCell>
 

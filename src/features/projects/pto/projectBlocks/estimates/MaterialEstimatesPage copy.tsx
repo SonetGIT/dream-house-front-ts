@@ -7,7 +7,6 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import MaterialEstimatesTable from './MaterialEstimatesTable';
 import MaterialEstimateCreateEditDialog from './MaterialEstimateCreateEditDialog';
-import { ImprovedEstimateTable } from './ImprovedEstimateTable';
 
 interface Props {
     blockId: number;
@@ -93,16 +92,7 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
                 <Typography color="text.secondary">Сметы отсутствуют</Typography>
             ) : (
                 <>
-                    <ImprovedEstimateTable
-                        blockId={blockId}
-                        data={data}
-                        // onDelete={handleDelete}
-                        // onEdit={(estimate: any) => {
-                        //     setEditingEstimate(estimate);
-                        //     setOpenEstimateDialog(true);
-                        // }}
-                    />
-                    {/* <MaterialEstimatesTable
+                    <MaterialEstimatesTable
                         blockId={blockId}
                         data={data}
                         onDelete={handleDelete}
@@ -110,7 +100,7 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
                             setEditingEstimate(estimate);
                             setOpenEstimateDialog(true);
                         }}
-                    /> */}
+                    />
 
                     {/* PAGINATION */}
                     {/* <Box

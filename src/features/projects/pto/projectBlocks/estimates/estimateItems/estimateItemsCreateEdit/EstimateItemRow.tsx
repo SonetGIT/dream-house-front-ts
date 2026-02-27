@@ -97,8 +97,6 @@ export default function EstimateItemRow({
     const isMaterial = Number(row.item_type) === Number(MATERIAL_ID);
     const isService = Number(row.item_type) === Number(SERVICE_ID);
     const isTypeSelected = Number(!!row.item_type);
-    console.log('row.item_type', row.item_type, typeof row.item_type);
-    console.log('MATERIAL_ID', MATERIAL_ID, typeof MATERIAL_ID);
 
     // derived lists
     const services =
@@ -212,7 +210,7 @@ export default function EstimateItemRow({
                         opacity: isMaterial ? 1 : 0.5,
                     }}
                 >
-                    {unitName}
+                    {unitName || 1}
                 </Box>
             </CompactCell>
 
@@ -221,7 +219,8 @@ export default function EstimateItemRow({
                 <CompactTextField
                     type="number"
                     value={row.quantity}
-                    disabled={!isMaterial}
+                    // disabled={!isMaterial}
+                    disabled={!isTypeSelected}
                     onChange={(e) =>
                         updateField(
                             index,
@@ -246,7 +245,7 @@ export default function EstimateItemRow({
                         opacity: isMaterial ? 1 : 0.5,
                     }}
                 >
-                    {row.coefficient || '—'}
+                    {row.coefficient || 1}
                 </Box>
             </CompactCell>
 

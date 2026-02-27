@@ -1,4 +1,5 @@
 /* Подключение шрифта 'Roboto', 'Source Sans Pro' */
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 /* @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap'); */
 /* font-family: 'Source Sans Pro', sans-serif; */
@@ -6,6 +7,9 @@
 /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap'); */
 
 /*ОСНОВНЫЕ БАЗОВЫЕ СТИЛИ ПРИЛОЖЕНИЯ*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 *,
 *::before,
 *::after {
@@ -126,7 +130,8 @@ button {
 
 main {
     flex: 1;
-    padding: 50px 0 0 135px;
+    /* padding: 50px 0 0 135px; */
+    padding: 20px;
     overflow-y: auto;
     justify-content: left;
 }

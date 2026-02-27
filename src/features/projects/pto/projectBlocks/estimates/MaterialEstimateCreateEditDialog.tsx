@@ -32,23 +32,29 @@ export default function MaterialEstimateCreateEditDialog({
     const dispatch = useAppDispatch();
 
     const [form, setForm] = useState({
+        blockId: blockId,
         planned_budget: '',
         total_area: '',
         sale_area: '',
+        status: '',
     });
 
     useEffect(() => {
         if (estimate) {
             setForm({
+                blockId: blockId,
                 planned_budget: String(estimate.planned_budget ?? ''),
                 total_area: String(estimate.total_area ?? ''),
                 sale_area: String(estimate.sale_area ?? ''),
+                status: '',
             });
         } else {
             setForm({
+                blockId: blockId,
                 planned_budget: '',
                 total_area: '',
                 sale_area: '',
+                status: '',
             });
         }
     }, [estimate]);
@@ -64,8 +70,9 @@ export default function MaterialEstimateCreateEditDialog({
                 planned_budget: form.planned_budget ? Number(form.planned_budget) : null,
                 total_area: form.total_area ? Number(form.total_area) : null,
                 sale_area: form.sale_area ? Number(form.sale_area) : null,
+                status: form.status ? Number(form.status) : 1, //черновки
             };
-
+            console.log('payload', payload);
             if (estimate) {
                 await dispatch(
                     updateMaterialEstimate({

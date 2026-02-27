@@ -37,7 +37,6 @@ export function useReference(enumName: string) {
             dispatch(fetchEnum(enumName));
         }
     }, [token, data, loading, error, enumName, dispatch]);
-    console.log('SERVICES', data);
     const lookup = useMemo(() => createLookup(data), [data]);
 
     return { data, loading, error, lookup };

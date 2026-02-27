@@ -19,13 +19,14 @@ import { useReference } from '@/features/reference/useReference';
 import EstimateItemDialog from './estimateItems/estimateItemsCreateEdit/EstimateItemDialog';
 
 interface Props {
+    blockId: number;
     data: MaterialEstimate[];
     onDelete: (id: number) => void;
     onEdit: (estimate: MaterialEstimate) => void;
 }
 
 /*************************************************************************************************************/
-export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props) {
+export default function MaterialEstimatesTable({ data, onDelete, onEdit, blockId }: Props) {
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [openItemDialogId, setOpenItemDialogId] = useState<number | null>(null);
@@ -113,7 +114,7 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit }: Props
 
                         return (
                             <Fragment key={estimate.id}>
-                                <TableRow hover>
+                                <TableRow className="border-b hover:bg-gray-50 transition-colors">
                                     <TableCell>
                                         <Box
                                             sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
