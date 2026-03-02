@@ -5,8 +5,6 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchMaterialEstimates, deleteMaterialEstimate } from './materialEstimatesSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
-import MaterialEstimatesTable from './MaterialEstimatesTable';
-import MaterialEstimateCreateEditDialog from './MaterialEstimateCreateEditDialog';
 import { ImprovedEstimateTable } from './ImprovedEstimateTable';
 
 interface Props {
@@ -71,7 +69,7 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* Header */}
-            <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                 <Button
                     variant="outlined"
                     startIcon={<Add />}
@@ -102,15 +100,6 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
                         //     setOpenEstimateDialog(true);
                         // }}
                     />
-                    {/* <MaterialEstimatesTable
-                        blockId={blockId}
-                        data={data}
-                        onDelete={handleDelete}
-                        onEdit={(estimate: any) => {
-                            setEditingEstimate(estimate);
-                            setOpenEstimateDialog(true);
-                        }}
-                    /> */}
 
                     {/* PAGINATION */}
                     {/* <Box
@@ -135,16 +124,6 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
                     </Box> */}
                 </>
             )}
-
-            <MaterialEstimateCreateEditDialog
-                open={openEstimateDialog}
-                onClose={() => {
-                    setOpenEstimateDialog(false);
-                    setEditingEstimate(null);
-                }}
-                blockId={blockId}
-                estimate={editingEstimate}
-            />
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog

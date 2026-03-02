@@ -23,7 +23,7 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
         );
     }
     return (
-        <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }} title="ProjectBlockDetails.tsx">
+        <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }} title="ProjectBlockPage.tsx">
             <PrjBreadcrumbs />
 
             <Box
@@ -37,14 +37,16 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
                 }}
             >
                 {/* Левая часть — название */}
-                <Typography variant="h5">{blockName}</Typography>
+                <Typography variant="h5" fontWeight={400}>
+                    {blockName}
+                </Typography>
 
                 {/* Правая часть — карточки */}
-                <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex flex-wrap items-center gap-4">
                     {blocks.map((block) => (
                         <div key={block.id} className="flex items-center gap-4">
-                            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border">
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <div className="flex items-center gap-3 px-4 py-2 bg-white border shadow-sm rounded-xl">
+                                <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-lg">
                                     <DollarSign className="w-5 h-5 text-green-600" />
                                 </div>
                                 <div>
@@ -55,8 +57,8 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border">
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <div className="flex items-center gap-3 px-4 py-2 bg-white border shadow-sm rounded-xl">
+                                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
                                     <Ruler className="w-5 h-5 text-blue-600" />
                                 </div>
                                 <div>
@@ -67,8 +69,8 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border">
-                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <div className="flex items-center gap-3 px-4 py-2 bg-white border shadow-sm rounded-xl">
+                                <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-lg">
                                     <Home className="w-5 h-5 text-purple-600" />
                                 </div>
                                 <div>
@@ -85,14 +87,12 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
             <Tabs value={tabIndex} onChange={(_, value) => setTabIndex(value)} sx={{ mb: 1 }}>
                 <Tab label="Этапы" />
                 <Tab label="Сметы" />
-                <Tab label="Сметыопт" />
             </Tabs>
 
             <Divider sx={{ mb: 2 }} />
             <Box>
                 {tabIndex === 0 && <BlockStagesList blockId={blockId} />}
                 {tabIndex === 1 && <MaterialEstimatesList blockId={blockId} />}
-                {/* {tabIndex === 2 && <BlockDetail blockId={blockId} />} */}
             </Box>
         </Paper>
     );

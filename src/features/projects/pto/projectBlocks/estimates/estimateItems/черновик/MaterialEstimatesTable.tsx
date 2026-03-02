@@ -13,10 +13,10 @@ import {
 } from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp, Edit, Delete, Add } from '@mui/icons-material';
 import { Fragment, useState } from 'react';
-import type { MaterialEstimate } from './materialEstimatesSlice';
-import MaterialEstimateItemsTable from './estimateItems/MaterialEstimateItemsTable';
+import type { MaterialEstimate } from '../../materialEstimatesSlice';
+import MaterialEstimateItemsTable from '../MaterialEstimateItemsTable';
 import { useReference } from '@/features/reference/useReference';
-import EstimateItemDialog from './estimateItems/estimateItemsCreateEdit/EstimateItemDialog';
+import EstimateItemDialog from '../estimateItemsCreateEdit/EstimateItemDialog';
 
 interface Props {
     blockId: number;
@@ -114,7 +114,7 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit, blockId
 
                         return (
                             <Fragment key={estimate.id}>
-                                <TableRow className="border-b hover:bg-gray-50 transition-colors">
+                                <TableRow className="transition-colors border-b hover:bg-gray-50">
                                     <TableCell>
                                         <Box
                                             sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
@@ -157,9 +157,9 @@ export default function MaterialEstimatesTable({ data, onDelete, onEdit, blockId
                                             }}
                                         />
                                     </TableCell>
-                                    <TableCell>{estimate.planned_budget}</TableCell>
+                                    {/* <TableCell>{estimate.planned_budget}</TableCell>
                                     <TableCell>{estimate.total_area}</TableCell>
-                                    <TableCell>{estimate.sale_area}</TableCell>
+                                    <TableCell>{estimate.sale_area}</TableCell> */}
                                     <TableCell>
                                         {estimate.created_user_id != null
                                             ? refs.users.lookup(estimate.created_user_id)

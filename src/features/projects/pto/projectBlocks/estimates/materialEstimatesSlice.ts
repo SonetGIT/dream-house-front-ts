@@ -7,9 +7,6 @@ import type { MaterialEstimateItem } from './estimateItems/materialEstimateItems
 export interface MaterialEstimate {
     id: number;
     block_id: number;
-    planned_budget: number | null;
-    total_area: number | null;
-    sale_area: number | null;
     status: number | null;
     created_user_id: number;
     approved_user_id: number | null;

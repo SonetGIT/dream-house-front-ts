@@ -1,47 +1,22 @@
-import { Pencil, Trash2, ChevronDown, ChevronRight, PlusCircle } from 'lucide-react';
+import { Pencil, Trash2, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import type { MaterialEstimate } from './materialEstimatesSlice';
+import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '@/features/reference/useReference';
 import type { MaterialEstimateItem } from './estimateItems/materialEstimateItemsSlice';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { MdOutlinePlaylistAdd } from 'react-icons/md';
 
 interface ImprovedEstimateTableProps {
     blockId: number;
     data: MaterialEstimate[];
 }
 
-/**********************************************************************************************************************/
 export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
     const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
     const [activeTab, setActiveTab] = useState<{ [key: string]: string }>({ i1: 'materials' });
-
-    // Справочники
-    const refs = {
-        statuses: useReference('generalStatuses'),
-        materials: useReference('materials'),
-        materialTypes: useReference('materialTypes'),
-        services: useReference('services'),
-        serviceTypes: useReference('serviceTypes'),
-        unitsOfMeasure: useReference('unitsOfMeasure'),
-        currencies: useReference('currencies'),
-    };
-    const getStatusColor = (statusId: number | null) => {
-        if (statusId === null) {
-            return 'bg-gray-100 text-gray-600';
-        }
-
-        const fullStatus = refs.statuses.lookup(statusId);
-
-        const statusColorMap: Record<string, string> = {
-            Черновик: 'bg-yellow-100 text-yellow-700 ',
-            Подписан: 'bg-green-100 text-green-700',
-            Отклонен: 'bg-red-100 text-red-700',
-            Архив: 'bg-blue-100 text-blue-700',
-        };
-
-        return statusColorMap[fullStatus] || 'bg-gray-100 text-gray-700';
-    };
-
+    const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(
+        new Set(['groupService', 'service', 'materialType']),
+    );
     const toggleRow = (id: number) => {
         setExpandedRows((prev) => {
             const next = new Set(prev);
@@ -58,6 +33,40 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
         setActiveTab((prev) => ({ ...prev, [rowId]: tab }));
     };
 
+    const toggleColumn = (column: string) => {
+        setHiddenColumns((prev) => {
+            const next = new Set(prev);
+            if (next.has(column)) {
+                next.delete(column);
+            } else {
+                next.add(column);
+            }
+            return next;
+        });
+    };
+
+    // Справочники
+    const refs = {
+        statuses: useReference('generalStatuses'),
+        materials: useReference('materials'),
+        materialTypes: useReference('materialTypes'),
+        services: useReference('services'),
+        serviceTypes: useReference('serviceTypes'),
+        unitsOfMeasure: useReference('unitsOfMeasure'),
+        currencies: useReference('currencies'),
+    };
+    // Сокращение статусов
+    const getShortStatus = (statusId: number | null) => {
+        if (statusId === null) return '—';
+        const fullStatus = refs.statuses.lookup(statusId);
+        const statusMap: Record<string, string> = {
+            Черновик: 'Черн.',
+            Подписан: 'Подп.',
+            Отклонен: 'Откл.',
+            Архив: 'Арх.',
+        };
+        return statusMap[fullStatus] || fullStatus;
+    };
     const rowTotal = (row: MaterialEstimateItem) => {
         const qty = Number(row.quantity_planned) || 0;
         const price = Number(row.price) || 0;
@@ -68,31 +77,109 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
 
         return qty * price * coef;
     };
+    // const formatNumber = (num: number) => {
+    //     if (num === 0) return '—';
+    //     return num.formatDateTime('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    // };
 
     const calculateTotal = () => {
         return data.reduce((sum, item) => sum + item.total_price, 0);
+        // return data.reduce((sum, item) => sum + 2000, 0);
     };
 
-    /*******************************************************************************************************************/
+    const isColumnHidden = (column: string) => hiddenColumns.has(column);
+
     return (
         <div className="space-y-4">
+            {/* Column Visibility Controls */}
+            <div className="p-3 bg-white border rounded-lg">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Показать столбцы:</span>
+                    <button
+                        onClick={() => toggleColumn('groupService')}
+                        className={`px-3 py-1 text-xs rounded-lg flex items-center gap-1 transition-colors ${
+                            !isColumnHidden('groupService')
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        {!isColumnHidden('groupService') ? (
+                            <Eye className="w-3 h-3" />
+                        ) : (
+                            <EyeOff className="w-3 h-3" />
+                        )}
+                        Группа услуг
+                    </button>
+                    <button
+                        onClick={() => toggleColumn('service')}
+                        className={`px-3 py-1 text-xs rounded-lg flex items-center gap-1 transition-colors ${
+                            !isColumnHidden('service')
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        {!isColumnHidden('service') ? (
+                            <Eye className="w-3 h-3" />
+                        ) : (
+                            <EyeOff className="w-3 h-3" />
+                        )}
+                        Услуга
+                    </button>
+                    <button
+                        onClick={() => toggleColumn('materialType')}
+                        className={`px-3 py-1 text-xs rounded-lg flex items-center gap-1 transition-colors ${
+                            !isColumnHidden('materialType')
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        {!isColumnHidden('materialType') ? (
+                            <Eye className="w-3 h-3" />
+                        ) : (
+                            <EyeOff className="w-3 h-3" />
+                        )}
+                        Тип материала
+                    </button>
+                </div>
+            </div>
+
             {/* Table - ESTIMATES*/}
             <div className="overflow-hidden bg-white border rounded-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        {/* ESTIMATES- HEADER */}
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 <th className="w-12 px-4 py-3 text-left bg-gray-50"></th>
                                 <th className="w-24 px-4 py-3 text-left bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Статус</div>
                                 </th>
-                                <th className="px-4 py-3 text-right border-l bg-blue-50">
+                                {!isColumnHidden('groupService') && (
+                                    <th className="px-4 py-3 text-left bg-gray-50">
+                                        <div className="text-xs text-gray-600 uppercase">
+                                            Группа услуг
+                                        </div>
+                                    </th>
+                                )}
+                                {!isColumnHidden('service') && (
+                                    <th className="px-4 py-3 text-left bg-gray-50">
+                                        <div className="text-xs text-gray-600 uppercase">
+                                            Услуга
+                                        </div>
+                                    </th>
+                                )}
+                                {!isColumnHidden('materialType') && (
+                                    <th className="px-4 py-3 text-left bg-gray-50">
+                                        <div className="text-xs text-gray-600 uppercase">
+                                            Тип материала
+                                        </div>
+                                    </th>
+                                )}
+                                <th className="px-4 py-3 text-right bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Материалы (сом)
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-right border-l bg-blue-50">
+                                <th className="px-4 py-3 text-right bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Услуги (сом)
                                     </div>
@@ -109,7 +196,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                         </thead>
                         {/* ESTIMATES-DATA */}
                         <tbody>
-                            {data?.map((item: MaterialEstimate) => {
+                            {data?.map((item: any) => {
                                 const isExpanded = expandedRows.has(item.id);
                                 const currentTab = activeTab[item.id] || 'materials';
                                 return (
@@ -130,19 +217,30 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                     )}
                                                 </button>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <span
-                                                    className={`px-2 py-1 font-medium rounded ${getStatusColor(item.status)}`}
-                                                >
-                                                    {item.status != null
-                                                        ? refs.statuses.lookup(item.status)
-                                                        : '—'}
+                                            <td className="px-4 py-3">
+                                                <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded">
+                                                    {getShortStatus(item.status)}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 font-medium text-right text-gray-900 border-l bg-blue-50/30">
+                                            {!isColumnHidden('groupService') && (
+                                                <td className="px-4 py-3 text-gray-600">
+                                                    {item.groupService || '—'}
+                                                </td>
+                                            )}
+                                            {!isColumnHidden('service') && (
+                                                <td className="px-4 py-3 text-gray-600">
+                                                    {item.service || '—'}
+                                                </td>
+                                            )}
+                                            {!isColumnHidden('materialType') && (
+                                                <td className="px-4 py-3 text-gray-600">
+                                                    {item.materialType || '—'}
+                                                </td>
+                                            )}
+                                            <td className="px-4 py-3 font-medium text-right text-gray-900 bg-blue-50/30">
                                                 {item.total_price_material}
                                             </td>
-                                            <td className="px-4 py-3 font-medium text-right text-gray-900 border-l bg-blue-50/30">
+                                            <td className="px-4 py-3 font-medium text-right text-gray-900 bg-blue-50/30">
                                                 {item.total_price_service}
                                             </td>
                                             <td className="px-4 py-3 text-base font-bold text-right text-green-700 border-l bg-green-50/30">
@@ -150,16 +248,15 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                             </td>
                                             <td className="px-4 py-3 border-l">
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <StyledTooltip title="Удалить смету">
-                                                        <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </StyledTooltip>
+                                                    <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
-
-                                        {/* ESTIMATE_ITEMS */}
                                         {isExpanded && (
                                             <tr className="border-b bg-gradient-to-r from-blue-50 to-blue-50/50">
                                                 <td colSpan={12} className="px-4 py-6">
@@ -210,63 +307,44 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                             </button>
                                                         </div>
 
-                                                        {/* MATERIALS */}
+                                                        {/* Tab Content */}
                                                         {currentTab === 'materials' && (
                                                             <div>
-                                                                <div className="flex justify-end">
-                                                                    <StyledTooltip title="Добавить материал">
-                                                                        <button
-                                                                            className="
-                                                                                group
-                                                                                p-1.5 
-                                                                                text-orange-500
-                                                                                rounded-lg 
-                                                                                hover:bg-orange-600
-                                                                                transition-all
-                                                                                duration-300
-                                                                                hover:text-white
-                                                                                hover:scale-110
-                                                                                hover:shadow-xl
-                                                                                hover:-translate-y-1
-                                                                                active:scale-95
-                                                                                "
-                                                                        >
-                                                                            <PlusCircle className="w-6 h-6 transition-transform duration-500 group-hover:rotate-90" />
-                                                                        </button>
-                                                                    </StyledTooltip>
-                                                                </div>
+                                                                <button className="px-3 py-1 mb-3 text-sm text-white transition-colors bg-blue-500 rounded-lg shadow-sm hover:bg-blue-700">
+                                                                    +Добавить материал
+                                                                </button>
                                                                 <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
-                                                                    <table className="w-full">
-                                                                        <thead className="text-gray-700 bg-gray-50">
-                                                                            <tr className="border-b">
-                                                                                <th className="px-3 py-2 text-xs text-left">
+                                                                    <table className="w-full text-sm">
+                                                                        <thead>
+                                                                            <tr className="text-xs text-gray-700 border-b bg-gray-50">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Тип
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-left">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Материал
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-left">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Ед. изм
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-right">
                                                                                     Кол-во
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-right">
                                                                                     Коэфф.
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 font-semibold text-right">
                                                                                     Валюта
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-right">
                                                                                     Цена
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 font-semibold text-right">
                                                                                     Сумма
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Примечание
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-center">
+                                                                                <th className="px-3 py-2 text-center">
                                                                                     Действия
                                                                                 </th>
                                                                             </tr>
@@ -290,7 +368,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                             }
                                                                                             className="transition-colors border-b hover:bg-gray-50"
                                                                                         >
-                                                                                            <td className="px-3 py-3 text-sm text-gray-600">
+                                                                                            <td className="px-3 py-3 text-gray-600">
                                                                                                 {sub.material_type !=
                                                                                                 null
                                                                                                     ? refs.materialTypes.lookup(
@@ -298,7 +376,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                       )
                                                                                                     : '—'}
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-gray-600">
+                                                                                            <td className="px-3 py-3 font-medium text-gray-600">
                                                                                                 {sub.material_id !=
                                                                                                 null
                                                                                                     ? refs.materials.lookup(
@@ -307,7 +385,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                     : '-'}
                                                                                             </td>
 
-                                                                                            <td className="px-3 py-3 text-sm text-gray-600">
+                                                                                            <td className="px-3 py-3 text-gray-600">
                                                                                                 {sub.unit_of_measure !=
                                                                                                 null
                                                                                                     ? refs.unitsOfMeasure.lookup(
@@ -315,17 +393,17 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                       )
                                                                                                     : '—'}
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {
                                                                                                     sub.quantity_planned
                                                                                                 }
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {
                                                                                                     sub.coefficient
                                                                                                 }
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-right text-blue-700">
+                                                                                            <td className="px-3 py-3 font-bold text-right text-blue-700">
                                                                                                 {sub.currency !=
                                                                                                 null
                                                                                                     ? refs.currencies.lookup(
@@ -333,18 +411,18 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                       )
                                                                                                     : '—'}
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 font-medium text-right">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {
                                                                                                     sub.price
                                                                                                 }
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 font-medium text-right text-green-600">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {rowTotal(
                                                                                                     sub,
                                                                                                 )}
                                                                                             </td>
 
-                                                                                            <td className="px-3 py-3 text-xs text-right text-gray-600">
+                                                                                            <td className="px-3 py-3 text-xs text-gray-600">
                                                                                                 {sub.comment ||
                                                                                                     '—'}
                                                                                             </td>
@@ -367,63 +445,43 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                             </div>
                                                         )}
 
-                                                        {/* SERVICES */}
                                                         {currentTab === 'services' && (
                                                             <div>
-                                                                <div className="flex justify-end">
-                                                                    <StyledTooltip title="Добавить услугу">
-                                                                        <button
-                                                                            className="
-                                                                                group
-                                                                                p-1.5 
-                                                                                text-orange-500 
-                                                                                rounded-lg 
-                                                                                hover:bg-orange-600
-                                                                                transition-all
-                                                                                duration-300
-                                                                                hover:text-white
-                                                                                hover:scale-110
-                                                                                hover:shadow-xl
-                                                                                hover:-translate-y-1
-                                                                                active:scale-95
-                                                                                "
-                                                                        >
-                                                                            <PlusCircle className="w-6 h-6 transition-transform duration-500 group-hover:rotate-90" />
-                                                                        </button>
-                                                                    </StyledTooltip>
-                                                                </div>
+                                                                <button className="px-4 py-2 mb-3 text-sm text-white transition-colors bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700">
+                                                                    + ДОБАВИТЬ УСЛУГУ
+                                                                </button>
                                                                 <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
                                                                     <table className="w-full text-sm">
-                                                                        <thead className="text-gray-700 bg-gray-50">
-                                                                            <tr className="border-b">
-                                                                                <th className="px-3 py-2 text-xs text-left">
+                                                                        <thead>
+                                                                            <tr className="text-xs text-gray-700 border-b bg-gray-50">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Группа услуг
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-left">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Услуга
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-left">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Ед. изм
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-right">
                                                                                     Кол-во
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-right">
                                                                                     Коэфф.
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 font-semibold text-right">
                                                                                     Валюта
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-right">
                                                                                     Цена
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 font-semibold text-right">
                                                                                     Сумма
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-right">
+                                                                                <th className="px-3 py-2 text-left">
                                                                                     Примечание
                                                                                 </th>
-                                                                                <th className="px-3 py-2 text-xs text-center">
+                                                                                <th className="px-3 py-2 text-center">
                                                                                     Действия
                                                                                 </th>
                                                                             </tr>
@@ -435,7 +493,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                         sub: MaterialEstimateItem,
                                                                                     ) =>
                                                                                         sub.item_type ===
-                                                                                        2, // 21 - услуги
+                                                                                        2, //services
                                                                                 )
                                                                                 .map(
                                                                                     (
@@ -447,7 +505,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                             }
                                                                                             className="transition-colors border-b hover:bg-gray-50"
                                                                                         >
-                                                                                            <td className="px-3 py-3 text-sm text-gray-600">
+                                                                                            <td className="px-3 py-3 text-gray-600">
                                                                                                 {sub.service_type !=
                                                                                                 null
                                                                                                     ? refs.serviceTypes.lookup(
@@ -455,7 +513,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                       )
                                                                                                     : '—'}
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-gray-600">
+                                                                                            <td className="px-3 py-3 font-medium text-gray-600">
                                                                                                 {sub.service_id !=
                                                                                                 null
                                                                                                     ? refs.services.lookup(
@@ -464,7 +522,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                     : '-'}
                                                                                             </td>
 
-                                                                                            <td className="px-3 py-3 text-sm text-gray-600">
+                                                                                            <td className="px-3 py-3 text-gray-600">
                                                                                                 {sub.unit_of_measure !=
                                                                                                 null
                                                                                                     ? refs.unitsOfMeasure.lookup(
@@ -472,17 +530,17 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                       )
                                                                                                     : '—'}
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {
                                                                                                     sub.quantity_planned
                                                                                                 }
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {
                                                                                                     sub.coefficient
                                                                                                 }
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 text-sm text-right text-blue-700">
+                                                                                            <td className="px-3 py-3 font-bold text-right text-blue-700">
                                                                                                 {sub.currency !=
                                                                                                 null
                                                                                                     ? refs.currencies.lookup(
@@ -490,18 +548,18 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                       )
                                                                                                     : '—'}
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 font-medium text-right">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {
                                                                                                     sub.price
                                                                                                 }
                                                                                             </td>
-                                                                                            <td className="px-3 py-3 font-medium text-right text-green-600">
+                                                                                            <td className="px-3 py-3 font-medium text-right text-gray-900">
                                                                                                 {rowTotal(
                                                                                                     sub,
                                                                                                 )}
                                                                                             </td>
 
-                                                                                            <td className="px-3 py-3 text-xs text-right text-gray-600">
+                                                                                            <td className="px-3 py-3 text-xs text-gray-600">
                                                                                                 {sub.comment ||
                                                                                                     '—'}
                                                                                             </td>
@@ -521,10 +579,12 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                         </tbody>
                                                                     </table>
                                                                 </div>
+                                                                {/* <div className="p-8 text-center text-gray-500 bg-white border rounded-lg">
+                                                                    Услуги не добавлены
+                                                                </div> */}
                                                             </div>
                                                         )}
 
-                                                        {/* HISTORY */}
                                                         {currentTab === 'history' && (
                                                             <div className="p-6 bg-white border rounded-lg">
                                                                 <div className="space-y-3">
@@ -551,15 +611,22 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                 );
                             })}
                             <tr className="font-bold border-t-2 border-green-600 bg-gradient-to-r from-green-50 to-green-100">
-                                <td colSpan={4}></td>
-
-                                <td className="px-4 py-4 text-base text-right text-gray-900">
+                                <td
+                                    colSpan={
+                                        isColumnHidden('groupService') &&
+                                        isColumnHidden('service') &&
+                                        isColumnHidden('materialType')
+                                            ? 6
+                                            : 9
+                                    }
+                                    className="px-4 py-4 text-base text-right text-gray-900"
+                                >
                                     ИТОГО:
                                 </td>
-
                                 <td className="px-4 py-4 text-lg text-right text-green-700">
                                     {calculateTotal()}
                                 </td>
+                                <td></td>
                             </tr>
                         </tbody>
                     </table>
