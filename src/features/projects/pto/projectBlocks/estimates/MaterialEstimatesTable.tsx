@@ -1,19 +1,32 @@
 import { Pencil, Trash2, ChevronDown, ChevronRight, PlusCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { MaterialEstimate } from './materialEstimatesSlice';
 import { useReference } from '@/features/reference/useReference';
-import type { MaterialEstimateItem } from './estimateItems/materialEstimateItemsSlice';
+import { type MaterialEstimateItem } from './estimateItems/materialEstimateItemsSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { useAppSelector } from '@/app/store';
+import EstimateItemsCreate from './estimateItems/EstimateItemsCreate';
 
-interface ImprovedEstimateTableProps {
-    blockId: number;
+interface MatEstTableProps {
+    // blockId: number;
     data: MaterialEstimate[];
+    onDeleteEstimateId: (id: number) => void;
+    onDeleteEstimateItemId: (itemId: number) => void;
 }
 
 /**********************************************************************************************************************/
-export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
+export function MaterialEstimatesTable({
+    data,
+    onDeleteEstimateId,
+    onDeleteEstimateItemId,
+}: MatEstTableProps) {
+    const estimateItems = useAppSelector((state) => state.materialEstimateItems.byEstimateId);
+    console.log('estimateItems', estimateItems); // {}
+    console.log('estimate', data);
     const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
     const [activeTab, setActiveTab] = useState<{ [key: string]: string }>({ i1: 'materials' });
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [currentRowId, setCurrentRowId] = useState<number | null>(null);
 
     // Справочники
     const refs = {
@@ -25,6 +38,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
         unitsOfMeasure: useReference('unitsOfMeasure'),
         currencies: useReference('currencies'),
     };
+
     const getStatusColor = (statusId: number | null) => {
         if (statusId === null) {
             return 'bg-gray-100 text-gray-600';
@@ -73,6 +87,10 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
         return data.reduce((sum, item) => sum + item.total_price, 0);
     };
 
+    const handleAddMaterial = (rowId: number) => {
+        setCurrentRowId(rowId);
+        setIsFormOpen(true);
+    };
     /*******************************************************************************************************************/
     return (
         <div className="space-y-4">
@@ -110,14 +128,12 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                         {/* ESTIMATES-DATA */}
                         <tbody>
                             {data?.map((item: MaterialEstimate) => {
+                                const items = estimateItems[item.id] ?? []; // ← ВАЖНО
                                 const isExpanded = expandedRows.has(item.id);
                                 const currentTab = activeTab[item.id] || 'materials';
                                 return (
-                                    <>
-                                        <tr
-                                            key={item.id}
-                                            className="transition-colors border-b hover:bg-gray-50"
-                                        >
+                                    <Fragment key={item.id}>
+                                        <tr className="transition-colors border-b hover:bg-gray-50">
                                             <td className="px-4 py-3">
                                                 <button
                                                     onClick={() => toggleRow(item.id)}
@@ -151,7 +167,12 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                             <td className="px-4 py-3 border-l">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <StyledTooltip title="Удалить смету">
-                                                        <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                                                        <button
+                                                            onClick={() =>
+                                                                onDeleteEstimateId(item.id)
+                                                            }
+                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </StyledTooltip>
@@ -230,6 +251,11 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                 hover:-translate-y-1
                                                                                 active:scale-95
                                                                                 "
+                                                                            onClick={() =>
+                                                                                handleAddMaterial(
+                                                                                    item.id,
+                                                                                )
+                                                                            }
                                                                         >
                                                                             <PlusCircle className="w-6 h-6 transition-transform duration-500 group-hover:rotate-90" />
                                                                         </button>
@@ -272,13 +298,13 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody>
-                                                                            {item?.items
-                                                                                ?.filter(
+                                                                            {items
+                                                                                .filter(
                                                                                     (
                                                                                         sub: MaterialEstimateItem,
                                                                                     ) =>
                                                                                         sub.item_type ===
-                                                                                        1, // 1 - материал
+                                                                                        1,
                                                                                 )
                                                                                 .map(
                                                                                     (
@@ -353,9 +379,18 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                     <button className="p-1 text-gray-400 hover:text-blue-600">
                                                                                                         <Pencil className="w-3.5 h-3.5" />
                                                                                                     </button>
-                                                                                                    <button className="p-1 text-gray-400 hover:text-red-600">
-                                                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                                                    </button>
+                                                                                                    <StyledTooltip title="Удалить позицию">
+                                                                                                        <button
+                                                                                                            onClick={() =>
+                                                                                                                onDeleteEstimateItemId(
+                                                                                                                    sub.id,
+                                                                                                                )
+                                                                                                            }
+                                                                                                            className="p-1 text-gray-400 hover:text-red-600"
+                                                                                                        >
+                                                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                                                        </button>
+                                                                                                    </StyledTooltip>
                                                                                                 </div>
                                                                                             </td>
                                                                                         </tr>
@@ -429,13 +464,13 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody>
-                                                                            {item?.items
-                                                                                ?.filter(
+                                                                            {items
+                                                                                .filter(
                                                                                     (
                                                                                         sub: MaterialEstimateItem,
                                                                                     ) =>
                                                                                         sub.item_type ===
-                                                                                        2, // 21 - услуги
+                                                                                        2,
                                                                                 )
                                                                                 .map(
                                                                                     (
@@ -510,7 +545,14 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                                                                     <button className="p-1 text-gray-400 hover:text-blue-600">
                                                                                                         <Pencil className="w-3.5 h-3.5" />
                                                                                                     </button>
-                                                                                                    <button className="p-1 text-gray-400 hover:text-red-600">
+                                                                                                    <button
+                                                                                                        className="p-1 text-gray-400 hover:text-red-600"
+                                                                                                        onClick={() =>
+                                                                                                            onDeleteEstimateItemId(
+                                                                                                                sub.id,
+                                                                                                            )
+                                                                                                        }
+                                                                                                    >
                                                                                                         <Trash2 className="w-3.5 h-3.5" />
                                                                                                     </button>
                                                                                                 </div>
@@ -547,7 +589,7 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </Fragment>
                                 );
                             })}
                             <tr className="font-bold border-t-2 border-green-600 bg-gradient-to-r from-green-50 to-green-100">
@@ -565,6 +607,11 @@ export function ImprovedEstimateTable({ data }: ImprovedEstimateTableProps) {
                     </table>
                 </div>
             </div>
+            <EstimateItemsCreate
+                isOpen={isFormOpen}
+                onClose={() => setIsFormOpen(false)}
+                // onSubmit={handleFormSubmit}
+            />
         </div>
     );
 }

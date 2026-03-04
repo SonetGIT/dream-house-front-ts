@@ -2,10 +2,18 @@ import { useEffect, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchMaterialEstimates, deleteMaterialEstimate } from './materialEstimatesSlice';
+import {
+    fetchMaterialEstimates,
+    deleteMaterialEstimate,
+    createMaterialEstimate,
+} from './materialEstimatesSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
-import { ImprovedEstimateTable } from './ImprovedEstimateTable';
+import { MaterialEstimatesTable } from './MaterialEstimatesTable';
+import {
+    deleteMaterialEstimateItem,
+    fetchMaterialEstimateItems,
+} from './estimateItems/materialEstimateItemsSlice';
 
 interface Props {
     blockId: number;
@@ -13,15 +21,17 @@ interface Props {
 
 export default function MaterialEstimatesPage({ blockId }: Props) {
     const dispatch = useAppDispatch();
-    const { data, pagination, loading } = useAppSelector((state) => state.materialEstimates);
+    const { data, loading } = useAppSelector((state) => state.materialEstimates);
 
     const [page, setPage] = useState(1);
     const size = 10;
-    const [deleteId, setDeleteId] = useState<number | null>(null);
-    const [openEstimateDialog, setOpenEstimateDialog] = useState(false);
-    const [editingEstimate, setEditingEstimate] = useState(null);
+    const [deleteState, setDeleteState] = useState<{
+        type: 'estimate' | 'item';
+        id: number;
+    } | null>(null);
 
     /* FETCH */
+    /* подгрузка ESTIMATE*/
     useEffect(() => {
         if (!blockId) return;
 
@@ -34,50 +44,61 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
         );
     }, [dispatch, blockId, page]);
 
-    /* DELETE */
-    const handleDelete = (id: number) => {
-        setDeleteId(id);
-    };
+    /* подгрузка ESTIMATE-ITEM*/
+    useEffect(() => {
+        dispatch(fetchMaterialEstimateItems());
+    }, [dispatch]);
 
     const confirmDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteState) return;
 
         try {
-            await dispatch(deleteMaterialEstimate(deleteId)).unwrap();
-            toast.success('Смета удалена');
+            if (deleteState.type === 'item') {
+                console.log('Deleting item:', deleteState.id);
+                await dispatch(deleteMaterialEstimateItem(deleteState.id)).unwrap();
+                toast.success('Позиция удалена');
+            }
 
-            // перезапрос текущей страницы
-            dispatch(
-                fetchMaterialEstimates({
-                    block_id: blockId,
-                    page,
-                    size,
-                }),
-            );
+            if (deleteState.type === 'estimate') {
+                await dispatch(deleteMaterialEstimate(deleteState.id)).unwrap();
+
+                toast.success('Смета удалена');
+
+                await dispatch(
+                    fetchMaterialEstimates({
+                        block_id: blockId,
+                        page,
+                        size,
+                    }),
+                ).unwrap();
+            }
         } catch {
             toast.error('Ошибка удаления');
         } finally {
-            setDeleteId(null);
+            setDeleteState(null);
         }
     };
 
-    /* PAGINATION */
-    const handlePrev = () => pagination?.hasPrev && setPage((p) => p - 1);
-    const handleNext = () => pagination?.hasNext && setPage((p) => p + 1);
+    const handleCreateEstimate = async () => {
+        try {
+            await dispatch(
+                createMaterialEstimate({
+                    block_id: blockId,
+                    status: 1, //  1 - черновик
+                }),
+            ).unwrap();
 
+            toast.success('Смета создана');
+        } catch {
+            toast.error('Ошибка создания сметы');
+        }
+    };
     /******************************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button
-                    variant="outlined"
-                    startIcon={<Add />}
-                    onClick={() => {
-                        setEditingEstimate(null);
-                        setOpenEstimateDialog(true);
-                    }}
-                >
+                <Button variant="outlined" startIcon={<Add />} onClick={handleCreateEstimate}>
                     Добавить смету
                 </Button>
             </Box>
@@ -91,47 +112,30 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
                 <Typography color="text.secondary">Сметы отсутствуют</Typography>
             ) : (
                 <>
-                    <ImprovedEstimateTable
-                        blockId={blockId}
+                    <MaterialEstimatesTable
                         data={data}
-                        // onDelete={handleDelete}
-                        // onEdit={(estimate: any) => {
-                        //     setEditingEstimate(estimate);
-                        //     setOpenEstimateDialog(true);
-                        // }}
+                        onDeleteEstimateId={(id) => setDeleteState({ type: 'estimate', id })} // удалить смету
+                        onDeleteEstimateItemId={(itemId: number) =>
+                            setDeleteState({ type: 'item', id: itemId })
+                        } // удалить позицию
                     />
-
-                    {/* PAGINATION */}
-                    {/* <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            mt: 2,
-                            gap: 1,
-                        }}
-                    >
-                        <Button size="small" disabled={!pagination?.hasPrev} onClick={handlePrev}>
-                            ←
-                        </Button>
-
-                        <Typography variant="body2">
-                            {page} / {pagination?.pages || 1}
-                        </Typography>
-
-                        <Button size="small" disabled={!pagination?.hasNext} onClick={handleNext}>
-                            →
-                        </Button>
-                    </Box> */}
                 </>
             )}
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog
-                open={!!deleteId}
+                open={!!deleteState && deleteState.type === 'estimate'}
                 title="Удалить смету?"
                 message="Это действие нельзя отменить."
                 onConfirm={confirmDelete}
-                onCancel={() => setDeleteId(null)}
+                onCancel={() => setDeleteState(null)}
+            />
+            <ConfirmDialog
+                open={!!deleteState && deleteState.type === 'item'}
+                title="Удалить позицию?"
+                message="Это действие нельзя отменить."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteState(null)}
             />
         </Paper>
     );

@@ -20,6 +20,7 @@ import projectBlocksReducer from '@/features/projects/pto/projectBlocks/projectB
 import blockStagesReducer from '@/features/projects/pto/projectBlocks/blockStages/blockStagesSlice';
 import stageSubsectionsReducer from '@/features/projects/pto/projectBlocks/blockStages/stageSubsections/stageSubsectionsSlice';
 import materialEstimatesReducer from '@/features/projects/pto/projectBlocks/estimates/materialEstimatesSlice';
+import materialEstimateItemsReducer from '@/features/projects/pto/projectBlocks/estimates/estimateItems/materialEstimateItemsSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -43,6 +44,7 @@ export const rootReducer = combineReducers({
     blockStages: blockStagesReducer,
     stageSubsections: stageSubsectionsReducer,
     materialEstimates: materialEstimatesReducer,
+    materialEstimateItems: materialEstimateItemsReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

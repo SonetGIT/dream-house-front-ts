@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 
 /* TYPES */
+
 export interface MaterialEstimateItem {
     id: number;
     material_estimate_id: number;
@@ -51,40 +52,35 @@ const initialState: MaterialEstimateItemsState = {
 };
 
 /* FETCH */
+
 export const fetchMaterialEstimateItems = createAsyncThunk<
-    { estimateId: number; data: MaterialEstimateItem[] },
-    number,
+    MaterialEstimateItem[],
+    void,
     { rejectValue: string }
->('materialEstimateItems/gets', async (estimateId, { rejectWithValue }) => {
+>('materialEstimateItems/gets', async (_, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialEstimateItem[]>(
-            '/materialEstimateItems/gets',
-            'POST',
-            { material_estimate_id: estimateId },
-        );
-        console.log('RES', res);
-        return {
-            estimateId,
-            data: res.data,
-        };
+        const res = await apiRequest<MaterialEstimateItem[]>('/materialEstimateItems/gets', 'GET');
+
+        return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка загрузки позиций');
     }
 });
 
 /* CREATE */
+
 export const createMaterialEstimateItem = createAsyncThunk<
     MaterialEstimateItem,
     MaterialEstimateItemFormData,
     { rejectValue: string }
 >('materialEstimateItems/create', async (data, { rejectWithValue }) => {
     try {
-        console.log('data', data);
         const res = await apiRequest<MaterialEstimateItem>(
             '/materialEstimateItems/create',
             'POST',
             data,
         );
+
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка создания позиции');
@@ -92,6 +88,7 @@ export const createMaterialEstimateItem = createAsyncThunk<
 });
 
 /* UPDATE */
+
 export const updateMaterialEstimateItem = createAsyncThunk<
     MaterialEstimateItem,
     { id: number; data: MaterialEstimateItemFormData },
@@ -112,19 +109,17 @@ export const updateMaterialEstimateItem = createAsyncThunk<
 
 /* DELETE */
 
-export const deleteMaterialEstimateItem = createAsyncThunk<
-    { id: number; estimateId: number },
-    { id: number; estimateId: number },
-    { rejectValue: string }
->('materialEstimateItems/delete', async ({ id, estimateId }, { rejectWithValue }) => {
-    try {
-        await apiRequest(`/materialEstimateItems/delete/${id}`, 'DELETE');
-
-        return { id, estimateId };
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка удаления позиции');
-    }
-});
+export const deleteMaterialEstimateItem = createAsyncThunk<number, number, { rejectValue: string }>(
+    'materialEstimateItems/delete',
+    async (id, { rejectWithValue }) => {
+        try {
+            await apiRequest(`/materialEstimateItems/delete/${id}`, 'DELETE');
+            return id;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Ошибка удаления позиции');
+        }
+    },
+);
 
 /* SLICE */
 
@@ -140,20 +135,35 @@ const materialEstimateItemsSlice = createSlice({
         builder
 
             /* FETCH */
+
             .addCase(fetchMaterialEstimateItems.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
+
             .addCase(fetchMaterialEstimateItems.fulfilled, (state, action) => {
                 state.loading = false;
-                state.byEstimateId[action.payload.estimateId] = action.payload.data;
+
+                state.byEstimateId = {};
+
+                action.payload.forEach((item) => {
+                    const estimateId = item.material_estimate_id;
+
+                    if (!state.byEstimateId[estimateId]) {
+                        state.byEstimateId[estimateId] = [];
+                    }
+
+                    state.byEstimateId[estimateId].push(item);
+                });
             })
+
             .addCase(fetchMaterialEstimateItems.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })
 
             /* CREATE */
+
             .addCase(createMaterialEstimateItem.fulfilled, (state, action) => {
                 const estimateId = action.payload.material_estimate_id;
 
@@ -165,28 +175,30 @@ const materialEstimateItemsSlice = createSlice({
             })
 
             /* UPDATE */
+
             .addCase(updateMaterialEstimateItem.fulfilled, (state, action) => {
                 const estimateId = action.payload.material_estimate_id;
                 const items = state.byEstimateId[estimateId];
 
                 if (!items) return;
 
-                const index = items.findIndex((item) => item.id === action.payload.id);
+                const index = items.findIndex((i) => i.id === action.payload.id);
 
                 if (index !== -1) {
                     items[index] = action.payload;
                 }
             })
 
-            /* DELETE */
+            /* DELETE (мгновенное обновление UI) */
+
             .addCase(deleteMaterialEstimateItem.fulfilled, (state, action) => {
-                const { id, estimateId } = action.payload;
+                const id = action.payload;
 
-                if (!state.byEstimateId[estimateId]) return;
-
-                state.byEstimateId[estimateId] = state.byEstimateId[estimateId].filter(
-                    (item) => item.id !== id,
-                );
+                Object.keys(state.byEstimateId).forEach((estimateId) => {
+                    state.byEstimateId[+estimateId] = state.byEstimateId[+estimateId].filter(
+                        (item) => item.id !== id,
+                    );
+                });
             });
     },
 });
