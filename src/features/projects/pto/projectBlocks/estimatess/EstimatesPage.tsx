@@ -6,22 +6,23 @@ import {
     fetchMaterialEstimates,
     deleteMaterialEstimate,
     createMaterialEstimate,
-} from './materialEstimatesSlice';
+} from './estimatesSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
-import { MaterialEstimatesTable } from './MaterialEstimatesTable';
 import {
     deleteMaterialEstimateItem,
     fetchMaterialEstimateItems,
-} from './estimateItems/materialEstimateItemsSlice';
+} from './estimateItems/estimateItemsSlice';
+import EstimatesTable from './EstimatesTable';
 
 interface Props {
     blockId: number;
 }
 
-export default function MaterialEstimatesPage({ blockId }: Props) {
+/**********************************************************************************************************/
+export default function EstimatesPage({ blockId }: Props) {
     const dispatch = useAppDispatch();
-    const { data, loading } = useAppSelector((state) => state.materialEstimates);
+    const { data, loading } = useAppSelector((state) => state.estimates);
 
     const [page, setPage] = useState(1);
     const size = 10;
@@ -93,7 +94,8 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
             toast.error('Ошибка создания сметы');
         }
     };
-    /******************************************************************************************************************************************/
+
+    /*************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* Header */}
@@ -112,7 +114,7 @@ export default function MaterialEstimatesPage({ blockId }: Props) {
                 <Typography color="text.secondary">Сметы отсутствуют</Typography>
             ) : (
                 <>
-                    <MaterialEstimatesTable
+                    <EstimatesTable
                         data={data}
                         onDeleteEstimateId={(id) => setDeleteState({ type: 'estimate', id })} // удалить смету
                         onDeleteEstimateItemId={(itemId: number) =>

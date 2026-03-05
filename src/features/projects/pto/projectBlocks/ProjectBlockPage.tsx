@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
 import BlockStagesList from './blockStages/BlockStagesList';
-import PrjBreadcrumbs from '../pto_ui/PrjBreadcrumbs';
+import PrjBreadcrumbs from '../PrjBreadcrumbs';
 import type { ProjectBlock } from './projectBlocksSlice';
 import { DollarSign, Home, Ruler } from 'lucide-react';
-import MaterialEstimatesPage from './estimates/MaterialEstimatesPage';
+import EstimatesPage from './estimatess/EstimatesPage';
 
 interface Props {
     blockId: number | null;
@@ -92,7 +92,7 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
             <Divider sx={{ mb: 2 }} />
             <Box>
                 {tabIndex === 0 && <BlockStagesList blockId={blockId} />}
-                {tabIndex === 1 && <MaterialEstimatesPage blockId={blockId} />}
+                {tabIndex === 1 && <EstimatesPage blockId={blockId} />}
             </Box>
         </Paper>
     );

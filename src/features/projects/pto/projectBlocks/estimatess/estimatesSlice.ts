@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
-import type { MaterialEstimateItem } from './estimateItems/materialEstimateItemsSlice';
+import type { MaterialEstimateItem } from './estimateItems/estimateItemsSlice';
 
 /* ================= TYPES ================= */
 export interface MaterialEstimate {
@@ -58,7 +58,7 @@ export const fetchMaterialEstimates = createAsyncThunk<
     { data: MaterialEstimate[]; pagination?: Pagination },
     FetchMaterialEstimatesParams,
     { rejectValue: string }
->('materialEstimates/search', async (params, { rejectWithValue }) => {
+>('estimates/search', async (params, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialEstimate[]>(
             '/materialEstimates/search',
@@ -81,7 +81,7 @@ export const createMaterialEstimate = createAsyncThunk<
     MaterialEstimate,
     MaterialEstimateFormData,
     { rejectValue: string }
->('materialEstimates/create', async (data, { rejectWithValue }) => {
+>('estimates/create', async (data, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialEstimate>('/materialEstimates/create', 'POST', data);
         return res.data;
@@ -96,7 +96,7 @@ export const updateMaterialEstimate = createAsyncThunk<
     MaterialEstimate,
     { id: number; data: MaterialEstimateFormData },
     { rejectValue: string }
->('materialEstimates/update', async ({ id, data }, { rejectWithValue }) => {
+>('estimates/update', async ({ id, data }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialEstimate>(
             `/materialEstimates/update/${id}`,
@@ -112,7 +112,7 @@ export const updateMaterialEstimate = createAsyncThunk<
 /* ================= DELETE ================= */
 
 export const deleteMaterialEstimate = createAsyncThunk<number, number, { rejectValue: string }>(
-    'materialEstimates/delete',
+    'estimates/delete',
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`/materialEstimates/delete/${id}`, 'DELETE');
@@ -125,8 +125,8 @@ export const deleteMaterialEstimate = createAsyncThunk<number, number, { rejectV
 
 /* ================= SLICE ================= */
 
-const materialEstimatesSlice = createSlice({
-    name: 'materialEstimates',
+const estimatesSlice = createSlice({
+    name: 'estimates',
     initialState,
     reducers: {
         clearMaterialEstimates: (state) => {
@@ -179,6 +179,6 @@ const materialEstimatesSlice = createSlice({
     },
 });
 
-export const { clearMaterialEstimates } = materialEstimatesSlice.actions;
+export const { clearMaterialEstimates } = estimatesSlice.actions;
 
-export default materialEstimatesSlice.reducer;
+export default estimatesSlice.reducer;

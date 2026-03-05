@@ -19,8 +19,8 @@ import materialsReducer from '@/features/materials/materialsSlice';
 import projectBlocksReducer from '@/features/projects/pto/projectBlocks/projectBlocksSlice';
 import blockStagesReducer from '@/features/projects/pto/projectBlocks/blockStages/blockStagesSlice';
 import stageSubsectionsReducer from '@/features/projects/pto/projectBlocks/blockStages/stageSubsections/stageSubsectionsSlice';
-import materialEstimatesReducer from '@/features/projects/pto/projectBlocks/estimates/materialEstimatesSlice';
-import materialEstimateItemsReducer from '@/features/projects/pto/projectBlocks/estimates/estimateItems/materialEstimateItemsSlice';
+import estimatesReducer from '@/features/projects/pto/projectBlocks/estimatess/estimatesSlice';
+import estimateItemsReducer from '@/features/projects/pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -43,8 +43,8 @@ export const rootReducer = combineReducers({
     projectBlocks: projectBlocksReducer,
     blockStages: blockStagesReducer,
     stageSubsections: stageSubsectionsReducer,
-    materialEstimates: materialEstimatesReducer,
-    materialEstimateItems: materialEstimateItemsReducer,
+    estimates: estimatesReducer,
+    estimateItems: estimateItemsReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

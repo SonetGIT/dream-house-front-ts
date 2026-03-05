@@ -1,0 +1,112 @@
+import { Pencil, Trash2 } from 'lucide-react';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import type { MaterialEstimateItem } from './estimateItemsSlice';
+
+interface MaterialsTableProps {
+    items: MaterialEstimateItem[];
+    refs: any;
+    rowTotal: (row: MaterialEstimateItem) => number;
+    onDeleteEstimateItemId: (id: number) => void;
+}
+
+export default function MaterialsTable({
+    items,
+    refs,
+    rowTotal,
+    onDeleteEstimateItemId,
+}: MaterialsTableProps) {
+    return (
+        <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
+            <table className="w-full">
+                <thead className="text-gray-700 bg-gray-50">
+                    <tr className="border-b">
+                        <th className="px-3 py-2 text-xs text-left">Тип</th>
+                        <th className="px-3 py-2 text-xs text-left">Материал</th>
+                        <th className="px-3 py-2 text-xs text-left">Ед. изм</th>
+                        <th className="px-3 py-2 text-xs text-right">Кол-во</th>
+                        <th className="px-3 py-2 text-xs text-right">Коэфф.</th>
+                        <th className="px-3 py-2 text-xs text-right">Валюта</th>
+                        <th className="px-3 py-2 text-xs text-right">Курс</th>
+                        <th className="px-3 py-2 text-xs text-right">Цена</th>
+                        <th className="px-3 py-2 text-xs text-right">Сумма</th>
+                        <th className="px-3 py-2 text-xs text-right">Примечание</th>
+                        <th className="px-3 py-2 text-xs text-center">Действия</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {items
+                        .filter((sub) => sub.item_type === 1)
+                        .map((sub) => (
+                            <tr
+                                key={sub.id}
+                                className="transition-colors border-b hover:bg-gray-50"
+                            >
+                                <td className="px-3 py-3 text-sm text-gray-600">
+                                    {sub.material_type != null
+                                        ? refs.materialTypes.lookup(sub.material_type)
+                                        : '—'}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-gray-600">
+                                    {sub.material_id != null
+                                        ? refs.materials.lookup(sub.material_id)
+                                        : '-'}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-gray-600">
+                                    {sub.unit_of_measure != null
+                                        ? refs.unitsOfMeasure.lookup(sub.unit_of_measure)
+                                        : '—'}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                    {sub.quantity_planned}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                    {sub.coefficient}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-right text-blue-700">
+                                    {sub.currency != null
+                                        ? refs.currencies.lookup(sub.currency)
+                                        : '—'}
+                                </td>
+                                <td className="px-3 py-3 font-medium text-right">
+                                    {sub.currency_rate}
+                                </td>
+
+                                <td className="px-3 py-3 font-medium text-right">{sub.price}</td>
+
+                                <td className="px-3 py-3 font-medium text-right text-green-600">
+                                    {rowTotal(sub)}
+                                </td>
+
+                                <td className="px-3 py-3 text-xs text-right text-gray-600">
+                                    {sub.comment || '—'}
+                                </td>
+
+                                <td className="px-3 py-3">
+                                    <div className="flex items-center justify-center gap-1">
+                                        <button className="p-1 text-gray-400 hover:text-blue-600">
+                                            <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        <StyledTooltip title="Удалить позицию">
+                                            <button
+                                                onClick={() => onDeleteEstimateItemId(sub.id)}
+                                                className="p-1 text-gray-400 hover:text-red-600"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </StyledTooltip>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}

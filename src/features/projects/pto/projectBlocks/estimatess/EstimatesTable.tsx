@@ -1,0 +1,93 @@
+import { Fragment, useState } from 'react';
+import { useAppSelector } from '@/app/store';
+import type { MaterialEstimate } from './estimatesSlice';
+import EstimateDetails from './EstimateDetails';
+import EstimateRow from './EstimateRow';
+
+interface EstTblTableProps {
+    data: MaterialEstimate[];
+    onDeleteEstimateId: (id: number) => void;
+    onDeleteEstimateItemId: (id: number) => void;
+}
+
+export default function EstimatesTable({
+    data,
+    onDeleteEstimateId,
+    onDeleteEstimateItemId,
+}: EstTblTableProps) {
+    const estimateItems = useAppSelector((state) => state.estimateItems.byEstimateId);
+
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    const toggleRow = (id: number) => {
+        setExpandedRows((prev) => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    return (
+        <div className="space-y-4">
+            {/* Table - ESTIMATES*/}
+            <div className="overflow-hidden bg-white border rounded-lg">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        {/* ESTIMATES- HEADER */}
+                        <thead className="sticky top-0 z-10 bg-gray-50">
+                            <tr className="border-b">
+                                <th className="w-12 px-4 py-3 text-left bg-gray-50"></th>
+                                <th className="w-24 px-4 py-3 text-left bg-gray-50">
+                                    <div className="text-xs text-gray-600 uppercase">Статус</div>
+                                </th>
+                                <th className="px-4 py-3 text-right border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Материалы (сом)
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-right border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Услуги (сом)
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-right border-l bg-green-50">
+                                    <div className="text-xs font-semibold text-green-700 uppercase">
+                                        Стоимость (сом)
+                                    </div>
+                                </th>
+                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                    <div className="text-xs text-gray-600 uppercase">Действия</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((item) => {
+                                const items = estimateItems[item.id] ?? [];
+                                const isExpanded = expandedRows.has(item.id);
+
+                                return (
+                                    <Fragment key={item.id}>
+                                        <EstimateRow
+                                            item={item}
+                                            isExpanded={isExpanded}
+                                            toggleRow={toggleRow}
+                                            onDeleteEstimateId={onDeleteEstimateId}
+                                        />
+
+                                        {isExpanded && (
+                                            <EstimateDetails
+                                                item={item}
+                                                items={items}
+                                                onDeleteEstimateItemId={onDeleteEstimateItemId}
+                                            />
+                                        )}
+                                    </Fragment>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
     Box,
     Paper,
@@ -153,8 +153,8 @@ export default function BlockStagesList({ blockId }: Props) {
                                 const isOpen = expandedStageId === stage.id;
 
                                 return (
-                                    <>
-                                        <TableRow key={stage.id} hover>
+                                    <Fragment key={stage.id}>
+                                        <TableRow hover>
                                             <TableCell width={50}>
                                                 <IconButton
                                                     size="small"
@@ -205,7 +205,7 @@ export default function BlockStagesList({ blockId }: Props) {
                                                 </Collapse>
                                             </TableCell>
                                         </TableRow>
-                                    </>
+                                    </Fragment>
                                 );
                             })}
                         </TableBody>
