@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
-import BlockStagesList from './blockStages/BlockStagesList';
 import PrjBreadcrumbs from '../PrjBreadcrumbs';
 import type { ProjectBlock } from './projectBlocksSlice';
 import { DollarSign, Home, Ruler } from 'lucide-react';
 import EstimatesPage from './estimatess/EstimatesPage';
+import { useAppSelector } from '@/app/store';
+import BlockStagesPage from './blockStages/BlockStagesPage';
 
 interface Props {
     blockId: number | null;
@@ -14,6 +15,11 @@ interface Props {
 
 /*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
 export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) {
+    const blockStages = useAppSelector((state) =>
+        state.blockStages.data.filter((stage) => stage.block_id === blockId),
+    );
+    console.log('blockStagesPAGE', blockStages);
+
     const [tabIndex, setTabIndex] = useState(0);
     if (!blockId) {
         return (
@@ -91,7 +97,7 @@ export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) 
 
             <Divider sx={{ mb: 2 }} />
             <Box>
-                {tabIndex === 0 && <BlockStagesList blockId={blockId} />}
+                {tabIndex === 0 && <BlockStagesPage blockId={blockId} />}
                 {tabIndex === 1 && <EstimatesPage blockId={blockId} />}
             </Box>
         </Paper>

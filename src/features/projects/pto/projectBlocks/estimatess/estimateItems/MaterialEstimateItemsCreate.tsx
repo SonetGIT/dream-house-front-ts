@@ -7,6 +7,8 @@ import { fetchCurrencyRatesByDate, type CurrencyRate } from '@/utils/fetchCurren
 
 interface MaterialRow {
     id: string;
+    material_estimate_id: number;
+    item_type: number;
     materialType: number | null;
     material: number | null;
     unitsOfMeasure: number | null;
@@ -20,13 +22,18 @@ interface MaterialRow {
 
 interface MaterialFormProps {
     isOpen: boolean;
-    onClose: () => void;
-    estimateId?: number | null;
+    estimateId: number;
     refs: Record<string, ReferenceResult>;
+    onClose: () => void;
 }
 
 /************************************************************************************************************/
-export default function MaterialEstimateItemsCreate({ isOpen, onClose, refs }: MaterialFormProps) {
+export default function MaterialEstimateItemsCreate({
+    isOpen,
+    estimateId,
+    refs,
+    onClose,
+}: MaterialFormProps) {
     const [rates, setRates] = useState<CurrencyRate[]>([]);
 
     useEffect(() => {
@@ -34,7 +41,6 @@ export default function MaterialEstimateItemsCreate({ isOpen, onClose, refs }: M
             try {
                 const today = new Date().toISOString().split('T')[0];
                 const res = await fetchCurrencyRatesByDate(today);
-                console.log('res', res);
                 setRates(res);
             } catch (err) {
                 console.error('Ошибка загрузки курсов валют', err);
@@ -51,6 +57,8 @@ export default function MaterialEstimateItemsCreate({ isOpen, onClose, refs }: M
 
     const createEmptyRow = (): MaterialRow => ({
         id: Math.random().toString(36).slice(2),
+        material_estimate_id: estimateId,
+        item_type: 1,
         materialType: null,
         material: null,
         unitsOfMeasure: null,
@@ -99,7 +107,7 @@ export default function MaterialEstimateItemsCreate({ isOpen, onClose, refs }: M
             return;
         }
 
-        console.log(valid);
+        console.log('Отправляем на сервер:', valid);
 
         setRows([createEmptyRow()]);
         onClose();

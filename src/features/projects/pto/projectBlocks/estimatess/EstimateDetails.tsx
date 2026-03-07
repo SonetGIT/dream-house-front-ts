@@ -27,8 +27,9 @@ export default function EstimateDetails({
 }: EstimateDetailsProps) {
     const [tab, setTab] = useState<TabType>('materials');
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [currentRowId, setCurrentRowId] = useState<number | null>(null);
+    const [currentRowId, setCurrentRowId] = useState<number>(item.id);
 
+    console.log('item', item.id);
     /** справочники */
     const refs = {
         materials: useReference('materials'),
@@ -183,21 +184,21 @@ export default function EstimateDetails({
                     </div>
                 </td>
             </tr>
-            <MaterialEstimateItemsCreate
+            {/* <MaterialEstimateItemsCreate
                 isOpen={isFormOpen}
                 estimateId={currentRowId}
                 refs={refs}
                 onClose={() => setIsFormOpen(false)}
                 // onSubmit={handleFormSubmit}
-            />
+            /> */}
 
-            <ServicesEstimateItemsCreate
+            {/* <ServicesEstimateItemsCreate
                 isOpen={isFormOpen}
                 estimateId={currentRowId}
                 refs={refs}
                 onClose={() => setIsFormOpen(false)}
                 // onSubmit={handleFormSubmit}
-            />
+            /> */}
         </>
     );
 }

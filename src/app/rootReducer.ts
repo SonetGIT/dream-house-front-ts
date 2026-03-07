@@ -18,7 +18,7 @@ import auditLogReducer from '@/features/auditLog/auditLogSlice';
 import materialsReducer from '@/features/materials/materialsSlice';
 import projectBlocksReducer from '@/features/projects/pto/projectBlocks/projectBlocksSlice';
 import blockStagesReducer from '@/features/projects/pto/projectBlocks/blockStages/blockStagesSlice';
-import stageSubsectionsReducer from '@/features/projects/pto/projectBlocks/blockStages/stageSubsections/stageSubsectionsSlice';
+import stageSubsectionsReducer from '@/features/projects/pto/projectBlocks/blockStages/subStages/stageSubsectionsSlice';
 import estimatesReducer from '@/features/projects/pto/projectBlocks/estimatess/estimatesSlice';
 import estimateItemsReducer from '@/features/projects/pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
 

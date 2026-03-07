@@ -6,23 +6,27 @@ import type { Pagination } from '@/features/users/userSlice';
 
 export interface BlockStage {
     id: number;
-    name: string;
     block_id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
     created_at?: string;
     updated_at?: string;
     deleted: boolean;
 }
 
 export interface BlockStageFormData {
-    name: string;
     block_id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
 }
 
 interface FetchBlockStagesParams {
     page: number;
     size: number;
     search?: string;
-    block_id?: number;
+    block_id: number;
 }
 
 interface BlockStagesState {
@@ -47,7 +51,12 @@ export const fetchBlockStages = createAsyncThunk<
     { rejectValue: string }
 >('blockStages/search', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequest('/blockStages/search', 'POST', params);
+        const res = await apiRequest('/blockStages/search', 'POST', params);
+        console.log('fetchBlockStages res', res.data);
+        return {
+            data: res.data,
+            pagination: res.pagination ?? undefined,
+        };
     } catch (error: any) {
         return rejectWithValue(error.message || 'Ошибка загрузки блоков');
     }
