@@ -4,14 +4,14 @@ import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { fetchCurrencyRatesByDate, type CurrencyRate } from '@/utils/fetchCurrencyRate';
-import {
-    createMaterialEstimateItems,
-    fetchMaterialEstimateItems,
-    type MaterialEstimateItemCreatePayload,
-    type MaterialEstimateItemFormData,
-} from './estimateItemsSlice';
 import { useAppDispatch } from '@/app/store';
 import toast from 'react-hot-toast';
+import {
+    createEstimateItems,
+    fetchEstimateItems,
+    type EstimateItemCreatePayload,
+    type EstimateItemFormData,
+} from './estimateItemsSlice';
 
 interface MaterialFormProps {
     isOpen: boolean;
@@ -51,7 +51,7 @@ export default function MaterialEstimateItemsCreate({
     const blockStages = refs.blockStages?.data || [];
     const stageSubsections = refs.stageSubsections?.data || [];
 
-    const createEmptyRow = (): MaterialEstimateItemFormData => ({
+    const createEmptyRow = (): EstimateItemFormData => ({
         id: Math.random().toString(36).substr(2, 9),
         material_estimate_id: estimateId,
         stage_id: null,
@@ -68,11 +68,11 @@ export default function MaterialEstimateItemsCreate({
         comment: '',
     });
 
-    const [rows, setRows] = useState<MaterialEstimateItemFormData[]>([createEmptyRow()]);
+    const [rows, setRows] = useState<EstimateItemFormData[]>([createEmptyRow()]);
 
     const updateRow = (
         id: string,
-        field: keyof MaterialEstimateItemFormData,
+        field: keyof EstimateItemFormData,
         value: string | number | null,
     ) => {
         setRows((prev) =>
@@ -129,14 +129,14 @@ export default function MaterialEstimateItemsCreate({
         return isNaN(num) ? 0 : num;
     };
 
-    const rowSum = (r: MaterialEstimateItemFormData) =>
+    const rowSum = (r: EstimateItemFormData) =>
         r.quantity_planned * r.coefficient * r.price * (r.currency_rate || 1);
 
     const total = rows.reduce((s, r) => s + rowSum(r), 0);
 
     const format = (n: number) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2 });
 
-    const submit = async (e: React.FormEvent) => {
+    const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
         const valid = rows.filter((r) => r.material_type && r.material_id && r.unit_of_measure);
@@ -146,17 +146,14 @@ export default function MaterialEstimateItemsCreate({
             return;
         }
 
-        const payload: MaterialEstimateItemCreatePayload[] = valid.map(({ id, ...rest }) => rest);
-        try {
-            await dispatch(createMaterialEstimateItems(payload)).unwrap();
-            await dispatch(fetchMaterialEstimateItems());
-            toast.success('Материалы успешно добавлены!');
+        const payload: EstimateItemCreatePayload[] = valid.map(({ id, ...rest }) => rest);
 
-            setRows([createEmptyRow()]);
-            onClose();
-        } catch (err: any) {
-            toast.error(err || 'Ошибка при создании материалов');
-        }
+        dispatch(createEstimateItems(payload));
+        dispatch(fetchEstimateItems());
+        toast.success('Материалы успешно добавлены!');
+
+        setRows([createEmptyRow()]);
+        onClose();
     };
 
     if (!isOpen) return null;

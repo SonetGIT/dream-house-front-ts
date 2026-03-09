@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 
 /* TYPES */
-export interface MaterialEstimateItem {
+export interface EstimateItem {
     id: number;
     material_estimate_id: number;
     stage_id: number | null;
@@ -23,7 +23,7 @@ export interface MaterialEstimateItem {
     updated_at?: string;
     deleted: boolean;
 }
-export interface MaterialEstimateItemFormData {
+export interface EstimateItemFormData {
     id: string;
 
     material_estimate_id: number;
@@ -46,48 +46,42 @@ export interface MaterialEstimateItemFormData {
     price: number;
     comment: string;
 }
-export type MaterialEstimateItemCreatePayload = Omit<MaterialEstimateItemFormData, 'id'>;
-interface MaterialEstimateItemsState {
-    byEstimateId: Record<number, MaterialEstimateItem[]>;
+export type EstimateItemCreatePayload = Omit<EstimateItemFormData, 'id'>;
+interface EstimateItemsState {
+    byEstimateId: Record<number, EstimateItem[]>;
     loading: boolean;
     error: string | null;
 }
 
-const initialState: MaterialEstimateItemsState = {
+const initialState: EstimateItemsState = {
     byEstimateId: {},
     loading: false,
     error: null,
 };
 
 /* FETCH */
+export const fetchEstimateItems = createAsyncThunk<EstimateItem[], void, { rejectValue: string }>(
+    'estimateItems/gets',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<EstimateItem[]>('/materialEstimateItems/gets', 'GET');
 
-export const fetchMaterialEstimateItems = createAsyncThunk<
-    MaterialEstimateItem[],
-    void,
-    { rejectValue: string }
->('estimateItems/gets', async (_, { rejectWithValue }) => {
-    try {
-        const res = await apiRequest<MaterialEstimateItem[]>('/materialEstimateItems/gets', 'GET');
-
-        return res.data;
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка загрузки позиций');
-    }
-});
+            return res.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Ошибка загрузки позиций');
+        }
+    },
+);
 
 /* CREATE */
 
-export const createMaterialEstimateItems = createAsyncThunk<
-    MaterialEstimateItem[],
-    MaterialEstimateItemCreatePayload[],
+export const createEstimateItems = createAsyncThunk<
+    EstimateItem[],
+    EstimateItemCreatePayload[],
     { rejectValue: string }
 >('estimateItems/create', async (data, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialEstimateItem[]>(
-            '/materialEstimateItems/create',
-            'POST',
-            data,
-        );
+        const res = await apiRequest<EstimateItem[]>('/materialEstimateItems/create', 'POST', data);
 
         return res.data;
     } catch (err: any) {
@@ -96,13 +90,13 @@ export const createMaterialEstimateItems = createAsyncThunk<
 });
 /* UPDATE */
 
-export const updateMaterialEstimateItem = createAsyncThunk<
-    MaterialEstimateItem,
-    { id: number; data: MaterialEstimateItemFormData },
+export const updateEstimateItem = createAsyncThunk<
+    EstimateItem,
+    { id: number; data: EstimateItemFormData },
     { rejectValue: string }
 >('estimateItems/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialEstimateItem>(
+        const res = await apiRequest<EstimateItem>(
             `/materialEstimateItems/update/${id}`,
             'PUT',
             data,
@@ -116,7 +110,7 @@ export const updateMaterialEstimateItem = createAsyncThunk<
 
 /* DELETE */
 
-export const deleteMaterialEstimateItem = createAsyncThunk<number, number, { rejectValue: string }>(
+export const deleteEstimateItem = createAsyncThunk<number, number, { rejectValue: string }>(
     'estimateItems/delete',
     async (id, { rejectWithValue }) => {
         try {
@@ -143,12 +137,12 @@ const estimateItemsSlice = createSlice({
 
             /* FETCH */
 
-            .addCase(fetchMaterialEstimateItems.pending, (state) => {
+            .addCase(fetchEstimateItems.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
 
-            .addCase(fetchMaterialEstimateItems.fulfilled, (state, action) => {
+            .addCase(fetchEstimateItems.fulfilled, (state, action) => {
                 state.loading = false;
 
                 state.byEstimateId = {};
@@ -164,14 +158,14 @@ const estimateItemsSlice = createSlice({
                 });
             })
 
-            .addCase(fetchMaterialEstimateItems.rejected, (state, action) => {
+            .addCase(fetchEstimateItems.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })
 
             /* CREATE */
 
-            .addCase(createMaterialEstimateItems.fulfilled, (state, action) => {
+            .addCase(createEstimateItems.fulfilled, (state, action) => {
                 action.payload.forEach((item) => {
                     const estimateId = item.material_estimate_id;
 
@@ -184,7 +178,7 @@ const estimateItemsSlice = createSlice({
             })
 
             /* UPDATE */
-            .addCase(updateMaterialEstimateItem.fulfilled, (state, action) => {
+            .addCase(updateEstimateItem.fulfilled, (state, action) => {
                 const estimateId = action.payload.material_estimate_id;
                 const items = state.byEstimateId[estimateId];
 
@@ -198,7 +192,7 @@ const estimateItemsSlice = createSlice({
             })
 
             /* DELETE (мгновенное обновление UI) */
-            .addCase(deleteMaterialEstimateItem.fulfilled, (state, action) => {
+            .addCase(deleteEstimateItem.fulfilled, (state, action) => {
                 const id = action.payload;
 
                 Object.keys(state.byEstimateId).forEach((estimateId) => {

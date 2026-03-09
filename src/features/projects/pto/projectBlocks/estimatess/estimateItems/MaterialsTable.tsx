@@ -1,11 +1,11 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import type { MaterialEstimateItem } from './estimateItemsSlice';
+import type { EstimateItem } from './estimateItemsSlice';
 
 interface MaterialsTableProps {
-    items: MaterialEstimateItem[];
+    items: EstimateItem[];
     refs: any;
-    rowTotal: (row: MaterialEstimateItem) => number;
+    rowTotal: (row: EstimateItem) => number;
     onDeleteEstimateItemId: (id: number) => void;
 }
 

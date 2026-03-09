@@ -2,17 +2,10 @@ import { useEffect, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import {
-    fetchMaterialEstimates,
-    deleteMaterialEstimate,
-    createMaterialEstimate,
-} from './estimatesSlice';
+import { deleteEstimate, fetchEstimates, createEstimate } from './estimatesSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
-import {
-    deleteMaterialEstimateItem,
-    fetchMaterialEstimateItems,
-} from './estimateItems/estimateItemsSlice';
+import { deleteEstimateItem, fetchEstimateItems } from './estimateItems/estimateItemsSlice';
 import EstimatesTable from './EstimatesTable';
 
 interface Props {
@@ -37,7 +30,7 @@ export default function EstimatesPage({ blockId }: Props) {
         if (!blockId) return;
 
         dispatch(
-            fetchMaterialEstimates({
+            fetchEstimates({
                 block_id: blockId,
                 page,
                 size,
@@ -47,7 +40,7 @@ export default function EstimatesPage({ blockId }: Props) {
 
     /* подгрузка ESTIMATE-ITEM*/
     useEffect(() => {
-        dispatch(fetchMaterialEstimateItems());
+        dispatch(fetchEstimateItems());
     }, [dispatch]);
 
     const confirmDelete = async () => {
@@ -56,17 +49,17 @@ export default function EstimatesPage({ blockId }: Props) {
         try {
             if (deleteState.type === 'item') {
                 console.log('Deleting item:', deleteState.id);
-                await dispatch(deleteMaterialEstimateItem(deleteState.id)).unwrap();
+                await dispatch(deleteEstimateItem(deleteState.id)).unwrap();
                 toast.success('Позиция удалена');
             }
 
             if (deleteState.type === 'estimate') {
-                await dispatch(deleteMaterialEstimate(deleteState.id)).unwrap();
+                await dispatch(deleteEstimate(deleteState.id)).unwrap();
 
                 toast.success('Смета удалена');
 
                 await dispatch(
-                    fetchMaterialEstimates({
+                    fetchEstimates({
                         block_id: blockId,
                         page,
                         size,
@@ -83,7 +76,7 @@ export default function EstimatesPage({ blockId }: Props) {
     const handleCreateEstimate = async () => {
         try {
             await dispatch(
-                createMaterialEstimate({
+                createEstimate({
                     block_id: blockId,
                     status: 1, //  1 - черновик
                 }),

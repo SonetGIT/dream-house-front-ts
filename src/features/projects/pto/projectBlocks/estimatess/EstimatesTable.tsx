@@ -1,11 +1,11 @@
 import { Fragment, useState } from 'react';
 import { useAppSelector } from '@/app/store';
-import type { MaterialEstimate } from './estimatesSlice';
 import EstimateDetails from './EstimateDetails';
 import EstimateRow from './EstimateRow';
+import type { Estimate } from './estimatesSlice';
 
 interface EstTblTableProps {
-    data: MaterialEstimate[];
+    data: Estimate[];
     onDeleteEstimateId: (id: number) => void;
     onDeleteEstimateItemId: (id: number) => void;
 }
@@ -18,6 +18,8 @@ export default function EstimatesTable({
     const estimateItems = useAppSelector((state) => state.estimateItems.byEstimateId);
 
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    console.log('estadata', data);
+    const [sums, setSums] = useState<Record<number, { material: number; service: number }>>({});
 
     const toggleRow = (id: number) => {
         setExpandedRows((prev) => {
@@ -27,6 +29,27 @@ export default function EstimatesTable({
         });
     };
 
+    const updateMaterialSum = (estimateId: number, sum: number) => {
+        setSums((prev) => ({
+            ...prev,
+            [estimateId]: {
+                material: sum,
+                service: prev[estimateId]?.service || 0,
+            },
+        }));
+    };
+
+    const updateServiceSum = (estimateId: number, sum: number) => {
+        setSums((prev) => ({
+            ...prev,
+            [estimateId]: {
+                material: prev[estimateId]?.material || 0,
+                service: sum,
+            },
+        }));
+    };
+
+    /********************************************************************************************************************/
     return (
         <div className="space-y-4">
             {/* Table - ESTIMATES*/}
@@ -72,6 +95,12 @@ export default function EstimatesTable({
                                             isExpanded={isExpanded}
                                             toggleRow={toggleRow}
                                             onDeleteEstimateId={onDeleteEstimateId}
+                                            materialSum={sums[item.id]?.material || 0}
+                                            serviceSum={sums[item.id]?.service || 0}
+                                            totalSum={
+                                                (sums[item.id]?.material || 0) +
+                                                (sums[item.id]?.service || 0)
+                                            }
                                         />
 
                                         {isExpanded && (
@@ -79,6 +108,8 @@ export default function EstimatesTable({
                                                 item={item}
                                                 items={items}
                                                 onDeleteEstimateItemId={onDeleteEstimateItemId}
+                                                onMaterialSumChange={updateMaterialSum}
+                                                onServiceSumChange={updateServiceSum}
                                             />
                                         )}
                                     </Fragment>

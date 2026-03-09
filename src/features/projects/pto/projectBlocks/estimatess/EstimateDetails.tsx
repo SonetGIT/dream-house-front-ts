@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { useReference } from '@/features/reference/useReference';
-
-import type { MaterialEstimate } from './estimatesSlice';
-import type { MaterialEstimateItem } from './estimateItems/estimateItemsSlice';
 
 import MaterialsTable from './estimateItems/MaterialsTable';
 import ServicesTable from './estimateItems/ServicesTable';
 import EstimateHistory from './estimateItems/EstimateHistory';
 import MaterialEstimateItemsCreate from './estimateItems/MaterialEstimateItemsCreate';
+import ServicesEstimateItemsCreate from './estimateItems/ServicesEstimateItemsCreate';
+import type { Estimate } from './estimatesSlice';
+import type { EstimateItem } from './estimateItems/estimateItemsSlice';
 
 interface EstimateDetailsProps {
-    item: MaterialEstimate;
-    items: MaterialEstimateItem[];
+    item: Estimate;
+    items: EstimateItem[];
     onDeleteEstimateItemId: (id: number) => void;
+    onMaterialSumChange: (estimateId: number, newSum: number) => void;
+    onServiceSumChange: (estimateId: number, newSum: number) => void;
 }
 
 type TabType = 'materials' | 'services' | 'history';
@@ -23,10 +25,12 @@ export default function EstimateDetails({
     item,
     items,
     onDeleteEstimateItemId,
+    onMaterialSumChange,
+    onServiceSumChange,
 }: EstimateDetailsProps) {
     const [tab, setTab] = useState<TabType>('materials');
-    const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentRowId, setCurrentRowId] = useState<number>(item.id);
+    const [formType, setFormType] = useState<'material' | 'service' | null>(null);
 
     /** справочники */
     const refs = {
@@ -41,7 +45,7 @@ export default function EstimateDetails({
     };
 
     /** расчет суммы строки */
-    const rowTotal = (row: MaterialEstimateItem) => {
+    const rowTotal = (row: EstimateItem) => {
         const qty = Number(row.quantity_planned) || 0;
         const price = Number(row.price) || 0;
 
@@ -55,15 +59,21 @@ export default function EstimateDetails({
     // const calculateTotal = () => {
     //     return data.reduce((sum, item) => sum + item.total_price, 0);
     // };
+    //  const sum = useMemo(() => {
+    //         return rows.reduce((s, r) => s + r.quantity_planned * r.price * (r.currency_rate || 1), 0);
+    //     }, [rows]);
+    useEffect(() => {
+        onMaterialSumChange(estimateId, rowTotal);
+    }, [rowTotal]);
 
     const handleAddMaterial = (rowId: number) => {
         setCurrentRowId(rowId);
-        setIsFormOpen(true);
+        setFormType('material');
     };
 
     const handleAddService = (rowId: number) => {
         setCurrentRowId(rowId);
-        setIsFormOpen(true);
+        setFormType('service');
     };
 
     return (
@@ -185,20 +195,19 @@ export default function EstimateDetails({
                 </td>
             </tr>
             <MaterialEstimateItemsCreate
-                isOpen={isFormOpen}
+                isOpen={formType === 'material'}
                 estimateId={currentRowId}
                 refs={refs}
-                onClose={() => setIsFormOpen(false)}
-                // onSubmit={handleFormSubmit}
+                onClose={() => setFormType(null)}
+                // onSumChange={onMaterialSumChange}
             />
 
-            {/* <ServicesEstimateItemsCreate
-                isOpen={isFormOpen}
+            <ServicesEstimateItemsCreate
+                isOpen={formType === 'service'}
                 estimateId={currentRowId}
                 refs={refs}
-                onClose={() => setIsFormOpen(false)}
-                // onSubmit={handleFormSubmit}
-            /> */}
+                onClose={() => setFormType(null)}
+            />
         </>
     );
 }

@@ -1,13 +1,16 @@
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { useReference } from '@/features/reference/useReference';
-import type { MaterialEstimate } from './estimatesSlice';
+import type { Estimate } from './estimatesSlice';
 
 interface EstimateRowProps {
-    item: MaterialEstimate;
+    item: Estimate;
     isExpanded: boolean;
     toggleRow: (id: number) => void;
     onDeleteEstimateId: (id: number) => void;
+    materialSum: number;
+    serviceSum: number;
+    totalSum: number;
 }
 
 export default function EstimateRow({
@@ -15,6 +18,9 @@ export default function EstimateRow({
     isExpanded,
     toggleRow,
     onDeleteEstimateId,
+    materialSum,
+    serviceSum,
+    totalSum,
 }: EstimateRowProps) {
     const statuses = useReference('generalStatuses');
 
@@ -60,17 +66,17 @@ export default function EstimateRow({
 
             {/* материалы */}
             <td className="px-4 py-3 font-medium text-right text-gray-900 border-l bg-blue-50/30">
-                {item.total_price_material}
+                {materialSum}
             </td>
 
             {/* услуги */}
             <td className="px-4 py-3 font-medium text-right text-gray-900 border-l bg-blue-50/30">
-                {item.total_price_service}
+                {serviceSum}
             </td>
 
             {/* итог */}
             <td className="px-4 py-3 text-base font-bold text-right text-green-700 border-l bg-green-50/30">
-                {item.total_price}
+                {totalSum}
             </td>
 
             {/* действия */}

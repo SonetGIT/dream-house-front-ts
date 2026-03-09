@@ -1,10 +1,10 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import type { MaterialEstimateItem } from './estimateItemsSlice';
+import type { EstimateItem } from './estimateItemsSlice';
 
 interface ServicesTableProps {
-    items: MaterialEstimateItem[];
+    items: EstimateItem[];
     refs: any;
-    rowTotal: (row: MaterialEstimateItem) => number;
+    rowTotal: (row: EstimateItem) => number;
     onDeleteEstimateItemId: (id: number) => void;
 }
 
@@ -19,6 +19,8 @@ export default function ServicesTable({
             <table className="w-full text-sm">
                 <thead className="text-gray-700 bg-gray-50">
                     <tr className="border-b">
+                        <th className="px-3 py-2 text-xs text-left">Этап</th>
+                        <th className="px-3 py-2 text-xs text-left">Подэтап</th>
                         <th className="px-3 py-2 text-xs text-left">Группа услуг</th>
                         <th className="px-3 py-2 text-xs text-left">Услуга</th>
                         <th className="px-3 py-2 text-xs text-left">Ед. изм</th>
@@ -41,6 +43,16 @@ export default function ServicesTable({
                                 key={sub.id}
                                 className="transition-colors border-b hover:bg-gray-50"
                             >
+                                <td className="px-3 py-3 text-sm text-gray-600">
+                                    {sub.stage_id != null
+                                        ? refs.blockStages.lookup(sub.stage_id)
+                                        : '—'}
+                                </td>
+                                <td className="px-3 py-3 text-sm text-gray-600">
+                                    {sub.subsection_id != null
+                                        ? refs.stageSubsections.lookup(sub.subsection_id)
+                                        : '—'}
+                                </td>
                                 <td className="px-3 py-3 text-sm text-gray-600">
                                     {sub.service_type != null
                                         ? refs.serviceTypes.lookup(sub.service_type)

@@ -1,32 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { fetchCurrencyRatesByDate, type CurrencyRate } from '@/utils/fetchCurrencyRate';
+import { useAppDispatch } from '@/app/store';
+import toast from 'react-hot-toast';
+import {
+    createEstimateItems,
+    fetchEstimateItems,
+    type EstimateItemCreatePayload,
+    type EstimateItemFormData,
+} from './estimateItemsSlice';
 
-interface ServicesRow {
-    id: string;
-    serviceType: number | null;
-    service_id: number | null;
-    unitsOfMeasure: number | null;
-    quantity: number;
-    coefficient: number;
-    currency: number | null;
-    currency_rate: number;
-    price: number;
-    note: string;
-}
-
-interface ServicesFormProps {
+interface MaterialFormProps {
     isOpen: boolean;
-    onClose: () => void;
-    estimateId?: number | null;
+    estimateId: number;
     refs: Record<string, ReferenceResult>;
+    onClose: () => void;
+    // onSumChange: (estimateId: number, newSum: number) => void;
 }
 
 /************************************************************************************************************/
-export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: ServicesFormProps) {
+export default function ServicesEstimateItemsCreate({
+    isOpen,
+    estimateId,
+    refs,
+    onClose,
+    // onSumChange,
+}: MaterialFormProps) {
+    const dispatch = useAppDispatch();
     const [rates, setRates] = useState<CurrencyRate[]>([]);
 
     useEffect(() => {
@@ -34,7 +37,6 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
             try {
                 const today = new Date().toISOString().split('T')[0];
                 const res = await fetchCurrencyRatesByDate(today);
-                console.log('res', res);
                 setRates(res);
             } catch (err) {
                 console.error('Ошибка загрузки курсов валют', err);
@@ -44,34 +46,87 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
         loadRates();
     }, []);
 
-    const serviceTypes = refs.materialTypes?.data || [];
-    const services = refs.materials?.data || [];
+    const serviceTypes = refs.serviceTypes?.data || [];
+    const services = refs.services?.data || [];
     const units = refs.unitsOfMeasure?.data || [];
     const currencies = refs.currencies?.data || [];
-
-    const createEmptyRow = (): ServicesRow => ({
-        id: Math.random().toString(36).slice(2),
-        serviceType: null,
+    const blockStages = refs.blockStages?.data || [];
+    const stageSubsections = refs.stageSubsections?.data || [];
+    console.log('serviceTypes', serviceTypes);
+    const createEmptyRow = (): EstimateItemFormData => ({
+        id: Math.random().toString(36).substr(2, 9),
+        material_estimate_id: estimateId,
+        stage_id: null,
+        subsection_id: null,
+        item_type: 2, // 2 - услуга
+        service_type: null,
         service_id: null,
-        unitsOfMeasure: null,
-        quantity: 1,
+        unit_of_measure: null,
+        quantity_planned: 1,
         coefficient: 1,
         currency: 1,
         currency_rate: 0,
         price: 0,
-        note: '',
+        comment: '',
     });
 
-    const [rows, setRows] = useState<ServicesRow[]>([createEmptyRow()]);
+    const [rows, setRows] = useState<EstimateItemFormData[]>([createEmptyRow()]);
+    // const sum = useMemo(() => {
+    //     return rows.reduce((s, r) => s + r.quantity_planned * r.price * (r.currency_rate || 1), 0);
+    // }, [rows]);
+    // useEffect(() => {
+    //     onSumChange(estimateId, sum);
+    // }, [sum]);
 
-    const updateRow = (id: string, field: keyof ServicesRow, value: string | number | null) => {
-        setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+    const updateRow = (
+        id: string,
+        field: keyof EstimateItemFormData,
+        value: string | number | null,
+    ) => {
+        setRows((prev) =>
+            prev.map((row) => {
+                if (row.id !== id) return row;
+
+                const updated = { ...row, [field]: value };
+
+                if (field === 'stage_id') {
+                    updated.subsection_id = null;
+                }
+
+                if (field === 'service_type') {
+                    updated.service_id = null;
+                    updated.unit_of_measure = null;
+                }
+
+                if (field === 'service_id') {
+                    updated.unit_of_measure = null;
+                }
+
+                if (field === 'item_type') {
+                    if (value === 1) {
+                        updated.service_type = null;
+                        updated.service_id = null;
+                    }
+
+                    if (value === 2) {
+                        updated.material_type = null;
+                        updated.material_id = null;
+                        updated.unit_of_measure = null;
+                    }
+                }
+
+                return updated;
+            }),
+        );
     };
 
-    const addRow = () => setRows((prev) => [...prev, createEmptyRow()]);
+    const addRow = () => {
+        setRows((prev) => [...prev, createEmptyRow()]);
+    };
 
     const removeRow = (id: string) => {
         if (rows.length === 1) return;
+
         setRows((prev) => prev.filter((r) => r.id !== id));
     };
 
@@ -82,8 +137,8 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
         return isNaN(num) ? 0 : num;
     };
 
-    const rowSum = (r: ServicesRow) =>
-        r.quantity * r.coefficient * r.price * (r.currency_rate || 1);
+    const rowSum = (r: EstimateItemFormData) =>
+        r.quantity_planned * r.coefficient * r.price * (r.currency_rate || 1);
 
     const total = rows.reduce((s, r) => s + rowSum(r), 0);
 
@@ -92,14 +147,18 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const valid = rows.filter((r) => r.serviceType && r.service_id);
+        const valid = rows.filter((r) => r.service_type && r.service_id && r.unit_of_measure);
 
         if (!valid.length) {
-            alert('Добавьте хотя бы один сервис');
+            alert('Добавьте хотя бы одну услугу');
             return;
         }
 
-        console.log(valid);
+        const payload: EstimateItemCreatePayload[] = valid.map(({ id, ...rest }) => rest);
+
+        dispatch(createEstimateItems(payload));
+        dispatch(fetchEstimateItems());
+        toast.success('Услуги успешно добавлены!');
 
         setRows([createEmptyRow()]);
         onClose();
@@ -115,10 +174,10 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
                 <div className="sticky top-0 flex items-center justify-between px-4 py-3 bg-white border-b rounded-t-lg">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            Массовое добавление материалов
+                            Массовое добавление услуг
                         </h2>
                         <p className="mt-1 text-sm text-gray-600">
-                            Добавьте несколько материалов за раз
+                            Добавьте несколько услуг за раз
                         </p>
                     </div>
 
@@ -133,11 +192,15 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
                             <thead className="sticky top-0 z-10 bg-gray-50">
                                 <tr>
                                     <th className="px-3 py-3 text-xs border">#</th>
+                                    <th className="border px-3 py-3 text-xs min-w-[180px]">Этап</th>
+                                    <th className="border px-3 py-3 text-xs min-w-[200px]">
+                                        Подэтап
+                                    </th>
                                     <th className="border px-3 py-3 text-xs min-w-[180px]">
-                                        Тип материала
+                                        Тип услуги
                                     </th>
                                     <th className="border px-3 py-3 text-xs min-w-[200px]">
-                                        Материал
+                                        Услуга
                                     </th>
                                     <th className="border px-3 py-3 text-xs min-w-[160px]">
                                         Ед. изм
@@ -165,9 +228,17 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
 
                             <tbody>
                                 {rows.map((row, index) => {
-                                    const filteredServices = row.serviceType
+                                    const filteredServices = row.service_type
                                         ? services.filter(
-                                              (s) => Number(s.type) === Number(row.serviceType),
+                                              (s) =>
+                                                  Number(s.service_type) ===
+                                                  Number(row.service_type),
+                                          )
+                                        : [];
+
+                                    const filteredSubStages = row.stage_id
+                                        ? stageSubsections.filter(
+                                              (s) => Number(s.stage_id) === Number(row.stage_id),
                                           )
                                         : [];
 
@@ -179,10 +250,30 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
 
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
+                                                    options={blockStages}
+                                                    value={row.stage_id}
+                                                    onChange={(v) =>
+                                                        updateRow(row.id, 'stage_id', v)
+                                                    }
+                                                />
+                                            </td>
+
+                                            <td className="px-3 py-2 border">
+                                                <ReferencesSelect
+                                                    options={filteredSubStages}
+                                                    value={row.subsection_id}
+                                                    disabled={!row.stage_id}
+                                                    onChange={(v) =>
+                                                        updateRow(row.id, 'subsection_id', v)
+                                                    }
+                                                />
+                                            </td>
+                                            <td className="px-3 py-2 border">
+                                                <ReferencesSelect
                                                     options={serviceTypes}
-                                                    value={row.serviceType}
+                                                    value={row.service_type}
                                                     onChange={(v) => {
-                                                        updateRow(row.id, 'serviceType', v);
+                                                        updateRow(row.id, 'service_type', v);
                                                         updateRow(row.id, 'service_id', null);
                                                     }}
                                                 />
@@ -192,7 +283,7 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
                                                 <ReferencesSelect
                                                     options={filteredServices}
                                                     value={row.service_id}
-                                                    disabled={!row.serviceType}
+                                                    disabled={!row.service_type}
                                                     onChange={(v) => {
                                                         updateRow(row.id, 'service_id', v);
 
@@ -202,7 +293,7 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
 
                                                         updateRow(
                                                             row.id,
-                                                            'unitsOfMeasure',
+                                                            'unit_of_measure',
                                                             service?.unit_of_measure
                                                                 ? Number(service.unit_of_measure)
                                                                 : null,
@@ -214,9 +305,9 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
                                                     options={units}
-                                                    value={row.unitsOfMeasure}
+                                                    value={row.unit_of_measure}
                                                     onChange={(v) =>
-                                                        updateRow(row.id, 'unitsOfMeasure', v)
+                                                        updateRow(row.id, 'unit_of_measure', v)
                                                     }
                                                 />
                                             </td>
@@ -224,11 +315,11 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
                                             <td className="px-3 py-2 border">
                                                 <input
                                                     type="text"
-                                                    value={row.quantity}
+                                                    value={row.quantity_planned}
                                                     onChange={(e) =>
                                                         updateRow(
                                                             row.id,
-                                                            'quantity',
+                                                            'quantity_planned',
                                                             parseNumber(e.target.value),
                                                         )
                                                     }
@@ -318,9 +409,9 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
                                             <td className="px-3 py-2 border">
                                                 <input
                                                     type="text"
-                                                    value={row.note}
+                                                    value={row.comment}
                                                     onChange={(e) =>
-                                                        updateRow(row.id, 'note', e.target.value)
+                                                        updateRow(row.id, 'comment', e.target.value)
                                                     }
                                                     className="w-full px-2 py-1.5 border rounded"
                                                 />
@@ -347,7 +438,7 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
 
                             <tfoot className="sticky bottom-0 bg-white">
                                 <tr>
-                                    <td colSpan={12} className="px-3 py-3 border-t-2">
+                                    <td colSpan={14} className="px-3 py-3 border-t-2">
                                         <button
                                             type="button"
                                             onClick={addRow}
@@ -361,7 +452,7 @@ export default function ServicesEstimateItemsCreate({ isOpen, onClose, refs }: S
 
                                 <tr className="bg-green-50">
                                     <td
-                                        colSpan={11}
+                                        colSpan={13}
                                         className="px-3 py-3 font-bold text-right border"
                                     >
                                         ИТОГО

@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
-import type { MaterialEstimateItem } from './estimateItems/estimateItemsSlice';
+import type { EstimateItem } from './estimateItems/estimateItemsSlice';
 
 /* ================= TYPES ================= */
-export interface MaterialEstimate {
+export interface Estimate {
     id: number;
     block_id: number;
     status: number | null;
@@ -15,21 +15,16 @@ export interface MaterialEstimate {
     updated_at?: string;
     deleted: boolean;
 
-    items: MaterialEstimateItem[];
-
-    total_price_material: number;
-    total_price_service: number;
-    total_price: number;
+    items: EstimateItem[];
 }
 
-export interface MaterialEstimateFormData {
+export interface EstimateFormData {
     block_id: number;
     status?: number;
 }
 
 /* ================= SEARCH PARAMS ================= */
-
-interface FetchMaterialEstimatesParams {
+interface FetchEstimatesParams {
     block_id: number;
     status?: number;
     page: number;
@@ -38,14 +33,14 @@ interface FetchMaterialEstimatesParams {
 
 /* ================= STATE ================= */
 
-interface MaterialEstimatesState {
-    data: MaterialEstimate[];
+interface EstimatesState {
+    data: Estimate[];
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
 }
 
-const initialState: MaterialEstimatesState = {
+const initialState: EstimatesState = {
     data: [],
     pagination: null,
     loading: false,
@@ -54,17 +49,13 @@ const initialState: MaterialEstimatesState = {
 
 /* ================= SEARCH ================= */
 
-export const fetchMaterialEstimates = createAsyncThunk<
-    { data: MaterialEstimate[]; pagination?: Pagination },
-    FetchMaterialEstimatesParams,
+export const fetchEstimates = createAsyncThunk<
+    { data: Estimate[]; pagination?: Pagination },
+    FetchEstimatesParams,
     { rejectValue: string }
 >('estimates/search', async (params, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialEstimate[]>(
-            '/materialEstimates/search',
-            'POST',
-            params,
-        );
+        const res = await apiRequest<Estimate[]>('/materialEstimates/search', 'POST', params);
 
         return {
             data: res.data,
@@ -76,33 +67,26 @@ export const fetchMaterialEstimates = createAsyncThunk<
 });
 
 /* ================= CREATE ================= */
-
-export const createMaterialEstimate = createAsyncThunk<
-    MaterialEstimate,
-    MaterialEstimateFormData,
-    { rejectValue: string }
->('estimates/create', async (data, { rejectWithValue }) => {
-    try {
-        const res = await apiRequest<MaterialEstimate>('/materialEstimates/create', 'POST', data);
-        return res.data;
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка создания сметы');
-    }
-});
+export const createEstimate = createAsyncThunk<Estimate, EstimateFormData, { rejectValue: string }>(
+    'estimates/create',
+    async (data, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<Estimate>('/materialEstimates/create', 'POST', data);
+            return res.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Ошибка создания сметы');
+        }
+    },
+);
 
 /* ================= UPDATE ================= */
-
-export const updateMaterialEstimate = createAsyncThunk<
-    MaterialEstimate,
-    { id: number; data: MaterialEstimateFormData },
+export const updateEstimate = createAsyncThunk<
+    Estimate,
+    { id: number; data: EstimateFormData },
     { rejectValue: string }
 >('estimates/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialEstimate>(
-            `/materialEstimates/update/${id}`,
-            'PUT',
-            data,
-        );
+        const res = await apiRequest<Estimate>(`/materialEstimates/update/${id}`, 'PUT', data);
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка обновления сметы');
@@ -110,8 +94,7 @@ export const updateMaterialEstimate = createAsyncThunk<
 });
 
 /* ================= DELETE ================= */
-
-export const deleteMaterialEstimate = createAsyncThunk<number, number, { rejectValue: string }>(
+export const deleteEstimate = createAsyncThunk<number, number, { rejectValue: string }>(
     'estimates/delete',
     async (id, { rejectWithValue }) => {
         try {
@@ -124,7 +107,6 @@ export const deleteMaterialEstimate = createAsyncThunk<number, number, { rejectV
 );
 
 /* ================= SLICE ================= */
-
 const estimatesSlice = createSlice({
     name: 'estimates',
     initialState,
@@ -139,22 +121,22 @@ const estimatesSlice = createSlice({
         builder
 
             /* SEARCH */
-            .addCase(fetchMaterialEstimates.pending, (state) => {
+            .addCase(fetchEstimates.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchMaterialEstimates.fulfilled, (state, action) => {
+            .addCase(fetchEstimates.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
                 state.pagination = action.payload.pagination ?? null;
             })
-            .addCase(fetchMaterialEstimates.rejected, (state, action) => {
+            .addCase(fetchEstimates.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })
 
             /* CREATE */
-            .addCase(createMaterialEstimate.fulfilled, (state, action) => {
+            .addCase(createEstimate.fulfilled, (state, action) => {
                 state.data.unshift(action.payload);
                 if (state.pagination) {
                     state.pagination.total += 1;
@@ -162,7 +144,7 @@ const estimatesSlice = createSlice({
             })
 
             /* UPDATE */
-            .addCase(updateMaterialEstimate.fulfilled, (state, action) => {
+            .addCase(updateEstimate.fulfilled, (state, action) => {
                 const index = state.data.findIndex((m) => m.id === action.payload.id);
                 if (index !== -1) {
                     state.data[index] = action.payload;
@@ -170,7 +152,7 @@ const estimatesSlice = createSlice({
             })
 
             /* DELETE */
-            .addCase(deleteMaterialEstimate.fulfilled, (state, action) => {
+            .addCase(deleteEstimate.fulfilled, (state, action) => {
                 state.data = state.data.filter((m) => m.id !== action.payload);
                 if (state.pagination) {
                     state.pagination.total -= 1;
