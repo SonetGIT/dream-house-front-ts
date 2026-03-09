@@ -4,7 +4,6 @@ import PrjBreadcrumbs from '../PrjBreadcrumbs';
 import type { ProjectBlock } from './projectBlocksSlice';
 import { DollarSign, Home, Ruler } from 'lucide-react';
 import EstimatesPage from './estimatess/EstimatesPage';
-import { useAppSelector } from '@/app/store';
 import BlockStagesPage from './blockStages/BlockStagesPage';
 
 interface Props {
@@ -15,11 +14,6 @@ interface Props {
 
 /*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
 export default function ProjectBlockPage({ blockId, blockName, blocks }: Props) {
-    const blockStages = useAppSelector((state) =>
-        state.blockStages.data.filter((stage) => stage.block_id === blockId),
-    );
-    console.log('blockStagesPAGE', blockStages);
-
     const [tabIndex, setTabIndex] = useState(0);
     if (!blockId) {
         return (

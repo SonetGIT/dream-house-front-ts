@@ -3,12 +3,14 @@ import BlockStageRow from './BlockStageRow';
 
 interface BlockStagesTableProps {
     stages: BlockStage[];
+    onEditStage: (stage: BlockStage) => void;
     onDeleteStageId: (id: number) => void;
     onDeleteSubStageId: (id: number, stageId: number) => void;
 }
 
 export default function BlockStagesTable({
     stages,
+    onEditStage,
     onDeleteStageId,
     onDeleteSubStageId,
 }: BlockStagesTableProps) {
@@ -22,31 +24,39 @@ export default function BlockStagesTable({
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 {/* Chevron col */}
-                                <th className="border-b w-9" />
+                                <th className="w-12 px-4 py-3 bg-gray-50"></th>
 
                                 {/* Name */}
-                                <th className="bg-blue-50 text-blue-600 text-[11px] font-bold tracking-wider uppercase px-3 py-2.5 text-left border-b border-r">
-                                    Название этапа
+                                <th className="px-4 py-3 text-left border-l bg-gray-50">
+                                    <div className="text-xs text-blue-700 uppercase">
+                                        Название этапа
+                                    </div>
                                 </th>
 
                                 {/* Start */}
-                                <th className="w-[200px] bg-blue-50 text-blue-600 text-[11px] font-bold tracking-wider uppercase px-3 py-2.5 text-left border-b border-r">
-                                    Дата начала
+                                <th className="px-4 py-3 text-left border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Дата начала
+                                    </div>
                                 </th>
 
                                 {/* End */}
-                                <th className="w-[200px] bg-blue-50 text-blue-600 text-[11px] font-bold tracking-wider uppercase px-3 py-2.5 text-left border-b border-r">
-                                    Дата окончания
+                                <th className="px-4 py-3 text-left border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Дата окончания
+                                    </div>
                                 </th>
 
-                                {/* Duration — pink accent */}
-                                <th className="w-[180px] bg-rose-200 text-rose-700 text-[11px] font-bold tracking-wider uppercase px-3 py-2.5 text-center border-b border-r ">
-                                    Продолжительность (дни)
+                                {/* Duration */}
+                                <th className="px-4 py-3 text-center border-l bg-rose-200">
+                                    <div className="text-xs font-semibold uppercase text-rose-700">
+                                        Продолжительность (дни)
+                                    </div>
                                 </th>
 
                                 {/* Actions */}
-                                <th className="w-[72px] bg-gray-50 text-gray-400 text-[11px] font-bold tracking-wider uppercase px-3 py-2.5 text-center border-b ">
-                                    Действия
+                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                    <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
                             </tr>
                         </thead>
@@ -55,6 +65,7 @@ export default function BlockStagesTable({
                                 <BlockStageRow
                                     key={stage.id}
                                     stage={stage}
+                                    onEditStage={onEditStage}
                                     onDeleteStageId={onDeleteStageId}
                                     onDeleteSubStageId={onDeleteSubStageId}
                                 />

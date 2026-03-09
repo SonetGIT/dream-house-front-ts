@@ -2,11 +2,11 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 
 /* TYPES */
-
 export interface MaterialEstimateItem {
     id: number;
     material_estimate_id: number;
-    subsection_id: number;
+    stage_id: number | null;
+    subsection_id: number | null;
     item_type: number;
     service_type: number | null;
     service_id: number | null;
@@ -23,24 +23,30 @@ export interface MaterialEstimateItem {
     updated_at?: string;
     deleted: boolean;
 }
-
 export interface MaterialEstimateItemFormData {
+    id: string;
+
     material_estimate_id: number;
-    subsection_id: number;
+    stage_id: number | null;
+    subsection_id: number | null;
+
     item_type: number;
+
     service_type?: number | null;
     service_id?: number | null;
+
     material_type?: number | null;
     material_id?: number | null;
     unit_of_measure?: number | null;
-    quantity_planned: number;
-    coefficient?: number | null;
-    currency?: number | null;
-    currency_rate?: number | null;
-    price?: number;
-    comment?: string | null;
-}
 
+    quantity_planned: number;
+    coefficient: number;
+    currency: number | null;
+    currency_rate: number;
+    price: number;
+    comment: string;
+}
+export type MaterialEstimateItemCreatePayload = Omit<MaterialEstimateItemFormData, 'id'>;
 interface MaterialEstimateItemsState {
     byEstimateId: Record<number, MaterialEstimateItem[]>;
     loading: boolean;
@@ -71,13 +77,13 @@ export const fetchMaterialEstimateItems = createAsyncThunk<
 
 /* CREATE */
 
-export const createMaterialEstimateItem = createAsyncThunk<
-    MaterialEstimateItem,
-    MaterialEstimateItemFormData,
+export const createMaterialEstimateItems = createAsyncThunk<
+    MaterialEstimateItem[],
+    MaterialEstimateItemCreatePayload[],
     { rejectValue: string }
 >('estimateItems/create', async (data, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialEstimateItem>(
+        const res = await apiRequest<MaterialEstimateItem[]>(
             '/materialEstimateItems/create',
             'POST',
             data,
@@ -88,7 +94,6 @@ export const createMaterialEstimateItem = createAsyncThunk<
         return rejectWithValue(err.message || 'Ошибка создания позиции');
     }
 });
-
 /* UPDATE */
 
 export const updateMaterialEstimateItem = createAsyncThunk<
@@ -166,18 +171,19 @@ const estimateItemsSlice = createSlice({
 
             /* CREATE */
 
-            .addCase(createMaterialEstimateItem.fulfilled, (state, action) => {
-                const estimateId = action.payload.material_estimate_id;
+            .addCase(createMaterialEstimateItems.fulfilled, (state, action) => {
+                action.payload.forEach((item) => {
+                    const estimateId = item.material_estimate_id;
 
-                if (!state.byEstimateId[estimateId]) {
-                    state.byEstimateId[estimateId] = [];
-                }
+                    if (!state.byEstimateId[estimateId]) {
+                        state.byEstimateId[estimateId] = [];
+                    }
 
-                state.byEstimateId[estimateId].push(action.payload);
+                    state.byEstimateId[estimateId].push(item);
+                });
             })
 
             /* UPDATE */
-
             .addCase(updateMaterialEstimateItem.fulfilled, (state, action) => {
                 const estimateId = action.payload.material_estimate_id;
                 const items = state.byEstimateId[estimateId];
@@ -192,7 +198,6 @@ const estimateItemsSlice = createSlice({
             })
 
             /* DELETE (мгновенное обновление UI) */
-
             .addCase(deleteMaterialEstimateItem.fulfilled, (state, action) => {
                 const id = action.payload;
 

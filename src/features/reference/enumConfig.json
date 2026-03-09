@@ -150,5 +150,20 @@
             "name": ["name"]
         },
         "apiName": "/materialEstimateItemTypes/gets"
+    },
+    "blockStages": {
+        "apiName": "/blockStages/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
+    },
+    "stageSubsections": {
+        "apiName": "/stageSubsections/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"],
+            "stage_id": "stage_id"
+        }
     }
 }

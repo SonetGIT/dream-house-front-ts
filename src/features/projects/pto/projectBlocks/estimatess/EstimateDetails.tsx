@@ -10,7 +10,6 @@ import MaterialsTable from './estimateItems/MaterialsTable';
 import ServicesTable from './estimateItems/ServicesTable';
 import EstimateHistory from './estimateItems/EstimateHistory';
 import MaterialEstimateItemsCreate from './estimateItems/MaterialEstimateItemsCreate';
-import ServicesEstimateItemsCreate from './estimateItems/ServicesEstimateItemsCreate';
 
 interface EstimateDetailsProps {
     item: MaterialEstimate;
@@ -29,7 +28,6 @@ export default function EstimateDetails({
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [currentRowId, setCurrentRowId] = useState<number>(item.id);
 
-    console.log('item', item.id);
     /** справочники */
     const refs = {
         materials: useReference('materials'),
@@ -38,6 +36,8 @@ export default function EstimateDetails({
         serviceTypes: useReference('serviceTypes'),
         unitsOfMeasure: useReference('unitsOfMeasure'),
         currencies: useReference('currencies'),
+        blockStages: useReference('blockStages'),
+        stageSubsections: useReference('stageSubsections'),
     };
 
     /** расчет суммы строки */
@@ -184,13 +184,13 @@ export default function EstimateDetails({
                     </div>
                 </td>
             </tr>
-            {/* <MaterialEstimateItemsCreate
+            <MaterialEstimateItemsCreate
                 isOpen={isFormOpen}
                 estimateId={currentRowId}
                 refs={refs}
                 onClose={() => setIsFormOpen(false)}
                 // onSubmit={handleFormSubmit}
-            /> */}
+            />
 
             {/* <ServicesEstimateItemsCreate
                 isOpen={isFormOpen}

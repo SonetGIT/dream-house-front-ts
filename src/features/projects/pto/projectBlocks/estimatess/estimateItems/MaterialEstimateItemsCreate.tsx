@@ -4,21 +4,14 @@ import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { fetchCurrencyRatesByDate, type CurrencyRate } from '@/utils/fetchCurrencyRate';
-
-interface MaterialRow {
-    id: string;
-    material_estimate_id: number;
-    item_type: number;
-    materialType: number | null;
-    material: number | null;
-    unitsOfMeasure: number | null;
-    quantity: number;
-    coefficient: number;
-    currency: number | null;
-    currency_rate: number;
-    price: number;
-    note: string;
-}
+import {
+    createMaterialEstimateItems,
+    fetchMaterialEstimateItems,
+    type MaterialEstimateItemCreatePayload,
+    type MaterialEstimateItemFormData,
+} from './estimateItemsSlice';
+import { useAppDispatch } from '@/app/store';
+import toast from 'react-hot-toast';
 
 interface MaterialFormProps {
     isOpen: boolean;
@@ -34,6 +27,7 @@ export default function MaterialEstimateItemsCreate({
     refs,
     onClose,
 }: MaterialFormProps) {
+    const dispatch = useAppDispatch();
     const [rates, setRates] = useState<CurrencyRate[]>([]);
 
     useEffect(() => {
@@ -54,32 +48,77 @@ export default function MaterialEstimateItemsCreate({
     const materials = refs.materials?.data || [];
     const units = refs.unitsOfMeasure?.data || [];
     const currencies = refs.currencies?.data || [];
+    const blockStages = refs.blockStages?.data || [];
+    const stageSubsections = refs.stageSubsections?.data || [];
 
-    const createEmptyRow = (): MaterialRow => ({
-        id: Math.random().toString(36).slice(2),
+    const createEmptyRow = (): MaterialEstimateItemFormData => ({
+        id: Math.random().toString(36).substr(2, 9),
         material_estimate_id: estimateId,
-        item_type: 1,
-        materialType: null,
-        material: null,
-        unitsOfMeasure: null,
-        quantity: 1,
+        stage_id: null,
+        subsection_id: null,
+        item_type: 1, // 1 - материал
+        material_type: null,
+        material_id: null,
+        unit_of_measure: null,
+        quantity_planned: 1,
         coefficient: 1,
         currency: 1,
         currency_rate: 0,
         price: 0,
-        note: '',
+        comment: '',
     });
 
-    const [rows, setRows] = useState<MaterialRow[]>([createEmptyRow()]);
+    const [rows, setRows] = useState<MaterialEstimateItemFormData[]>([createEmptyRow()]);
 
-    const updateRow = (id: string, field: keyof MaterialRow, value: string | number | null) => {
-        setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+    const updateRow = (
+        id: string,
+        field: keyof MaterialEstimateItemFormData,
+        value: string | number | null,
+    ) => {
+        setRows((prev) =>
+            prev.map((row) => {
+                if (row.id !== id) return row;
+
+                const updated = { ...row, [field]: value };
+
+                if (field === 'stage_id') {
+                    updated.subsection_id = null;
+                }
+
+                if (field === 'material_type') {
+                    updated.material_id = null;
+                    updated.unit_of_measure = null;
+                }
+
+                if (field === 'material_id') {
+                    updated.unit_of_measure = null;
+                }
+
+                if (field === 'item_type') {
+                    if (value === 1) {
+                        updated.service_type = null;
+                        updated.service_id = null;
+                    }
+
+                    if (value === 2) {
+                        updated.material_type = null;
+                        updated.material_id = null;
+                        updated.unit_of_measure = null;
+                    }
+                }
+
+                return updated;
+            }),
+        );
     };
 
-    const addRow = () => setRows((prev) => [...prev, createEmptyRow()]);
+    const addRow = () => {
+        setRows((prev) => [...prev, createEmptyRow()]);
+    };
 
     const removeRow = (id: string) => {
         if (rows.length === 1) return;
+
         setRows((prev) => prev.filter((r) => r.id !== id));
     };
 
@@ -90,27 +129,34 @@ export default function MaterialEstimateItemsCreate({
         return isNaN(num) ? 0 : num;
     };
 
-    const rowSum = (r: MaterialRow) =>
-        r.quantity * r.coefficient * r.price * (r.currency_rate || 1);
+    const rowSum = (r: MaterialEstimateItemFormData) =>
+        r.quantity_planned * r.coefficient * r.price * (r.currency_rate || 1);
 
     const total = rows.reduce((s, r) => s + rowSum(r), 0);
 
     const format = (n: number) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2 });
 
-    const submit = (e: React.FormEvent) => {
+    const submit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const valid = rows.filter((r) => r.materialType && r.material);
+        const valid = rows.filter((r) => r.material_type && r.material_id && r.unit_of_measure);
 
         if (!valid.length) {
             alert('Добавьте хотя бы один материал');
             return;
         }
 
-        console.log('Отправляем на сервер:', valid);
+        const payload: MaterialEstimateItemCreatePayload[] = valid.map(({ id, ...rest }) => rest);
+        try {
+            await dispatch(createMaterialEstimateItems(payload)).unwrap();
+            await dispatch(fetchMaterialEstimateItems());
+            toast.success('Материалы успешно добавлены!');
 
-        setRows([createEmptyRow()]);
-        onClose();
+            setRows([createEmptyRow()]);
+            onClose();
+        } catch (err: any) {
+            toast.error(err || 'Ошибка при создании материалов');
+        }
     };
 
     if (!isOpen) return null;
@@ -141,6 +187,10 @@ export default function MaterialEstimateItemsCreate({
                             <thead className="sticky top-0 z-10 bg-gray-50">
                                 <tr>
                                     <th className="px-3 py-3 text-xs border">#</th>
+                                    <th className="border px-3 py-3 text-xs min-w-[180px]">Этап</th>
+                                    <th className="border px-3 py-3 text-xs min-w-[200px]">
+                                        Подэтап
+                                    </th>
                                     <th className="border px-3 py-3 text-xs min-w-[180px]">
                                         Тип материала
                                     </th>
@@ -173,9 +223,15 @@ export default function MaterialEstimateItemsCreate({
 
                             <tbody>
                                 {rows.map((row, index) => {
-                                    const filteredMaterials = row.materialType
+                                    const filteredMaterials = row.material_type
                                         ? materials.filter(
-                                              (m) => Number(m.type) === Number(row.materialType),
+                                              (m) => Number(m.type) === Number(row.material_type),
+                                          )
+                                        : [];
+
+                                    const filteredSubStages = row.stage_id
+                                        ? stageSubsections.filter(
+                                              (s) => Number(s.stage_id) === Number(row.stage_id),
                                           )
                                         : [];
 
@@ -187,11 +243,31 @@ export default function MaterialEstimateItemsCreate({
 
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
+                                                    options={blockStages}
+                                                    value={row.stage_id}
+                                                    onChange={(v) =>
+                                                        updateRow(row.id, 'stage_id', v)
+                                                    }
+                                                />
+                                            </td>
+
+                                            <td className="px-3 py-2 border">
+                                                <ReferencesSelect
+                                                    options={filteredSubStages}
+                                                    value={row.subsection_id}
+                                                    disabled={!row.stage_id}
+                                                    onChange={(v) =>
+                                                        updateRow(row.id, 'subsection_id', v)
+                                                    }
+                                                />
+                                            </td>
+                                            <td className="px-3 py-2 border">
+                                                <ReferencesSelect
                                                     options={materialTypes}
-                                                    value={row.materialType}
+                                                    value={row.material_type}
                                                     onChange={(v) => {
-                                                        updateRow(row.id, 'materialType', v);
-                                                        updateRow(row.id, 'material', null);
+                                                        updateRow(row.id, 'material_type', v);
+                                                        updateRow(row.id, 'material_id', null);
                                                     }}
                                                 />
                                             </td>
@@ -199,10 +275,10 @@ export default function MaterialEstimateItemsCreate({
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
                                                     options={filteredMaterials}
-                                                    value={row.material}
-                                                    disabled={!row.materialType}
+                                                    value={row.material_id}
+                                                    disabled={!row.material_type}
                                                     onChange={(v) => {
-                                                        updateRow(row.id, 'material', v);
+                                                        updateRow(row.id, 'material_id', v);
 
                                                         const material = materials.find(
                                                             (m) => Number(m.id) === Number(v),
@@ -210,7 +286,7 @@ export default function MaterialEstimateItemsCreate({
 
                                                         updateRow(
                                                             row.id,
-                                                            'unitsOfMeasure',
+                                                            'unit_of_measure',
                                                             material?.unit_of_measure
                                                                 ? Number(material.unit_of_measure)
                                                                 : null,
@@ -222,9 +298,9 @@ export default function MaterialEstimateItemsCreate({
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
                                                     options={units}
-                                                    value={row.unitsOfMeasure}
+                                                    value={row.unit_of_measure}
                                                     onChange={(v) =>
-                                                        updateRow(row.id, 'unitsOfMeasure', v)
+                                                        updateRow(row.id, 'unit_of_measure', v)
                                                     }
                                                 />
                                             </td>
@@ -232,11 +308,11 @@ export default function MaterialEstimateItemsCreate({
                                             <td className="px-3 py-2 border">
                                                 <input
                                                     type="text"
-                                                    value={row.quantity}
+                                                    value={row.quantity_planned}
                                                     onChange={(e) =>
                                                         updateRow(
                                                             row.id,
-                                                            'quantity',
+                                                            'quantity_planned',
                                                             parseNumber(e.target.value),
                                                         )
                                                     }
@@ -326,9 +402,9 @@ export default function MaterialEstimateItemsCreate({
                                             <td className="px-3 py-2 border">
                                                 <input
                                                     type="text"
-                                                    value={row.note}
+                                                    value={row.comment}
                                                     onChange={(e) =>
-                                                        updateRow(row.id, 'note', e.target.value)
+                                                        updateRow(row.id, 'comment', e.target.value)
                                                     }
                                                     className="w-full px-2 py-1.5 border rounded"
                                                 />
@@ -355,7 +431,7 @@ export default function MaterialEstimateItemsCreate({
 
                             <tfoot className="sticky bottom-0 bg-white">
                                 <tr>
-                                    <td colSpan={12} className="px-3 py-3 border-t-2">
+                                    <td colSpan={14} className="px-3 py-3 border-t-2">
                                         <button
                                             type="button"
                                             onClick={addRow}
@@ -369,7 +445,7 @@ export default function MaterialEstimateItemsCreate({
 
                                 <tr className="bg-green-50">
                                     <td
-                                        colSpan={11}
+                                        colSpan={13}
                                         className="px-3 py-3 font-bold text-right border"
                                     >
                                         ИТОГО
