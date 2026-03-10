@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, ChevronDown, ChevronRight, Pencil, PlusCircle, Trash2, X } from 'lucide-react';
 
-import { useAppDispatch, useAppSelector } from '@/app/store';
+import { useAppDispatch, useAppSelector, type RootAppState } from '@/app/store';
 import {
     createStageSubsection,
     fetchStageSubsections,
@@ -29,7 +29,10 @@ export default function BlockStageRow({
 }: BlockStageRowProps) {
     const dispatch = useAppDispatch();
 
-    const subStages = useAppSelector((s) => s.stageSubsections.byStageId[stage.id] ?? []);
+    const EMPTY: StageSubsection[] = [];
+    const selectSubStagesByStageId = (state: RootAppState, stageId: number) =>
+        state.stageSubsections.byStageId[stageId] ?? EMPTY;
+    const subStages = useAppSelector((s) => selectSubStagesByStageId(s, stage.id));
 
     // const loading = useAppSelector((s) => s.stageSubsections.loadingByStageId[stage.id]);
 

@@ -24,12 +24,13 @@ import { Layers, List } from 'lucide-react';
 export default function BlockStagesPage({ blockId }: { blockId: number }) {
     const dispatch = useAppDispatch();
 
-    const stages = useAppSelector((s) =>
-        s.blockStages.data.filter((st) => st.block_id === blockId),
-    );
+    const allStages = useAppSelector((s) => s.blockStages.data);
     const subStagesByStageId = useAppSelector((s) => s.stageSubsections.byStageId);
-
     const loading = useAppSelector((s) => s.blockStages.loading);
+
+    const stages = useMemo(() => {
+        return allStages.filter((st) => st.block_id === blockId);
+    }, [allStages, blockId]);
 
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);

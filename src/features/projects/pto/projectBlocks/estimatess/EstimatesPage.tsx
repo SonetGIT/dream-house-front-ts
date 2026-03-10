@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -19,13 +19,13 @@ export default function EstimatesPage({ blockId }: Props) {
 
     const [page, setPage] = useState(1);
     const size = 10;
+
     const [deleteState, setDeleteState] = useState<{
         type: 'estimate' | 'item';
         id: number;
     } | null>(null);
 
-    /* FETCH */
-    /* подгрузка ESTIMATE*/
+    //LOAD ESTIMATES
     useEffect(() => {
         if (!blockId) return;
 
@@ -36,57 +36,63 @@ export default function EstimatesPage({ blockId }: Props) {
                 size,
             }),
         );
-    }, [dispatch, blockId, page]);
+    }, [blockId, page, size, dispatch]);
 
-    /* подгрузка ESTIMATE-ITEM*/
+    //LOAD ESTIMATE ITEMS
     useEffect(() => {
         dispatch(fetchEstimateItems());
     }, [dispatch]);
 
-    const confirmDelete = async () => {
+    //DELETE
+    const confirmDelete = useCallback(async () => {
         if (!deleteState) return;
 
         try {
             if (deleteState.type === 'item') {
-                console.log('Deleting item:', deleteState.id);
                 await dispatch(deleteEstimateItem(deleteState.id)).unwrap();
                 toast.success('Позиция удалена');
-            }
-
-            if (deleteState.type === 'estimate') {
+            } else {
                 await dispatch(deleteEstimate(deleteState.id)).unwrap();
-
                 toast.success('Смета удалена');
 
-                await dispatch(
+                dispatch(
                     fetchEstimates({
                         block_id: blockId,
                         page,
                         size,
                     }),
-                ).unwrap();
+                );
             }
         } catch {
             toast.error('Ошибка удаления');
         } finally {
             setDeleteState(null);
         }
-    };
+    }, [deleteState, dispatch, blockId, page, size]);
 
-    const handleCreateEstimate = async () => {
+    //CREATE
+    const handleCreateEstimate = useCallback(async () => {
         try {
             await dispatch(
                 createEstimate({
                     block_id: blockId,
-                    status: 1, //  1 - черновик
+                    status: 1,
                 }),
             ).unwrap();
 
             toast.success('Смета создана');
+
+            dispatch(
+                fetchEstimates({
+                    block_id: blockId,
+                    page,
+                    size,
+                }),
+            );
         } catch {
             toast.error('Ошибка создания сметы');
         }
-    };
+    }, [dispatch, blockId, page, size]);
 
     /*************************************************************************************************************************/
     return (

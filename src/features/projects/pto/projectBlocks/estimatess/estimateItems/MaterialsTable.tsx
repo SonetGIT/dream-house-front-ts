@@ -1,20 +1,113 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Check, X } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { EstimateItem } from './estimateItemsSlice';
+import { useState, useMemo } from 'react';
+import ReferencesSelect from '@/components/ui/ReferencesSelect';
+import { useCurrencyRates } from '@/utils/useCurrencyRates';
+import { parseNumber } from '@/utils/parseNumber';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface MaterialsTableProps {
     items: EstimateItem[];
-    refs: any;
-    rowTotal: (row: EstimateItem) => number;
+    refs: Record<string, ReferenceResult>;
+    calcRowTotal: (row: any) => number;
     onDeleteEstimateItemId: (id: number) => void;
+    onUpdateEstimateItem?: (id: number, data: Partial<EstimateItem>) => void;
 }
 
 export default function MaterialsTable({
     items,
     refs,
-    rowTotal,
+    calcRowTotal,
     onDeleteEstimateItemId,
+    onUpdateEstimateItem,
 }: MaterialsTableProps) {
+    // ---------- STATE ----------
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editedData, setEditedData] = useState<Partial<EstimateItem>>({});
+
+    const rates = useCurrencyRates();
+
+    // ---------- REFERENCES ----------
+    const materialTypes = refs.materialTypes?.data || [];
+    const materials = refs.materials?.data || [];
+    const units = refs.unitsOfMeasure?.data || [];
+    const currencies = refs.currencies?.data || [];
+    const blockStages = refs.blockStages?.data || [];
+    const stageSubsections = refs.stageSubsections?.data || [];
+
+    // ---------- MEMOIZED LOOKUPS ----------
+    const materialsByType = useMemo(() => {
+        const map: Record<number, any[]> = {};
+
+        materials.forEach((m: any) => {
+            const type = Number(m.type);
+            if (!map[type]) map[type] = [];
+            map[type].push(m);
+        });
+
+        return map;
+    }, [materials]);
+
+    const subsectionsByStage = useMemo(() => {
+        const map: Record<number, any[]> = {};
+
+        stageSubsections.forEach((s: any) => {
+            const stage = Number(s.stage_id);
+            if (!map[stage]) map[stage] = [];
+            map[stage].push(s);
+        });
+
+        return map;
+    }, [stageSubsections]);
+
+    // ---------- HANDLERS ----------
+    const handleEdit = (item: EstimateItem) => {
+        setEditingId(item.id);
+        setEditedData({ ...item });
+    };
+
+    const handleSave = async () => {
+        if (onUpdateEstimateItem && editingId !== null) {
+            await onUpdateEstimateItem(editingId, editedData);
+        }
+
+        setEditingId(null);
+        setEditedData({});
+    };
+
+    const handleCancel = () => {
+        setEditingId(null);
+        setEditedData({});
+    };
+
+    const handleChange = (key: keyof EstimateItem, value: any) => {
+        setEditedData((prev) => {
+            const updated = { ...prev, [key]: value };
+
+            // сброс зависимых полей
+            if (key === 'stage_id') {
+                updated.subsection_id = null;
+            }
+
+            if (key === 'material_type') {
+                updated.material_id = null;
+                updated.unit_of_measure = null;
+            }
+
+            if (key === 'material_id') {
+                const material = materials.find((m: any) => Number(m.id) === Number(value));
+
+                if (material?.unit_of_measure) {
+                    updated.unit_of_measure = Number(material.unit_of_measure);
+                }
+            }
+
+            return updated;
+        });
+    };
+
+    /*******************************************************************************************************************/
     return (
         <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
             <table className="w-full">
@@ -39,84 +132,285 @@ export default function MaterialsTable({
                 <tbody>
                     {items
                         .filter((sub) => sub.item_type === 1)
-                        .map((sub) => (
-                            <tr
-                                key={sub.id}
-                                className="transition-colors border-b hover:bg-gray-50"
-                            >
-                                <td className="px-3 py-3 text-sm text-gray-600">
-                                    {sub.stage_id != null
-                                        ? refs.blockStages.lookup(sub.stage_id)
-                                        : '—'}
-                                </td>
-                                <td className="px-3 py-3 text-sm text-gray-600">
-                                    {sub.subsection_id != null
-                                        ? refs.stageSubsections.lookup(sub.subsection_id)
-                                        : '—'}
-                                </td>
-                                <td className="px-3 py-3 text-sm text-gray-600">
-                                    {sub.material_type != null
-                                        ? refs.materialTypes.lookup(sub.material_type)
-                                        : '—'}
-                                </td>
+                        .map((sub) => {
+                            const isEditing = editingId === sub.id;
+                            const data = isEditing ? editedData : sub;
 
-                                <td className="px-3 py-3 text-sm text-gray-600">
-                                    {sub.material_id != null
-                                        ? refs.materials.lookup(sub.material_id)
-                                        : '-'}
-                                </td>
+                            const filteredMaterials = data.material_type
+                                ? materialsByType[Number(data.material_type)] || []
+                                : [];
 
-                                <td className="px-3 py-3 text-sm text-gray-600">
-                                    {sub.unit_of_measure != null
-                                        ? refs.unitsOfMeasure.lookup(sub.unit_of_measure)
-                                        : '—'}
-                                </td>
+                            const filteredSubStages = data.stage_id
+                                ? subsectionsByStage[Number(data.stage_id)] || []
+                                : [];
 
-                                <td className="px-3 py-3 text-sm text-right text-gray-900">
-                                    {sub.quantity_planned}
-                                </td>
+                            return (
+                                <tr
+                                    key={sub.id}
+                                    className={`transition-colors border-b ${isEditing ? 'bg-blue-50/30' : 'hover:bg-gray-50'}`}
+                                >
+                                    {/* Этап */}
+                                    <td className="px-3 py-3 text-sm text-gray-600">
+                                        {isEditing ? (
+                                            <ReferencesSelect
+                                                options={blockStages}
+                                                value={data.stage_id}
+                                                onChange={(v) => handleChange('stage_id', v)}
+                                            />
+                                        ) : sub.stage_id != null ? (
+                                            refs.blockStages.lookup(sub.stage_id)
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
 
-                                <td className="px-3 py-3 text-sm text-right text-gray-900">
-                                    {sub.coefficient}
-                                </td>
+                                    {/* Подэтап */}
+                                    <td className="px-3 py-3 text-sm text-gray-600">
+                                        {isEditing ? (
+                                            <ReferencesSelect
+                                                options={filteredSubStages}
+                                                value={data.subsection_id}
+                                                disabled={!data.stage_id}
+                                                onChange={(v) => handleChange('subsection_id', v)}
+                                            />
+                                        ) : sub.subsection_id != null ? (
+                                            refs.stageSubsections.lookup(sub.subsection_id)
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
 
-                                <td className="px-3 py-3 text-sm text-right text-blue-700">
-                                    {sub.currency != null
-                                        ? refs.currencies.lookup(sub.currency)
-                                        : '—'}
-                                </td>
-                                <td className="px-3 py-3 font-medium text-right">
-                                    {sub.currency_rate}
-                                </td>
+                                    {/* Тип материала */}
+                                    <td className="px-3 py-3 text-sm text-gray-600">
+                                        {isEditing ? (
+                                            <ReferencesSelect
+                                                options={materialTypes}
+                                                value={data.material_type}
+                                                onChange={(v) => handleChange('material_type', v)}
+                                            />
+                                        ) : sub.material_type != null ? (
+                                            refs.materialTypes.lookup(sub.material_type)
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
 
-                                <td className="px-3 py-3 font-medium text-right">{sub.price}</td>
+                                    {/* Материал */}
+                                    <td className="px-3 py-3 text-sm text-gray-600">
+                                        {isEditing ? (
+                                            <ReferencesSelect
+                                                options={filteredMaterials}
+                                                value={data.material_id}
+                                                disabled={!data.material_type}
+                                                onChange={(v) => handleChange('material_id', v)}
+                                            />
+                                        ) : sub.material_id != null ? (
+                                            refs.materials.lookup(sub.material_id)
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
 
-                                <td className="px-3 py-3 font-medium text-right text-green-600">
-                                    {rowTotal(sub)}
-                                </td>
+                                    {/* Единица измерения */}
+                                    <td className="px-3 py-3 text-sm text-gray-600">
+                                        {isEditing ? (
+                                            <ReferencesSelect
+                                                options={units}
+                                                value={data.unit_of_measure}
+                                                onChange={(v) => handleChange('unit_of_measure', v)}
+                                            />
+                                        ) : sub.unit_of_measure != null ? (
+                                            refs.unitsOfMeasure.lookup(sub.unit_of_measure)
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
 
-                                <td className="px-3 py-3 text-xs text-right text-gray-600">
-                                    {sub.comment || '—'}
-                                </td>
+                                    {/* Количество */}
+                                    <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={data.quantity_planned ?? ''}
+                                                onChange={(e) =>
+                                                    handleChange('quantity_planned', e.target.value)
+                                                }
+                                                onBlur={(e) =>
+                                                    handleChange(
+                                                        'quantity_planned',
+                                                        parseNumber(e.target.value),
+                                                    )
+                                                }
+                                                className="w-full px-2 py-1.5 text-sm border rounded text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            sub.quantity_planned
+                                        )}
+                                    </td>
 
-                                <td className="px-3 py-3">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <button className="p-1 text-gray-400 hover:text-blue-600">
-                                            <Pencil className="w-3.5 h-3.5" />
-                                        </button>
+                                    {/* Коэффициент */}
+                                    <td className="px-3 py-3 text-sm text-right text-gray-900">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={data.coefficient ?? ''}
+                                                onChange={(e) =>
+                                                    handleChange('coefficient', e.target.value)
+                                                }
+                                                onBlur={(e) =>
+                                                    handleChange(
+                                                        'coefficient',
+                                                        parseNumber(e.target.value),
+                                                    )
+                                                }
+                                                className="w-full px-2 py-1.5 text-sm border rounded text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            sub.coefficient
+                                        )}
+                                    </td>
 
-                                        <StyledTooltip title="Удалить позицию">
-                                            <button
-                                                onClick={() => onDeleteEstimateItemId(sub.id)}
-                                                className="p-1 text-gray-400 hover:text-red-600"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </StyledTooltip>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    {/* Валюта */}
+                                    <td className="px-3 py-3 text-sm text-right text-blue-700">
+                                        {isEditing ? (
+                                            <ReferencesSelect
+                                                options={currencies}
+                                                value={data.currency}
+                                                onChange={(v) => {
+                                                    handleChange('currency', v);
+
+                                                    const rate = rates.find(
+                                                        (r) => Number(r.currency_id) === Number(v),
+                                                    )?.rate;
+
+                                                    handleChange('currency_rate', rate ?? 1);
+                                                }}
+                                            />
+                                        ) : sub.currency != null ? (
+                                            refs.currencies.lookup(sub.currency)
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </td>
+
+                                    {/* Курс */}
+                                    <td className="px-3 py-3 font-medium text-right">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={data.currency_rate ?? ''}
+                                                onChange={(e) =>
+                                                    handleChange('currency_rate', e.target.value)
+                                                }
+                                                onBlur={(e) =>
+                                                    handleChange(
+                                                        'currency_rate',
+                                                        parseNumber(e.target.value),
+                                                    )
+                                                }
+                                                className="w-full px-2 py-1.5 text-sm border rounded text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            sub.currency_rate
+                                        )}
+                                    </td>
+
+                                    {/* Цена */}
+                                    <td className="px-3 py-3 font-medium text-right">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={data.price ?? ''}
+                                                onChange={(e) =>
+                                                    handleChange('price', e.target.value)
+                                                }
+                                                onBlur={(e) =>
+                                                    handleChange(
+                                                        'price',
+                                                        parseNumber(e.target.value),
+                                                    )
+                                                }
+                                                className="w-full px-2 py-1.5 text-sm border rounded text-right focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            sub.price
+                                        )}
+                                    </td>
+
+                                    {/* Сумма */}
+                                    <td className="px-3 py-3 font-medium text-right text-green-600">
+                                        {/* {rowTotal(isEditing ? (data as EstimateItem) : sub)} */}
+
+                                        {calcRowTotal({ ...sub, ...data })}
+                                    </td>
+
+                                    {/* Примечание */}
+                                    <td className="px-3 py-3 text-xs text-right text-gray-600">
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={data.comment || ''}
+                                                onChange={(e) =>
+                                                    handleChange('comment', e.target.value)
+                                                }
+                                                className="w-full px-2 py-1.5 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                        ) : (
+                                            sub.comment || '—'
+                                        )}
+                                    </td>
+
+                                    {/* Действия */}
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-center justify-center gap-1">
+                                            {isEditing ? (
+                                                <>
+                                                    <StyledTooltip title="Сохранить изменения">
+                                                        <button
+                                                            onClick={handleSave}
+                                                            className="p-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                                                        >
+                                                            <Check className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </StyledTooltip>
+
+                                                    <StyledTooltip title="Отменить">
+                                                        <button
+                                                            onClick={handleCancel}
+                                                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </StyledTooltip>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <StyledTooltip title="Редактировать материал">
+                                                        <button
+                                                            onClick={() => handleEdit(sub)}
+                                                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        >
+                                                            <Pencil className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </StyledTooltip>
+
+                                                    <StyledTooltip title="Удалить материал">
+                                                        <button
+                                                            onClick={() =>
+                                                                onDeleteEstimateItemId(sub.id)
+                                                            }
+                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </StyledTooltip>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                 </tbody>
             </table>
         </div>

@@ -1,8 +1,9 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useAppSelector } from '@/app/store';
 import EstimateDetails from './EstimateDetails';
 import EstimateRow from './EstimateRow';
 import type { Estimate } from './estimatesSlice';
+import { calcRowTotal } from '@/utils/calcRowTotal';
 
 interface EstTblTableProps {
     data: Estimate[];
@@ -10,16 +11,14 @@ interface EstTblTableProps {
     onDeleteEstimateItemId: (id: number) => void;
 }
 
+/*************************************************************************************************************************/
 export default function EstimatesTable({
     data,
     onDeleteEstimateId,
     onDeleteEstimateItemId,
 }: EstTblTableProps) {
     const estimateItems = useAppSelector((state) => state.estimateItems.byEstimateId);
-
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-    console.log('estadata', data);
-    const [sums, setSums] = useState<Record<number, { material: number; service: number }>>({});
 
     const toggleRow = (id: number) => {
         setExpandedRows((prev) => {
@@ -29,25 +28,25 @@ export default function EstimatesTable({
         });
     };
 
-    const updateMaterialSum = (estimateId: number, sum: number) => {
-        setSums((prev) => ({
-            ...prev,
-            [estimateId]: {
-                material: sum,
-                service: prev[estimateId]?.service || 0,
-            },
-        }));
-    };
+    const sums = useMemo(() => {
+        const result: Record<number, { material: number; service: number }> = {};
 
-    const updateServiceSum = (estimateId: number, sum: number) => {
-        setSums((prev) => ({
-            ...prev,
-            [estimateId]: {
-                material: prev[estimateId]?.material || 0,
-                service: sum,
-            },
-        }));
-    };
+        Object.entries(estimateItems).forEach(([estimateId, items]) => {
+            const id = Number(estimateId);
+
+            const material = items
+                .filter((i) => i.item_type === 1)
+                .reduce((sum, row) => sum + calcRowTotal(row), 0);
+
+            const service = items
+                .filter((i) => i.item_type === 2)
+                .reduce((sum, row) => sum + calcRowTotal(row), 0);
+
+            result[id] = { material, service };
+        });
+
+        return result;
+    }, [estimateItems]);
 
     /********************************************************************************************************************/
     return (
@@ -108,8 +107,6 @@ export default function EstimatesTable({
                                                 item={item}
                                                 items={items}
                                                 onDeleteEstimateItemId={onDeleteEstimateItemId}
-                                                onMaterialSumChange={updateMaterialSum}
-                                                onServiceSumChange={updateServiceSum}
                                             />
                                         )}
                                     </Fragment>

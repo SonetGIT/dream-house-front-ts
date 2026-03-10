@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { fetchCurrencyRatesByDate, type CurrencyRate } from '@/utils/fetchCurrencyRate';
 import { useAppDispatch } from '@/app/store';
 import toast from 'react-hot-toast';
 import {
@@ -12,13 +11,16 @@ import {
     type EstimateItemCreatePayload,
     type EstimateItemFormData,
 } from './estimateItemsSlice';
+import { parseNumber } from '@/utils/parseNumber';
+import { useCurrencyRates } from '@/utils/useCurrencyRates';
+import { calcRowTotal } from '@/utils/calcRowTotal';
+import { formatNumber } from '@/utils/formatNumber';
 
 interface MaterialFormProps {
     isOpen: boolean;
     estimateId: number;
     refs: Record<string, ReferenceResult>;
     onClose: () => void;
-    // onSumChange: (estimateId: number, newSum: number) => void;
 }
 
 /************************************************************************************************************/
@@ -29,30 +31,19 @@ export default function ServicesEstimateItemsCreate({
     onClose,
     // onSumChange,
 }: MaterialFormProps) {
+    //HOOKS
     const dispatch = useAppDispatch();
-    const [rates, setRates] = useState<CurrencyRate[]>([]);
+    const rates = useCurrencyRates();
 
-    useEffect(() => {
-        const loadRates = async () => {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                const res = await fetchCurrencyRatesByDate(today);
-                setRates(res);
-            } catch (err) {
-                console.error('Ошибка загрузки курсов валют', err);
-            }
-        };
+    //REFERENCES
+    const serviceTypes = refs.serviceTypes?.data ?? [];
+    const services = refs.services?.data ?? [];
+    const units = refs.unitsOfMeasure?.data ?? [];
+    const currencies = refs.currencies?.data ?? [];
+    const blockStages = refs.blockStages?.data ?? [];
+    const stageSubsections = refs.stageSubsections?.data ?? [];
 
-        loadRates();
-    }, []);
-
-    const serviceTypes = refs.serviceTypes?.data || [];
-    const services = refs.services?.data || [];
-    const units = refs.unitsOfMeasure?.data || [];
-    const currencies = refs.currencies?.data || [];
-    const blockStages = refs.blockStages?.data || [];
-    const stageSubsections = refs.stageSubsections?.data || [];
-    console.log('serviceTypes', serviceTypes);
+    //HELPERS
     const createEmptyRow = (): EstimateItemFormData => ({
         id: Math.random().toString(36).substr(2, 9),
         material_estimate_id: estimateId,
@@ -70,14 +61,11 @@ export default function ServicesEstimateItemsCreate({
         comment: '',
     });
 
+    //STATE
     const [rows, setRows] = useState<EstimateItemFormData[]>([createEmptyRow()]);
-    // const sum = useMemo(() => {
-    //     return rows.reduce((s, r) => s + r.quantity_planned * r.price * (r.currency_rate || 1), 0);
-    // }, [rows]);
-    // useEffect(() => {
-    //     onSumChange(estimateId, sum);
-    // }, [sum]);
+    const total = rows.reduce((s, r) => s + calcRowTotal(r), 0);
 
+    //HANDLERS
     const updateRow = (
         id: string,
         field: keyof EstimateItemFormData,
@@ -130,21 +118,7 @@ export default function ServicesEstimateItemsCreate({
         setRows((prev) => prev.filter((r) => r.id !== id));
     };
 
-    const parseNumber = (value: string) => {
-        const normalized = value.replace(',', '.');
-        const num = Number(normalized);
-
-        return isNaN(num) ? 0 : num;
-    };
-
-    const rowSum = (r: EstimateItemFormData) =>
-        r.quantity_planned * r.coefficient * r.price * (r.currency_rate || 1);
-
-    const total = rows.reduce((s, r) => s + rowSum(r), 0);
-
-    const format = (n: number) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2 });
-
-    const submit = (e: React.FormEvent) => {
+    const submit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const valid = rows.filter((r) => r.service_type && r.service_id && r.unit_of_measure);
@@ -156,20 +130,26 @@ export default function ServicesEstimateItemsCreate({
 
         const payload: EstimateItemCreatePayload[] = valid.map(({ id, ...rest }) => rest);
 
-        dispatch(createEstimateItems(payload));
-        dispatch(fetchEstimateItems());
-        toast.success('Услуги успешно добавлены!');
+        try {
+            await dispatch(createEstimateItems(payload)).unwrap();
 
-        setRows([createEmptyRow()]);
-        onClose();
+            dispatch(fetchEstimateItems());
+
+            toast.success('Услуги успешно добавлены!');
+
+            setRows([createEmptyRow()]);
+            onClose();
+        } catch {
+            toast.error('Ошибка создания');
+        }
     };
 
     if (!isOpen) return null;
 
     /******************************************************************************************************************************/
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg shadow-xl w-[98vw] max-h-[95vh] flex flex-col">
+        <tr className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black bg-opacity-50">
+            <td className="bg-white rounded-lg shadow-xl w-[98vw] max-h-[95vh] flex flex-col">
                 {/* Header */}
                 <div className="sticky top-0 flex items-center justify-between px-4 py-3 bg-white border-b rounded-t-lg">
                     <div>
@@ -403,7 +383,7 @@ export default function ServicesEstimateItemsCreate({
                                             </td>
 
                                             <td className="px-3 py-2 font-bold text-right text-green-700 border bg-green-50">
-                                                {format(rowSum(row))}
+                                                {formatNumber(calcRowTotal(row))}
                                             </td>
 
                                             <td className="px-3 py-2 border">
@@ -458,7 +438,7 @@ export default function ServicesEstimateItemsCreate({
                                         ИТОГО
                                     </td>
                                     <td className="px-3 py-3 font-bold text-right text-green-700 border">
-                                        {format(total)}
+                                        {formatNumber(total)}
                                     </td>
                                 </tr>
                             </tfoot>
@@ -483,7 +463,7 @@ export default function ServicesEstimateItemsCreate({
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </td>
+        </tr>
     );
 }

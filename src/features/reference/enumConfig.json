@@ -134,7 +134,8 @@
         "data": {
             "id": "id",
             "name": ["name"],
-            "service_type": "service_type"
+            "service_type": "service_type",
+            "unit_of_measure": "unit_of_measure"
         },
         "apiName": "/services/gets"
     },

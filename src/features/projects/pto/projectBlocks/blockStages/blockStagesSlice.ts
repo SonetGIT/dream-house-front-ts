@@ -52,7 +52,6 @@ export const fetchBlockStages = createAsyncThunk<
 >('blockStages/search', async (params, { rejectWithValue }) => {
     try {
         const res = await apiRequest('/blockStages/search', 'POST', params);
-        console.log('fetchBlockStages res', res.data);
         return {
             data: res.data,
             pagination: res.pagination ?? undefined,

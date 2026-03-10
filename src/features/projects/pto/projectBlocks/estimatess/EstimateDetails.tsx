@@ -1,33 +1,38 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { useReference } from '@/features/reference/useReference';
 
-import MaterialsTable from './estimateItems/MaterialsTable';
 import ServicesTable from './estimateItems/ServicesTable';
 import EstimateHistory from './estimateItems/EstimateHistory';
 import MaterialEstimateItemsCreate from './estimateItems/MaterialEstimateItemsCreate';
 import ServicesEstimateItemsCreate from './estimateItems/ServicesEstimateItemsCreate';
 import type { Estimate } from './estimatesSlice';
-import type { EstimateItem } from './estimateItems/estimateItemsSlice';
+import {
+    fetchEstimateItems,
+    updateEstimateItem,
+    type EstimateItem,
+} from './estimateItems/estimateItemsSlice';
+import { useAppDispatch } from '@/app/store';
+import toast from 'react-hot-toast';
+import MaterialsTable from './estimateItems/MaterialsTable';
+import { calcRowTotal } from '@/utils/calcRowTotal';
 
 interface EstimateDetailsProps {
     item: Estimate;
     items: EstimateItem[];
     onDeleteEstimateItemId: (id: number) => void;
-    onMaterialSumChange: (estimateId: number, newSum: number) => void;
-    onServiceSumChange: (estimateId: number, newSum: number) => void;
 }
 
 type TabType = 'materials' | 'services' | 'history';
 
+/****************************************************************************************************************/
 export default function EstimateDetails({
     item,
     items,
     onDeleteEstimateItemId,
-    onMaterialSumChange,
-    onServiceSumChange,
 }: EstimateDetailsProps) {
+    const dispatch = useAppDispatch();
     const [tab, setTab] = useState<TabType>('materials');
     const [currentRowId, setCurrentRowId] = useState<number>(item.id);
     const [formType, setFormType] = useState<'material' | 'service' | null>(null);
@@ -44,28 +49,6 @@ export default function EstimateDetails({
         stageSubsections: useReference('stageSubsections'),
     };
 
-    /** расчет суммы строки */
-    const rowTotal = (row: EstimateItem) => {
-        const qty = Number(row.quantity_planned) || 0;
-        const price = Number(row.price) || 0;
-
-        const coef =
-            row.coefficient === undefined || row.coefficient === null || row.coefficient === 1
-                ? 1
-                : Number(row.coefficient);
-
-        return qty * price * coef;
-    };
-    // const calculateTotal = () => {
-    //     return data.reduce((sum, item) => sum + item.total_price, 0);
-    // };
-    //  const sum = useMemo(() => {
-    //         return rows.reduce((s, r) => s + r.quantity_planned * r.price * (r.currency_rate || 1), 0);
-    //     }, [rows]);
-    useEffect(() => {
-        onMaterialSumChange(estimateId, rowTotal);
-    }, [rowTotal]);
-
     const handleAddMaterial = (rowId: number) => {
         setCurrentRowId(rowId);
         setFormType('material');
@@ -76,6 +59,17 @@ export default function EstimateDetails({
         setFormType('service');
     };
 
+    const handleUpdateEstimateItem = async (id: number, data: Partial<EstimateItem>) => {
+        try {
+            await dispatch(updateEstimateItem({ id, data })).unwrap();
+            dispatch(fetchEstimateItems());
+            toast.success('Материал обновлен');
+        } catch {
+            toast.error('Ошибка обновления');
+        }
+    };
+
+    /*********************************************************************************************************************/
     return (
         <>
             <tr className="border-b bg-gradient-to-r from-blue-50 to-blue-50/50">
@@ -124,19 +118,19 @@ export default function EstimateDetails({
                                     <StyledTooltip title="Добавить материал">
                                         <button
                                             className="
-                                        group
-                                        p-1.5
-                                        text-orange-500
-                                        rounded-lg
-                                        hover:bg-orange-600
-                                        transition-all
-                                        duration-300
-                                        hover:text-white
-                                        hover:scale-110
-                                        hover:shadow-xl
-                                        hover:-translate-y-1
-                                        active:scale-95
-                                        "
+                                            group
+                                            p-1.5
+                                            text-orange-500
+                                            rounded-lg
+                                            hover:bg-orange-600
+                                            transition-all
+                                            duration-300
+                                            hover:text-white
+                                            hover:scale-110
+                                            hover:shadow-xl
+                                            hover:-translate-y-1
+                                            active:scale-95
+                                            "
                                             onClick={() => handleAddMaterial(item.id)}
                                         >
                                             <PlusCircle className="w-6 h-6 transition-transform duration-500 group-hover:rotate-90" />
@@ -147,8 +141,9 @@ export default function EstimateDetails({
                                 <MaterialsTable
                                     items={items}
                                     refs={refs}
-                                    rowTotal={rowTotal}
+                                    calcRowTotal={calcRowTotal}
                                     onDeleteEstimateItemId={onDeleteEstimateItemId}
+                                    onUpdateEstimateItem={handleUpdateEstimateItem}
                                 />
                             </div>
                         )}
@@ -183,8 +178,9 @@ export default function EstimateDetails({
                                 <ServicesTable
                                     items={items}
                                     refs={refs}
-                                    rowTotal={rowTotal}
+                                    calcRowTotal={calcRowTotal}
                                     onDeleteEstimateItemId={onDeleteEstimateItemId}
+                                    onUpdateEstimateItem={handleUpdateEstimateItem}
                                 />
                             </div>
                         )}
@@ -199,7 +195,6 @@ export default function EstimateDetails({
                 estimateId={currentRowId}
                 refs={refs}
                 onClose={() => setFormType(null)}
-                // onSumChange={onMaterialSumChange}
             />
 
             <ServicesEstimateItemsCreate
