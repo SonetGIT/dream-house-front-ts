@@ -12,6 +12,7 @@ import { formatDateTime } from '@/utils/formatDateTime';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { BlockStage } from './blockStagesSlice';
 import toast from 'react-hot-toast';
+import { fetchEnum } from '@/features/reference/referenceSlice';
 
 interface BlockStageRowProps {
     stage: BlockStage;
@@ -50,7 +51,8 @@ export default function BlockStageRow({
                     page: 1,
                     size: 10,
                 }),
-            );
+            ).unwrap();
+            dispatch(fetchEnum('stageSubsections'));
         }
     }, [expanded]);
 
@@ -73,7 +75,8 @@ export default function BlockStageRow({
                     name: newSubstageName.trim(),
                     stage_id: stage.id,
                 }),
-            );
+            ).unwrap();
+            dispatch(fetchEnum('stageSubsections'));
             setNewSubstageName('');
             setIsAddingSubstage(false);
         }

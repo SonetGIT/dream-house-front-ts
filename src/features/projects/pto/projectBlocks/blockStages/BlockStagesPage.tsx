@@ -19,6 +19,7 @@ import BlockStageModal from './BlockStageModal';
 import { deleteStageSubsection } from './subStages/stageSubsectionsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Layers, List } from 'lucide-react';
+import { fetchEnum } from '@/features/reference/referenceSlice';
 
 /*ЭТАПЫ - БЛОКА************************************************************************************************************/
 export default function BlockStagesPage({ blockId }: { blockId: number }) {
@@ -133,6 +134,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                     size,
                 }),
             );
+            dispatch(fetchEnum('blockStages')); //вызов обновление справочника этапа
         } catch {
             toast.error('Ошибка сохранения');
         }

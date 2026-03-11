@@ -10,10 +10,10 @@ import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequ
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
-import DocumentStagesPage from '@/features/projects/legal_department/documentStages/DocumentStagesPage';
 import DocumentsPage from '@/features/projects/legal_department/documents/DocumentsPage';
 import MaterialsPage from '@/features/materials/MaterialsPage';
 import BlocksManager from '@/features/projects/pto/PtoManager';
+import LegalDocStagesPage from '@/features/projects/legal_department2/legalDocStages/LegalDocStagesPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -30,7 +30,7 @@ export const router = createBrowserRouter([
                 element: <ProjectDashboardPage />,
                 children: [
                     { index: true, element: null }, //дашборд
-                    { path: 'documentStages', element: <DocumentStagesPage /> },
+                    { path: 'documentStages', element: <LegalDocStagesPage /> },
                     { path: 'documentStages/:documentStagesId', element: <DocumentsPage /> },
                     { path: 'pto', element: <BlocksManager /> },
                     { path: 'materialRequests', element: <MaterialRequests /> },

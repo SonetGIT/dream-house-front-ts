@@ -1,0 +1,130 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import type { Pagination } from '@/features/users/userSlice';
+import { apiRequest } from '@/utils/apiRequest';
+
+export interface LegalDocument {
+    id: number;
+    name: string;
+    status: number;
+    price: number;
+    description: string;
+    deadline: string;
+    responsible_users: number[];
+    entity_type: string;
+    entity_id: number;
+    created_at: string;
+    updated_at: string;
+    deleted: boolean;
+}
+
+interface LegalDocSearchParams {
+    entity_type: string;
+    entity_id: number;
+    status?: number;
+    name?: string;
+    page?: number;
+    size?: number;
+}
+interface LegalDocumentsState {
+    items: LegalDocument[];
+    pagination: Pagination | null;
+    loading: boolean;
+    error: string | null;
+}
+
+const initialState: LegalDocumentsState = {
+    items: [],
+    pagination: null,
+    loading: false,
+    error: null,
+};
+
+// fetch DOCUMENTS
+export const fetchLegalDocuments = createAsyncThunk<
+    { data: LegalDocument[]; pagination?: Pagination },
+    LegalDocSearchParams,
+    { rejectValue: string }
+>('legalDocuments/search', async (params, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest('/documents/search', 'POST', params);
+        return {
+            data: res.data,
+            pagination: res.pagination ?? undefined,
+        };
+    } catch (error: any) {
+        return rejectWithValue(error.message || 'Ошибка загрузки этапов');
+    }
+});
+
+// CREATE DOCUMENT
+export const createLegalDocument = createAsyncThunk(
+    'legalDocuments/create',
+    async (payload: Partial<LegalDocument>) => {
+        const res = await apiRequest<LegalDocument>('/documents/create', 'POST', payload);
+
+        return res.data;
+    },
+);
+
+// UPDATE DOCUMENT
+export const updateLegalDocument = createAsyncThunk(
+    'legalDocuments/update',
+    async ({ id, data }: { id: number; data: Partial<LegalDocument> }) => {
+        const res = await apiRequest<LegalDocument>(`/documents/update/${id}`, 'PUT', data);
+
+        return res.data;
+    },
+);
+
+// DELETE DOCUMENT
+export const deleteLegalDocument = createAsyncThunk('legalDocuments/delete', async (id: number) => {
+    await apiRequest(`/documents/delete/${id}`, 'DELETE');
+    return id;
+});
+
+// SLICE
+const legalDocumentSlice = createSlice({
+    name: 'legalDocuments',
+    initialState,
+    reducers: {},
+
+    extraReducers: (builder) => {
+        // FETCH
+        builder.addCase(fetchLegalDocuments.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+
+        builder.addCase(fetchLegalDocuments.fulfilled, (state, action) => {
+            state.loading = false;
+            state.items = action.payload.data;
+            state.pagination = action.payload.pagination ?? null;
+        });
+
+        builder.addCase(fetchLegalDocuments.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message || 'Ошибка загрузки документов';
+        });
+
+        // CREATE
+        builder.addCase(createLegalDocument.fulfilled, (state, action) => {
+            state.items.unshift(action.payload);
+        });
+
+        // UPDATE
+        builder.addCase(updateLegalDocument.fulfilled, (state, action) => {
+            const index = state.items.findIndex((doc) => doc.id === action.payload.id);
+
+            if (index !== -1) {
+                state.items[index] = action.payload;
+            }
+        });
+
+        // DELETE
+        builder.addCase(deleteLegalDocument.fulfilled, (state, action) => {
+            state.items = state.items.filter((doc) => doc.id !== action.payload);
+        });
+    },
+});
+
+export default legalDocumentSlice.reducer;

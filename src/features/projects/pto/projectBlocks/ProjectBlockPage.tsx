@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
-import PrjBreadcrumbs from '../PrjBreadcrumbs';
 import type { ProjectBlock } from './projectBlocksSlice';
 import { CheckCircle2, Clock, DollarSign, Home, Ruler, TrendingUp } from 'lucide-react';
 import EstimatesPage from './estimatess/EstimatesPage';
@@ -25,11 +24,11 @@ export default function ProjectBlockPage({ blockId, blockName, currentBlock }: P
     }
     return (
         <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }}>
-            <PrjBreadcrumbs />
+            {/* <PrjBreadcrumbs /> */}
 
             <Box
                 sx={{
-                    mt: 4,
+                    mt: 1,
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',

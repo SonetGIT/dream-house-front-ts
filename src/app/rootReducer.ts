@@ -11,8 +11,6 @@ import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehous
 import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
 import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
 import suppliersReducer from '@/features/suppliers/suppliersSlice';
-import documentStagesReducer from '@/features/projects/legal_department/documentStages/documentStagesSlice';
-import documentsReducer from '@/features/projects/legal_department/documents/documentsSlice';
 import documentFilesReducer from '@/features/projects/legal_department/files/documentFilesSlice';
 import auditLogReducer from '@/features/auditLog/auditLogSlice';
 import materialsReducer from '@/features/materials/materialsSlice';
@@ -21,6 +19,8 @@ import blockStagesReducer from '@/features/projects/pto/projectBlocks/blockStage
 import stageSubsectionsReducer from '@/features/projects/pto/projectBlocks/blockStages/subStages/stageSubsectionsSlice';
 import estimatesReducer from '@/features/projects/pto/projectBlocks/estimatess/estimatesSlice';
 import estimateItemsReducer from '@/features/projects/pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
+import legalDocStageReducer from '@/features/projects/legal_department2/legalDocStages/legalDocStageSlice';
+import legalDocumentReducer from '@/features/projects/legal_department2/legalDoc/legalDocSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -35,8 +35,8 @@ export const rootReducer = combineReducers({
     purchaseOrderItems: purchaseOrderItemsReducer,
     materialMovements: materialMovementsReducer,
     suppliers: suppliersReducer,
-    documentStages: documentStagesReducer,
-    documents: documentsReducer,
+    legalDocStages: legalDocStageReducer,
+    legalDocuments: legalDocumentReducer,
     documentFiles: documentFilesReducer,
     auditLog: auditLogReducer,
     materials: materialsReducer,
