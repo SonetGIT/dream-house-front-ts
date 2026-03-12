@@ -1,8 +1,9 @@
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { useReference } from '@/features/reference/useReference';
 import type { Estimate } from './estimatesSlice';
 import { formatNumber } from '@/utils/formatNumber';
-import getStatusColor from '@/utils/getStatusColor';
+import { getStatusColor } from '@/utils/getStatusColor';
 
 interface EstimateRowProps {
     item: Estimate;
@@ -24,6 +25,7 @@ export default function EstimateRow({
     serviceSum,
     totalSum,
 }: EstimateRowProps) {
+    const statuses = useReference('generalStatuses');
     /*****************************************************************************************************************/
     return (
         <tr className="transition-colors border-b hover:bg-gray-50">
@@ -43,8 +45,13 @@ export default function EstimateRow({
 
             {/* статус */}
             <td className="px-3 py-3">
-                <span className={`px-2 py-1 font-medium rounded ${getStatusColor(item.status)}`}>
-                    {item.status != null ? item.status : '—'}
+                <span
+                    className={`px-2 py-1 font-medium rounded ${getStatusColor(
+                        item.status,
+                        statuses.lookup,
+                    )}`}
+                >
+                    {item.status != null ? statuses.lookup(item.status) : '—'}
                 </span>
             </td>
 

@@ -114,26 +114,13 @@ export default function EstimateDetails({
                         {/* MATERIALS */}
                         {tab === 'materials' && (
                             <div>
-                                <div className="flex justify-end">
+                                <div className="flex justify-end mb-1">
                                     <StyledTooltip title="Добавить материал">
                                         <button
-                                            className="
-                                            group
-                                            p-1.5
-                                            text-orange-500
-                                            rounded-lg
-                                            hover:bg-orange-600
-                                            transition-all
-                                            duration-300
-                                            hover:text-white
-                                            hover:scale-110
-                                            hover:shadow-xl
-                                            hover:-translate-y-1
-                                            active:scale-95
-                                            "
+                                            className="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition-all duration-200 rounded-md bg-blue-50 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
                                             onClick={() => handleAddMaterial(item.id)}
                                         >
-                                            <PlusCircle className="w-6 h-6 transition-transform duration-500 group-hover:rotate-90" />
+                                            <PlusCircle className="w-6 h-6" />
                                         </button>
                                     </StyledTooltip>
                                 </div>
@@ -151,26 +138,13 @@ export default function EstimateDetails({
                         {/* SERVICES */}
                         {tab === 'services' && (
                             <div>
-                                <div className="flex justify-end">
+                                <div className="flex justify-end mb-1">
                                     <StyledTooltip title="Добавить услугу">
                                         <button
-                                            className="
-                                        group
-                                        p-1.5
-                                        text-orange-500
-                                        rounded-lg
-                                        hover:bg-orange-600
-                                        transition-all
-                                        duration-300
-                                        hover:text-white
-                                        hover:scale-110
-                                        hover:shadow-xl
-                                        hover:-translate-y-1
-                                        active:scale-95
-                                        "
+                                            className="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition-all duration-200 rounded-md bg-blue-50 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
                                             onClick={() => handleAddService(item.id)}
                                         >
-                                            <PlusCircle className="w-6 h-6 transition-transform duration-500 group-hover:rotate-90" />
+                                            <PlusCircle className="w-6 h-6" />
                                         </button>
                                     </StyledTooltip>
                                 </div>

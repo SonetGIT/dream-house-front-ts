@@ -1,16 +1,26 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronRight, Package } from 'lucide-react';
+import { Fragment, useState } from 'react';
+import { ChevronDown, ChevronRight, Package, Pencil, Trash2 } from 'lucide-react';
 import { TableCell, TableRow } from '@mui/material';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { LegalDocStages } from './legalDocStageSlice';
 import LegalDocTable from '../legalDoc/LegalDocTable';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
 interface DocumentStagesTableProps {
     stages: LegalDocStages[];
     loading?: boolean;
+    onEditStage: (stage: LegalDocStages) => void;
+    onDeleteStageId: (id: number) => void;
+    onDeleteSubStageId: (id: number, stageId: number) => void;
 }
 
 /*СПИСОК ЭТАПОВ ЮР. ОТДЕЛА************************************************************************************************/
-export default function LegalDocStagesTable({ stages, loading = false }: DocumentStagesTableProps) {
+export default function LegalDocStagesTable({
+    stages,
+    loading = false,
+    onEditStage,
+    onDeleteStageId,
+    onDeleteSubStageId,
+}: DocumentStagesTableProps) {
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
     const toggleRow = (id: number) => {
@@ -62,10 +72,13 @@ export default function LegalDocStagesTable({ stages, loading = false }: Documen
                                         Дата создания
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-left border-l bg-blue-50">
+                                <th className="px-3 py-3 text-left border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата обновления
                                     </div>
+                                </th>
+                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                    <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
                             </tr>
                         </thead>
@@ -73,9 +86,8 @@ export default function LegalDocStagesTable({ stages, loading = false }: Documen
                         <tbody>
                             {stages?.length > 0 ? (
                                 stages.map((stage) => (
-                                    <>
+                                    <Fragment key={stage.id}>
                                         <tr
-                                            key={stage.id}
                                             className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(stage.id)}
                                         >
@@ -105,7 +117,45 @@ export default function LegalDocStagesTable({ stages, loading = false }: Documen
                                             <td className="w-[200px] text-[14px] text-gray-700 border-l border-gray-200 px-3 py-2.5">
                                                 {formatDateTime(stage.updated_at)}
                                             </td>
+
                                             {/* Stage Actions */}
+                                            <td className="px-4 py-3 border-l">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <StyledTooltip title="Редактировать этап">
+                                                        <button
+                                                            onClick={onEditStage.bind(null, stage)}
+                                                            className="
+                                                                p-1.5
+                                                                text-gray-400
+                                                                hover:text-blue-600
+                                                                hover:bg-blue-50
+                                                                rounded
+                                                                transition-colors
+                                                            "
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                    </StyledTooltip>
+                                                    <StyledTooltip title="Удалить этап">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDeleteStageId(stage.id);
+                                                            }}
+                                                            className="
+                                                                p-1.5
+                                                                text-gray-400
+                                                                hover:text-red-600
+                                                                hover:bg-red-50
+                                                                rounded
+                                                                transition-colors
+                                                            "
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </StyledTooltip>
+                                                </div>
+                                            </td>
                                         </tr>
 
                                         {/* Раскрываемая строка с вложенной таблицей документов */}
@@ -118,15 +168,17 @@ export default function LegalDocStagesTable({ stages, loading = false }: Documen
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     <div className="ml-3">
+                                                        {/* СПИСОК ДОКУМЕНТОВ */}
                                                         <LegalDocTable
                                                             entityType={'document_stage'}
                                                             entityId={stage.id}
+                                                            onDeleteSubStageId={onDeleteSubStageId}
                                                         />
                                                     </div>
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </Fragment>
                                 ))
                             ) : (
                                 <TableRow>

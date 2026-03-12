@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
+import { DOCUMENT_STATUS } from '../../legal_department/documents/documentStatus';
 
 export interface LegalDocument {
     id: number;
@@ -17,8 +18,18 @@ export interface LegalDocument {
     deleted: boolean;
 }
 
-interface LegalDocSearchParams {
+export interface LegalDocumentForm {
+    name: string;
+    status: number;
+    price: number;
+    description: string;
+    deadline: string;
+    responsible_users: number[];
     entity_type: string;
+    entity_id: number;
+}
+interface LegalDocSearchParams {
+    entity_type?: string;
     entity_id: number;
     status?: number;
     name?: string;
@@ -82,6 +93,27 @@ export const deleteLegalDocument = createAsyncThunk('legalDocuments/delete', asy
     return id;
 });
 
+export const setDocumentStatus = createAsyncThunk<
+    number,
+    { id: number; status: number },
+    { rejectValue: string }
+>('legalDocuments/setStatus', async ({ id, status }, { rejectWithValue }) => {
+    try {
+        await apiRequest(`/documents/update/${id}`, 'PUT', { status });
+        return id;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка смены статуса');
+    }
+});
+export const archiveDocument = (id: number) =>
+    setDocumentStatus({ id, status: DOCUMENT_STATUS.ARCHIVED });
+
+export const underReviewDocument = (id: number) =>
+    setDocumentStatus({ id, status: DOCUMENT_STATUS.UNDER_REVIEW });
+
+export const signDocument = (id: number) =>
+    setDocumentStatus({ id, status: DOCUMENT_STATUS.SIGNED });
+
 // SLICE
 const legalDocumentSlice = createSlice({
     name: 'legalDocuments',
@@ -123,6 +155,12 @@ const legalDocumentSlice = createSlice({
         // DELETE
         builder.addCase(deleteLegalDocument.fulfilled, (state, action) => {
             state.items = state.items.filter((doc) => doc.id !== action.payload);
+        });
+        builder.addCase(setDocumentStatus.fulfilled, (state, action) => {
+            const doc = state.items.find((d) => d.id === action.payload);
+            if (doc) {
+                doc.status = action.meta.arg.status;
+            }
         });
     },
 });

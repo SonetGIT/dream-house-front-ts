@@ -134,7 +134,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                     size,
                 }),
             );
-            dispatch(fetchEnum('blockStages')); //вызов обновление справочника этапа
+            dispatch(fetchEnum('blockStages')); //вызов обновление справочника
         } catch {
             toast.error('Ошибка сохранения');
         }

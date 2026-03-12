@@ -387,7 +387,7 @@ export default function ServicesTable({
                                                     <StyledTooltip title="Редактировать сервис">
                                                         <button
                                                             onClick={() => handleEdit(sub)}
-                                                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                            className="inline-flex items-center justify-center text-blue-600 transition-colors rounded-md h-7 w-7 hover:bg-blue-50"
                                                         >
                                                             <Pencil className="w-3.5 h-3.5" />
                                                         </button>
@@ -398,7 +398,7 @@ export default function ServicesTable({
                                                             onClick={() =>
                                                                 onDeleteEstimateItemId(sub.id)
                                                             }
-                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                            className="inline-flex items-center justify-center text-red-600 transition-colors rounded-md h-7 w-7 hover:bg-red-50"
                                                         >
                                                             <Trash2 className="w-3.5 h-3.5" />
                                                         </button>

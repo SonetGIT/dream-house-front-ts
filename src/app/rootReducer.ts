@@ -11,7 +11,7 @@ import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehous
 import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
 import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
 import suppliersReducer from '@/features/suppliers/suppliersSlice';
-import documentFilesReducer from '@/features/projects/legal_department/files/documentFilesSlice';
+import documentFilesReducer from '@/features/projects/legal_department2/files/documentFilesSlice';
 import auditLogReducer from '@/features/auditLog/auditLogSlice';
 import materialsReducer from '@/features/materials/materialsSlice';
 import projectBlocksReducer from '@/features/projects/pto/projectBlocks/projectBlocksSlice';

@@ -24,10 +24,14 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { documentFormData } from '@/features/auditLog/metaData/document';
 import { AuditLogTable } from '@/features/auditLog/AuditLogTable';
 import { MdHistory } from 'react-icons/md';
-import { DocumentFilesList } from '../files/DocumentFilesList';
+import { DocumentFilesList } from '../../legal_department2/files/DocumentFilesList';
 import { fetchDocuments, signDocument } from './documentsSlice';
 import toast from 'react-hot-toast';
 import StatusChip from '@/components/ui/StatusChip';
+import {
+    fetchLegalDocuments,
+    type LegalDocumentForm,
+} from '../../legal_department2/legalDoc/legalDocSlice';
 
 export interface DocumentFormData {
     project_id: number;
@@ -37,16 +41,15 @@ export interface DocumentFormData {
     description: string;
     status: number;
     deadline: null;
-    responsible_users: number[];
 }
 
 interface DocumentCreateEditFormProps {
     open: boolean;
     onClose: () => void;
     documentId?: number;
-    initialData: DocumentFormData;
+    initialData: LegalDocumentForm;
     submitting?: boolean;
-    onSubmit: (data: DocumentFormData, files: File[]) => void | Promise<void>;
+    onSubmit: (data: LegalDocumentForm, files: File[]) => void | Promise<void>;
 }
 
 /**********************************************************************************************************************/
@@ -59,8 +62,8 @@ export function DocumentCreateEditForm({
     onSubmit,
 }: DocumentCreateEditFormProps) {
     const dispatch = useAppDispatch();
-    const [formData, setFormData] = useState<DocumentFormData>(initialData);
-    const [errors, setErrors] = useState<Partial<Record<keyof DocumentFormData, string>>>({});
+    const [formData, setFormData] = useState<LegalDocumentForm>(initialData);
+    const [errors, setErrors] = useState<Partial<Record<keyof LegalDocumentForm, string>>>({});
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [openHistory, setOpenHistory] = useState(false);
 
@@ -80,7 +83,7 @@ export function DocumentCreateEditForm({
         }
     }, [open, initialData, documentId]);
 
-    const handleChange = (field: keyof DocumentFormData, value: any) => {
+    const handleChange = (field: keyof LegalDocumentForm, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -109,7 +112,9 @@ export function DocumentCreateEditForm({
         dispatch(signDocument(documentId))
             .unwrap()
             .then(() => {
-                dispatch(fetchDocuments({ page: 1, size: 10, project_id: initialData.project_id }));
+                dispatch(
+                    fetchLegalDocuments({ page: 1, size: 10, entity_id: initialData.entity_id }),
+                );
                 toast.success('Документ успешно подписан');
             })
             .catch((err) => {

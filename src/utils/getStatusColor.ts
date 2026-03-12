@@ -1,23 +1,18 @@
-import { useReference } from '@/features/reference/useReference';
-
-const statuses = useReference('generalStatuses');
-
-export default function getStatusColor(statusId: number | null) {
+export const getStatusColor = (statusId: number | null, lookup: (id: number) => string) => {
     if (statusId === null) {
-        return 'bg-gray-50 text-gray-600 border border-gray-200';
+        return 'bg-gray-100 text-gray-700 border border-gray-200 rounded-lg';
     }
 
-    const fullStatus = statuses.lookup(statusId);
+    const fullStatus = lookup(statusId);
 
     const statusColorMap: Record<string, string> = {
-        Черновик:
-            'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border border-amber-200 shadow-sm',
-        Подписан:
-            'bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-700 border border-emerald-200 shadow-sm',
-        Отклонен:
-            'bg-gradient-to-r from-rose-50 to-red-50 text-rose-700 border border-rose-200 shadow-sm',
-        Архив: 'bg-gradient-to-r from-sky-50 to-blue-50 text-sky-700 border border-sky-200 shadow-sm',
+        Черновик: 'bg-amber-50 text-amber-700 text-xs border border-amber-200 rounded-lg',
+        Подписан: 'bg-emerald-50 text-emerald-700 text-xs border border-emerald-200 rounded-lg',
+        Отклонен: 'bg-rose-50 text-rose-700 text-xs border border-rose-200 rounded-lg',
+        Архив: 'bg-blue-50 text-blue-700 text-xs border border-blue-200 rounded-lg',
     };
 
-    return statusColorMap[fullStatus] || 'bg-gray-50 text-gray-700 border border-gray-200';
-}
+    return (
+        statusColorMap[fullStatus] || 'bg-gray-100 text-gray-700 border border-gray-200 rounded-lg'
+    );
+};

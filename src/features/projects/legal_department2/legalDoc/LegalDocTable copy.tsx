@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, FileText, PlusCircle } from 'lucide-react';
+import { Edit, Trash2, Plus, FileText, DollarSign, Calendar, PlusCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
     createLegalDocument,
@@ -7,15 +7,14 @@ import {
     fetchLegalDocuments,
     updateLegalDocument,
     type LegalDocument,
-    type LegalDocumentForm,
 } from './legalDocSlice';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '@/features/reference/useReference';
 import { getStatusColor } from '@/utils/getStatusColor';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import LegalDocModal from './LegalDocModal';
-import { DocumentCreateEditForm } from '../../legal_department/documents/DocumentCreateEditForm';
+import LegalDocModal, { type DocumentFormData } from './LegalDocModal';
+import { uploadDocumentFile } from '../files/documentFilesSlice';
 
 interface LegalDocTableProps {
     entityType: string;
@@ -23,61 +22,42 @@ interface LegalDocTableProps {
     onDeleteSubStageId: (id: number, stageId: number) => void;
 }
 
-export default function LegalDocTable({
-    entityType,
-    entityId,
-    onDeleteSubStageId,
-}: LegalDocTableProps) {
+export default function LegalDocTable({ entityType, entityId }: LegalDocTableProps) {
     const dispatch = useAppDispatch();
     const { items: documents, loading } = useAppSelector((state) => state.legalDocuments);
     const statuses = useReference('generalStatuses');
-    const legalDocs = documents.filter((doc) => doc.entity_id === entityId);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editingDocument, setEditingDocument] = useState<LegalDocument | null>(null);
     const [openForm, setOpenForm] = useState(false);
     const [editingDocId, setEditingDocId] = useState<number | undefined>(undefined);
-    const [initialData, setInitialData] = useState<LegalDocumentForm | null>(null);
+    const [initialData, setInitialData] = useState<LegalDocument | null>(null);
     const [saving, setSaving] = useState(false);
+
+    const legalDocs = documents.filter((doc) => doc.entity_id === entityId);
     useEffect(() => {
         dispatch(fetchLegalDocuments({ entity_type: entityType, entity_id: entityId }));
     }, [dispatch, entityType, entityId]);
 
-    const openCreate = () => {
-        setEditingDocId(undefined);
-
-        setInitialData({
-            entity_type: entityType,
-            entity_id: entityId,
-            name: '',
-            price: 0,
-            description: '',
-            responsible_users: [],
-            deadline: '',
-            status: 0,
-        });
-
-        setOpenForm(true);
+    const handleCreate = () => {
+        setEditingDocument(null);
+        setFormOpen(true);
     };
 
-    const openEdit = (doc: LegalDocument) => {
-        setEditingDocId(doc.id);
-
-        setInitialData({
-            entity_type: doc.entity_type,
-            entity_id: doc.entity_id,
-            name: doc.name,
-            price: doc.price,
-            description: doc.description,
-            responsible_users: doc.responsible_users,
-            deadline: doc.deadline,
-            status: doc.status,
-        });
-
-        setOpenForm(true);
+    const handleEdit = (document: LegalDocument) => {
+        setEditingDocument(document);
+        setFormOpen(true);
     };
 
-    const handleSave = async (data: LegalDocumentForm, files: File[]) => {
+    const handleDelete = async (document: LegalDocument) => {
+        if (window.confirm(`Удалить документ "${document.name}"?`)) {
+            // В реальном приложении здесь будет dispatch deleteDocument
+            // await dispatch(deleteLegalDocument())
+            toast.success('Документ удален');
+        }
+    };
+    const handleSave = async (data: LegalDocument, files: File[]) => {
         try {
             setSaving(true);
-
             let docId = editingDocId;
 
             if (!docId) {
@@ -87,26 +67,35 @@ export default function LegalDocTable({
                 await dispatch(updateLegalDocument({ id: docId, data })).unwrap();
             }
 
-            // если есть загрузка файлов
-            // здесь должен быть uploadDocumentFile thunk
-            // если его нет — просто уберите цикл
+            for (const file of files) {
+                await dispatch(uploadDocumentFile({ documentId: docId!, file })).unwrap();
+            }
 
             toast.success('Документ сохранён');
-
-            await dispatch(
-                fetchLegalDocuments({
-                    entity_type: entityType,
-                    entity_id: entityId,
-                }),
-            );
-
+            // await dispatch(
+            //     fetchLegalDocuments({ page: page + 1, size: rowsPerPage, project_id: props.project_id }),
+            // );
             setOpenForm(false);
-        } catch (err) {
+        } catch {
             toast.error('Ошибка сохранения документа');
         } finally {
             setSaving(false);
         }
     };
+    // const handleSubmit = async (data: Partial<LegalDocument>) => {
+    //     try {
+    //         if (editingDocument) {
+    //             await dispatch(updateLegalDocument({ id: editingDocument.id, data })).unwrap();
+    //             toast.success('Документ обновлен');
+    //         } else {
+    //             await dispatch(createLegalDocument(data)).unwrap();
+    //             toast.success('Документ создан');
+    //         }
+    //         dispatch(fetchLegalDocuments({ entity_type: entityType, entity_id: entityId }));
+    //     } catch (error: any) {
+    //         toast.error(error || 'Ошибка при сохранении документа');
+    //     }
+    // };
 
     if (loading && legalDocs.length === 0) {
         return (
@@ -130,7 +119,8 @@ export default function LegalDocTable({
                 <StyledTooltip title="Добавить документ">
                     <button
                         className="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition-all duration-200 rounded-md bg-blue-50 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
-                        onClick={openCreate}
+                        // onClick={() => handleCreate(item.id)}
+                        onClick={() => handleCreate}
                     >
                         <PlusCircle className="w-6 h-6" />
                     </button>
@@ -179,7 +169,7 @@ export default function LegalDocTable({
                                         <div className="flex items-center justify-center gap-1">
                                             <StyledTooltip title="Редактировать">
                                                 <button
-                                                    onClick={() => openEdit(doc)}
+                                                    onClick={() => handleEdit(doc)}
                                                     className="inline-flex items-center justify-center text-blue-600 transition-colors rounded-md h-7 w-7 hover:bg-blue-50"
                                                 >
                                                     <Edit className="h-3.5 w-3.5" />
@@ -187,9 +177,7 @@ export default function LegalDocTable({
                                             </StyledTooltip>
                                             <StyledTooltip title="Удалить">
                                                 <button
-                                                    onClick={() =>
-                                                        onDeleteSubStageId(doc.id, entityId)
-                                                    }
+                                                    onClick={() => handleDelete(doc)}
                                                     className="inline-flex items-center justify-center text-red-600 transition-colors rounded-md h-7 w-7 hover:bg-red-50"
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
@@ -213,16 +201,6 @@ export default function LegalDocTable({
             )}
 
             {openForm && initialData && (
-                <DocumentCreateEditForm
-                    open
-                    documentId={editingDocId}
-                    initialData={initialData}
-                    submitting={saving}
-                    onSubmit={handleSave}
-                    onClose={() => setOpenForm(false)}
-                />
-            )}
-            {/* {openForm && initialData && (
                 <LegalDocModal
                     open
                     documentId={editingDocId}
@@ -231,7 +209,7 @@ export default function LegalDocTable({
                     onSubmit={handleSave}
                     onClose={() => setOpenForm(false)}
                 />
-            )} */}
+            )}
         </div>
     );
 }
