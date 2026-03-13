@@ -3,7 +3,6 @@ import { Edit, Trash2, FileText, PlusCircle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
     createLegalDocument,
-    deleteLegalDocument,
     fetchLegalDocuments,
     updateLegalDocument,
     type LegalDocument,
@@ -14,8 +13,8 @@ import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '@/features/reference/useReference';
 import { getStatusColor } from '@/utils/getStatusColor';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import LegalDocModal from './LegalDocModal';
-import { DocumentCreateEditForm } from '../../legal_department/documents/DocumentCreateEditForm';
+import { LegalDocModal } from './LegalDocModal';
+import { uploadDocumentFile } from '../files/documentFilesSlice';
 
 interface LegalDocTableProps {
     entityType: string;
@@ -30,12 +29,15 @@ export default function LegalDocTable({
 }: LegalDocTableProps) {
     const dispatch = useAppDispatch();
     const { items: documents, loading } = useAppSelector((state) => state.legalDocuments);
-    const statuses = useReference('generalStatuses');
+    const documentStatuses = useReference('documentStatuses');
+
     const legalDocs = documents.filter((doc) => doc.entity_id === entityId);
     const [openForm, setOpenForm] = useState(false);
     const [editingDocId, setEditingDocId] = useState<number | undefined>(undefined);
     const [initialData, setInitialData] = useState<LegalDocumentForm | null>(null);
     const [saving, setSaving] = useState(false);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     useEffect(() => {
         dispatch(fetchLegalDocuments({ entity_type: entityType, entity_id: entityId }));
     }, [dispatch, entityType, entityId]);
@@ -77,7 +79,6 @@ export default function LegalDocTable({
     const handleSave = async (data: LegalDocumentForm, files: File[]) => {
         try {
             setSaving(true);
-
             let docId = editingDocId;
 
             if (!docId) {
@@ -87,21 +88,16 @@ export default function LegalDocTable({
                 await dispatch(updateLegalDocument({ id: docId, data })).unwrap();
             }
 
-            // если есть загрузка файлов
-            // здесь должен быть uploadDocumentFile thunk
-            // если его нет — просто уберите цикл
+            for (const file of files) {
+                await dispatch(uploadDocumentFile({ documentId: docId!, file })).unwrap();
+            }
 
             toast.success('Документ сохранён');
-
             await dispatch(
-                fetchLegalDocuments({
-                    entity_type: entityType,
-                    entity_id: entityId,
-                }),
+                fetchLegalDocuments({ page: page + 1, size: rowsPerPage, entity_id: entityId }),
             );
-
             setOpenForm(false);
-        } catch (err) {
+        } catch {
             toast.error('Ошибка сохранения документа');
         } finally {
             setSaving(false);
@@ -118,7 +114,7 @@ export default function LegalDocTable({
             </div>
         );
     }
-
+    /*****************************************************************************************************************/
     return (
         <div className="rounded-lg bg-gradient-to-br from-blue-50/30 to-indigo-50/30">
             <div className="flex items-center justify-between mb-2">
@@ -146,14 +142,22 @@ export default function LegalDocTable({
                                 <th className="px-3 py-2 text-sm text-left">Название</th>
                                 <th className="px-3 py-2 text-sm text-left">Описание</th>
                                 <th className="px-3 py-2 text-sm text-left">Стоимость</th>
-                                <th className="px-3 py-2 text-sm text-left">Срок</th>
+                                <th className="px-3 py-2 text-sm text-left">Создан</th>
+                                <th className="px-3 py-2 text-sm text-left">Крайний cрок</th>
                                 <th className="px-3 py-2 text-sm text-left">Статус</th>
                                 <th className="px-3 py-2 text-sm text-center">Действия</th>
                             </tr>
                         </thead>
                         <tbody>
                             {legalDocs.map((doc, index) => (
-                                <tr key={doc.id} className="hover:bg-gray-50/50">
+                                <tr
+                                    key={doc.id}
+                                    className="hover:bg-gray-50/50"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openEdit(doc);
+                                    }}
+                                >
                                     <td className="px-3 py-3 text-sm text-blue-500">{index + 1}</td>
                                     <td className="px-3 py-3 text-sm text-gray-600">{doc.name}</td>
                                     <td className="px-3 py-3 text-sm text-gray-600">
@@ -163,16 +167,22 @@ export default function LegalDocTable({
                                         {doc.price}
                                     </td>
                                     <td className="px-3 py-3 text-sm text-gray-600">
+                                        {formatDateTime(doc.created_at)}
+                                    </td>
+                                    <td className="px-3 py-3 text-sm text-gray-600">
                                         {formatDateTime(doc.deadline)}
                                     </td>
+
                                     <td className="px-3 py-3 text-sm text-gray-600">
                                         <span
                                             className={`px-2 py-1 font-medium rounded ${getStatusColor(
                                                 doc.status,
-                                                statuses.lookup,
+                                                documentStatuses.lookup,
                                             )}`}
                                         >
-                                            {doc.status != null ? statuses.lookup(doc.status) : '—'}
+                                            {doc.status != null
+                                                ? documentStatuses.lookup(doc.status)
+                                                : '—'}
                                         </span>
                                     </td>
                                     <td>
@@ -187,9 +197,11 @@ export default function LegalDocTable({
                                             </StyledTooltip>
                                             <StyledTooltip title="Удалить">
                                                 <button
-                                                    onClick={() =>
-                                                        onDeleteSubStageId(doc.id, entityId)
-                                                    }
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDeleteSubStageId(doc.id, entityId);
+                                                        console.log(doc.id, entityId);
+                                                    }}
                                                     className="inline-flex items-center justify-center text-red-600 transition-colors rounded-md h-7 w-7 hover:bg-red-50"
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
@@ -213,16 +225,6 @@ export default function LegalDocTable({
             )}
 
             {openForm && initialData && (
-                <DocumentCreateEditForm
-                    open
-                    documentId={editingDocId}
-                    initialData={initialData}
-                    submitting={saving}
-                    onSubmit={handleSave}
-                    onClose={() => setOpenForm(false)}
-                />
-            )}
-            {/* {openForm && initialData && (
                 <LegalDocModal
                     open
                     documentId={editingDocId}
@@ -231,7 +233,7 @@ export default function LegalDocTable({
                     onSubmit={handleSave}
                     onClose={() => setOpenForm(false)}
                 />
-            )} */}
+            )}
         </div>
     );
 }

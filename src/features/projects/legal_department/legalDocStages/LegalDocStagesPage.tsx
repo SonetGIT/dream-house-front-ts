@@ -16,27 +16,50 @@ import LegalDocStageModal from './LegalDocStageModal';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../../material_request/MaterialRequests';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { deleteLegalDocument } from '../legalDoc/legalDocSlice';
 
 export default function LegalDocStagesPage() {
+    /* HOOKS */
+
     const { projectId } = useOutletContext<ProjectOutletContext>();
     const dispatch = useAppDispatch();
+
     const { data: stages, loading, error } = useAppSelector((state) => state.legalDocStages);
+
     const { items } = useAppSelector((state) => state.legalDocuments);
+
+    /* STATE */
+
     const [editingStage, setEditingStage] = useState<LegalDocStages | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [formData, setFormData] = useState({ name: '' });
+
     const [page, setPage] = useState(1);
     const size = 10;
+
+    const [search, setSearch] = useState('');
+
     const [deleteState, setDeleteState] = useState<
         | { type: 'legalStage'; id: number }
         | { type: 'legalSubStage'; id: number; stageId: number }
         | null
     >(null);
+
+    /* DERIVED STATE */
+
+    const filteredStages = stages.filter((stage) =>
+        stage.name.toLowerCase().includes(search.toLowerCase()),
+    );
+
     const totalDocuments = items.filter((doc) => !doc.deleted).length;
+
     const signedDocuments = items.filter((doc) => doc.status === 3 && !doc.deleted).length;
+
     const totalValue = items
         .filter((doc) => !doc.deleted)
         .reduce((sum, doc) => sum + (doc.price || 0), 0);
+
+    /* EFFECTS */
 
     /* загрузка этапов */
     useEffect(() => {
@@ -51,31 +74,25 @@ export default function LegalDocStagesPage() {
         );
     }, [dispatch, projectId, page]);
 
+    /* ошибки */
     useEffect(() => {
         if (error) {
             toast.error(error);
         }
     }, [error]);
 
+    /*HANDLERS*/
     /* создание этапа */
     const handleCreateStage = () => {
         setEditingStage(null);
-
-        setFormData({
-            name: '',
-        });
-
+        setFormData({ name: '' });
         setModalOpen(true);
     };
 
     /* редактирование */
     const handleEditStage = (stage: LegalDocStages) => {
         setEditingStage(stage);
-
-        setFormData({
-            name: stage.name,
-        });
-
+        setFormData({ name: stage.name });
         setModalOpen(true);
     };
 
@@ -94,6 +111,7 @@ export default function LegalDocStagesPage() {
                         },
                     }),
                 ).unwrap();
+
                 toast.success('Этап обновлен');
             } else {
                 await dispatch(
@@ -102,10 +120,12 @@ export default function LegalDocStagesPage() {
                         ...formData,
                     }),
                 ).unwrap();
+
                 toast.success('Этап создан');
             }
 
             setModalOpen(false);
+
             dispatch(
                 fetchLegalDocStages({
                     project_id: projectId,
@@ -137,16 +157,16 @@ export default function LegalDocStagesPage() {
                 );
             }
 
-            // if (deleteState.type === 'subStage') {
-            //     await dispatch(
-            //         deleteStageSubsection({
-            //             id: deleteState.id,
-            //             stageId: deleteState.stageId,
-            //         }),
-            //     ).unwrap();
+            if (deleteState.type === 'legalSubStage') {
+                await dispatch(
+                    deleteLegalDocument({
+                        id: deleteState.id,
+                        stageId: deleteState.stageId,
+                    }),
+                ).unwrap();
 
-            //     toast.success('Подэтап удален');
-            // }
+                toast.success('Документ удален');
+            }
         } catch {
             toast.error('Ошибка удаления');
         } finally {
@@ -179,6 +199,8 @@ export default function LegalDocStagesPage() {
                                     type="text"
                                     placeholder="Поиск..."
                                     className="pl-12 text-base h-11"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -235,7 +257,7 @@ export default function LegalDocStagesPage() {
                         </Button>
                     </div>
                     <LegalDocStagesTable
-                        stages={stages}
+                        stages={filteredStages}
                         loading={loading}
                         onEditStage={handleEditStage}
                         onDeleteStageId={(id) => setDeleteState({ type: 'legalStage', id })}

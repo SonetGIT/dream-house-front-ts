@@ -4,8 +4,6 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    Box,
-    Typography,
     Divider,
     FormControl,
     InputLabel,
@@ -16,12 +14,9 @@ import {
     ListItemText,
     DialogTitle,
     Button,
-    Stack,
-    Chip,
 } from '@mui/material';
 import { AiOutlineUpload } from 'react-icons/ai';
-import { MdHistory } from 'react-icons/md';
-import { AppButton } from '@/components/ui/AppButton';
+import { MdHistory, MdAttachFile } from 'react-icons/md';
 import { useReference } from '@/features/reference/useReference';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { documentFormData } from '@/features/auditLog/metaData/document';
@@ -29,47 +24,38 @@ import { AuditLogTable } from '@/features/auditLog/AuditLogTable';
 import { DocumentFilesList } from '../files/DocumentFilesList';
 import toast from 'react-hot-toast';
 import StatusChip from '@/components/ui/StatusChip';
-import { signDocument, type LegalDocument } from './legalDocSlice';
-import { fetchDocuments } from '../../legal_department/documents/documentsSlice';
+import { fetchLegalDocuments, signDocument, type LegalDocumentForm } from './legalDocSlice';
 
-// Вынесли константы стилей
-const COLORS = {
-    primary: '#1f4774',
-    textSecondary: '#888787',
-    textDisabled: '#9e9e9e',
-} as const;
+// export interface DocumentFormData {
+//     project_id: number;
+//     stage_id?: number;
+//     name: string;
+//     price: number;
+//     description: string;
+//     status: number;
+//     deadline: null;
+// }
 
-export interface DocumentFormData {
-    project_id: number;
-    stage_id?: number;
-    name: string;
-    price: number;
-    description: string;
-    status: number;
-    deadline: null;
-    responsible_users: number[];
-}
-
-interface DocumentCreateEditFormProps {
+interface LegalDocModalProps {
     open: boolean;
     onClose: () => void;
     documentId?: number;
-    initialData: LegalDocument | null;
+    initialData: LegalDocumentForm;
     submitting?: boolean;
-    onSubmit: (data: LegalDocument, files: File[]) => void | Promise<void>;
+    onSubmit: (data: LegalDocumentForm, files: File[]) => void | Promise<void>;
 }
 
-export default function LegalDocModal({
+export function LegalDocModal({
     open,
     onClose,
     documentId,
     initialData,
     submitting = false,
     onSubmit,
-}: DocumentCreateEditFormProps) {
+}: LegalDocModalProps) {
     const dispatch = useAppDispatch();
-    const [formData, setFormData] = useState<LegalDocument>(initialData);
-    const [errors, setErrors] = useState<Partial<Record<keyof LegalDocument, string>>>({});
+    const [formData, setFormData] = useState<LegalDocumentForm>(initialData);
+    const [errors, setErrors] = useState<Partial<Record<keyof LegalDocumentForm, string>>>({});
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [openHistory, setOpenHistory] = useState(false);
 
@@ -89,7 +75,7 @@ export default function LegalDocModal({
         }
     }, [open, initialData, documentId]);
 
-    const handleChange = (field: keyof LegalDocument, value: any) => {
+    const handleChange = (field: keyof LegalDocumentForm, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -98,6 +84,7 @@ export default function LegalDocModal({
 
     const handleSubmit = () => {
         onSubmit(formData, pendingFiles);
+        console.log('pendingFiles', pendingFiles);
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +104,9 @@ export default function LegalDocModal({
         dispatch(signDocument(documentId))
             .unwrap()
             .then(() => {
-                // dispatch(fetchDocuments({ page: 1, size: 10, project_id: initialData.project_id }));
+                dispatch(
+                    fetchLegalDocuments({ page: 1, size: 10, entity_id: initialData.entity_id }),
+                );
                 toast.success('Документ успешно подписан');
             })
             .catch((err) => {
@@ -128,57 +117,37 @@ export default function LegalDocModal({
     return (
         <>
             <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-                {/* Шапка */}
-                <Box sx={{ p: 3, pb: 2 }}>
-                    <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                        spacing={2}
-                    >
-                        <Box>
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    color: COLORS.primary,
-                                    fontWeight: 600,
-                                    textTransform: 'uppercase',
-                                }}
-                            >
+                {/* 📋 Шапка */}
+                <div className="p-6 pb-4 border-b border-gray-200 bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
+                    <div className="flex flex-row flex-wrap items-start justify-between gap-4">
+                        <div className="flex-1">
+                            <h2 className="mb-1 text-lg font-bold tracking-wide text-blue-900 uppercase">
                                 {documentId
                                     ? `Редактировать документ № ${documentId}`
                                     : 'Создать новый документ'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            </h2>
+                            <p className="mt-1 text-sm text-gray-600">
                                 {documentId
                                     ? 'Обновите информацию о документе и управляйте файлами'
                                     : 'Заполните информацию о новом документе'}
-                            </Typography>
-                        </Box>
+                            </p>
+                        </div>
 
                         {documentId && (
-                            <AppButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={<MdHistory />}
+                            <button
                                 onClick={() => setOpenHistory(true)}
-                                sx={{ border: 'none', fontWeight: 500 }}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-900 transition-all duration-200 border border-transparent rounded-lg hover:bg-blue-100/60 hover:border-blue-200"
                             >
-                                История
-                            </AppButton>
+                                <MdHistory className="w-4 h-4" />
+                                <span>История</span>
+                            </button>
                         )}
-                    </Stack>
-                </Box>
+                    </div>
+                </div>
 
-                <DialogContent dividers>
-                    {/* Основные поля */}
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                            gap: 2,
-                        }}
-                    >
+                <DialogContent dividers className="p-6">
+                    {/* 📝 Основные поля */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <TextField
                             label="Название"
                             value={formData.name}
@@ -192,8 +161,8 @@ export default function LegalDocModal({
 
                         <TextField
                             label="Стоимость"
-                            type="number"
-                            value={formData.price || ''}
+                            type="text"
+                            value={formData.price ?? ''}
                             onChange={(e) => handleChange('price', Number(e.target.value))}
                             helperText={errors.price}
                             size="small"
@@ -201,16 +170,17 @@ export default function LegalDocModal({
                             required
                         />
 
-                        <TextField
-                            label="Описание"
-                            multiline
-                            rows={3}
-                            value={formData.description}
-                            onChange={(e) => handleChange('description', e.target.value)}
-                            size="small"
-                            fullWidth
-                            sx={{ gridColumn: '1 / -1' }}
-                        />
+                        <div className="col-span-full">
+                            <TextField
+                                label="Описание"
+                                multiline
+                                rows={3}
+                                value={formData.description}
+                                onChange={(e) => handleChange('description', e.target.value)}
+                                size="small"
+                                fullWidth
+                            />
+                        </div>
 
                         <FormControl
                             error={!!errors.responsible_users}
@@ -262,117 +232,132 @@ export default function LegalDocModal({
                             InputLabelProps={{ shrink: true }}
                         />
 
-                        {/* Статус */}
-                        <Stack
-                            direction="row"
-                            alignItems="center"
-                            spacing={1}
-                            sx={{ gridColumn: '1 / -1', justifyContent: 'flex-end' }}
-                        >
-                            <Typography variant="body2" color={COLORS.primary}>
+                        {/* 🎯 Статус */}
+                        <div className="flex items-center justify-end gap-3 p-4 mt-2 border border-dashed rounded-lg col-span-full bg-blue-50/20 border-blue-200/50">
+                            <span className="text-sm font-medium text-blue-900">
                                 Статус документа:
-                            </Typography>
+                            </span>
                             <StatusChip
                                 label={documentStatuses.lookup(formData.status)}
                                 status={formData.status}
                             />
-                        </Stack>
-                    </Box>
+                        </div>
+                    </div>
 
-                    {/* Файлы */}
+                    {/* 📎 Сохранённые файлы */}
                     {documentId && (
                         <>
-                            <Divider sx={{ my: 3 }} />
-                            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                                Сохранённые файлы
-                            </Typography>
+                            <Divider className="my-6" />
+                            <div className="flex items-center gap-2 mb-3">
+                                <MdAttachFile className="w-5 h-5 text-blue-900" />
+                                <h3 className="text-base font-semibold text-blue-900">
+                                    Сохранённые файлы
+                                </h3>
+                            </div>
                             <DocumentFilesList documentId={documentId} />
                         </>
                     )}
 
-                    <Divider sx={{ my: 3 }} />
+                    <Divider className="my-6" />
 
-                    {/* Прикреплённые файлы */}
-                    <Stack spacing={2}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="subtitle1" fontWeight={600}>
+                    {/* 📁 Прикреплённые файлы */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <MdAttachFile className="w-5 h-5 text-blue-900" />
+                            <h3 className="text-base font-semibold text-blue-900">
                                 Прикреплённые файлы
-                            </Typography>
-                        </Stack>
+                            </h3>
+                        </div>
 
                         {pendingFiles.length === 0 ? (
-                            <Typography variant="body2" color="text.disabled" fontStyle="italic">
-                                Файлы ещё не добавлены
-                            </Typography>
+                            <div className="px-4 py-8 text-center border border-gray-300 border-dashed rounded-lg bg-gray-50">
+                                <p className="text-sm italic text-gray-500">
+                                    Файлы ещё не добавлены
+                                </p>
+                            </div>
                         ) : (
-                            <Stack spacing={0.5}>
+                            <div className="flex flex-col gap-2 mb-4">
                                 {pendingFiles.map((file, index) => (
-                                    <Chip
+                                    <div
                                         key={index}
-                                        label={file.name}
-                                        size="small"
-                                        variant="outlined"
-                                    />
+                                        className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md hover:border-blue-300"
+                                    >
+                                        <MdAttachFile className="w-4 h-4 text-blue-600" />
+                                        <span className="text-gray-700">{file.name}</span>
+                                    </div>
                                 ))}
-                            </Stack>
+                            </div>
                         )}
 
-                        <Stack
-                            direction="row"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            spacing={2}
-                        >
-                            <AppButton
-                                component="label"
-                                startIcon={<AiOutlineUpload />}
-                                disabled={submitting}
-                            >
-                                Добавить файлы
-                                <input
-                                    type="file"
-                                    hidden
-                                    multiple
-                                    onChange={handleFileSelect}
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                                />
-                            </AppButton>
+                        <div className="p-4 mt-4 border border-gray-200 bg-gray-50 rounded-xl">
+                            <div className="flex flex-row flex-wrap items-center justify-between gap-4">
+                                <label className="inline-flex items-center gap-2 px-4 py-2 font-medium text-white transition-colors duration-200 bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <AiOutlineUpload className="w-4 h-4" />
+                                    <span>Добавить файлы</span>
+                                    <input
+                                        type="file"
+                                        hidden
+                                        multiple
+                                        onChange={handleFileSelect}
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                                        disabled={submitting}
+                                    />
+                                </label>
 
-                            <Typography variant="caption" color="text.secondary">
-                                PDF, DOC, XLS, JPG, PNG
-                            </Typography>
-                        </Stack>
-                    </Stack>
+                                <span className="text-xs text-gray-600">
+                                    PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </DialogContent>
 
-                <DialogActions sx={{ p: 2, gap: 1 }}>
-                    <AppButton
-                        variantType="primary"
+                <DialogActions className="gap-2 p-6 border-t border-gray-200 bg-gray-50/50">
+                    <button
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (documentId) handleSign(documentId);
+                            if (documentId) {
+                                handleSign(documentId);
+                            }
                         }}
                         disabled={!documentId}
-                        sx={{ mr: 'auto' }}
+                        className="px-4 py-2 mr-auto font-medium text-white transition-colors duration-200 bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Подписать
-                    </AppButton>
+                    </button>
 
-                    <AppButton onClick={onClose}>Отмена</AppButton>
-                    <AppButton variantType="primary" onClick={handleSubmit} disabled={submitting}>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 font-medium text-gray-700 transition-colors duration-200 bg-gray-200 rounded-lg hover:bg-gray-300"
+                    >
+                        Отмена
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="px-4 py-2 font-medium text-white transition-colors duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         Сохранить
-                    </AppButton>
+                    </button>
                 </DialogActions>
             </Dialog>
 
-            {/* История изменений */}
+            {/* 📜 История изменений */}
             <Dialog
                 open={openHistory}
                 onClose={() => setOpenHistory(false)}
                 maxWidth="md"
                 fullWidth
             >
-                <DialogTitle>История изменений</DialogTitle>
+                <DialogTitle className="border-b border-gray-200 bg-gray-50">
+                    <div className="flex items-center gap-2">
+                        <MdHistory className="w-5 h-5 text-blue-900" />
+                        <span className="text-lg font-semibold text-blue-900">
+                            История изменений
+                        </span>
+                    </div>
+                </DialogTitle>
+
                 <DialogContent dividers>
                     <AuditLogTable
                         entity_type={'document'}
@@ -380,7 +365,8 @@ export default function LegalDocModal({
                         formMetadata={documentFormData}
                     />
                 </DialogContent>
-                <DialogActions>
+
+                <DialogActions className="p-4">
                     <Button onClick={() => setOpenHistory(false)}>Закрыть</Button>
                 </DialogActions>
             </Dialog>

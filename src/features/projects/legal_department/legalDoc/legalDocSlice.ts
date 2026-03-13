@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
-import { DOCUMENT_STATUS } from '../../legal_department/documents/documentStatus';
+import { DOCUMENT_STATUS } from './documentStatus';
 
 export interface LegalDocument {
     id: number;
@@ -88,9 +88,18 @@ export const updateLegalDocument = createAsyncThunk(
 );
 
 // DELETE DOCUMENT
-export const deleteLegalDocument = createAsyncThunk('legalDocuments/delete', async (id: number) => {
-    await apiRequest(`/documents/delete/${id}`, 'DELETE');
-    return id;
+export const deleteLegalDocument = createAsyncThunk<
+    { id: number; stageId: number },
+    { id: number; stageId: number },
+    { rejectValue: string }
+>('legalDocuments/delete', async ({ id, stageId }, { rejectWithValue }) => {
+    try {
+        await apiRequest(`/documents/delete/${id}`, 'DELETE');
+
+        return { id, stageId };
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка удаления документа');
+    }
 });
 
 export const setDocumentStatus = createAsyncThunk<
@@ -154,8 +163,9 @@ const legalDocumentSlice = createSlice({
 
         // DELETE
         builder.addCase(deleteLegalDocument.fulfilled, (state, action) => {
-            state.items = state.items.filter((doc) => doc.id !== action.payload);
+            state.items = state.items.filter((doc) => doc.id !== action.payload.id);
         });
+
         builder.addCase(setDocumentStatus.fulfilled, (state, action) => {
             const doc = state.items.find((d) => d.id === action.payload);
             if (doc) {

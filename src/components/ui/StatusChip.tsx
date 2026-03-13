@@ -1,4 +1,4 @@
-import { DOCUMENT_STATUS_COLOR } from '@/features/projects/legal_department/documents/documentStatus';
+import { DOCUMENT_STATUS_COLOR } from '@/features/projects/legal_department/legalDoc/documentStatus';
 import { Chip } from '@mui/material';
 
 interface Props {

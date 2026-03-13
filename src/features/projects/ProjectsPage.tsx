@@ -5,12 +5,13 @@ import ProjectsTable from './ProjectsTable';
 import InputSearch from '@/components/ui/InputSearch';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { MdDomainAdd, MdOutlineRestartAlt } from 'react-icons/md';
+import { MdDomainAdd } from 'react-icons/md';
 import { useReference } from '../reference/useReference';
 import { Button } from '@mui/material';
 import { ProjectCreateEditDialog } from './ProjectCreateEditDialog';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { RotateCcw } from 'lucide-react';
 
 interface ProjectFilters {
     type?: string | number;
@@ -142,47 +143,63 @@ export default function ProjectsPage() {
 
     /***********************************************************************************************************************************************************/
     return (
-        <div>
+        <div className="mx-auto w-[1600px] mt-4">
             {/* ======= ПОИСК И ФИЛЬТРЫ ======= */}
-            <div className="filter-container">
-                {/* Фильтры и поиск — слева */}
-                <div className="filter-search">
-                    <InputSearch
-                        value={searchText}
-                        onChange={setSearchText}
-                        onEnter={handleSearch}
-                    />
-
-                    <ReferenceSelect
-                        label="Тип проекта"
-                        value={projectTypeId || ''}
-                        onChange={setProjectTypeId}
-                        options={refs.projectTypes.data || []}
-                        loading={refs.projectTypes.loading}
-                    />
-
-                    <ReferenceSelect
-                        label="Статус проекта"
-                        value={projectStatusId || ''}
-                        onChange={setProjectStatusId}
-                        options={refs.projectStatuses.data || []}
-                        loading={refs.projectStatuses.loading}
-                    />
-                    <div className="icon">
-                        <StyledTooltip title="Сбросить фильтры и поиск">
-                            <MdOutlineRestartAlt onClick={handleReset} />
-                        </StyledTooltip>
+            <div className="px-5 py-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm  w-[1445px]">
+                <div className="flex items-center justify-between mb-2">
+                    <div>
+                        <p className="text-gray-600 uppercase text-medium">
+                            Панель управление объектом
+                        </p>
                     </div>
                 </div>
+                <div className="flex justify-between gap-4 mb-0 items-left">
+                    {/* Фильтры и поиск — слева */}
+                    <div className="flex flex-1 gap-3 items-left">
+                        <InputSearch
+                            value={searchText}
+                            onChange={setSearchText}
+                            onEnter={handleSearch}
+                        />
 
-                {/* Кнопка "Создать" — справа */}
-                <div className="filter-actions">
-                    <Button variant="outlined" startIcon={<MdDomainAdd />} onClick={handleCreate}>
-                        Создать
-                    </Button>
+                        <ReferenceSelect
+                            label="Тип проекта"
+                            value={projectTypeId || ''}
+                            onChange={setProjectTypeId}
+                            options={refs.projectTypes.data || []}
+                            loading={refs.projectTypes.loading}
+                        />
+
+                        <ReferenceSelect
+                            label="Статус проекта"
+                            value={projectStatusId || ''}
+                            onChange={setProjectStatusId}
+                            options={refs.projectStatuses.data || []}
+                            loading={refs.projectStatuses.loading}
+                        />
+                        {/* Иконка сброса */}
+                        <StyledTooltip title="Сбросить фильтры и поиск">
+                            <button
+                                onClick={handleReset}
+                                className="p-2 text-gray-400 transition-colors rounded-lg hover:text-blue-600 hover:bg-blue-50 group"
+                                title="Сбросить фильтры и поиск"
+                            >
+                                <RotateCcw className="w-5 h-5 transition-transform duration-300 group-hover:rotate-180" />
+                            </button>
+                        </StyledTooltip>
+                    </div>
+                    {/* Кнопка "Создать" — справа */}
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outlined"
+                            startIcon={<MdDomainAdd />}
+                            onClick={handleCreate}
+                        >
+                            Создать
+                        </Button>
+                    </div>
                 </div>
             </div>
-
             {/* ======= ТАБЛИЦА ======= */}
             <ProjectsTable
                 items={items}
@@ -195,13 +212,11 @@ export default function ProjectsPage() {
                 onDelete={handleDelete}
                 refs={refs}
             />
-
             <ProjectCreateEditDialog
                 open={openForm}
                 project={editingProject}
                 onClose={handleClose}
             />
-
             {/* Диалог подтверждения */}
             <ConfirmDialog
                 open={confirmOpen}

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
-import { downloadFile } from '@/features/projects/legal_department2/files/downloadFile';
+import { downloadFile } from '@/features/projects/legal_department/files/downloadFile';
 
 export interface DocumentFile {
     id: number;
@@ -14,7 +14,11 @@ export interface DocumentFile {
     updated_at: string;
     deleted: boolean;
 }
-
+export interface UploadDocumentResponse {
+    success: boolean;
+    uploaded: number;
+    data: DocumentFile[];
+}
 interface DocumentFilesState {
     data: DocumentFile[];
     loading: boolean;
@@ -44,19 +48,21 @@ export const fetchDocumentFiles = createAsyncThunk<
 
 // UPLOAD
 export const uploadDocumentFile = createAsyncThunk<
-    ApiResponse<DocumentFile>,
+    UploadDocumentResponse,
     { documentId: number; file: File },
     { rejectValue: string }
 >('documentFiles/upload', async ({ documentId, file }, { rejectWithValue }) => {
     try {
         const formData = new FormData();
-        formData.append('file', file);
-        console.log('file', formData);
-        return await apiRequest<DocumentFile>(
+        formData.append('files', file);
+
+        const response = await apiRequest<UploadDocumentResponse>(
             `/documentFiles/upload/${documentId}`,
             'POST',
             formData,
         );
+
+        return response.data; // ← ВАЖНО
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка загрузки файла');
     }
@@ -98,6 +104,13 @@ const documentFilesSlice = createSlice({
     initialState,
     reducers: {
         clearDocumentFiles: () => initialState,
+        setFiles(state, action) {
+            state.data = action.payload;
+        },
+
+        removeFile(state, action) {
+            state.data = state.data.filter((f) => f.id !== action.payload);
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -120,15 +133,21 @@ const documentFilesSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
+
+            /* upload success */
             .addCase(uploadDocumentFile.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data.push(action.payload.data);
-            })
-            .addCase(uploadDocumentFile.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload ?? 'Ошибка загрузки файла';
+
+                if (action.payload?.data) {
+                    state.data.push(...action.payload.data);
+                }
             })
 
+            /* upload error */
+            .addCase(uploadDocumentFile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || 'Ошибка загрузки файла';
+            })
             // DOWNLOAD
             .addCase(downloadDocumentFile.pending, (state) => {
                 state.loading = true;

@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Package, Pencil, Trash2 } from 'lucide-react
 import { TableCell, TableRow } from '@mui/material';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { LegalDocStages } from './legalDocStageSlice';
-import LegalDocTable from '../legalDoc/LegalDocTable';
+import LegalDocTable from '../../legal_department/legalDoc/LegalDocTable';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 interface DocumentStagesTableProps {
     stages: LegalDocStages[];
