@@ -12,7 +12,7 @@ import {
     updateMaterialRequest,
     type MaterialRequest,
 } from './materialRequestsSlice';
-import { getProjectById } from '../projectsSlice';
+import { getProjectById } from '../z_project/projectsSliceo';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import MaterialReqCreateEditForm from './MaterialReqCreateEditForm';
 import MaterialRequestsTable from './MaterialRequestsTable';

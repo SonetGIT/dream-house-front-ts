@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { Pagination } from '../users/userSlice';
+import type { Pagination } from '../../users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
 
 export interface Project {

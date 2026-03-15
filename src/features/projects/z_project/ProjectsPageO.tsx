@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchProjects, setSearch, setFilters, type Project, deleteProject } from './projectsSlice';
-import ProjectsTable from './ProjectsTable';
+import {
+    fetchProjects,
+    setSearch,
+    setFilters,
+    type Project,
+    deleteProject,
+} from './projectsSliceo';
+import ProjectsTable from './ProjectsTableO';
 import InputSearch from '@/components/ui/InputSearch';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { MdDomainAdd } from 'react-icons/md';
-import { useReference } from '../reference/useReference';
+import { useReference } from '../../reference/useReference';
 import { Button } from '@mui/material';
 import { ProjectCreateEditDialog } from './ProjectCreateEditDialog';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';

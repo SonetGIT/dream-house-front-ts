@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { setFilters } from '../projectsSlice';
+import { setFilters } from '../z_project/projectsSliceo';
 import PurchasingAgentItemsTable from './PurchasingAgentItemsTable';
 import { Box } from '@mui/material';
 import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';

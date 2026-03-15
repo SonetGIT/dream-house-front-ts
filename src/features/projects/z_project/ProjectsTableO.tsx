@@ -1,9 +1,9 @@
 import { LinearProgress } from '@mui/material';
-import type { Project } from './projectsSlice';
+import type { Project } from './projectsSliceo';
 import { useNavigate } from 'react-router-dom';
-import type { Pagination } from '../users/userSlice';
+import type { Pagination } from '../../users/userSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
-import type { ReferenceResult } from '../reference/referenceSlice';
+import type { ReferenceResult } from '../../reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { Pencil, Trash2 } from 'lucide-react';
 
@@ -41,7 +41,7 @@ export default function ProjectsTable(props: PropsType) {
                     <table className="w-full text-sm">
                         {/* PROJECT- HEADER */}
                         <thead className="sticky top-0 z-10">
-                            <tr className="border-b-2 bg-cyan-600">
+                            <tr className="bg-blue-500 border-b-1">
                                 <th className="px-4 py-2 text-center border-r border-slate-200/60">
                                     <div className="text-[11px] font-semibold text-white uppercase tracking-wide">
                                         Наименование

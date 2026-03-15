@@ -12,7 +12,7 @@ export default function Dashboard() {
             title: 'Документы (юр.)',
             label: 'Инфо',
             value: '',
-            color: '#117394',
+            color: '#06789e',
             to: 'documentStages',
             icon: <IoDocumentsSharp />,
         },

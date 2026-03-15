@@ -1,3 +1,4 @@
+// фун-я с hour / minute
 export function formatDateTime(value?: string | null, withTime: boolean = true) {
     if (!value) return '';
 

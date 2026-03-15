@@ -2,9 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import App from '../App';
 import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../pages/AuthPage';
-import ProjectsPage from '@/features/projects/ProjectsPage';
 import UsersPage from '@/features/users/UsersPage';
-import ProjectDashboardPage from '@/features/projects/ProjectDashboardPage';
+
 import MaterialRequests from '@/features/projects/material_request/MaterialRequests';
 import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequestTabs';
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
@@ -14,6 +13,9 @@ import SuppliersPage from '@/features/suppliers/SuppliersPage';
 import MaterialsPage from '@/features/materials/MaterialsPage';
 import BlocksManager from '@/features/projects/pto/PtoManager';
 import LegalDocStagesPage from '@/features/projects/legal_department/legalDocStages/LegalDocStagesPage';
+import ProjectsPage from '@/features/projects/a_project/ProjectsPage';
+import ProjectDashboardPage from '@/features/projects/a_project/ProjectDashboardPage';
+
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
     {

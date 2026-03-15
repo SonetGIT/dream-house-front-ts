@@ -1,7 +1,6 @@
 import { useAppDispatch } from '@/app/store';
-import { createProject, updateProject, type Project } from './projectsSlice';
+import { createProject, updateProject, type Project } from './projectsSliceo';
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
-import { ProjectForm } from './ProjectForm';
 
 interface Props {
     open: boolean;
@@ -26,7 +25,7 @@ export function ProjectCreateEditDialog({ open, project, onClose }: Props) {
             <DialogTitle>{project ? 'Редактировать проект' : 'Создать проект'}</DialogTitle>
 
             <DialogContent dividers>
-                <ProjectForm initialData={project} onSubmit={handleSubmit} />
+                {/* <ProjectForm initialData={project} onSubmit={handleSubmit} /> */}
             </DialogContent>
         </Dialog>
     );

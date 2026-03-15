@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { DialogActions, TextField, Box } from '@mui/material';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
-import type { Project } from './projectsSlice';
-import { useReference } from '../reference/useReference';
+import type { Project } from './projectsSliceo';
 import { AppButton } from '@/components/ui/AppButton';
+import { useReference } from '@/features/reference/useReference';
 
 export interface ProjectFormData {
     name: string;
@@ -19,7 +19,7 @@ interface Props {
     submitting?: boolean;
 }
 
-export function ProjectForm({ initialData, onSubmit, submitting = false }: Props) {
+export function ProjectFormO({ initialData, onSubmit, submitting = false }: Props) {
     const projectTypes = useReference('projectTypes');
     const projectStatuses = useReference('projectStatuses');
 

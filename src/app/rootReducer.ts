@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
 import userReducer from '../features/users/userSlice';
-import projectsReducer from '../features/projects/projectsSlice';
+import projectsReducer from '../features/projects/a_project/projectsSlice';
 import referenceReducer from '../features/reference/referenceSlice';
 import materialRequestsReducer from '@/features/projects/material_request/materialRequestsSlice';
 import materialRequestItemsReducer from '@/features/projects/material_request_items/materialRequestItemsSlice';
