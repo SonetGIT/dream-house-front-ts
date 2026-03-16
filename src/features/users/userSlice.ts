@@ -89,6 +89,7 @@ export const fetchUsers = createAsyncThunk(
                 ...(params.filters || {}),
             };
             const data = await apiRequest<Users[]>(`/users/search`, 'POST', body);
+            console.log('dataUSER', data);
             return data;
         } catch (err: any) {
             return rejectWithValue(err.message);

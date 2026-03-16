@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { setFilters } from '../z_project/projectsSliceo';
 import PurchasingAgentItemsTable from './PurchasingAgentItemsTable';
 import { Box } from '@mui/material';
 import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 import { useReference } from '@/features/reference/useReference';
+import { setFilters } from '@/features/users/userSlice';
 
 interface MaterialFilters {
     mType?: string | number;

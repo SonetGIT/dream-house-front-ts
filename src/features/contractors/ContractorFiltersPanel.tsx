@@ -1,10 +1,8 @@
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { Search, Plus, RotateCcw, Filter } from 'lucide-react';
 import { useState } from 'react';
 
 interface FiltersPanelProps {
-    refs: Record<string, ReferenceResult>;
     onSearch: (filters: {
         search: string;
         typeId: number | null;
@@ -16,7 +14,7 @@ interface FiltersPanelProps {
 }
 
 /**********************************************************************************************************/
-export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: FiltersPanelProps) {
+export default function ContractorFiltersPanel({ onSearch, onReset, onCreate }: FiltersPanelProps) {
     const [searchText, setSearchText] = useState('');
     const [typeId, setTypeId] = useState<number | null>(null);
     const [statusId, setStatusId] = useState<number | null>(null);
@@ -58,14 +56,14 @@ export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: Filte
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Поиск по названию, коду или адресу..."
+                                placeholder="Поиск по названию, ИНН, КПП, ОГРН, адрусу или email..."
                                 className="w-full py-2 pl-10 pr-4 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent placeholder:text-gray-400"
                             />
                         </div>
                     </div>
 
                     {/* Кнопки */}
-                    <StyledTooltip title="Фильтры">
+                    {/* <StyledTooltip title="Фильтры">
                         <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={`
@@ -77,7 +75,7 @@ export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: Filte
                                         : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
                                 }
                                 rounded-lg transition-colors
-                                focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2
+                                focus:outline-none focus:ring-1 focus:ring-sky-500 focus:ring-offset-2
                             `}
                         >
                             <Filter className="w-4 h-4" />
@@ -87,7 +85,7 @@ export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: Filte
                                 </span>
                             )}
                         </button>
-                    </StyledTooltip>
+                    </StyledTooltip> */}
 
                     <button
                         onClick={handleSearch}
@@ -116,13 +114,12 @@ export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: Filte
             </div>
 
             {/* Расширенные фильтры */}
-            {showFilters && (
+            {/* {showFilters && (
                 <div
                     className="px-4 pb-4 border-t border-gray-200 bg-gray-50"
                     style={{ animation: 'slideDown 0.2s ease-out' }}
                 >
-                    <div className="grid grid-cols-3 gap-4 pt-4">
-                        {/* Тип проекта */}
+                    <div className="grid grid-cols-3 gap-4 pt-4">                       
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Тип проекта
@@ -141,52 +138,10 @@ export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: Filte
                                     </option>
                                 ))}
                             </select>
-                        </div>
-
-                        {/* Статус */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Статус
-                            </label>
-                            <select
-                                value={statusId || ''}
-                                onChange={(e) =>
-                                    setStatusId(e.target.value ? Number(e.target.value) : null)
-                                }
-                                className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
-                            >
-                                <option value="">Все статусы</option>
-                                {refs.projectStatuses.data?.map((status) => (
-                                    <option key={status.id} value={status.id}>
-                                        {status.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Заказчик */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Заказчик
-                            </label>
-                            <select
-                                value={customerId || ''}
-                                onChange={(e) =>
-                                    setCustomerId(e.target.value ? Number(e.target.value) : null)
-                                }
-                                className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
-                            >
-                                <option value="">Все заказчики</option>
-                                {refs.projectStatuses.data?.map((customer) => (
-                                    <option key={customer.id} value={customer.id}>
-                                        {customer.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        </div>                        
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 }

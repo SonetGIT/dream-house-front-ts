@@ -2,58 +2,50 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
 
-export interface Supplier {
+export interface Contractor {
     id: number;
 
     name: string;
     inn: string;
-    kpp: string;
-    ogrn: string;
+    kpp: string | null;
+    ogrn: string | null;
 
-    address: string | null;
+    address: string;
     phone: string | null;
     email: string | null;
     contact_person: string | null;
-
-    deleted: boolean;
 
     created_at: string;
     updated_at: string;
 
-    avg_quality: number;
-    avg_time: number;
-    avg_price: number;
-    avg_rating: number;
-
-    ratings_count: number;
+    deleted: boolean;
 }
-export interface SupplierForm {
+
+export interface ContractorForm {
     name: string;
     inn: string;
-
     kpp: string | null;
     ogrn: string | null;
-
     address: string | null;
     phone: string | null;
     email: string | null;
     contact_person: string | null;
 }
 
-interface SuppliersState {
-    items: Supplier[];
+interface ContractorsState {
+    items: Contractor[];
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
-    currentSupplier: Supplier | null;
+    currentContractor: Contractor | null;
 }
 
-const initialState: SuppliersState = {
+const initialState: ContractorsState = {
     items: [],
     pagination: null,
     loading: false,
     error: null,
-    currentSupplier: null,
+    currentContractor: null,
 };
 
 interface SearchPayload {
@@ -61,24 +53,13 @@ interface SearchPayload {
     page?: number;
     size?: number;
 }
-export type SupplierFormData = Omit<
-    Supplier,
-    | 'id'
-    | 'created_at'
-    | 'updated_at'
-    | 'deleted'
-    | 'avg_quality'
-    | 'avg_time'
-    | 'avg_price'
-    | 'avg_rating'
-    | 'ratings_count'
->;
+export type ContractorFormData = Omit<Contractor, 'id' | 'created_at' | 'updated_at' | 'deleted'>;
 
-export const fetchSuppliers = createAsyncThunk(
-    'suppliers/search',
+export const fetchContractors = createAsyncThunk(
+    'contractors/search',
     async (params: SearchPayload = {}, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<Supplier[]>('/suppliers/search', 'POST', params);
+            const res = await apiRequest<Contractor[]>('/contractors/search', 'POST', params);
             return res;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -86,11 +67,11 @@ export const fetchSuppliers = createAsyncThunk(
     },
 );
 
-export const createSupplier = createAsyncThunk(
-    'suppliers/create',
-    async (data: Partial<Supplier>, { rejectWithValue }) => {
+export const createContractor = createAsyncThunk(
+    'contractors/create',
+    async (data: Partial<Contractor>, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<Supplier>('/suppliers/create', 'POST', data);
+            const res = await apiRequest<Contractor>('/contractors/create', 'POST', data);
 
             return res.data;
         } catch (err: any) {
@@ -99,11 +80,11 @@ export const createSupplier = createAsyncThunk(
     },
 );
 
-export const updateSupplier = createAsyncThunk(
-    'suppliers/update',
-    async ({ id, data }: { id: number; data: Partial<Supplier> }, { rejectWithValue }) => {
+export const updateContractor = createAsyncThunk(
+    'contractors/update',
+    async ({ id, data }: { id: number; data: Partial<Contractor> }, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<Supplier>(`/suppliers/update/${id}`, 'PUT', data);
+            const res = await apiRequest<Contractor>(`/contractors/update/${id}`, 'PUT', data);
 
             return res.data;
         } catch (err: any) {
@@ -112,11 +93,11 @@ export const updateSupplier = createAsyncThunk(
     },
 );
 
-export const deleteSupplier = createAsyncThunk(
-    'suppliers/delete',
+export const deleteContractor = createAsyncThunk(
+    'contractors/delete',
     async (id: number, { rejectWithValue }) => {
         try {
-            await apiRequest(`/suppliers/delete/${id}`, 'DELETE');
+            await apiRequest(`/contractors/delete/${id}`, 'DELETE');
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -124,19 +105,19 @@ export const deleteSupplier = createAsyncThunk(
     },
 );
 
-export const getSupplierById = createAsyncThunk(
-    'suppliers/getById',
+export const getContractorById = createAsyncThunk(
+    'contractors/getById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await apiRequest<Supplier>(`/suppliers/getById/${id}`, 'GET');
+            const response = await apiRequest<Contractor>(`/contractors/getById/${id}`, 'GET');
             return response.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
     },
 );
-const suppliersSlice = createSlice({
-    name: 'suppliers',
+const contractorsSlice = createSlice({
+    name: 'contractors',
     initialState,
     reducers: {},
 
@@ -144,29 +125,29 @@ const suppliersSlice = createSlice({
         builder
 
             // fetch
-            .addCase(fetchSuppliers.pending, (state) => {
+            .addCase(fetchContractors.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
 
-            .addCase(fetchSuppliers.fulfilled, (state, action) => {
+            .addCase(fetchContractors.fulfilled, (state, action) => {
                 state.loading = false;
                 state.items = action.payload.data;
                 state.pagination = action.payload.pagination ?? null;
             })
 
-            .addCase(fetchSuppliers.rejected, (state, action) => {
+            .addCase(fetchContractors.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             })
 
             // create
-            .addCase(createSupplier.fulfilled, (state, action) => {
+            .addCase(createContractor.fulfilled, (state, action) => {
                 state.items.unshift(action.payload);
             })
 
             // update
-            .addCase(updateSupplier.fulfilled, (state, action) => {
+            .addCase(updateContractor.fulfilled, (state, action) => {
                 const index = state.items.findIndex((p) => p.id === action.payload.id);
 
                 if (index !== -1) {
@@ -175,22 +156,22 @@ const suppliersSlice = createSlice({
             })
 
             // delete
-            .addCase(deleteSupplier.fulfilled, (state, action) => {
+            .addCase(deleteContractor.fulfilled, (state, action) => {
                 state.items = state.items.filter((p) => p.id !== action.payload);
             })
-            .addCase(getSupplierById.pending, (state) => {
+            .addCase(getContractorById.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(getSupplierById.fulfilled, (state, action) => {
+            .addCase(getContractorById.fulfilled, (state, action) => {
                 state.loading = false;
-                state.currentSupplier = action.payload;
+                state.currentContractor = action.payload;
             })
-            .addCase(getSupplierById.rejected, (state, action) => {
+            .addCase(getContractorById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });
     },
 });
 
-export default suppliersSlice.reducer;
+export default contractorsSlice.reducer;

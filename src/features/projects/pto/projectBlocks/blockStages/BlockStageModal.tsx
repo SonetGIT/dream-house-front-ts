@@ -57,9 +57,9 @@ export default function BlockStageModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* HEADER */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-sky-50 to-indigo-50">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-blue-600 rounded-lg">
+                        <div className="p-2 rounded-lg bg-sky-600">
                             <FileText className="w-4 h-4 text-white" />
                         </div>
                         <h2 className="text-base font-semibold text-gray-800">
@@ -91,7 +91,7 @@ export default function BlockStageModal({
                                 onChange={(e) => onChange({ ...formData, name: e.target.value })}
                                 placeholder="Например: Каркас монолитный"
                                 required
-                                className="w-full px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                                className="w-full px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 border border-gray-300 rounded-md focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-100 transition-all"
                             />
                         </div>
 
@@ -109,7 +109,7 @@ export default function BlockStageModal({
                                     onChange={(e) =>
                                         onChange({ ...formData, start_date: e.target.value })
                                     }
-                                    className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                                    className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-100 transition-all"
                                 />
                             </div>
 
@@ -126,14 +126,14 @@ export default function BlockStageModal({
                                         onChange({ ...formData, end_date: e.target.value })
                                     }
                                     min={startDateValue}
-                                    className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                                    className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-100 transition-all"
                                 />
                             </div>
                         </div>
 
                         {/* Helper text */}
                         <p className="text-sm text-gray-500 flex items-start gap-1.5 mt-2">
-                            <span className="text-blue-500 mt-0.5">ℹ</span>
+                            <span className="text-sky-500 mt-0.5">ℹ</span>
                             <span>
                                 Укажите название этапа и даты для автоматического расчета
                                 длительности
@@ -154,7 +154,7 @@ export default function BlockStageModal({
                         <button
                             type="submit"
                             disabled={!formData.name.trim()}
-                            className="px-5 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed hover:shadow-md"
+                            className="px-5 py-2 text-sm font-medium text-white transition-colors rounded-md shadow-sm bg-sky-600 hover:bg-sky-700 disabled:bg-gray-300 disabled:cursor-not-allowed hover:shadow-md"
                         >
                             {editing ? 'Сохранить изменения' : 'Создать этап'}
                         </button>

@@ -13,7 +13,7 @@ export default function SubStageRow({ sub, index }: Props) {
                 <div className="flex items-center gap-3">
                     {/* точка этапа */}
 
-                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                    <div className="w-2 h-2 rounded-full bg-sky-500" />
 
                     <span className="w-6 text-gray-400">{index}.</span>
 
@@ -22,7 +22,7 @@ export default function SubStageRow({ sub, index }: Props) {
                     {/* действия */}
 
                     <div className="flex items-center gap-1 transition opacity-0 group-hover:opacity-100">
-                        <button className="p-1 text-gray-400 hover:text-blue-600">
+                        <button className="p-1 text-gray-400 hover:text-sky-600">
                             <Pencil className="w-3 h-3" />
                         </button>
 

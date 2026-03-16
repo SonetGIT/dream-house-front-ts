@@ -52,7 +52,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
         return (
             <div className="flex items-center justify-center py-20">
                 <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
                     <p className="text-sm text-gray-500">Загрузка проектов...</p>
                 </div>
             </div>
@@ -117,7 +117,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                         return (
                             <tr
                                 key={project.id}
-                                className="transition-colors hover:bg-blue-50/50 group"
+                                className="transition-colors hover:bg-sky-50/50 group"
                                 onClick={() => handleRowClick(project)}
                             >
                                 {/* Номер */}
@@ -127,7 +127,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
 
                                 {/* Код */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                         {project.code}
                                     </span>
                                 </td>
@@ -141,7 +141,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
 
                                 {/* Тип */}
                                 <td className="px-3 py-2.5 text-xs text-gray-700">
-                                    {refs.projectTypes.lookup(project.type)}
+                                    {project.type ? refs.projectTypes.lookup(project.type) : '_'}
                                 </td>
 
                                 {/* Адрес */}
@@ -165,25 +165,29 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                         <div className="font-medium text-gray-900">
                                             {formatCurrency(project.planned_budget)}
                                         </div>
-                                        {project.actual_budget && (
-                                            <div
-                                                className={`
+                                        {project.planned_budget
+                                            ? project.actual_budget && (
+                                                  <div
+                                                      className={`
                                                 ${
                                                     project.actual_budget > project.planned_budget
                                                         ? 'text-red-600'
                                                         : 'text-green-600'
                                                 }
                                             `}
-                                            >
-                                                {formatCurrency(project.actual_budget)}
-                                            </div>
-                                        )}
+                                                  >
+                                                      {formatCurrency(project.actual_budget)}
+                                                  </div>
+                                              )
+                                            : '_'}
                                     </div>
                                 </td>
 
                                 {/* Заказчик */}
                                 <td className="px-3 py-2.5 text-xs text-gray-700">
-                                    {refs.users.lookup(project.customer_id)}
+                                    {project.customer_id
+                                        ? refs.users.lookup(project.customer_id)
+                                        : '_'}
                                 </td>
 
                                 {/* Статус */}
@@ -195,7 +199,9 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                              ${statusInfo.className}
                                         `}
                                     >
-                                        {refs.projectStatuses.lookup(project.status)}
+                                        {project.status
+                                            ? refs.projectStatuses.lookup(project.status)
+                                            : '_'}
                                     </span>
                                 </td>
 
@@ -204,7 +210,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                     <div className="flex items-center gap-2">
                                         <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full transition-all bg-blue-600 rounded-full"
+                                                className="h-full transition-all rounded-full bg-sky-600"
                                                 style={{ width: `${project.progress_percent}%` }}
                                             />
                                         </div>
@@ -213,7 +219,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                         </span>
                                     </div>
                                 </td>
-                                {/* Руководитель объекта */}
+                                {/* Инженер проекта */}
                                 <td className="px-3 py-2.5 text-xs text-gray-700">
                                     {project.manager_id
                                         ? refs.users.lookup(project.manager_id)

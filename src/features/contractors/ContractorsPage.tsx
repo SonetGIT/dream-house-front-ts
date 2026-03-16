@@ -1,37 +1,32 @@
 import { useState, useEffect } from 'react';
-import { ConfirmDialogNew } from '../../../components/ui/ConfirmDialogNew';
 import toast from 'react-hot-toast';
-import { ProjectFiltersPanel } from './ProjectFiltersPanel';
-import { ProjectsTable } from './ProjectsTable';
-import { ProjectModal } from './ProjectModal';
-import { ProjectForm } from './ProjectForm';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import {
-    createProject,
-    deleteProject,
-    fetchProjects,
-    updateProject,
-    type Project,
-    type ProjectFormData,
-} from './projectsSlice';
-import { useReference } from '@/features/reference/useReference';
 import { TablePagination } from '@/components/ui/TablePagination';
+import {
+    createContractor,
+    deleteContractor,
+    fetchContractors,
+    updateContractor,
+    type Contractor,
+    type ContractorFormData,
+} from './contractorsSlice';
+import ContractorsTable from './ContractorsTable';
+import ContractorModal from './ContractorModal';
+import ContractorFiltersPanel from './ContractorFiltersPanel';
+import ContractorForm from './ContractorForm';
+import { ConfirmDialogNew } from '@/components/ui/ConfirmDialogNew';
 
-export default function ProjectsPage() {
+/*******************************************************************************************************************/
+export default function ContractorsPage() {
     const dispatch = useAppDispatch();
-    const { items, pagination, loading } = useAppSelector((state) => state.projects);
+    const { items, pagination, loading } = useAppSelector((state) => state.contractors);
 
-    const [filters, setFilters] = useState({
-        search: '',
-        typeId: null as number | null,
-        statusId: null as number | null,
-        customerId: null as number | null,
-    });
+    const [filters, setFilters] = useState({ search: '' });
 
     const [currentPage, setCurrentPage] = useState(1);
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
-    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
 
     const [formLoading, setFormLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
@@ -39,25 +34,12 @@ export default function ProjectsPage() {
     //Первичная загрузка
     useEffect(() => {
         dispatch(
-            fetchProjects({
+            fetchContractors({
                 page: 1,
                 size: 10,
             }),
         );
     }, [dispatch]);
-
-    //Справочники
-    const projectTypes = useReference('projectTypes');
-    const projectStatuses = useReference('projectStatuses');
-    const users = useReference('users');
-    const userRoles = useReference('userRoles');
-
-    const refs = {
-        projectTypes,
-        projectStatuses,
-        users,
-        userRoles,
-    };
 
     //Поиск
     const handleSearch = (newFilters: typeof filters) => {
@@ -65,7 +47,7 @@ export default function ProjectsPage() {
         setCurrentPage(1);
 
         dispatch(
-            fetchProjects({
+            fetchContractors({
                 page: 1,
                 size: pagination?.size ?? 10,
                 ...newFilters,
@@ -85,7 +67,7 @@ export default function ProjectsPage() {
         setCurrentPage(1);
 
         dispatch(
-            fetchProjects({
+            fetchContractors({
                 page: 1,
                 size: pagination?.size ?? 10,
             }),
@@ -96,30 +78,30 @@ export default function ProjectsPage() {
 
     //CRUD
     const handleCreate = () => {
-        setSelectedProject(null);
+        setSelectedContractor(null);
         setModal('create');
     };
 
-    const handleEdit = (project: Project) => {
-        setSelectedProject(project);
+    const handleEdit = (contractor: Contractor) => {
+        setSelectedContractor(contractor);
         setModal('edit');
     };
 
-    const handleDelete = (project: Project) => {
-        setSelectedProject(project);
+    const handleDelete = (contractor: Contractor) => {
+        setSelectedContractor(contractor);
         setModal('delete');
     };
 
-    const handleCreateProject = async (data: ProjectFormData) => {
+    const handleCreateContractor = async (data: ContractorFormData) => {
         try {
             setFormLoading(true);
 
-            await dispatch(createProject(data)).unwrap();
+            await dispatch(createContractor(data)).unwrap();
 
-            toast.success(`Объект создан: ${data.name}`);
+            toast.success(`Подрядчик успешно создан: ${data.name}`);
 
             dispatch(
-                fetchProjects({
+                fetchContractors({
                     page: pagination?.page ?? 1,
                     size: pagination?.size ?? 10,
                     ...filters,
@@ -128,29 +110,29 @@ export default function ProjectsPage() {
 
             setModal(null);
         } catch (err: any) {
-            toast.error(err || 'Ошибка создания объекта');
+            toast.error(err || 'Ошибка создания подрядчика');
         } finally {
             setFormLoading(false);
         }
     };
 
-    const handleUpdateProject = async (data: ProjectFormData) => {
-        if (!selectedProject) return;
+    const handleUpdateContractor = async (data: ContractorFormData) => {
+        if (!selectedContractor) return;
 
         try {
             setFormLoading(true);
 
             await dispatch(
-                updateProject({
-                    id: selectedProject.id,
+                updateContractor({
+                    id: selectedContractor.id,
                     data,
                 }),
             ).unwrap();
 
-            toast.success(`Объект обновлён: ${data.name}`);
+            toast.success(`Подрядчик успешно  обновлён: ${data.name}`);
 
             dispatch(
-                fetchProjects({
+                fetchContractors({
                     page: pagination?.page ?? 1,
                     size: pagination?.size ?? 10,
                     ...filters,
@@ -158,7 +140,7 @@ export default function ProjectsPage() {
             );
 
             setModal(null);
-            setSelectedProject(null);
+            setSelectedContractor(null);
         } catch (err: any) {
             toast.error(err || 'Ошибка обновления объекта');
         } finally {
@@ -166,18 +148,18 @@ export default function ProjectsPage() {
         }
     };
 
-    const handleDeleteProject = async () => {
-        if (!selectedProject) return;
+    const handleDeleteContractor = async () => {
+        if (!selectedContractor) return;
 
         try {
             setDeleteLoading(true);
 
-            await dispatch(deleteProject(selectedProject.id)).unwrap();
+            await dispatch(deleteContractor(selectedContractor.id)).unwrap();
 
-            toast.success(`Объект удалён: ${selectedProject.name}`);
+            toast.success(`Подрядчик успешно удалён: ${selectedContractor.name}`);
 
             dispatch(
-                fetchProjects({
+                fetchContractors({
                     page: pagination?.page ?? 1,
                     size: pagination?.size ?? 10,
                     ...filters,
@@ -185,9 +167,9 @@ export default function ProjectsPage() {
             );
 
             setModal(null);
-            setSelectedProject(null);
+            setSelectedContractor(null);
         } catch (err: any) {
-            toast.error(err || 'Ошибка удаления проекта');
+            toast.error(err || 'Ошибка удаления подрядчика');
         } finally {
             setDeleteLoading(false);
         }
@@ -199,15 +181,12 @@ export default function ProjectsPage() {
             <div className="mx-auto max-w-[1800px] px-6 py-8">
                 {/* Header */}
                 <div className="mb-6">
-                    <h1 className="mb-2 text-3xl font-bold text-sky-800">Объекты</h1>
-                    <p className="text-sm text-sky-700">
-                        Панель управления строительными объектами
-                    </p>
+                    <h1 className="mb-2 text-3xl font-bold text-sky-800">Подрядчики</h1>
+                    <p className="text-sm text-sky-700">Панель управления по подрядчиком</p>
                 </div>
 
                 {/* Фильтры */}
-                <ProjectFiltersPanel
-                    refs={refs}
+                <ContractorFiltersPanel
                     onSearch={handleSearch}
                     onReset={handleReset}
                     onCreate={handleCreate}
@@ -215,10 +194,9 @@ export default function ProjectsPage() {
 
                 {/* Таблица */}
                 <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <ProjectsTable
-                        projects={items}
+                    <ContractorsTable
+                        contractors={items}
                         loading={loading}
-                        refs={refs}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                     />
@@ -231,7 +209,7 @@ export default function ProjectsPage() {
                                 setCurrentPage(newPage);
 
                                 dispatch(
-                                    fetchProjects({
+                                    fetchContractors({
                                         page: newPage,
                                         size: pagination.size,
                                         ...filters,
@@ -242,7 +220,7 @@ export default function ProjectsPage() {
                                 setCurrentPage(1);
 
                                 dispatch(
-                                    fetchProjects({
+                                    fetchContractors({
                                         page: 1,
                                         size: newSize,
                                         ...filters,
@@ -258,41 +236,39 @@ export default function ProjectsPage() {
             </div>
 
             {/* CREATE */}
-            <ProjectModal
+            <ContractorModal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
-                title="Создать новый объект"
+                title="Создать новые данные"
             >
-                <ProjectForm
-                    refs={refs}
-                    onSubmit={handleCreateProject}
+                <ContractorForm
+                    onSubmit={handleCreateContractor}
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </ProjectModal>
+            </ContractorModal>
 
             {/* EDIT */}
-            <ProjectModal
+            <ContractorModal
                 isOpen={modal === 'edit'}
                 onClose={() => setModal(null)}
-                title="Редактировать объект"
+                title="Редактировать данные"
             >
-                <ProjectForm
-                    project={selectedProject}
-                    refs={refs}
-                    onSubmit={handleUpdateProject}
+                <ContractorForm
+                    contractor={selectedContractor}
+                    onSubmit={handleUpdateContractor}
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </ProjectModal>
+            </ContractorModal>
 
             {/* DELETE */}
             <ConfirmDialogNew
                 isOpen={modal === 'delete'}
                 onClose={() => setModal(null)}
-                onConfirm={handleDeleteProject}
-                title="Удалить проект?"
-                message={`Вы уверены, что хотите удалить проект "${selectedProject?.name}" (${selectedProject?.code})? Это действие нельзя отменить.`}
+                onConfirm={handleDeleteContractor}
+                title="Удалить подрядчика?"
+                message={`Вы уверены, что хотите удалить подрядчика "${selectedContractor?.name}" (${selectedContractor?.inn})? Это действие нельзя отменить.`}
                 confirmText="Удалить"
                 cancelText="Отмена"
                 variant="danger"

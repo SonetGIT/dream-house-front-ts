@@ -1,103 +1,73 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-
-interface Project {
-    id?: number;
-    name: string;
-    code: string;
-    type: number | null;
-    address: string;
-    customer_id: number | null;
-    start_date: string;
-    end_date: string;
-    planned_budget: number | null;
-    actual_budget: number | null;
-    status: number | null;
-    manager_id: number | null;
-    foreman_id: number | null;
-    master_id: number | null;
-    warehouse_manager_id: number | null;
-    description: string;
-    progress_percent: number;
-}
+import type { ProjectForm, ProjectFormData } from './projectsSlice';
 
 interface ProjectFormProps {
-    project?: Project | null;
+    project?: ProjectFormData | null;
     refs: Record<string, ReferenceResult>;
-    // onSubmit: (data: Omit<Project, 'id'>) => Promise<void>;
+    onSubmit: (data: ProjectFormData) => Promise<void>;
     onCancel: () => void;
     loading?: boolean;
 }
 
+/**Создание начального состояния формы*/
+function getInitialFormData(project?: ProjectFormData | null): ProjectForm {
+    return {
+        name: project?.name ?? '',
+        code: project?.code ?? '',
+        type: project?.type ?? null,
+        address: project?.address ?? '',
+        customer_id: project?.customer_id ?? null,
+        start_date: project?.start_date?.slice(0, 10) ?? '',
+        end_date: project?.end_date?.slice(0, 10) ?? '',
+        planned_budget: project?.planned_budget ?? null,
+        actual_budget: project?.actual_budget ?? null,
+        status: project?.status ?? null,
+        manager_id: project?.manager_id ?? null,
+        foreman_id: project?.foreman_id ?? null,
+        master_id: project?.master_id ?? null,
+        warehouse_manager_id: project?.warehouse_manager_id ?? null,
+        description: project?.description ?? '',
+        progress_percent: project?.progress_percent ?? 0,
+    };
+}
+
+/******************************************************************************************************/
 export function ProjectForm({
     project,
     refs,
-    /*onSubmit,*/ onCancel,
+    onSubmit,
+    onCancel,
     loading = false,
 }: ProjectFormProps) {
-    const [formData, setFormData] = useState<Omit<Project, 'id'>>({
-        name: project?.name || '',
-        code: project?.code || '',
-        type: project?.type || null,
-        address: project?.address || '',
-        customer_id: project?.customer_id || null,
-        start_date: project?.start_date || '',
-        end_date: project?.end_date || '',
-        planned_budget: project?.planned_budget || null,
-        actual_budget: project?.actual_budget || null,
-        status: project?.status || null,
-        manager_id: project?.manager_id || null,
-        foreman_id: project?.foreman_id || null,
-        master_id: project?.master_id || null,
-        warehouse_manager_id: project?.warehouse_manager_id || null,
-        description: project?.description || '',
-        progress_percent: project?.progress_percent || 0,
-    });
-
+    const [formData, setFormData] = useState<ProjectForm>(() => getInitialFormData(project));
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    /*Обновление формы при редактировании*/
     useEffect(() => {
-        if (project) {
-            setFormData({
-                name: project.name,
-                code: project.code,
-                type: project.type,
-                address: project.address,
-                customer_id: project.customer_id,
-                start_date: project.start_date,
-                end_date: project.end_date,
-                planned_budget: project.planned_budget,
-                actual_budget: project.actual_budget,
-                status: project.status,
-                manager_id: project.manager_id,
-                foreman_id: project.foreman_id,
-                master_id: project.master_id,
-                warehouse_manager_id: project.warehouse_manager_id,
-                description: project.description,
-                progress_percent: project.progress_percent,
-            });
-        }
+        setFormData(getInitialFormData(project));
     }, [project]);
 
+    /*Валидация*/
     const validate = () => {
         const newErrors: Record<string, string> = {};
 
         if (!formData.name.trim()) newErrors.name = 'Название обязательно';
         if (!formData.code.trim()) newErrors.code = 'Код обязателен';
-        if (!formData.type) newErrors.type = 'Выберите тип проекта';
+        if (!formData.type) newErrors.type = 'Выберите тип объекта';
         if (!formData.address.trim()) newErrors.address = 'Адрес обязателен';
         if (!formData.customer_id) newErrors.customer_id = 'Выберите заказчика';
         if (!formData.start_date) newErrors.start_date = 'Дата начала обязательна';
         if (!formData.end_date) newErrors.end_date = 'Дата окончания обязательна';
         if (!formData.planned_budget) newErrors.planned_budget = 'Плановый бюджет обязателен';
         if (!formData.status) newErrors.status = 'Выберите статус';
-        if (!formData.manager_id) newErrors.manager_id = 'Выберите менеджера';
+        if (!formData.manager_id) newErrors.manager_id = 'Выберите инженера объекта';
 
-        // Проверка дат
         if (formData.start_date && formData.end_date) {
             const start = new Date(formData.start_date);
             const end = new Date(formData.end_date);
+
             if (end < start) {
                 newErrors.end_date = 'Дата окончания не может быть раньше даты начала';
             }
@@ -107,21 +77,37 @@ export function ProjectForm({
         return Object.keys(newErrors).length === 0;
     };
 
+    /*Submit*/
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!validate()) return;
 
-        // await onSubmit(formData);
+        const payload: ProjectFormData = {
+            ...formData,
+            type: formData.type!,
+            customer_id: formData.customer_id!,
+            planned_budget: formData.planned_budget!,
+            actual_budget: formData.actual_budget ?? 0,
+            status: formData.status!,
+            manager_id: formData.manager_id!,
+            progress_percent: formData.progress_percent ?? 0,
+        };
+
+        await onSubmit(payload);
     };
 
-    const handleChange = (field: keyof typeof formData, value: any) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
-        if (errors[field]) {
+    /*Изменение полей*/
+    const handleChange = <K extends keyof ProjectForm>(field: K, value: ProjectForm[K]) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+
+        if (errors[field as string]) {
             setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
+                const { [field as string]: _, ...rest } = prev;
+                return rest;
             });
         }
     };
@@ -138,7 +124,7 @@ export function ProjectForm({
                     {/* Название */}
                     <div className="col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Название проекта <span className="text-red-500">*</span>
+                            Название объекта <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -147,10 +133,10 @@ export function ProjectForm({
                             className={`
                                 w-full px-3 py-2 text-sm text-gray-900 bg-white
                                 border ${errors.name ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                                 transition-all placeholder:text-gray-400
                             `}
-                            placeholder="Введите название проекта"
+                            placeholder="Введите название объекта"
                             disabled={loading}
                         />
                         {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
@@ -159,28 +145,28 @@ export function ProjectForm({
                     {/* Код */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Код проекта <span className="text-red-500">*</span>
+                            Код объекта <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             value={formData.code}
                             onChange={(e) => handleChange('code', e.target.value)}
                             className={`
-                w-full px-3 py-2 text-sm text-gray-900 bg-white
-                border ${errors.code ? 'border-red-300' : 'border-gray-300'}
-                rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                transition-all placeholder:text-gray-400
-              `}
+                                w-full px-3 py-2 text-sm text-gray-900 bg-white
+                                border ${errors.code ? 'border-red-300' : 'border-gray-300'}
+                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                                transition-all placeholder:text-gray-400
+                            `}
                             placeholder="PRJ-001"
                             disabled={loading}
                         />
                         {errors.code && <p className="mt-1 text-xs text-red-600">{errors.code}</p>}
                     </div>
 
-                    {/* Тип проекта */}
+                    {/* Тип объекта */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Тип проекта <span className="text-red-500">*</span>
+                            Тип объекта <span className="text-red-500">*</span>
                         </label>
                         <select
                             value={formData.type || ''}
@@ -188,11 +174,11 @@ export function ProjectForm({
                                 handleChange('type', e.target.value ? Number(e.target.value) : null)
                             }
                             className={`
-                w-full px-3 py-2 text-sm text-gray-900 bg-white
-                border ${errors.type ? 'border-red-300' : 'border-gray-300'}
-                rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                transition-all cursor-pointer
-              `}
+                                w-full px-3 py-2 text-sm text-gray-900 bg-white
+                                border ${errors.type ? 'border-red-300' : 'border-gray-300'}
+                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                                transition-all cursor-pointer
+                            `}
                             disabled={loading}
                         >
                             <option value="">Выберите тип</option>
@@ -221,7 +207,7 @@ export function ProjectForm({
                             className={`
                                 w-full px-3 py-2 text-sm text-gray-900 bg-white
                                 border ${errors.customer_id ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                                 transition-all cursor-pointer
                             `}
                             disabled={loading}
@@ -254,7 +240,7 @@ export function ProjectForm({
                             className={`
                             w-full px-3 py-2 text-sm text-gray-900 bg-white
                             border ${errors.status ? 'border-red-300' : 'border-gray-300'}
-                            rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                             transition-all cursor-pointer
                         `}
                             disabled={loading}
@@ -283,10 +269,10 @@ export function ProjectForm({
                             className={`
                                 w-full px-3 py-2 text-sm text-gray-900 bg-white
                                 border ${errors.address ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                                 transition-all placeholder:text-gray-400 resize-none
                             `}
-                            placeholder="Введите адрес проекта"
+                            placeholder="Введите адрес объекта"
                             disabled={loading}
                         />
                         {errors.address && (
@@ -303,7 +289,7 @@ export function ProjectForm({
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
                             rows={3}
-                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent placeholder:text-gray-400"
                             placeholder="Дополнительная информация о проекте"
                             disabled={loading}
                         />
@@ -329,7 +315,7 @@ export function ProjectForm({
                             className={`
                             w-full px-3 py-2 text-sm text-gray-900 bg-white
                             border ${errors.start_date ? 'border-red-300' : 'border-gray-300'}
-                            rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                             transition-all
                         `}
                             disabled={loading}
@@ -351,7 +337,7 @@ export function ProjectForm({
                             className={`
                             w-full px-3 py-2 text-sm text-gray-900 bg-white
                             border ${errors.end_date ? 'border-red-300' : 'border-gray-300'}
-                            rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                             transition-all
                         `}
                             disabled={loading}
@@ -364,7 +350,7 @@ export function ProjectForm({
                     {/* Плановый бюджет */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Плановый бюджет (₽) <span className="text-red-500">*</span>
+                            Плановый бюджет (KGS) <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="number"
@@ -378,7 +364,7 @@ export function ProjectForm({
                             className={`
                             w-full px-3 py-2 text-sm text-gray-900 bg-white
                             border ${errors.planned_budget ? 'border-red-300' : 'border-gray-300'}
-                            rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                            rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                             transition-all placeholder:text-gray-400
                         `}
                             placeholder="0"
@@ -393,7 +379,7 @@ export function ProjectForm({
                     {/* Фактический бюджет */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Фактический бюджет (₽)
+                            Фактический бюджет (KGS)
                         </label>
                         <input
                             type="number"
@@ -404,7 +390,7 @@ export function ProjectForm({
                                     e.target.value ? Number(e.target.value) : null,
                                 )
                             }
-                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent placeholder:text-gray-400"
                             placeholder="0"
                             min="0"
                             disabled={loading}
@@ -412,7 +398,7 @@ export function ProjectForm({
                     </div>
 
                     {/* Прогресс */}
-                    <div className="col-span-2">
+                    {/* <div className="col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Прогресс выполнения: {formData.progress_percent}%
                         </label>
@@ -424,10 +410,10 @@ export function ProjectForm({
                             }
                             min="0"
                             max="100"
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                             disabled={loading}
                         />
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
@@ -437,10 +423,10 @@ export function ProjectForm({
                     Ответственные лица
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                    {/* Менеджер проекта */}
+                    {/* Инженер объекта */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Менеджер проекта <span className="text-red-500">*</span>
+                            Инженер объекта <span className="text-red-500">*</span>
                         </label>
                         <select
                             value={formData.manager_id || ''}
@@ -453,12 +439,12 @@ export function ProjectForm({
                             className={`
                                 w-full px-3 py-2 text-sm text-gray-900 bg-white
                                 border ${errors.manager_id ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                                 transition-all cursor-pointer
                             `}
                             disabled={loading}
                         >
-                            <option value="">Выберите менеджера</option>
+                            <option value="">Выберите инженера</option>
                             {refs.users.data?.map((manager) => (
                                 <option key={manager.id} value={manager.id}>
                                     {manager.name}
@@ -483,7 +469,7 @@ export function ProjectForm({
                                     e.target.value ? Number(e.target.value) : null,
                                 )
                             }
-                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
                             disabled={loading}
                         >
                             <option value="">Не назначен</option>
@@ -508,7 +494,7 @@ export function ProjectForm({
                                     e.target.value ? Number(e.target.value) : null,
                                 )
                             }
-                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
                             disabled={loading}
                         >
                             <option value="">Не назначен</option>
@@ -533,7 +519,7 @@ export function ProjectForm({
                                     e.target.value ? Number(e.target.value) : null,
                                 )
                             }
-                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
                             disabled={loading}
                         >
                             <option value="">Не назначен</option>

@@ -232,7 +232,7 @@ export default function BlockStageRow({
                                     editingSubstageId === sub.id ? (
                                         <div
                                             key={sub.id}
-                                            className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-md border-2 border-blue-400 shadow-md text-[13px]"
+                                            className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-md border-2 border-sky-400 shadow-md text-[13px]"
                                         >
                                             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold flex-shrink-0">
                                                 {idx + 1}
@@ -254,7 +254,7 @@ export default function BlockStageRow({
                                                 <StyledTooltip title="Сохранить">
                                                     <button
                                                         onClick={handleSaveEdit}
-                                                        className="p-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                                                        className="p-1.5 text-white bg-sky-600 hover:bg-sky-700 rounded transition-colors"
                                                     >
                                                         <Check className="w-3.5 h-3.5" />
                                                     </button>

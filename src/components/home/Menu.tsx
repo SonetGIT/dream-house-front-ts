@@ -43,6 +43,7 @@ const drawerItems: DrawerItem[] = [
         icon: <AssessmentOutlinedIcon />,
     },
     { label: 'Поставщики', path: '/suppliers', icon: <SupervisedUserCircleSharpIcon /> },
+    { label: 'Подрядчики', path: '/contractors', icon: <SupervisedUserCircleSharpIcon /> },
     {
         label: 'Справочники',
         icon: <VscReferences />,

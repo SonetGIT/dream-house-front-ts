@@ -32,6 +32,25 @@ export interface Project {
     progress_percent: number;
 }
 
+export interface ProjectForm {
+    name: string;
+    code: string;
+    type: number | null;
+    address: string;
+    customer_id: number | null;
+    start_date: string;
+    end_date: string;
+    planned_budget: number | null;
+    actual_budget: number | null;
+    status: number | null;
+    manager_id: number | null;
+    foreman_id: number | null;
+    master_id: number | null;
+    warehouse_manager_id: number | null;
+    description: string;
+    progress_percent: number;
+}
+
 interface ProjectsState {
     items: Project[];
     pagination: Pagination | null;
@@ -53,13 +72,13 @@ interface SearchPayload {
     page?: number;
     size?: number;
 }
+export type ProjectFormData = Omit<Project, 'id' | 'created_at' | 'updated_at' | 'deleted'>;
 
 export const fetchProjects = createAsyncThunk(
     'projects/search',
     async (params: SearchPayload = {}, { rejectWithValue }) => {
         try {
             const res = await apiRequest<Project[]>('/projects/search', 'POST', params);
-            console.log('resres', res);
             return res;
         } catch (err: any) {
             return rejectWithValue(err.message);

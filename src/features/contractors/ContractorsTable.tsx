@@ -1,27 +1,26 @@
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { Pencil, Trash2, Loader2, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { Supplier } from './suppliersSlice';
+import type { Contractor } from './contractorsSlice';
 import { formatPhone } from '@/utils/formatPhone';
-import Rating from '@/components/ui/Rating';
 
-interface SuppliersTableProps {
-    suppliers: Supplier[];
-    onEdit: (suppliers: Supplier) => void;
-    onDelete: (suppliers: Supplier) => void;
+interface ContractorsTableProps {
+    contractors: Contractor[];
+    onEdit: (contractors: Contractor) => void;
+    onDelete: (contractors: Contractor) => void;
     loading?: boolean;
 }
 
 /************************************************************************************************************/
-export default function SuppliersTable({
-    suppliers,
+export default function ContractorsTable({
+    contractors,
     onEdit,
     onDelete,
     loading,
-}: SuppliersTableProps) {
+}: ContractorsTableProps) {
     const navigate = useNavigate();
-    const handleRowClick = (supplier: Supplier) => {
-        navigate(`/suppliers/${supplier.id}`, { state: { supplier } });
+    const handleRowClick = (contractor: Contractor) => {
+        navigate(`/contractors/${contractor.id}`, { state: { contractor } });
     };
 
     if (loading) {
@@ -29,13 +28,13 @@ export default function SuppliersTable({
             <div className="flex items-center justify-center py-20">
                 <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                    <p className="text-sm text-gray-500">Загрузка список поставщика...</p>
+                    <p className="text-sm text-gray-500">Загрузка проектов...</p>
                 </div>
             </div>
         );
     }
 
-    if (suppliers.length === 0) {
+    if (contractors.length === 0) {
         return (
             <div className="py-20 text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
@@ -56,8 +55,8 @@ export default function SuppliersTable({
                 <thead>
                     <tr className="text-white bg-gradient-to-r from-sky-600 to-sky-600">
                         <th className="w-12 px-3 py-3 text-xs font-semibold text-left">№</th>
-                        <th className="px-3 py-3 text-left text-xs font-semibold w-[140px]">
-                            Поставщик
+                        <th className="px-3 py-3 text-left text-xs font-semibold w-[120px]">
+                            Организация
                         </th>
                         <th className="w-32 px-3 py-3 text-xs font-semibold text-left">ИНН</th>
                         <th className="w-32 px-3 py-3 text-xs font-semibold text-left">КПП</th>
@@ -70,17 +69,16 @@ export default function SuppliersTable({
                         <th className="px-3 py-3 text-left text-xs font-semibold w-[120px]">
                             Контактное лицо
                         </th>
-                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">Рейтинг</th>
                         <th className="w-20 px-3 py-3 text-xs font-semibold text-center">
                             Действия
                         </th>
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {suppliers.map((supplier, index) => {
+                    {contractors.map((contractor, index) => {
                         return (
                             <tr
-                                key={supplier.id}
+                                key={contractor.id}
                                 className="transition-colors hover:bg-blue-50/50 group"
                             >
                                 {/* Номер */}
@@ -90,50 +88,50 @@ export default function SuppliersTable({
 
                                 {/* Название */}
                                 <td className="px-3 py-2.5">
-                                    <div className="text-xs font-medium text-gray-900 truncate max-w-[140px]">
-                                        {supplier.name}
+                                    <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
+                                        {contractor.name}
                                     </div>
                                 </td>
 
                                 {/* ИНН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
-                                        {supplier.inn}
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                        {contractor.inn}
                                     </span>
                                 </td>
                                 {/* КПП */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
-                                        {supplier.kpp}
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                        {contractor.kpp}
                                     </span>
                                 </td>
                                 {/* ОГРН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
-                                        {supplier.ogrn}
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                        {contractor.ogrn}
                                     </span>
                                 </td>
                                 {/* Адрес */}
                                 <td className="px-3 py-2.5">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {supplier.address}
+                                        {contractor.address}
                                     </div>
                                 </td>
 
                                 <td className="px-3 py-2.5">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {formatPhone(supplier.phone)}
+                                        {formatPhone(contractor.phone)}
                                     </div>
                                 </td>
 
                                 {/* email */}
                                 <td className="px-3 py-2.5">
-                                    {supplier.email ? (
+                                    {contractor.email ? (
                                         <a
-                                            href={`mailto:${supplier.email}`}
+                                            href={`mailto:${contractor.email}`}
                                             className="text-xs font-medium text-sky-600 hover:underline truncate max-w-[160px] block"
                                         >
-                                            {supplier.email}
+                                            {contractor.email}
                                         </a>
                                     ) : (
                                         <span className="text-xs text-gray-400">—</span>
@@ -143,13 +141,7 @@ export default function SuppliersTable({
                                 {/* Контактное лицо */}
                                 <td className="px-3 py-2.5">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {supplier.name}
-                                    </div>
-                                </td>
-                                {/* Рейтинг */}
-                                <td className="px-3 py-2.5">
-                                    <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        <Rating value={supplier.avg_rating} size="sm" showValue />
+                                        {contractor.name}
                                     </div>
                                 </td>
 
@@ -160,7 +152,7 @@ export default function SuppliersTable({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    onEdit(supplier);
+                                                    onEdit(contractor);
                                                 }}
                                                 className="
                                                     p-1.5
@@ -178,7 +170,7 @@ export default function SuppliersTable({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    onDelete(supplier);
+                                                    onDelete(contractor);
                                                 }}
                                                 className="
                                                     p-1.5
