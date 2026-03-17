@@ -1,26 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 
-// TYPES
-export interface Users {
-    id: number;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    middle_name: string;
-    phone: string;
-    role_id: number;
-    password?: string;
-    required_action?: string;
-}
-
-export interface UserRole {
-    id: number;
-    name: string;
-    description?: string;
-}
-
 export interface Pagination {
     page: number;
     size: number;
@@ -30,90 +10,114 @@ export interface Pagination {
     hasPrev: boolean;
 }
 
-export interface UsersState {
-    items: Users[];
-    pagination: Pagination | null;
-    search: string;
-    filters: Record<string, any>;
-    loading: boolean;
-    error: string | null;
+export interface User {
+    id: number;
 
-    currentUser: Users | null;
-    roles: UserRole[];
-    rolesLoading: boolean;
-    rolesLoaded: boolean;
-    rolesError: string | null;
+    username: string;
+    email: string;
+
+    first_name: string;
+    last_name: string;
+    middle_name: string | null;
+
+    phone: string | null;
+
+    role_id: number;
+    supplier_id: number | null;
+    contractor_id: number | null;
+
+    required_action: string | null;
+
+    created_at: string;
+    updated_at: string;
+
+    deleted: boolean;
 }
 
-// Initial
+export interface UserForm {
+    username: string;
+    email: string;
+
+    first_name: string;
+    last_name: string;
+    middle_name: string | null;
+
+    phone: string | null;
+
+    role_id: number;
+    supplier_id: number | null;
+    contractor_id: number | null;
+
+    required_action?: string | null;
+}
+export type UserFormData = Omit<User, 'id' | 'created_at' | 'updated_at' | 'deleted'>;
+interface UsersState {
+    items: User[];
+    pagination: Pagination | null;
+    loading: boolean;
+    error: string | null;
+    currentUser: User | null;
+}
+
 const initialState: UsersState = {
     items: [],
     pagination: null,
-    search: '',
-    filters: {},
     loading: false,
     error: null,
-
     currentUser: null,
-    roles: [],
-    rolesLoading: false,
-    rolesLoaded: false,
-    rolesError: null,
 };
 
-/* THUNKS ********************************************************************/
+interface SearchPayload {
+    search?: string;
+    page?: number;
+    size?: number;
+}
 
-export const getUserRoles = createAsyncThunk<UserRole[], void, { rejectValue: string }>(
-    'users/getUserRoles',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await apiRequest<UserRole[]>(`/userRoles/gets`, 'GET');
-            return response.data;
-        } catch (err: any) {
-            return rejectWithValue(err.message);
-        }
-    },
-);
-
+//SEARCH
 export const fetchUsers = createAsyncThunk(
-    'users/fetch',
-    async (
-        params: { page?: number; size?: number; search?: string; filters?: any },
-        { rejectWithValue },
-    ) => {
+    'users/search',
+    async (params: SearchPayload = {}, { rejectWithValue }) => {
         try {
-            const body = {
-                page: params.page ?? 1,
-                size: params.size ?? 10,
-                search: params.search ?? '',
-                ...(params.filters || {}),
-            };
-            const data = await apiRequest<Users[]>(`/users/search`, 'POST', body);
-            console.log('dataUSER', data);
-            return data;
+            const res = await apiRequest<User[]>('/users/search', 'POST', params);
+            return res;
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
     },
 );
 
-export const createUser = createAsyncThunk<Users, Partial<Users>, { rejectValue: string }>(
+//CREATE
+export const createUser = createAsyncThunk(
     'users/create',
-    async (user, { rejectWithValue }) => {
+    async (data: Partial<User>, { rejectWithValue }) => {
         try {
-            const response = await apiRequest<Users>(`/users/createUser`, 'POST', user);
-            return response.data;
+            const res = await apiRequest<User>('/users/create', 'POST', data);
+            return res.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
     },
 );
 
+//UPDATE
+export const updateUser = createAsyncThunk(
+    'users/update',
+    async ({ id, data }: { id: number; data: Partial<User> }, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<User>(`/users/update/${id}`, 'PUT', data);
+            return res.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message);
+        }
+    },
+);
+
+//DELETE
 export const deleteUser = createAsyncThunk(
     'users/delete',
     async (id: number, { rejectWithValue }) => {
         try {
-            await apiRequest<Users>(`/users/delete/${id}`, 'DELETE');
+            await apiRequest(`/users/delete/${id}`, 'DELETE');
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -121,81 +125,27 @@ export const deleteUser = createAsyncThunk(
     },
 );
 
+//GET BY ID
 export const getUserById = createAsyncThunk(
     'users/getById',
     async (id: number, { rejectWithValue }) => {
         try {
-            const response = await apiRequest<Users>(`/users/getById/${id}`, 'GET');
-            return response.data;
+            const res = await apiRequest<User>(`/users/getById/${id}`, 'GET');
+            return res.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
         }
     },
 );
 
-export const updateUser = createAsyncThunk(
-    'users/update',
-    async (payload: { id: number; data: Partial<Users> }, { rejectWithValue }) => {
-        try {
-            const send = { ...payload.data };
-            if (!send.password) delete send.password;
-            const response = await apiRequest<Users>(`/users/update/${payload.id}`, 'PUT', send);
-            return response.data;
-        } catch (err: any) {
-            return rejectWithValue(err.message);
-        }
-    },
-);
-
-export const resetPassword = createAsyncThunk(
-    'users/resetPassword',
-    async ({ id, password }: { id: number; password: string }, { rejectWithValue }) => {
-        try {
-            const data = await apiRequest<Users>(`/users/resetPassword/${id}`, 'PUT', {
-                password,
-            });
-            return { message: data.message || 'Пароль обновлён' };
-        } catch (err: any) {
-            return rejectWithValue(err.message);
-        }
-    },
-);
-
-/* SLICE ********************************************************************/
-
-const usersSlice = createSlice({
+const userSlice = createSlice({
     name: 'users',
     initialState,
-    reducers: {
-        setSearch: (state, action) => {
-            state.search = action.payload;
-        },
-        setFilters: (state, action) => {
-            state.filters = action.payload;
-        },
-        clearFilters: (state) => {
-            state.filters = {};
-            state.search = '';
-        },
-    },
+    reducers: {},
+
     extraReducers: (builder) => {
         builder
-            // GET USER ROLES
-            .addCase(getUserRoles.pending, (state) => {
-                state.rolesLoading = true;
-                state.rolesError = null;
-            })
-            .addCase(getUserRoles.fulfilled, (state, action) => {
-                state.rolesLoading = false;
-                state.roles = action.payload;
-                state.rolesLoaded = true;
-            })
-            .addCase(getUserRoles.rejected, (state, action) => {
-                state.rolesLoading = false;
-                state.rolesError = action.payload as string;
-            })
-
-            // FETCH USERS
+            // FETCH
             .addCase(fetchUsers.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -210,37 +160,38 @@ const usersSlice = createSlice({
                 state.error = action.payload as string;
             })
 
-            // CREATE USER
+            // CREATE
             .addCase(createUser.fulfilled, (state, action) => {
                 state.items.unshift(action.payload);
             })
-            .addCase(createUser.rejected, (state, action) => {
-                state.error = action.payload as string;
+
+            // UPDATE
+            .addCase(updateUser.fulfilled, (state, action) => {
+                const index = state.items.findIndex((u) => u.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
             })
 
-            // DELETE USER
+            // DELETE
             .addCase(deleteUser.fulfilled, (state, action) => {
                 state.items = state.items.filter((u) => u.id !== action.payload);
             })
 
-            // UPDATE USER
-            .addCase(updateUser.fulfilled, (state, action) => {
-                state.items = state.items.map((u) =>
-                    u.id === action.payload.id ? action.payload : u,
-                );
+            // GET BY ID
+            .addCase(getUserById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
             })
-
-            // GET USER BY ID
             .addCase(getUserById.fulfilled, (state, action) => {
+                state.loading = false;
                 state.currentUser = action.payload;
             })
-
-            // RESET PASSWORD
-            .addCase(resetPassword.rejected, (state, action) => {
+            .addCase(getUserById.rejected, (state, action) => {
+                state.loading = false;
                 state.error = action.payload as string;
             });
     },
 });
 
-export const { setSearch, setFilters, clearFilters } = usersSlice.actions;
-export default usersSlice.reducer;
+export default userSlice.reducer;

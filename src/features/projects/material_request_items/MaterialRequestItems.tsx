@@ -6,7 +6,7 @@ import { fetchPurchasingAgentItems } from './materialRequestItemsSlice';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../material_request/MaterialRequests';
 import { useReference } from '@/features/reference/useReference';
-import { setFilters } from '@/features/users/userSlice';
+// import { setFilters } from '@/features/users/userSlice';
 
 interface MaterialFilters {
     mType?: string | number;
@@ -53,7 +53,7 @@ export default function MaterialRequestItems() {
 
     // ===== 3. Авто-обновление фильтров при выборе =====
     useEffect(() => {
-        dispatch(setFilters(getCurrentFilters()));
+        // dispatch(setFilters(getCurrentFilters()));
 
         dispatch(
             fetchPurchasingAgentItems({

@@ -1,5 +1,5 @@
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { Pencil, Trash2, Loader2, FolderOpen } from 'lucide-react';
+import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Contractor } from './contractorsSlice';
 import { formatPhone } from '@/utils/formatPhone';
@@ -64,8 +64,7 @@ export default function ContractorsTable({
                         <th className="px-3 py-3 text-left text-xs font-semibold w-[120px]">
                             Адрес
                         </th>
-                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">Телефон</th>
-                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">email</th>
+                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">Контакты</th>
                         <th className="px-3 py-3 text-left text-xs font-semibold w-[120px]">
                             Контактное лицо
                         </th>
@@ -79,7 +78,7 @@ export default function ContractorsTable({
                         return (
                             <tr
                                 key={contractor.id}
-                                className="transition-colors hover:bg-blue-50/50 group"
+                                className="transition-colors hover:bg-sky-50/50 group"
                             >
                                 {/* Номер */}
                                 <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">
@@ -118,24 +117,31 @@ export default function ContractorsTable({
                                     </div>
                                 </td>
 
+                                {/* Контакты */}
                                 <td className="px-3 py-2.5">
-                                    <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {formatPhone(contractor.phone)}
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex items-center gap-1.5 text-gray-700">
+                                            <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                            <span className="truncate max-w-[200px]">
+                                                {contractor.email ? (
+                                                    <a
+                                                        href={`mailto:${contractor.email}`}
+                                                        className="text-sm font-medium text-sky-600 hover:underline truncate max-w-[160px] block"
+                                                    >
+                                                        {contractor.email}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        {contractor.phone && (
+                                            <div className="flex items-center gap-1.5 text-gray-700 text-sm">
+                                                <Phone className="w-3.5 h-3.5 text-gray-400" />
+                                                {formatPhone(contractor.phone)}
+                                            </div>
+                                        )}
                                     </div>
-                                </td>
-
-                                {/* email */}
-                                <td className="px-3 py-2.5">
-                                    {contractor.email ? (
-                                        <a
-                                            href={`mailto:${contractor.email}`}
-                                            className="text-xs font-medium text-sky-600 hover:underline truncate max-w-[160px] block"
-                                        >
-                                            {contractor.email}
-                                        </a>
-                                    ) : (
-                                        <span className="text-xs text-gray-400">—</span>
-                                    )}
                                 </td>
 
                                 {/* Контактное лицо */}

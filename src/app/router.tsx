@@ -2,8 +2,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import App from '../App';
 import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../pages/AuthPage';
-import UsersPage from '@/features/users/UsersPage';
-
 import MaterialRequests from '@/features/projects/material_request/MaterialRequests';
 import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequestTabs';
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
@@ -16,6 +14,7 @@ import ProjectsPage from '@/features/projects/a_project/ProjectsPage';
 import ProjectDashboardPage from '@/features/projects/a_project/ProjectDashboardPage';
 import ContractorsPage from '@/features/contractors/ContractorsPage';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
+import UsersPage from '@/features/users/UsersPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -36,10 +35,10 @@ export const router = createBrowserRouter([
                     { path: 'documentStages', element: <LegalDocStagesPage /> },
                     // { path: 'documentStages/:documentStagesId', element: <DocumentsPage /> },
                     { path: 'pto', element: <BlocksManager /> },
-                    { path: 'materialRequests', element: <MaterialRequests /> },
-                    { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
-                    { path: 'warehouses', element: <WarehousesPage /> },
-                    { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },
+                    // { path: 'materialRequests', element: <MaterialRequests /> },
+                    // { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
+                    // { path: 'warehouses', element: <WarehousesPage /> },
+                    // { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },
                 ],
             },
         ],

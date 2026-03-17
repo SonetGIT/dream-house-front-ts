@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { SupplierForm, SupplierFormData } from './suppliersSlice';
 
-interface SupplierFormProps {
+export interface SupplierFormProps {
     supplier?: SupplierFormData | null;
     onSubmit: (data: SupplierFormData) => Promise<void>;
     onCancel: () => void;

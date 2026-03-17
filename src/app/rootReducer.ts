@@ -11,6 +11,7 @@ import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehous
 import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
 import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
 import suppliersReducer from '@/features/suppliers/suppliersSlice';
+import supplierRatingReducer from '@/features/suppliers/supplierRating/supplierRatingSlice';
 import contractorsReducer from '@/features/contractors/contractorsSlice';
 import documentFilesReducer from '@/features/projects/legal_department/files/documentFilesSlice';
 import auditLogReducer from '@/features/auditLog/auditLogSlice';
@@ -36,6 +37,7 @@ export const rootReducer = combineReducers({
     purchaseOrderItems: purchaseOrderItemsReducer,
     materialMovements: materialMovementsReducer,
     suppliers: suppliersReducer,
+    supplierRatings: supplierRatingReducer,
     contractors: contractorsReducer,
     legalDocStages: legalDocStageReducer,
     legalDocuments: legalDocumentReducer,

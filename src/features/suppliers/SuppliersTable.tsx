@@ -1,12 +1,13 @@
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { Pencil, Trash2, Loader2, FolderOpen } from 'lucide-react';
+import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Supplier } from './suppliersSlice';
 import { formatPhone } from '@/utils/formatPhone';
 import Rating from '@/components/ui/Rating';
+import { RowActions } from '@/components/ui/RowActions';
 
 interface SuppliersTableProps {
     suppliers: Supplier[];
+    onRating: (supplier: Supplier) => void;
     onEdit: (suppliers: Supplier) => void;
     onDelete: (suppliers: Supplier) => void;
     loading?: boolean;
@@ -15,6 +16,7 @@ interface SuppliersTableProps {
 /************************************************************************************************************/
 export default function SuppliersTable({
     suppliers,
+    onRating,
     onEdit,
     onDelete,
     loading,
@@ -65,8 +67,7 @@ export default function SuppliersTable({
                         <th className="px-3 py-3 text-left text-xs font-semibold w-[120px]">
                             Адрес
                         </th>
-                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">Телефон</th>
-                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">email</th>
+                        <th className="w-32 px-3 py-3 text-xs font-semibold text-left">Контакты</th>
                         <th className="px-3 py-3 text-left text-xs font-semibold w-[120px]">
                             Контактное лицо
                         </th>
@@ -97,19 +98,19 @@ export default function SuppliersTable({
 
                                 {/* ИНН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                         {supplier.inn}
                                     </span>
                                 </td>
                                 {/* КПП */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                         {supplier.kpp?.trim() ? supplier.kpp : '-'}
                                     </span>
                                 </td>
                                 {/* ОГРН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-200 rounded">
+                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                         {supplier.ogrn}
                                     </span>
                                 </td>
@@ -119,25 +120,31 @@ export default function SuppliersTable({
                                         {supplier.address}
                                     </div>
                                 </td>
-
+                                {/* email телефон*/}
                                 <td className="px-3 py-2.5">
-                                    <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {formatPhone(supplier.phone)}
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex items-center gap-1.5 text-gray-700">
+                                            <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                            <span className="truncate max-w-[200px]">
+                                                {supplier.email ? (
+                                                    <a
+                                                        href={`mailto:${supplier.email}`}
+                                                        className="text-sm font-medium text-sky-600 hover:underline truncate max-w-[160px] block"
+                                                    >
+                                                        {supplier.email}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        {supplier.phone && (
+                                            <div className="flex items-center gap-1.5 text-gray-700 text-sm">
+                                                <Phone className="w-3.5 h-3.5 text-gray-400" />
+                                                {formatPhone(supplier.phone)}
+                                            </div>
+                                        )}
                                     </div>
-                                </td>
-
-                                {/* email */}
-                                <td className="px-3 py-2.5">
-                                    {supplier.email ? (
-                                        <a
-                                            href={`mailto:${supplier.email}`}
-                                            className="text-xs font-medium text-sky-600 hover:underline truncate max-w-[160px] block"
-                                        >
-                                            {supplier.email}
-                                        </a>
-                                    ) : (
-                                        <span className="text-xs text-gray-400">—</span>
-                                    )}
                                 </td>
 
                                 {/* Контактное лицо */}
@@ -153,45 +160,32 @@ export default function SuppliersTable({
                                     </div>
                                 </td>
 
-                                {/* Действия */}
+                                {/* ACTION */}
                                 <td className="px-3 py-2">
                                     <div className="flex items-center justify-center gap-1.5">
-                                        <StyledTooltip title="Редактировать подрядч">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEdit(supplier);
-                                                }}
-                                                className="
-                                                    p-1.5
-                                                    text-gray-400
-                                                    hover:text-blue-600
-                                                    hover:bg-blue-50
-                                                    rounded
-                                                    transition-colors
-                                                "
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                        </StyledTooltip>
-                                        <StyledTooltip title="Удалить">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDelete(supplier);
-                                                }}
-                                                className="
-                                                    p-1.5
-                                                    text-gray-400
-                                                    hover:text-red-600
-                                                    hover:bg-red-50
-                                                    rounded
-                                                    transition-colors
-                                                "
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </StyledTooltip>
+                                        <RowActions
+                                            row={supplier}
+                                            actions={[
+                                                {
+                                                    label: 'Оставить отзыв',
+                                                    icon: Star,
+                                                    onClick: onRating,
+                                                    className: 'text-yellow-500 hover:bg-yellow-50',
+                                                },
+                                                {
+                                                    label: 'Редактировать',
+                                                    icon: Pencil,
+                                                    onClick: onEdit,
+                                                    className: 'text-indigo-500 hover:bg-indigo-50',
+                                                },
+                                                {
+                                                    label: 'Удалить',
+                                                    icon: Trash2,
+                                                    onClick: onDelete,
+                                                    className: 'text-red-600 hover:bg-red-50',
+                                                },
+                                            ]}
+                                        />
                                     </div>
                                 </td>
                             </tr>

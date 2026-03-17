@@ -1,10 +1,10 @@
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
-import { Pencil, Trash2, Loader2, FolderOpen } from 'lucide-react';
+import { Pencil, Trash2, Loader2, FolderOpen, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Project } from './projectsSlice';
+import { RowActions } from '@/components/ui/RowActions';
 
 interface ProjectsTableProps {
     projects: Project[];
@@ -245,42 +245,23 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                 {/* Действия */}
                                 <td className="px-3 py-2">
                                     <div className="flex items-center justify-center gap-1.5">
-                                        <StyledTooltip title="Редактировать объект">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEdit(project);
-                                                }}
-                                                className="
-                                                    p-1.5
-                                                    text-gray-400
-                                                    hover:text-blue-600
-                                                    hover:bg-blue-50
-                                                    rounded
-                                                    transition-colors
-                                                "
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" />
-                                            </button>
-                                        </StyledTooltip>
-                                        <StyledTooltip title="Удалить объект">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDelete(project);
-                                                }}
-                                                className="
-                                                    p-1.5
-                                                    text-gray-400
-                                                    hover:text-red-600
-                                                    hover:bg-red-50
-                                                    rounded
-                                                    transition-colors
-                                                "
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </StyledTooltip>
+                                        <RowActions
+                                            row={project}
+                                            actions={[
+                                                {
+                                                    label: 'Редактировать',
+                                                    icon: Pencil,
+                                                    onClick: onEdit,
+                                                    className: 'text-blue-500 hover:bg-blue-50',
+                                                },
+                                                {
+                                                    label: 'Удалить',
+                                                    icon: Trash2,
+                                                    onClick: onDelete,
+                                                    className: 'text-red-600 hover:bg-red-50',
+                                                },
+                                            ]}
+                                        />
                                     </div>
                                 </td>
                             </tr>

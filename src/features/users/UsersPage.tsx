@@ -1,283 +1,301 @@
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { MdGroupAdd, MdOutlineRestartAlt } from 'react-icons/md';
-import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import InputSearch from '@/components/ui/InputSearch';
-import UserCreateEditFrm from './UserCreateEditFrm';
-
+import { useReference } from '@/features/reference/useReference';
+import { TablePagination } from '@/components/ui/TablePagination';
 import {
-    fetchUsers,
-    setSearch,
-    setFilters,
-    deleteUser,
-    getUserById,
-    updateUser,
-    type Users,
     createUser,
-    resetPassword,
+    deleteUser,
+    fetchUsers,
+    updateUser,
+    type User,
+    type UserFormData,
 } from './userSlice';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import UsersFiltersPanel from './UsersFiltersPanel';
 import UsersTable from './UsersTable';
-import { useReference } from '../reference/useReference';
+import UserModal from './UsersModal';
+import { ConfirmDialogNew } from '@/components/ui/ConfirmDialogNew';
+import UsersForm from './UsersForm';
 
-interface UsersFilters {
-    role_id?: string | number;
-}
-export type ConfirmAction = 'delete' | 'resetPassword' | null;
-
-/*************************************************************************************************************************************************/
 export default function UsersPage() {
     const dispatch = useAppDispatch();
-    const { items, pagination, loading, error, search } = useAppSelector((state) => state.users);
-    // Справочники
-    const refs = { userRoles: useReference('userRoles') };
+    const { items, pagination, loading } = useAppSelector((state) => state.users);
 
-    //Локальные состояния
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [searchText, setSearchText] = useState('');
-    const [userRolesId, setUserRolesId] = useState<string | number | null>(null);
-    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-    const [editingUser, setEditingUser] = useState<Users | null>(null);
-    const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+    const [filters, setFilters] = useState({
+        search: '',
+        typeId: null as number | null,
+        statusId: null as number | null,
+        customerId: null as number | null,
+    });
 
-    //Первичная загрузка Users
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+    const [formLoading, setFormLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+    //Первичная загрузка
     useEffect(() => {
-        dispatch(fetchUsers({ page: 1, size: 10 }));
+        dispatch(
+            fetchUsers({
+                page: 1,
+                size: 10,
+            }),
+        );
     }, [dispatch]);
 
-    //Формирование фильтров
-    const getCurrentFilters = (): UsersFilters => {
-        const currentFilters: UsersFilters = {};
-        if (userRolesId) currentFilters.role_id = userRolesId;
-        return currentFilters;
-    };
+    // Справочники
+    const projectTypes = useReference('projectTypes');
+    const projectStatuses = useReference('projectStatuses');
+    const users = useReference('users');
+    const userRoles = useReference('userRoles');
 
-    //Авто-обновление фильтров при выборе
-    useEffect(() => {
-        const newFilters = getCurrentFilters();
-        dispatch(setFilters(newFilters));
-        dispatch(fetchUsers({ page: 1, size: 10, search, filters: newFilters }));
-    }, [userRolesId]);
+    const refs = {
+        projectTypes,
+        projectStatuses,
+        users,
+        userRoles,
+    };
 
     //Поиск
-    const handleSearch = () => {
-        dispatch(setSearch(searchText));
-        const currentFilters = getCurrentFilters();
-        dispatch(setFilters(currentFilters));
-        dispatch(fetchUsers({ page: 1, size: 10, search: searchText, filters: currentFilters }));
+    const handleSearch = (newFilters: typeof filters) => {
+        setFilters(newFilters);
+        setCurrentPage(1);
+
+        dispatch(
+            fetchUsers({
+                page: 1,
+                size: pagination?.size ?? 10,
+                ...newFilters,
+            }),
+        );
     };
 
-    useEffect(() => {
-        if (searchText.trim() === '') {
-            dispatch(fetchUsers({ page: 1 }));
-        } else {
-            dispatch(fetchUsers({ page: 1, search }));
-        }
-    }, [searchText]);
-
-    //Сброс данные поиска и филтра
     const handleReset = () => {
-        setSearchText('');
-        setUserRolesId(null);
+        const resetFilters = {
+            search: '',
+            typeId: null,
+            statusId: null,
+            customerId: null,
+        };
 
-        dispatch(setSearch(''));
-        dispatch(setFilters({}));
-        dispatch(fetchUsers({ page: 1, size: 10 }));
+        setFilters(resetFilters);
+        setCurrentPage(1);
+
+        dispatch(
+            fetchUsers({
+                page: 1,
+                size: pagination?.size ?? 10,
+            }),
+        );
+
+        toast.success('Фильтры сброшены');
     };
 
-    //Открытие формы создания
+    //CRUD
     const handleCreate = () => {
-        setEditingUser(null); // создаём нового
-        setIsFormOpen(true);
+        setSelectedUser(null);
+        setModal('create');
     };
 
-    //Открытие формы редактирования
-    const handleEdit = async (id: number) => {
-        const currentUser = await dispatch(getUserById(id)).unwrap();
-        setEditingUser(currentUser); // сразу помещаем пользователя в локальное состояние
-        setIsFormOpen(true); // открываем форму после загрузки данных
+    const handleEdit = (user: User) => {
+        setSelectedUser(user);
+        setModal('edit');
     };
 
-    //Сохранение формы (создание или редактирование)
-    const handleSave = (formData: Partial<Users>) => {
-        if (editingUser) {
-            dispatch(updateUser({ id: editingUser.id, data: formData }))
-                .unwrap()
-                .then(() => {
-                    dispatch(fetchUsers({ page: 1, size: 10 }));
-                    toast.success('Пользователь успешно обновлён');
-                })
-                .catch((err: string) => {
-                    toast.error(err || 'Ошибка при обновлении пользователя');
-                });
-        } else {
-            dispatch(createUser(formData))
-                .unwrap()
-                .then(() => {
-                    dispatch(fetchUsers({ page: 1, size: 10 }));
-                    toast.success('Пользователь успешно создан', {
-                        duration: 3000,
-                    });
-                })
-                .catch((err: string) => {
-                    toast.error(err || 'Ошибка при создании пользователя');
-                });
+    const handleDelete = (user: User) => {
+        setSelectedUser(user);
+        setModal('delete');
+    };
+
+    const handleCreateProject = async (data: UserFormData) => {
+        try {
+            setFormLoading(true);
+
+            await dispatch(createUser(data)).unwrap();
+
+            toast.success(`Объект создан: ${data.username}`);
+
+            dispatch(
+                fetchUsers({
+                    page: pagination?.page ?? 1,
+                    size: pagination?.size ?? 10,
+                    ...filters,
+                }),
+            );
+
+            setModal(null);
+        } catch (err: any) {
+            toast.error(err || 'Ошибка создания пользователя');
+        } finally {
+            setFormLoading(false);
         }
-        setIsFormOpen(false);
     };
 
-    //Отмена формы
-    const handleCancel = () => {
-        setIsFormOpen(false);
-        setEditingUser(null);
-    };
+    const handleUpdateProject = async (data: UserFormData) => {
+        if (!selectedUser) return;
 
-    const handleDelete = (id: number) => {
-        setSelectedUserId(id);
-        setConfirmAction('delete');
-        setConfirmOpen(true);
-    };
+        try {
+            setFormLoading(true);
 
-    const handleConfirm = () => {
-        if (!selectedUserId || !confirmAction) return;
+            await dispatch(
+                updateUser({
+                    id: selectedUser.id,
+                    data,
+                }),
+            ).unwrap();
 
-        if (confirmAction === 'delete') {
-            dispatch(deleteUser(selectedUserId))
-                .unwrap()
-                .then(() => {
-                    dispatch(
-                        fetchUsers({
-                            page: 1,
-                            size: 10,
-                            search,
-                            filters: getCurrentFilters(),
-                        }),
-                    );
-                    toast.success('Пользователь успешно удалён');
-                })
-                .catch((err: string) => {
-                    toast.error(err || 'Ошибка при удалении пользователя');
-                });
+            toast.success(`Пользователь обновлён: ${data.username}`);
+
+            dispatch(
+                fetchUsers({
+                    page: pagination?.page ?? 1,
+                    size: pagination?.size ?? 10,
+                    ...filters,
+                }),
+            );
+
+            setModal(null);
+            setSelectedUser(null);
+        } catch (err: any) {
+            toast.error(err || 'Ошибка обновления пользователя');
+        } finally {
+            setFormLoading(false);
         }
+    };
 
-        if (confirmAction === 'resetPassword') {
-            dispatch(resetPassword({ id: selectedUserId, password: '123456' }))
-                .unwrap()
-                .then((data) => {
-                    toast.success(data.message || 'Пароль сброшен');
-                })
-                .catch((err: string) => {
-                    toast.error(err || 'Ошибка при сбросе пароля');
-                });
+    const handleDeleteProject = async () => {
+        if (!selectedUser) return;
+
+        try {
+            setDeleteLoading(true);
+
+            await dispatch(deleteUser(selectedUser.id)).unwrap();
+
+            toast.success(`Пользователь удалён: ${selectedUser.username}`);
+
+            dispatch(
+                fetchUsers({
+                    page: pagination?.page ?? 1,
+                    size: pagination?.size ?? 10,
+                    ...filters,
+                }),
+            );
+
+            setModal(null);
+            setSelectedUser(null);
+        } catch (err: any) {
+            toast.error(err || 'Ошибка удаления пользователя');
+        } finally {
+            setDeleteLoading(false);
         }
-
-        setConfirmOpen(false);
-        setSelectedUserId(null);
-        setConfirmAction(null);
     };
 
-    // обработчик кнопки resetPass
-    const handleResetPassword = (userId: number) => {
-        setSelectedUserId(userId);
-        setConfirmAction('resetPassword');
-        setConfirmOpen(true);
-    };
-
-    //Пагинация
-    const handleNextPage = () => {
-        if (!pagination?.hasNext) return;
-        dispatch(
-            fetchUsers({
-                page: pagination.page + 1,
-                size: pagination.size,
-                search,
-                filters: getCurrentFilters(),
-            }),
-        );
-    };
-
-    const handlePrevPage = () => {
-        if (!pagination?.hasPrev) return;
-        dispatch(
-            fetchUsers({
-                page: pagination.page - 1,
-                size: pagination.size,
-                search,
-                filters: getCurrentFilters(),
-            }),
-        );
-    };
-
-    /*UI********************************************************************************************************************************************/
+    /*******************************************************************************************************************/
     return (
-        <>
-            {/* ======= ПОИСК И ФИЛЬТРЫ ======= */}
-            {!isFormOpen && (
-                <div>
-                    <div className="filter-container">
-                        <StyledTooltip title="Создать пользователя">
-                            <MdGroupAdd className="icon" onClick={handleCreate} />
-                        </StyledTooltip>
-                        <InputSearch
-                            value={searchText}
-                            onChange={setSearchText}
-                            onEnter={handleSearch}
-                        />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+            <div className="mx-auto max-w-[1800px] px-6 py-8">
+                {/* Header */}
+                <div className="mb-6">
+                    <h1 className="mb-2 text-3xl font-bold text-sky-800">Пользователи</h1>
+                    <p className="text-sm text-sky-700">Панель управления пользователями</p>
+                </div>
 
-                        <ReferenceSelect
-                            label="Роли"
-                            value={userRolesId || ''}
-                            onChange={setUserRolesId}
-                            options={refs.userRoles.data || []}
-                            loading={refs.userRoles.loading}
-                        />
+                {/* Фильтры */}
+                <UsersFiltersPanel
+                    refs={refs}
+                    onSearch={handleSearch}
+                    onReset={handleReset}
+                    onCreate={handleCreate}
+                />
 
-                        <StyledTooltip title="Сбросить фильтры и поиск">
-                            <MdOutlineRestartAlt className="icon" onClick={handleReset} />
-                        </StyledTooltip>
-                    </div>
-
+                {/* Таблица */}
+                <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
                     <UsersTable
-                        items={items}
-                        refs={refs}
+                        users={items}
                         loading={loading}
-                        error={error}
-                        pagination={pagination}
+                        refs={refs}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
-                        onResetPass={handleResetPassword}
-                        onPrevPage={handlePrevPage}
-                        onNextPage={handleNextPage}
                     />
+
+                    {/* Пагинация */}
+                    {pagination && (
+                        <TablePagination
+                            pagination={pagination}
+                            onPageChange={(newPage) => {
+                                setCurrentPage(newPage);
+
+                                dispatch(
+                                    fetchUsers({
+                                        page: newPage,
+                                        size: pagination.size,
+                                        ...filters,
+                                    }),
+                                );
+                            }}
+                            onSizeChange={(newSize) => {
+                                setCurrentPage(1);
+
+                                dispatch(
+                                    fetchUsers({
+                                        page: 1,
+                                        size: newSize,
+                                        ...filters,
+                                    }),
+                                );
+                            }}
+                            sizeOptions={[10, 25, 50, 100]}
+                            showFirstButton
+                            showLastButton
+                        />
+                    )}
                 </div>
-            )}
-            {isFormOpen && (
-                <UserCreateEditFrm
-                    user={editingUser || undefined} // для редактирования или создания
-                    userRoles={refs.userRoles.data || []}
-                    onSubmit={handleSave}
-                    onCancel={handleCancel}
+            </div>
+
+            {/* CREATE */}
+            <UserModal
+                isOpen={modal === 'create'}
+                onClose={() => setModal(null)}
+                title="Создать нового пользователя"
+            >
+                <UsersForm
+                    refs={refs}
+                    onSubmit={handleCreateProject}
+                    onCancel={() => setModal(null)}
+                    loading={formLoading}
                 />
-            )}
-            {/* Диалог подтверждения */}
-            <ConfirmDialog
-                open={confirmOpen}
-                title={confirmAction === 'delete' ? 'Удалить пользователя?' : 'Сбросить пароль?'}
-                message={
-                    confirmAction === 'delete'
-                        ? 'Вы уверены, что хотите удалить этого пользователя?'
-                        : 'Пароль пользователя будет сброшен. Продолжить?'
-                }
-                onConfirm={handleConfirm}
-                onCancel={() => {
-                    setConfirmOpen(false);
-                    setSelectedUserId(null);
-                    setConfirmAction(null);
-                }}
+            </UserModal>
+
+            {/* EDIT */}
+            <UserModal
+                isOpen={modal === 'edit'}
+                onClose={() => setModal(null)}
+                title="Редактировать данные пользователя"
+            >
+                <UsersForm
+                    user={selectedUser}
+                    refs={refs}
+                    onSubmit={handleUpdateProject}
+                    onCancel={() => setModal(null)}
+                    loading={formLoading}
+                />
+            </UserModal>
+
+            {/* DELETE */}
+            <ConfirmDialogNew
+                isOpen={modal === 'delete'}
+                onClose={() => setModal(null)}
+                onConfirm={handleDeleteProject}
+                title="Удалить проект?"
+                message={`Вы уверены, что хотите удалить проект "${selectedUser?.username}" (${selectedUser?.first_name && selectedUser?.last_name})? Это действие нельзя отменить.`}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                variant="danger"
+                loading={deleteLoading}
             />
-        </>
+        </div>
     );
 }

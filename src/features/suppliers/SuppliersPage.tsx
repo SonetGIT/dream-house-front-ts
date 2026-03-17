@@ -15,6 +15,11 @@ import {
     type Supplier,
     type SupplierFormData,
 } from './suppliersSlice';
+import SupplierRatingForm from './supplierRating/SupplierRatingForm';
+import {
+    createSupplierRating,
+    type SupplierRatingFormData,
+} from './supplierRating/supplierRatingSlice';
 
 /*******************************************************************************************************************/
 export default function SuppliersPage() {
@@ -25,7 +30,7 @@ export default function SuppliersPage() {
 
     const [currentPage, setCurrentPage] = useState(1);
 
-    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
+    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | 'rating' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
     const [formLoading, setFormLoading] = useState(false);
@@ -80,6 +85,11 @@ export default function SuppliersPage() {
     const handleCreate = () => {
         setSelectedSupplier(null);
         setModal('create');
+    };
+
+    const handleRating = (supplier: Supplier) => {
+        setSelectedSupplier(supplier);
+        setModal('rating');
     };
 
     const handleEdit = (suppliers: Supplier) => {
@@ -175,6 +185,38 @@ export default function SuppliersPage() {
         }
     };
 
+    const handleRatingSupplier = async (data: SupplierRatingFormData) => {
+        if (!selectedSupplier) return;
+
+        try {
+            setFormLoading(true);
+
+            await dispatch(
+                createSupplierRating({
+                    ...data,
+                    supplier_id: selectedSupplier.id,
+                }),
+            ).unwrap();
+
+            toast.success(`Рейтинг для ${selectedSupplier.name} добавлен`);
+
+            dispatch(
+                fetchSuppliers({
+                    page: pagination?.page ?? 1,
+                    size: pagination?.size ?? 10,
+                    ...filters,
+                }),
+            );
+
+            setModal(null);
+            setSelectedSupplier(null);
+        } catch (err: any) {
+            toast.error(err || 'Ошибка создания рейтинга');
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
     /*******************************************************************************************************************/
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
@@ -197,6 +239,7 @@ export default function SuppliersPage() {
                     <SuppliersTable
                         suppliers={items}
                         loading={loading}
+                        onRating={handleRating}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                     />
@@ -243,6 +286,20 @@ export default function SuppliersPage() {
             >
                 <SupplierForm
                     onSubmit={handleCreateSupplier}
+                    onCancel={() => setModal(null)}
+                    loading={formLoading}
+                />
+            </SupplierModal>
+
+            {/* RATING */}
+            <SupplierModal
+                isOpen={modal === 'rating'}
+                onClose={() => setModal(null)}
+                title="Оставить отзыв"
+            >
+                <SupplierRatingForm
+                    supplier={selectedSupplier}
+                    onSubmit={handleRatingSupplier}
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
