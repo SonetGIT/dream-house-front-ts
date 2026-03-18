@@ -44,13 +44,16 @@ export interface UserForm {
 
     phone: string | null;
 
-    role_id: number;
+    role_id: number | null;
     supplier_id: number | null;
     contractor_id: number | null;
 
+    password: string;
     required_action?: string | null;
 }
+
 export type UserFormData = Omit<User, 'id' | 'created_at' | 'updated_at' | 'deleted'>;
+
 interface UsersState {
     items: User[];
     pagination: Pagination | null;
@@ -69,11 +72,12 @@ const initialState: UsersState = {
 
 interface SearchPayload {
     search?: string;
+    role_id?: number | null;
     page?: number;
     size?: number;
 }
 
-//SEARCH
+// SEARCH
 export const fetchUsers = createAsyncThunk(
     'users/search',
     async (params: SearchPayload = {}, { rejectWithValue }) => {
@@ -86,12 +90,12 @@ export const fetchUsers = createAsyncThunk(
     },
 );
 
-//CREATE
+// CREATE
 export const createUser = createAsyncThunk(
-    'users/create',
-    async (data: Partial<User>, { rejectWithValue }) => {
+    'users/createUser',
+    async (data: UserFormData, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<User>('/users/create', 'POST', data);
+            const res = await apiRequest<User>('/users/createUser', 'POST', data);
             return res.data;
         } catch (err: any) {
             return rejectWithValue(err.message);
@@ -99,10 +103,10 @@ export const createUser = createAsyncThunk(
     },
 );
 
-//UPDATE
+// UPDATE
 export const updateUser = createAsyncThunk(
     'users/update',
-    async ({ id, data }: { id: number; data: Partial<User> }, { rejectWithValue }) => {
+    async ({ id, data }: { id: number; data: Partial<UserFormData> }, { rejectWithValue }) => {
         try {
             const res = await apiRequest<User>(`/users/update/${id}`, 'PUT', data);
             return res.data;
@@ -112,7 +116,7 @@ export const updateUser = createAsyncThunk(
     },
 );
 
-//DELETE
+// DELETE
 export const deleteUser = createAsyncThunk(
     'users/delete',
     async (id: number, { rejectWithValue }) => {
@@ -125,7 +129,7 @@ export const deleteUser = createAsyncThunk(
     },
 );
 
-//GET BY ID
+// GET BY ID
 export const getUserById = createAsyncThunk(
     'users/getById',
     async (id: number, { rejectWithValue }) => {
@@ -169,7 +173,10 @@ const userSlice = createSlice({
             .addCase(updateUser.fulfilled, (state, action) => {
                 const index = state.items.findIndex((u) => u.id === action.payload.id);
                 if (index !== -1) {
-                    state.items[index] = action.payload;
+                    state.items[index] = {
+                        ...state.items[index],
+                        ...action.payload,
+                    };
                 }
             })
 

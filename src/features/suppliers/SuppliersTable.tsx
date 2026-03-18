@@ -1,9 +1,9 @@
 import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Supplier } from './suppliersSlice';
-import { formatPhone } from '@/utils/formatPhone';
 import Rating from '@/components/ui/Rating';
 import { RowActions } from '@/components/ui/RowActions';
+import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 
 interface SuppliersTableProps {
     suppliers: Supplier[];
@@ -98,21 +98,33 @@ export default function SuppliersTable({
 
                                 {/* ИНН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
-                                        {supplier.inn}
-                                    </span>
+                                    {supplier.inn ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                            {supplier.inn}
+                                        </span>
+                                    ) : (
+                                        '-'
+                                    )}
                                 </td>
                                 {/* КПП */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
-                                        {supplier.kpp?.trim() ? supplier.kpp : '-'}
-                                    </span>
+                                    {supplier.kpp ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                            {supplier.kpp?.trim() ? supplier.kpp : '-'}
+                                        </span>
+                                    ) : (
+                                        '-'
+                                    )}
                                 </td>
                                 {/* ОГРН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
-                                        {supplier.ogrn}
-                                    </span>
+                                    {supplier.ogrn ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                            {supplier.ogrn}
+                                        </span>
+                                    ) : (
+                                        '-'
+                                    )}
                                 </td>
                                 {/* Адрес */}
                                 <td className="px-3 py-2.5">
@@ -141,7 +153,7 @@ export default function SuppliersTable({
                                         {supplier.phone && (
                                             <div className="flex items-center gap-1.5 text-gray-700 text-sm">
                                                 <Phone className="w-3.5 h-3.5 text-gray-400" />
-                                                {formatPhone(supplier.phone)}
+                                                {formatPhoneDisplay(supplier.phone)}
                                             </div>
                                         )}
                                     </div>

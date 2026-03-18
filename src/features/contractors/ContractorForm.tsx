@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { ContractorForm, ContractorFormData } from './contractorsSlice';
+import { formatPhoneInput, toStoragePhone } from '@/utils/formatPhoneNumber';
 
 interface ContractorFormProps {
     contractor?: ContractorFormData | null;
@@ -128,6 +129,12 @@ export default function ContractorForm({
                 return rest;
             });
         }
+    };
+
+    /*Изменение телефона*/
+    const handlePhoneChange = (value: string) => {
+        const storage = toStoragePhone(value);
+        handleChange('phone', storage);
     };
 
     /************************************************************************************************************/
@@ -298,11 +305,8 @@ export default function ContractorForm({
 
                         <input
                             type="tel"
-                            value={formData.phone ?? ''}
-                            onChange={(e) => {
-                                const value = e.target.value.replace(/[^\d+]/g, '');
-                                handleChange('phone', value);
-                            }}
+                            value={formatPhoneInput(formData.phone)}
+                            onChange={(e) => handlePhoneChange(e.target.value)}
                             maxLength={16}
                             inputMode="tel"
                             className={`

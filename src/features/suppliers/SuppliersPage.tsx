@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { TablePagination } from '@/components/ui/TablePagination';
 import SuppliersTable from './SuppliersTable';
-import SupplierModal from './SuppliersModal';
 import SupplierFiltersPanel from './SuppliersFiltersPanel';
 import SupplierForm from './SuppliersForm';
 import { ConfirmDialogNew } from '@/components/ui/ConfirmDialogNew';
@@ -20,6 +19,7 @@ import {
     createSupplierRating,
     type SupplierRatingFormData,
 } from './supplierRating/supplierRatingSlice';
+import Modal from '@/components/ui/Modal';
 
 /*******************************************************************************************************************/
 export default function SuppliersPage() {
@@ -77,8 +77,6 @@ export default function SuppliersPage() {
                 size: pagination?.size ?? 10,
             }),
         );
-
-        toast.success('Фильтры сброшены');
     };
 
     //CRUD
@@ -279,7 +277,7 @@ export default function SuppliersPage() {
             </div>
 
             {/* CREATE */}
-            <SupplierModal
+            <Modal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
                 title="Создать новые данные"
@@ -289,10 +287,10 @@ export default function SuppliersPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </SupplierModal>
+            </Modal>
 
             {/* RATING */}
-            <SupplierModal
+            <Modal
                 isOpen={modal === 'rating'}
                 onClose={() => setModal(null)}
                 title="Оставить отзыв"
@@ -303,10 +301,10 @@ export default function SuppliersPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </SupplierModal>
+            </Modal>
 
             {/* EDIT */}
-            <SupplierModal
+            <Modal
                 isOpen={modal === 'edit'}
                 onClose={() => setModal(null)}
                 title="Редактировать данные"
@@ -317,7 +315,7 @@ export default function SuppliersPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </SupplierModal>
+            </Modal>
 
             {/* DELETE */}
             <ConfirmDialogNew
@@ -325,7 +323,7 @@ export default function SuppliersPage() {
                 onClose={() => setModal(null)}
                 onConfirm={handleDeleteSupplier}
                 title="Удалить подрядчика?"
-                message={`Вы уверены, что хотите удалить подрядчика "${selectedSupplier?.name}" (${selectedSupplier?.inn})? Это действие нельзя отменить.`}
+                message={`Вы уверены, что хотите удалить подрядчика "${selectedSupplier?.name}" (${selectedSupplier?.inn})?`}
                 confirmText="Удалить"
                 cancelText="Отмена"
                 variant="danger"

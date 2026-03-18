@@ -11,10 +11,10 @@ import {
     type ContractorFormData,
 } from './contractorsSlice';
 import ContractorsTable from './ContractorsTable';
-import ContractorModal from './ContractorModal';
 import ContractorFiltersPanel from './ContractorFiltersPanel';
 import ContractorForm from './ContractorForm';
 import { ConfirmDialogNew } from '@/components/ui/ConfirmDialogNew';
+import Modal from '@/components/ui/Modal';
 
 /*******************************************************************************************************************/
 export default function ContractorsPage() {
@@ -72,8 +72,6 @@ export default function ContractorsPage() {
                 size: pagination?.size ?? 10,
             }),
         );
-
-        toast.success('Фильтры сброшены');
     };
 
     //CRUD
@@ -129,7 +127,7 @@ export default function ContractorsPage() {
                 }),
             ).unwrap();
 
-            toast.success(`Подрядчик успешно  обновлён: ${data.name}`);
+            toast.success(`Подрядчик успешно обновлён: ${data.name}`);
 
             dispatch(
                 fetchContractors({
@@ -236,7 +234,7 @@ export default function ContractorsPage() {
             </div>
 
             {/* CREATE */}
-            <ContractorModal
+            <Modal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
                 title="Создать новые данные"
@@ -246,10 +244,10 @@ export default function ContractorsPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </ContractorModal>
+            </Modal>
 
             {/* EDIT */}
-            <ContractorModal
+            <Modal
                 isOpen={modal === 'edit'}
                 onClose={() => setModal(null)}
                 title="Редактировать данные"
@@ -260,7 +258,7 @@ export default function ContractorsPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </ContractorModal>
+            </Modal>
 
             {/* DELETE */}
             <ConfirmDialogNew
@@ -268,7 +266,7 @@ export default function ContractorsPage() {
                 onClose={() => setModal(null)}
                 onConfirm={handleDeleteContractor}
                 title="Удалить подрядчика?"
-                message={`Вы уверены, что хотите удалить подрядчика "${selectedContractor?.name}" (${selectedContractor?.inn})? Это действие нельзя отменить.`}
+                message={`Вы уверены, что хотите удалить подрядчика "${selectedContractor?.name}" (${selectedContractor?.inn})? `}
                 confirmText="Удалить"
                 cancelText="Отмена"
                 variant="danger"

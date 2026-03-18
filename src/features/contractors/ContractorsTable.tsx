@@ -2,7 +2,7 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Contractor } from './contractorsSlice';
-import { formatPhone } from '@/utils/formatPhone';
+import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 
 interface ContractorsTableProps {
     contractors: Contractor[];
@@ -94,21 +94,33 @@ export default function ContractorsTable({
 
                                 {/* ИНН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
-                                        {contractor.inn}
-                                    </span>
+                                    {contractor.inn ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                            {contractor.inn}
+                                        </span>
+                                    ) : (
+                                        '-'
+                                    )}
                                 </td>
                                 {/* КПП */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
-                                        {contractor.kpp}
-                                    </span>
+                                    {contractor.kpp ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                            {contractor.kpp?.trim() ? contractor.kpp : '-'}
+                                        </span>
+                                    ) : (
+                                        '-'
+                                    )}
                                 </td>
                                 {/* ОГРН */}
                                 <td className="px-3 py-2.5">
-                                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
-                                        {contractor.ogrn}
-                                    </span>
+                                    {contractor.ogrn ? (
+                                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                            {contractor.ogrn}
+                                        </span>
+                                    ) : (
+                                        '-'
+                                    )}
                                 </td>
                                 {/* Адрес */}
                                 <td className="px-3 py-2.5">
@@ -138,7 +150,7 @@ export default function ContractorsTable({
                                         {contractor.phone && (
                                             <div className="flex items-center gap-1.5 text-gray-700 text-sm">
                                                 <Phone className="w-3.5 h-3.5 text-gray-400" />
-                                                {formatPhone(contractor.phone)}
+                                                {formatPhoneDisplay(contractor.phone)}
                                             </div>
                                         )}
                                     </div>

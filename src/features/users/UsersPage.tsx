@@ -13,9 +13,9 @@ import {
 } from './userSlice';
 import UsersFiltersPanel from './UsersFiltersPanel';
 import UsersTable from './UsersTable';
-import UserModal from './UsersModal';
 import { ConfirmDialogNew } from '@/components/ui/ConfirmDialogNew';
 import UsersForm from './UsersForm';
+import Modal from '@/components/ui/Modal';
 
 export default function UsersPage() {
     const dispatch = useAppDispatch();
@@ -23,9 +23,7 @@ export default function UsersPage() {
 
     const [filters, setFilters] = useState({
         search: '',
-        typeId: null as number | null,
-        statusId: null as number | null,
-        customerId: null as number | null,
+        role_id: null as number | null,
     });
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -47,16 +45,16 @@ export default function UsersPage() {
     }, [dispatch]);
 
     // Справочники
-    const projectTypes = useReference('projectTypes');
-    const projectStatuses = useReference('projectStatuses');
     const users = useReference('users');
     const userRoles = useReference('userRoles');
+    const suppliers = useReference('suppliers');
+    const contractors = useReference('contractors');
 
     const refs = {
-        projectTypes,
-        projectStatuses,
         users,
         userRoles,
+        suppliers,
+        contractors,
     };
 
     //Поиск
@@ -64,21 +62,26 @@ export default function UsersPage() {
         setFilters(newFilters);
         setCurrentPage(1);
 
-        dispatch(
-            fetchUsers({
-                page: 1,
-                size: pagination?.size ?? 10,
-                ...newFilters,
-            }),
-        );
+        const params: any = {
+            page: 1,
+            size: pagination?.size ?? 10,
+        };
+
+        if (newFilters.search) {
+            params.search = newFilters.search;
+        }
+
+        if (newFilters.role_id) {
+            params.role_id = newFilters.role_id;
+        }
+
+        dispatch(fetchUsers(params));
     };
 
     const handleReset = () => {
         const resetFilters = {
             search: '',
-            typeId: null,
-            statusId: null,
-            customerId: null,
+            role_id: null,
         };
 
         setFilters(resetFilters);
@@ -90,8 +93,6 @@ export default function UsersPage() {
                 size: pagination?.size ?? 10,
             }),
         );
-
-        toast.success('Фильтры сброшены');
     };
 
     //CRUD
@@ -109,22 +110,32 @@ export default function UsersPage() {
         setSelectedUser(user);
         setModal('delete');
     };
+    const refetchUsers = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
+        const params: any = {
+            page,
+            size,
+        };
 
-    const handleCreateProject = async (data: UserFormData) => {
+        if (filters.search) {
+            params.search = filters.search;
+        }
+
+        if (filters.role_id) {
+            params.role_id = filters.role_id;
+        }
+
+        dispatch(fetchUsers(params));
+    };
+
+    const handleCreateUser = async (data: UserFormData) => {
         try {
             setFormLoading(true);
 
             await dispatch(createUser(data)).unwrap();
 
-            toast.success(`Объект создан: ${data.username}`);
+            toast.success(`Пользователь создан: ${data.username}`);
 
-            dispatch(
-                fetchUsers({
-                    page: pagination?.page ?? 1,
-                    size: pagination?.size ?? 10,
-                    ...filters,
-                }),
-            );
+            refetchUsers(1); //всегда на первую страницу
 
             setModal(null);
         } catch (err: any) {
@@ -134,7 +145,7 @@ export default function UsersPage() {
         }
     };
 
-    const handleUpdateProject = async (data: UserFormData) => {
+    const handleUpdateUser = async (data: UserFormData) => {
         if (!selectedUser) return;
 
         try {
@@ -149,13 +160,7 @@ export default function UsersPage() {
 
             toast.success(`Пользователь обновлён: ${data.username}`);
 
-            dispatch(
-                fetchUsers({
-                    page: pagination?.page ?? 1,
-                    size: pagination?.size ?? 10,
-                    ...filters,
-                }),
-            );
+            refetchUsers(); // 👈 остаёмся на текущей странице
 
             setModal(null);
             setSelectedUser(null);
@@ -166,7 +171,7 @@ export default function UsersPage() {
         }
     };
 
-    const handleDeleteProject = async () => {
+    const handleDeleteUser = async () => {
         if (!selectedUser) return;
 
         try {
@@ -176,13 +181,9 @@ export default function UsersPage() {
 
             toast.success(`Пользователь удалён: ${selectedUser.username}`);
 
-            dispatch(
-                fetchUsers({
-                    page: pagination?.page ?? 1,
-                    size: pagination?.size ?? 10,
-                    ...filters,
-                }),
-            );
+            const isLastItem = items.length === 1 && (pagination?.page ?? 1) > 1;
+
+            refetchUsers(isLastItem ? pagination!.page - 1 : pagination?.page);
 
             setModal(null);
             setSelectedUser(null);
@@ -256,21 +257,21 @@ export default function UsersPage() {
             </div>
 
             {/* CREATE */}
-            <UserModal
+            <Modal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
                 title="Создать нового пользователя"
             >
                 <UsersForm
                     refs={refs}
-                    onSubmit={handleCreateProject}
+                    onSubmit={handleCreateUser}
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </UserModal>
+            </Modal>
 
             {/* EDIT */}
-            <UserModal
+            <Modal
                 isOpen={modal === 'edit'}
                 onClose={() => setModal(null)}
                 title="Редактировать данные пользователя"
@@ -278,19 +279,19 @@ export default function UsersPage() {
                 <UsersForm
                     user={selectedUser}
                     refs={refs}
-                    onSubmit={handleUpdateProject}
+                    onSubmit={handleUpdateUser}
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </UserModal>
+            </Modal>
 
             {/* DELETE */}
             <ConfirmDialogNew
                 isOpen={modal === 'delete'}
                 onClose={() => setModal(null)}
-                onConfirm={handleDeleteProject}
-                title="Удалить проект?"
-                message={`Вы уверены, что хотите удалить проект "${selectedUser?.username}" (${selectedUser?.first_name && selectedUser?.last_name})? Это действие нельзя отменить.`}
+                onConfirm={handleDeleteUser}
+                title="Удалить пользователя?"
+                message={`Вы уверены, что хотите удалить пользователя "${selectedUser?.username}"?`}
                 confirmText="Удалить"
                 cancelText="Отмена"
                 variant="danger"

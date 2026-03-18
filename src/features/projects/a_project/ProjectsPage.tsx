@@ -3,7 +3,6 @@ import { ConfirmDialogNew } from '../../../components/ui/ConfirmDialogNew';
 import toast from 'react-hot-toast';
 import { ProjectFiltersPanel } from './ProjectFiltersPanel';
 import { ProjectsTable } from './ProjectsTable';
-import { ProjectModal } from './ProjectModal';
 import { ProjectForm } from './ProjectForm';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
@@ -16,6 +15,7 @@ import {
 } from './projectsSlice';
 import { useReference } from '@/features/reference/useReference';
 import { TablePagination } from '@/components/ui/TablePagination';
+import Modal from '@/components/ui/Modal';
 
 export default function ProjectsPage() {
     const dispatch = useAppDispatch();
@@ -90,8 +90,6 @@ export default function ProjectsPage() {
                 size: pagination?.size ?? 10,
             }),
         );
-
-        toast.success('Фильтры сброшены');
     };
 
     //CRUD
@@ -109,7 +107,15 @@ export default function ProjectsPage() {
         setSelectedProject(project);
         setModal('delete');
     };
-
+    const refetchProjects = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
+        dispatch(
+            fetchProjects({
+                page,
+                size,
+                ...filters,
+            }),
+        );
+    };
     const handleCreateProject = async (data: ProjectFormData) => {
         try {
             setFormLoading(true);
@@ -118,13 +124,7 @@ export default function ProjectsPage() {
 
             toast.success(`Объект создан: ${data.name}`);
 
-            dispatch(
-                fetchProjects({
-                    page: pagination?.page ?? 1,
-                    size: pagination?.size ?? 10,
-                    ...filters,
-                }),
-            );
+            refetchProjects(1); // 👈 всегда на первую страницу
 
             setModal(null);
         } catch (err: any) {
@@ -149,13 +149,7 @@ export default function ProjectsPage() {
 
             toast.success(`Объект обновлён: ${data.name}`);
 
-            dispatch(
-                fetchProjects({
-                    page: pagination?.page ?? 1,
-                    size: pagination?.size ?? 10,
-                    ...filters,
-                }),
-            );
+            refetchProjects(); // 👈 остаёмся на текущей странице
 
             setModal(null);
             setSelectedProject(null);
@@ -176,13 +170,10 @@ export default function ProjectsPage() {
 
             toast.success(`Объект удалён: ${selectedProject.name}`);
 
-            dispatch(
-                fetchProjects({
-                    page: pagination?.page ?? 1,
-                    size: pagination?.size ?? 10,
-                    ...filters,
-                }),
-            );
+            // 👇 если удалили последний элемент на странице — откат на предыдущую
+            const isLastItem = items.length === 1 && (pagination?.page ?? 1) > 1;
+
+            refetchProjects(isLastItem ? pagination!.page - 1 : pagination?.page);
 
             setModal(null);
             setSelectedProject(null);
@@ -258,7 +249,7 @@ export default function ProjectsPage() {
             </div>
 
             {/* CREATE */}
-            <ProjectModal
+            <Modal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
                 title="Создать новый объект"
@@ -269,10 +260,10 @@ export default function ProjectsPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </ProjectModal>
+            </Modal>
 
             {/* EDIT */}
-            <ProjectModal
+            <Modal
                 isOpen={modal === 'edit'}
                 onClose={() => setModal(null)}
                 title="Редактировать объект"
@@ -284,15 +275,15 @@ export default function ProjectsPage() {
                     onCancel={() => setModal(null)}
                     loading={formLoading}
                 />
-            </ProjectModal>
+            </Modal>
 
             {/* DELETE */}
             <ConfirmDialogNew
                 isOpen={modal === 'delete'}
                 onClose={() => setModal(null)}
                 onConfirm={handleDeleteProject}
-                title="Удалить проект?"
-                message={`Вы уверены, что хотите удалить проект "${selectedProject?.name}" (${selectedProject?.code})? Это действие нельзя отменить.`}
+                title="Удалить объект?"
+                message={`Вы уверены, что хотите удалить объект "${selectedProject?.name}" (${selectedProject?.code})?`}
                 confirmText="Удалить"
                 cancelText="Отмена"
                 variant="danger"

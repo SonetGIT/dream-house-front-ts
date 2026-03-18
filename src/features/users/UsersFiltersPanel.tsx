@@ -5,12 +5,7 @@ import { useState } from 'react';
 
 interface FiltersPanelProps {
     refs: Record<string, ReferenceResult>;
-    onSearch: (filters: {
-        search: string;
-        typeId: number | null;
-        statusId: number | null;
-        customerId: number | null;
-    }) => void;
+    onSearch: (filters: { search: string; role_id: number | null }) => void;
     onReset: () => void;
     onCreate: () => void;
 }
@@ -23,20 +18,16 @@ export default function UsersFiltersPanel({
     onCreate,
 }: FiltersPanelProps) {
     const [searchText, setSearchText] = useState('');
-    const [typeId, setTypeId] = useState<number | null>(null);
-    const [statusId, setStatusId] = useState<number | null>(null);
-    const [customerId, setCustomerId] = useState<number | null>(null);
+    const [roleId, setRoleId] = useState<number | null>(null);
     const [showFilters, setShowFilters] = useState(false);
 
     const handleSearch = () => {
-        onSearch({ search: searchText, typeId, statusId, customerId });
+        onSearch({ search: searchText, role_id: roleId });
     };
 
     const handleReset = () => {
         setSearchText('');
-        setTypeId(null);
-        setStatusId(null);
-        setCustomerId(null);
+        setRoleId(null);
         onReset();
     };
 
@@ -46,7 +37,7 @@ export default function UsersFiltersPanel({
         }
     };
 
-    const hasActiveFilters = typeId !== null || statusId !== null || customerId !== null;
+    const hasActiveFilters = roleId !== null;
 
     /**************************************************************************************************************************/
     return (
@@ -55,7 +46,7 @@ export default function UsersFiltersPanel({
             <div className="p-4">
                 <div className="flex items-center gap-3">
                     {/* Поиск */}
-                    <div className="flex-1 min-w-[300px]">
+                    <div className="flex-1 min-w-[200px]">
                         <div className="relative">
                             <Search className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
                             <input
@@ -63,37 +54,31 @@ export default function UsersFiltersPanel({
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Поиск по имени, логину, email..."
+                                placeholder="Поиск по ФИО, логину, email..."
                                 className="w-full py-2 pl-10 pr-4 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent placeholder:text-gray-400"
                             />
                         </div>
                     </div>
 
-                    {/* Кнопки */}
-                    <StyledTooltip title="Фильтры">
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`
-                                flex items-center gap-2 px-4 py-2
-                                text-sm font-medium
-                                ${
-                                    hasActiveFilters
-                                        ? 'text-white bg-sky-600 hover:bg-sky-500'
-                                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                                }
-                                rounded-lg transition-colors
-                                focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2
-                            `}
+                    {/* Роль - Расширенный фильтр */}
+                    <div className="w-[300px]">
+                        <select
+                            value={roleId || ''}
+                            onChange={(e) =>
+                                setRoleId(e.target.value ? Number(e.target.value) : null)
+                            }
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
                         >
-                            <Filter className="w-4 h-4" />
-                            {hasActiveFilters && (
-                                <span className="px-1.5 py-0.5 text-xs bg-white/20 rounded">
-                                    {[typeId, statusId, customerId].filter(Boolean).length}
-                                </span>
-                            )}
-                        </button>
-                    </StyledTooltip>
+                            <option value="">Все роли</option>
+                            {refs.userRoles.data?.map((role) => (
+                                <option key={role.id} value={role.id}>
+                                    {role.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
+                    {/* Кнопки */}
                     <button
                         onClick={handleSearch}
                         className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-sky-600 hover:bg-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:ring-offset-2"
@@ -119,79 +104,6 @@ export default function UsersFiltersPanel({
                     </button>
                 </div>
             </div>
-
-            {/* Расширенные фильтры */}
-            {showFilters && (
-                <div
-                    className="px-4 pb-4 border-t border-gray-200 bg-gray-50"
-                    style={{ animation: 'slideDown 0.2s ease-out' }}
-                >
-                    <div className="grid grid-cols-3 gap-4 pt-4">
-                        {/* Тип проекта */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Тип проекта
-                            </label>
-                            <select
-                                value={typeId || ''}
-                                onChange={(e) =>
-                                    setTypeId(e.target.value ? Number(e.target.value) : null)
-                                }
-                                className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
-                            >
-                                <option value="">Все типы</option>
-                                {/* {refs.projectTypes.data?.map((type) => (
-                                    <option key={type.id} value={type.id}>
-                                        {type.name}
-                                    </option>
-                                ))} */}
-                            </select>
-                        </div>
-
-                        {/* Статус */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Статус
-                            </label>
-                            <select
-                                value={statusId || ''}
-                                onChange={(e) =>
-                                    setStatusId(e.target.value ? Number(e.target.value) : null)
-                                }
-                                className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
-                            >
-                                <option value="">Все статусы</option>
-                                {/* {refs.projectStatuses.data?.map((status) => (
-                                    <option key={status.id} value={status.id}>
-                                        {status.name}
-                                    </option>
-                                ))} */}
-                            </select>
-                        </div>
-
-                        {/* Заказчик */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Заказчик
-                            </label>
-                            <select
-                                value={customerId || ''}
-                                onChange={(e) =>
-                                    setCustomerId(e.target.value ? Number(e.target.value) : null)
-                                }
-                                className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
-                            >
-                                <option value="">Все заказчики</option>
-                                {/* {refs.projectStatuses.data?.map((customer) => (
-                                    <option key={customer.id} value={customer.id}>
-                                        {customer.name}
-                                    </option>
-                                ))} */}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

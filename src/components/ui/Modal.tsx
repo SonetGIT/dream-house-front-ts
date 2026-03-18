@@ -9,7 +9,7 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
-export default function SuppliersModal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';

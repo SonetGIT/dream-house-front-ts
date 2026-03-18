@@ -81,6 +81,13 @@
         },
         "apiName": "/suppliers/gets"
     },
+    "contractors": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/contractors/gets"
+    },
     "warehouses": {
         "data": {
             "id": "id",

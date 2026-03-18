@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { SupplierForm, SupplierFormData } from './suppliersSlice';
+import { formatPhoneInput, toStoragePhone } from '@/utils/formatPhoneNumber';
 
 export interface SupplierFormProps {
     supplier?: SupplierFormData | null;
@@ -113,6 +114,11 @@ export default function SuppliersForm({
                 return rest;
             });
         }
+    };
+
+    const handlePhoneChange = (value: string) => {
+        const storage = toStoragePhone(value);
+        handleChange('phone', storage);
     };
 
     return (
@@ -289,11 +295,8 @@ export default function SuppliersForm({
 
                         <input
                             type="tel"
-                            value={formData.phone ?? ''}
-                            onChange={(e) => {
-                                const value = e.target.value.replace(/[^\d]/g, '');
-                                handleChange('phone', value);
-                            }}
+                            value={formatPhoneInput(formData.phone)}
+                            onChange={(e) => handlePhoneChange(e.target.value)}
                             maxLength={16}
                             inputMode="tel"
                             className={`
