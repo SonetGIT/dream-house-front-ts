@@ -25,7 +25,7 @@ import { createPurchaseOrder } from '../purchaseOrders/purchaseOrdersSlice';
 import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import type { Pagination } from '@/features/users/userSlice';
-import type { ProjectOutletContext } from '../material_request/MaterialRequests';
+import type { ProjectOutletContext } from '../material_request/MaterialRequestsPage';
 import { AppButton } from '@/components/ui/AppButton';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 

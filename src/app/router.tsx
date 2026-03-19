@@ -2,11 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import App from '../App';
 import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../pages/AuthPage';
-import MaterialRequests from '@/features/projects/material_request/MaterialRequests';
-import PurchaseRequestTabs from '@/features/projects/purchaseOrders/PurchaseRequestTabs';
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
-// import DocumentsPage from '@/features/projects/legal_department/documents/DocumentsPage';
 import MaterialsPage from '@/features/materials/MaterialsPage';
 import BlocksManager from '@/features/projects/pto/PtoManager';
 import LegalDocStagesPage from '@/features/projects/legal_department/legalDocStages/LegalDocStagesPage';
@@ -15,6 +12,7 @@ import ProjectDashboardPage from '@/features/projects/a_project/ProjectDashboard
 import ContractorsPage from '@/features/contractors/ContractorsPage';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
 import UsersPage from '@/features/users/UsersPage';
+import MaterialRequestsPage from '@/features/projects/material_request/MaterialRequestsPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -33,9 +31,8 @@ export const router = createBrowserRouter([
                 children: [
                     { index: true, element: null }, //дашборд
                     { path: 'documentStages', element: <LegalDocStagesPage /> },
-                    // { path: 'documentStages/:documentStagesId', element: <DocumentsPage /> },
                     { path: 'pto', element: <BlocksManager /> },
-                    // { path: 'materialRequests', element: <MaterialRequests /> },
+                    { path: 'materialRequests', element: <MaterialRequestsPage /> },
                     // { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
                     // { path: 'warehouses', element: <WarehousesPage /> },
                     // { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },

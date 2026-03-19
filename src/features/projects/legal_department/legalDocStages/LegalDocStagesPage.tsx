@@ -14,7 +14,7 @@ import {
 import { Add } from '@mui/icons-material';
 import LegalDocStageModal from './LegalDocStageModal';
 import { useOutletContext } from 'react-router-dom';
-import type { ProjectOutletContext } from '../../material_request/MaterialRequests';
+import type { ProjectOutletContext } from '../../material_request/MaterialRequestsPage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { deleteLegalDocument } from '../legalDoc/legalDocSlice';
 

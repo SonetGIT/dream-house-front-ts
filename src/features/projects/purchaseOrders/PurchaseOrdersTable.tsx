@@ -17,7 +17,7 @@ import { fetchPurchaseOrders } from './purchaseOrdersSlice';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useOutletContext } from 'react-router-dom';
-import type { ProjectOutletContext } from '../material_request/MaterialRequests';
+import type { ProjectOutletContext } from '../material_request/MaterialRequestsPage';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '@/features/reference/useReference';
 

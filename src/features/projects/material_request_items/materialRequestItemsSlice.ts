@@ -1,114 +1,185 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 
-export interface MaterialRequestItems {
+// ================= TYPES =================
+
+export interface Material {
     id: number;
+    name: string;
+}
+
+export interface MaterialRequestItem {
+    id: number;
+    material_request_id: number;
+    material_estimate_item_id: number | null;
     material_type: number;
     material_id: number;
     unit_of_measure: number;
     quantity: number;
     price: number | null;
-    summ: number | null;
-    comment: string | null;
     currency: number | null;
-    material_request_id: number;
+    currency_rate: number | null;
+    summ: number | null;
     status: number;
+    stage_id: number;
+    subsection_id: number;
+    comment: string;
     created_at: string;
     updated_at: string;
     deleted: boolean;
-    total_ordered: number;
-    remaining_quantity: number;
+
+    material?: Material;
+    total_ordered?: number;
+    remaining_quantity?: number;
 }
 
-export interface PurchasingAgentSearchResponse {
-    success: boolean;
-    data: MaterialRequestItems[];
-    pagination: Pagination;
-}
-
-interface SearchParams {
-    project_id: number;
-    material_type?: number;
-    material_id?: number;
+export interface MaterialRequestItemsSearchPayload {
+    material_request_id?: number;
+    status?: number;
     page?: number;
     size?: number;
-    // status?: number;
 }
 
-interface PurchasingAgentState {
-    items: MaterialRequestItems[];
+// ================= THUNKS =================
+
+// 🔍 SEARCH
+export const fetchMaterialRequestItems = createAsyncThunk(
+    'materialRequestItems/fetch',
+    async (payload: MaterialRequestItemsSearchPayload, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<MaterialRequestItem[]>(
+                '/materialRequestItems/search',
+                'POST',
+                payload,
+            );
+
+            return {
+                items: res.data,
+                pagination: res.pagination,
+            };
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+// ➕ CREATE
+export const createMaterialRequestItem = createAsyncThunk(
+    'materialRequestItems/create',
+    async (payload: Partial<MaterialRequestItem>, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<MaterialRequestItem>(
+                '/materialRequestItems/create',
+                'POST',
+                payload,
+            );
+
+            return res.data;
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+// ✏️ UPDATE
+export const updateMaterialRequestItem = createAsyncThunk(
+    'materialRequestItems/update',
+    async (
+        { id, data }: { id: number; data: Partial<MaterialRequestItem> },
+        { rejectWithValue },
+    ) => {
+        try {
+            const res = await apiRequest<MaterialRequestItem>(
+                `/materialRequestItems/update/${id}`,
+                'PUT',
+                data,
+            );
+
+            return res.data;
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+// ❌ DELETE
+export const deleteMaterialRequestItem = createAsyncThunk(
+    'materialRequestItems/delete',
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiRequest(`/materialRequestItems/delete/${id}`, 'DELETE');
+
+            return id;
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+// ================= SLICE =================
+
+interface MaterialRequestItemsState {
+    items: MaterialRequestItem[];
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
 }
 
-const initialState: PurchasingAgentState = {
+const initialState: MaterialRequestItemsState = {
     items: [],
     pagination: null,
     loading: false,
     error: null,
 };
 
-export interface PurchasingAgentSearchResponse {
-    success: boolean;
-    data: MaterialRequestItems[];
-    pagination: Pagination;
-}
-
-interface SearchParams {
-    project_id: number;
-    material_type?: number;
-    material_id?: number;
-    page?: number;
-    size?: number;
-    // status?: number;
-}
-
-export const fetchPurchasingAgentItems = createAsyncThunk<
-    ApiResponse<MaterialRequestItems[]>,
-    SearchParams,
-    { rejectValue: string }
->('materialRequestItems/purchasingAgentSearch', async (params, { rejectWithValue }) => {
-    try {
-        return await apiRequest<MaterialRequestItems[]>(
-            '/materialRequestItems/purchasingAgentSearch',
-            'POST',
-            params,
-        );
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка при загрузке заявок на материалы');
-    }
-});
-
 const materialRequestItemsSlice = createSlice({
     name: 'materialRequestItems',
     initialState,
     reducers: {
-        clearPurchasingAgentItems(state) {
+        clearItems(state) {
             state.items = [];
             state.pagination = null;
-            state.error = null;
         },
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchPurchasingAgentItems.pending, (state) => {
+
+            // ===== FETCH =====
+            .addCase(fetchMaterialRequestItems.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchPurchasingAgentItems.fulfilled, (state, action) => {
+            .addCase(fetchMaterialRequestItems.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload.data;
-                state.pagination = action.payload.pagination;
+                state.items = action.payload.items;
+                state.pagination = action.payload.pagination || null;
             })
-            .addCase(fetchPurchasingAgentItems.rejected, (state, action) => {
+            .addCase(fetchMaterialRequestItems.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+
+            // ===== CREATE =====
+            .addCase(createMaterialRequestItem.fulfilled, (state, action) => {
+                state.items.unshift(action.payload);
+            })
+
+            // ===== UPDATE =====
+            .addCase(updateMaterialRequestItem.fulfilled, (state, action) => {
+                const index = state.items.findIndex((i) => i.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
+            })
+
+            // ===== DELETE =====
+            .addCase(deleteMaterialRequestItem.fulfilled, (state, action) => {
+                state.items = state.items.filter((i) => i.id !== action.payload);
             });
     },
 });
 
-export const { clearPurchasingAgentItems } = materialRequestItemsSlice.actions;
+export const { clearItems } = materialRequestItemsSlice.actions;
 
 export default materialRequestItemsSlice.reducer;

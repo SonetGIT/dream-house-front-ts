@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -18,13 +18,14 @@ import MaterialRequestsTable from './MaterialRequestsTable';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
 import { getProjectById } from '../a_project/projectsSlice';
+import { Add } from '@mui/icons-material';
 
 export interface ProjectOutletContext {
     projectId: number;
 }
 
 /*************************************************************************************************************************/
-export default function MaterialRequests() {
+export default function MaterialRequestsPage() {
     const dispatch = useAppDispatch();
     const { projectId } = useOutletContext<ProjectOutletContext>();
 
@@ -47,6 +48,7 @@ export default function MaterialRequests() {
         materialTypes: useReference('materialTypes'),
         materials: useReference('materials'),
         unitsOfMeasure: useReference('unitsOfMeasure'),
+        currencies: useReference('currencies'),
         users: useReference('users'),
         materialRequestStatuses: useReference('materialRequestStatuses'),
         materialRequestItemStatuses: useReference('materialRequestItemStatuses'),
@@ -150,38 +152,78 @@ export default function MaterialRequests() {
     };
 
     return (
-        <>
-            {!isFormOpen && (
-                <Box>
-                    <StyledTooltip title="Создать заявку">
-                        <MdOutlinePlaylistAdd className="icon" onClick={handleCreateMatReq} />
-                    </StyledTooltip>
+        <Paper sx={{ p: 2, borderRadius: 3 }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Button variant="outlined" startIcon={<Add />} onClick={handleCreateMatReq}>
+                    Создать заявку
+                </Button>
+            </Box>
 
-                    <div>
-                        <MaterialRequestsTable
-                            data={materialRequests.filter((req) => req.project_id === project.id)}
-                            refs={refs}
-                        />
-                    </div>
-
-                    <TablePagination
-                        pagination={pagination}
-                        onPrev={handlePrevPage}
-                        onNext={handleNextPage}
-                    />
+            {/* CONTENT */}
+            {materialLoading ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <CircularProgress />
                 </Box>
+            ) : materialRequests.length === 0 ? (
+                <Typography color="text.secondary">Заявки отсутствуют</Typography>
+            ) : (
+                <>
+                    <MaterialRequestsTable
+                        data={materialRequests.filter((req) => req.project_id === project.id)}
+                        refs={refs}
+                    />
+                </>
             )}
 
-            {isFormOpen && (
-                <MaterialReqCreateEditForm
-                    request={editingMatReq || undefined}
-                    refs={refs}
-                    projectId={project.id}
-                    statusId={project.status}
-                    onSubmit={handleSave}
-                    onCancel={handleCancel}
-                />
-            )}
-        </>
+            {/* DELETE CONFIRM */}
+            {/* <ConfirmDialog
+                open={!!deleteState && deleteState.type === 'estimate'}
+                title="Удалить смету?"
+                message="Это действие нельзя отменить."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteState(null)}
+            />
+            <ConfirmDialog
+                open={!!deleteState && deleteState.type === 'item'}
+                title="Удалить позицию?"
+                message="Это действие нельзя отменить."
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteState(null)}
+            /> */}
+        </Paper>
+        // <>
+        //     {!isFormOpen && (
+        //         <Box>
+        //             <StyledTooltip title="Создать заявку">
+        //                 <MdOutlinePlaylistAdd className="icon" onClick={handleCreateMatReq} />
+        //             </StyledTooltip>
+
+        //             <div>
+        //                 <MaterialRequestsTable
+        //                     data={materialRequests.filter((req) => req.project_id === project.id)}
+        //                     refs={refs}
+        //                 />
+        //             </div>
+
+        //             {/* <TablePagination
+        //                 pagination={pagination}
+        //                 onPrev={handlePrevPage}
+        //                 onNext={handleNextPage}
+        //             /> */}
+        //         </Box>
+        //     )}
+
+        //     {isFormOpen && (
+        //         <MaterialReqCreateEditForm
+        //             request={editingMatReq || undefined}
+        //             refs={refs}
+        //             projectId={project.id}
+        //             statusId={project.status}
+        //             onSubmit={handleSave}
+        //             onCancel={handleCancel}
+        //         />
+        //     )}
+        // </>
     );
 }

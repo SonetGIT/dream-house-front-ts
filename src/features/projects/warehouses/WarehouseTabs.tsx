@@ -5,7 +5,7 @@ import { fetchWarehouseStocks } from '../warehouseStocks/warehouseStocksSlice';
 import WarehouseStocksTable from '../warehouseStocks/WarehouseStocksTable';
 import WarehousePurchaseOrdersTable from './WarehousePurchaseOrdersTable';
 import { useOutletContext, useParams } from 'react-router-dom';
-import type { ProjectOutletContext } from '../material_request/MaterialRequests';
+import type { ProjectOutletContext } from '../material_request/MaterialRequestsPage';
 import { fetchPurchaseOrders } from '../purchaseOrders/purchaseOrdersSlice';
 import MaterialMovementsTable from '../materialMovements/MaterialMovementsTable';
 import { fetchMaterialMovements } from '../materialMovements/materialMovementsSlice';

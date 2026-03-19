@@ -2,19 +2,29 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
+import type { MaterialRequestItem } from '../material_request_items/materialRequestItemsSlice';
 
 // Типы
-export interface MaterialRequestItem {
-    id: number;
-    material_type: number;
-    material_id: number;
-    unit_of_measure: number;
-    quantity: number;
-    price: number;
-    summ: number;
-    comment: string | null;
-    material_request_id: number;
-}
+// export interface MaterialRequestItem {
+//     id: number;
+//     material_request_id: number;
+//     material_estimate_item_id: number | null;
+//     material_type: number;
+//     material_id: number;
+//     unit_of_measure: number;
+//     quantity: number;
+//     price: number | null;
+//     currency: number | null;
+//     currency_rate: number | null;
+//     summ: number | null;
+//     status: number;
+//     stage_id: number;
+//     subsection_id: number;
+//     comment: string;
+//     created_at: string;
+//     updated_at: string;
+//     deleted: boolean;
+// }
 
 export interface MaterialRequest {
     id: number;
