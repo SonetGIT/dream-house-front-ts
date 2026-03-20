@@ -2,6 +2,7 @@ import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
+import { MdOutlinePlaylistAdd } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import {
@@ -19,7 +20,10 @@ import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
 import { getProjectById } from '../a_project/projectsSlice';
 import { Add } from '@mui/icons-material';
-import { deleteMaterialRequestItem } from '../material_request_items/materialRequestItemsSlice';
+import {
+    deleteMaterialRequestItem,
+    fetchMaterialRequestItems,
+} from '../material_request_items/materialRequestItemsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export interface ProjectOutletContext {
@@ -27,19 +31,15 @@ export interface ProjectOutletContext {
 }
 
 /*************************************************************************************************************************/
-export default function MaterialRequestsPage() {
+export default function MaterialRequestsPageыыы() {
     const dispatch = useAppDispatch();
-
-    // ✅ SAFE outlet context
-    const outlet = useOutletContext<ProjectOutletContext | null>();
-    const projectId = outlet?.projectId;
-
+    const { projectId } = useOutletContext<ProjectOutletContext>();
     const { currentProject: project, loading: projectLoading } = useAppSelector(
         (state) => state.projects,
     );
 
     const {
-        data: materialRequests = [],
+        data: materialRequests,
         loading: materialLoading,
         pagination,
     } = useAppSelector((state) => state.materialRequests);
@@ -47,13 +47,11 @@ export default function MaterialRequestsPage() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingMatReq, setEditingMatReq] = useState<MaterialRequest | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-
     const [deleteState, setDeleteState] = useState<{
         type: 'matReq' | 'matReqItem';
         id: number;
     } | null>(null);
 
-    // ✅ hooks всегда вызываются одинаково
     const projectTypes = useReference('projectTypes');
     const projectStatuses = useReference('projectStatuses');
     const materialTypes = useReference('materialTypes');
@@ -76,18 +74,17 @@ export default function MaterialRequestsPage() {
         materialRequestItemStatuses,
     };
 
-    //EFFECTS
-
+    // Загрузка проекта
     useEffect(() => {
         if (projectId && (!project || project.id !== projectId)) {
             dispatch(getProjectById(projectId));
         }
     }, [projectId, project, dispatch]);
 
+    // Загрузка заявок на материалы
     useEffect(() => {
         if (project?.id) {
             dispatch(clearMaterialRequests());
-
             dispatch(
                 fetchSearchMaterialReq({
                     page: 1,
@@ -98,45 +95,61 @@ export default function MaterialRequestsPage() {
         }
     }, [project?.id, dispatch]);
 
-    //HANDLERS
+    if (projectLoading || materialLoading) return <div>Загрузка...</div>;
+    if (!project) return <div>Проект не найден</div>;
 
     const handleCreateMatReq = () => {
         setEditingMatReq(null);
         setIsFormOpen(true);
     };
 
-    // const handleSave = (formData: MaterialRequestCreatePayload) => {
-    //     const action = editingMatReq
-    //         ? updateMaterialRequest({
-    //               id: editingMatReq.id,
-    //               data: formData,
-    //           })
-    //         : createMaterialReq(formData);
+    const handleSave = (formData: MaterialRequestCreatePayload) => {
+        if (editingMatReq) {
+            dispatch(
+                updateMaterialRequest({
+                    id: editingMatReq.id,
+                    data: formData,
+                }),
+            )
+                .unwrap()
+                .then(() => {
+                    dispatch(
+                        fetchSearchMaterialReq({
+                            page: 1,
+                            size: 10,
+                            project_id: editingMatReq.project_id,
+                        }),
+                    );
+                    toast.success('Заявка успешно обновлена');
+                })
+                .catch((err: string) => {
+                    toast.error(err || 'Ошибка при обновлении заявки');
+                });
+        } else {
+            dispatch(createMaterialReq(formData))
+                .unwrap()
+                .then(() => {
+                    dispatch(
+                        fetchSearchMaterialReq({
+                            page: 1,
+                            size: 10,
+                            project_id: formData.project_id,
+                        }),
+                    );
+                    toast.success('Заявка успешно создана', { duration: 3000 });
+                })
+                .catch((err: string) => {
+                    toast.error(err || 'Ошибка при создании заявки');
+                });
+        }
+        setIsFormOpen(false);
+    };
 
-    //     dispatch(action)
-    //         .unwrap()
-    //         .then(() => {
-    //             dispatch(
-    //                 fetchSearchMaterialReq({
-    //                     page: 1,
-    //                     size: 10,
-    //                     project_id: formData.project_id,
-    //                 }),
-    //             );
+    const handleCancel = () => {
+        setIsFormOpen(false);
+    };
 
-    //             toast.success(
-    //                 editingMatReq
-    //                     ? 'Заявка успешно обновлена'
-    //                     : 'Заявка успешно создана',
-    //             );
-    //         })
-    //         .catch((err: string) => {
-    //             toast.error(err || 'Ошибка');
-    //         });
-
-    //     setIsFormOpen(false);
-    // };
-
+    //DELETE
     const confirmDelete = useCallback(async () => {
         if (!deleteState) return;
 
@@ -146,11 +159,13 @@ export default function MaterialRequestsPage() {
                 toast.success('Заявка удалена');
             } else {
                 await dispatch(deleteMaterialRequestItem(deleteState.id)).unwrap();
-                toast.success('Позиция удалена');
+                toast.success('Позиция из заявки удалена');
 
-                if (projectId) {
-                    dispatch(fetchSearchMaterialReq({ project_id: projectId }));
-                }
+                dispatch(
+                    fetchSearchMaterialReq({
+                        project_id: projectId,
+                    }),
+                );
             }
         } catch {
             toast.error('Ошибка удаления');
@@ -159,23 +174,9 @@ export default function MaterialRequestsPage() {
         }
     }, [deleteState, dispatch, projectId]);
 
-    //SAFE RETURNS
-    if (!projectId) {
-        return <div>Нет projectId</div>;
-    }
-
-    if (projectLoading) {
-        return <div>Загрузка проекта...</div>;
-    }
-
-    if (!project) {
-        return <div>Проект не найден</div>;
-    }
-
-    //RENDER
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
-            {/* HEADER */}
+            {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                 <Button variant="outlined" startIcon={<Add />} onClick={handleCreateMatReq}>
                     Создать заявку
@@ -195,11 +196,11 @@ export default function MaterialRequestsPage() {
                         data={materialRequests.filter((req) => req.project_id === project.id)}
                         refs={refs}
                         onDeleteMatReqId={(id) => setDeleteState({ type: 'matReq', id })}
-                        onDeleteMatReqItemId={(itemId) =>
+                        onDeleteMatReqItemId={(itemId: number) =>
                             setDeleteState({ type: 'matReqItem', id: itemId })
                         }
                     />
-
+                    {/* Пагинация */}
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
@@ -211,6 +212,7 @@ export default function MaterialRequestsPage() {
                                         project_id: projectId,
                                         page: newPage,
                                         size: pagination.size,
+                                        // ...filters,
                                     }),
                                 );
                             }}
@@ -235,20 +237,52 @@ export default function MaterialRequestsPage() {
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog
-                open={deleteState?.type === 'matReq'}
+                open={!!deleteState && deleteState.type === 'matReq'}
                 title="Удалить заявку?"
                 message="Это действие нельзя отменить."
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteState(null)}
             />
-
             <ConfirmDialog
-                open={deleteState?.type === 'matReqItem'}
-                title="Удалить позицию из заявки?"
+                open={!!deleteState && deleteState.type === 'matReqItem'}
+                title="Удалить позицию из заявки ?"
                 message="Это действие нельзя отменить."
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteState(null)}
             />
         </Paper>
+        // <>
+        //     {!isFormOpen && (
+        //         <Box>
+        //             <StyledTooltip title="Создать заявку">
+        //                 <MdOutlinePlaylistAdd className="icon" onClick={handleCreateMatReq} />
+        //             </StyledTooltip>
+
+        //             <div>
+        //                 <MaterialRequestsTable
+        //                     data={materialRequests.filter((req) => req.project_id === project.id)}
+        //                     refs={refs}
+        //                 />
+        //             </div>
+
+        //             {/* <TablePagination
+        //                 pagination={pagination}
+        //                 onPrev={handlePrevPage}
+        //                 onNext={handleNextPage}
+        //             /> */}
+        //         </Box>
+        //     )}
+
+        //     {isFormOpen && (
+        //         <MaterialReqCreateEditForm
+        //             request={editingMatReq || undefined}
+        //             refs={refs}
+        //             projectId={project.id}
+        //             statusId={project.status}
+        //             onSubmit={handleSave}
+        //             onCancel={handleCancel}
+        //         />
+        //     )}
+        // </>
     );
 }

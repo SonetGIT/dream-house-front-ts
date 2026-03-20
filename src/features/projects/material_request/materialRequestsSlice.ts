@@ -142,6 +142,18 @@ export const updateMaterialRequest = createAsyncThunk<
     }
 });
 
+/* DELETE*/
+export const deleteMaterialRequest = createAsyncThunk<number, number, { rejectValue: string }>(
+    'materialRequests/delete',
+    async (id, { rejectWithValue }) => {
+        try {
+            await apiRequest(`/materialRequests/delete/${id}`, 'DELETE');
+            return id;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Ошибка удаления заявки');
+        }
+    },
+);
 export const signMaterialRequest = createAsyncThunk<
     MaterialRequest,
     { id: number; role_id: number; userId: number },
@@ -276,6 +288,13 @@ export const materialRequestsSlice = createSlice({
                 );
             })
 
+            /* DELETE */
+            .addCase(deleteMaterialRequest.fulfilled, (state, action) => {
+                state.data = state.data.filter((m) => m.id !== action.payload);
+                if (state.pagination) {
+                    state.pagination.total -= 1;
+                }
+            })
             //SIGN
             .addCase(signMaterialRequest.pending, (state) => {
                 state.loading = true;
@@ -284,7 +303,6 @@ export const materialRequestsSlice = createSlice({
 
             .addCase(signMaterialRequest.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log('ACTION', action.payload);
                 const index = state.data.findIndex((req) => req.id === action.payload.id);
 
                 if (index !== -1) {

@@ -1,7 +1,6 @@
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Pagination } from '@/features/users/userSlice';
 import { MdSkipNext, MdSkipPrevious } from 'react-icons/md';
-import { StyledTooltip } from './StyledTooltip';
-
 interface TablePaginationProps {
     // Обязательные пропсы
     pagination: Pagination;

@@ -24,6 +24,7 @@ export interface MaterialRequestItem {
     status: number;
     stage_id: number;
     subsection_id: number;
+    item_type: number;
     comment: string;
     created_at: string;
     updated_at: string;
@@ -53,7 +54,6 @@ export const fetchMaterialRequestItems = createAsyncThunk(
                 'POST',
                 payload,
             );
-
             return {
                 items: res.data,
                 pagination: res.pagination,

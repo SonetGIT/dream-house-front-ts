@@ -62,7 +62,7 @@ export default function Rating({
     return (
         <div className={`flex items-center gap-0.5 ${className}`}>
             {stars}
-            {showValue && (
+            {showValue && value != null && (
                 <span className={`ml-1.5 ${currentSize.text} text-gray-600 font-medium`}>
                     {value.toFixed(1)}
                 </span>
