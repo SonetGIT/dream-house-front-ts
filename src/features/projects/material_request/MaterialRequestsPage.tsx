@@ -1,19 +1,13 @@
 import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import {
     clearMaterialRequests,
-    createMaterialReq,
     deleteMaterialRequest,
     fetchSearchMaterialReq,
-    updateMaterialRequest,
-    type MaterialRequest,
 } from './materialRequestsSlice';
-import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
-import MaterialReqCreateEditForm from './MaterialReqCreateEditForm';
 import MaterialRequestsTable from './MaterialRequestsTable';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
@@ -21,6 +15,10 @@ import { getProjectById } from '../a_project/projectsSlice';
 import { Add } from '@mui/icons-material';
 import { deleteMaterialRequestItem } from '../material_request_items/materialRequestItemsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Modal from '@/components/ui/Modal';
+import MaterialRequestFlow from './material_request_flow/MaterialRequestFlow';
+import { calcRowTotal } from '@/utils/calcRowTotal';
+import { fetchProjectBlocks } from '../pto/projectBlocks/projectBlocksSlice';
 
 export interface ProjectOutletContext {
     projectId: number;
@@ -29,10 +27,8 @@ export interface ProjectOutletContext {
 /*************************************************************************************************************************/
 export default function MaterialRequestsPage() {
     const dispatch = useAppDispatch();
-
-    // ✅ SAFE outlet context
-    const outlet = useOutletContext<ProjectOutletContext | null>();
-    const projectId = outlet?.projectId;
+    const { projectId } = useOutletContext<ProjectOutletContext>();
+    const { data: blocks } = useAppSelector((state) => state.projectBlocks);
 
     const { currentProject: project, loading: projectLoading } = useAppSelector(
         (state) => state.projects,
@@ -44,8 +40,13 @@ export default function MaterialRequestsPage() {
         pagination,
     } = useAppSelector((state) => state.materialRequests);
 
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingMatReq, setEditingMatReq] = useState<MaterialRequest | null>(null);
+    const projectBlocks = useMemo(
+        () => blocks.filter((b) => b.project_id === projectId),
+        [blocks, projectId],
+    );
+
+    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
+    const [step, setStep] = useState<'select' | 'estimate' | 'form'>('select');
     const [currentPage, setCurrentPage] = useState(1);
 
     const [deleteState, setDeleteState] = useState<{
@@ -53,16 +54,19 @@ export default function MaterialRequestsPage() {
         id: number;
     } | null>(null);
 
-    // ✅ hooks всегда вызываются одинаково
+    // hooks всегда вызываются одинаково
     const projectTypes = useReference('projectTypes');
     const projectStatuses = useReference('projectStatuses');
     const materialTypes = useReference('materialTypes');
     const materials = useReference('materials');
     const unitsOfMeasure = useReference('unitsOfMeasure');
     const currencies = useReference('currencies');
+    const blockStages = useReference('blockStages');
+    const stageSubsections = useReference('stageSubsections');
     const users = useReference('users');
     const materialRequestStatuses = useReference('materialRequestStatuses');
     const materialRequestItemStatuses = useReference('materialRequestItemStatuses');
+    const materialRequestItemTypes = useReference('materialRequestItemTypes');
 
     const refs = {
         projectTypes,
@@ -71,19 +75,31 @@ export default function MaterialRequestsPage() {
         materials,
         unitsOfMeasure,
         currencies,
+        blockStages,
+        stageSubsections,
         users,
         materialRequestStatuses,
         materialRequestItemStatuses,
+        materialRequestItemTypes,
     };
 
-    //EFFECTS
+    // ================= EFFECTS =================
 
+    // 🔹 загрузка проекта
     useEffect(() => {
         if (projectId && (!project || project.id !== projectId)) {
             dispatch(getProjectById(projectId));
         }
     }, [projectId, project, dispatch]);
 
+    // загрузка блоков
+    useEffect(() => {
+        if (projectId && blocks.length === 0) {
+            dispatch(fetchProjectBlocks({ project_id: projectId, page: 1, size: 10 }));
+        }
+    }, [projectId, blocks.length, dispatch]);
+
+    // 🔹 загрузка заявок
     useEffect(() => {
         if (project?.id) {
             dispatch(clearMaterialRequests());
@@ -98,44 +114,11 @@ export default function MaterialRequestsPage() {
         }
     }, [project?.id, dispatch]);
 
-    //HANDLERS
+    // ================= HANDLERS =================
 
-    const handleCreateMatReq = () => {
-        setEditingMatReq(null);
-        setIsFormOpen(true);
+    const handleCreate = () => {
+        setModal('create');
     };
-
-    // const handleSave = (formData: MaterialRequestCreatePayload) => {
-    //     const action = editingMatReq
-    //         ? updateMaterialRequest({
-    //               id: editingMatReq.id,
-    //               data: formData,
-    //           })
-    //         : createMaterialReq(formData);
-
-    //     dispatch(action)
-    //         .unwrap()
-    //         .then(() => {
-    //             dispatch(
-    //                 fetchSearchMaterialReq({
-    //                     page: 1,
-    //                     size: 10,
-    //                     project_id: formData.project_id,
-    //                 }),
-    //             );
-
-    //             toast.success(
-    //                 editingMatReq
-    //                     ? 'Заявка успешно обновлена'
-    //                     : 'Заявка успешно создана',
-    //             );
-    //         })
-    //         .catch((err: string) => {
-    //             toast.error(err || 'Ошибка');
-    //         });
-
-    //     setIsFormOpen(false);
-    // };
 
     const confirmDelete = useCallback(async () => {
         if (!deleteState) return;
@@ -159,7 +142,8 @@ export default function MaterialRequestsPage() {
         }
     }, [deleteState, dispatch, projectId]);
 
-    //SAFE RETURNS
+    // ================= SAFE RETURNS =================
+
     if (!projectId) {
         return <div>Нет projectId</div>;
     }
@@ -177,7 +161,7 @@ export default function MaterialRequestsPage() {
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* HEADER */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button variant="outlined" startIcon={<Add />} onClick={handleCreateMatReq}>
+                <Button variant="outlined" startIcon={<Add />} onClick={handleCreate}>
                     Создать заявку
                 </Button>
             </Box>
@@ -232,6 +216,22 @@ export default function MaterialRequestsPage() {
                     )}
                 </>
             )}
+            <Modal
+                size={step === 'estimate' || step === 'form' ? 'full' : 'xl'}
+                isOpen={modal === 'create'}
+                onClose={() => setModal(null)}
+                title="Создать новую заявку"
+            >
+                <MaterialRequestFlow
+                    step={step}
+                    setStep={setStep}
+                    blocks={projectBlocks}
+                    projectId={projectId}
+                    refs={refs}
+                    calcRowTotal={calcRowTotal}
+                    onClose={() => setModal(null)}
+                />
+            </Modal>
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog

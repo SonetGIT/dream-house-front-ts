@@ -1,15 +1,24 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { MdDomainAdd } from 'react-icons/md';
+type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
     children: React.ReactNode;
+    size?: ModalSize;
 }
+const sizeClasses: Record<ModalSize, string> = {
+    sm: 'max-w-md',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
+    xl: 'max-w-5xl',
+    full: 'max-w-[95vw]',
+};
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, size = 'xl' }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -35,11 +44,12 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
 
             {/* Modal */}
             <div
-                className="
-                    relative w-full max-w-5xl
-                    bg-white rounded-xl shadow-2xl
-                    max-h-[90vh] flex flex-col
-                "
+                className={`
+                relative w-full
+                ${sizeClasses[size]}
+                bg-white rounded-xl shadow-2xl
+                max-h-[90vh] flex flex-col
+            `}
                 style={{ animation: 'slideUp 0.3s ease-out' }}
                 onClick={(e) => e.stopPropagation()}
             >

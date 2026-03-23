@@ -174,5 +174,12 @@
             "name": ["name"],
             "stage_id": "stage_id"
         }
+    },
+    "materialRequestItemTypes": {
+        "apiName": "/materialRequestItemTypes/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }

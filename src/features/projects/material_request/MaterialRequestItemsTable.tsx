@@ -3,11 +3,12 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { RowActions } from '@/components/ui/RowActions';
-import { Trash2 } from 'lucide-react';
+import { FolderOpen, Trash2 } from 'lucide-react';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface MatREqItemsProps {
     materialRequestId: number;
-    refs: any;
+    refs: Record<string, ReferenceResult>;
     onDelete: (id: number) => void;
 }
 
@@ -43,6 +44,9 @@ export default function MaterialRequestItemsTable({
     const dispatch = useAppDispatch();
 
     const { items, loading, pagination } = useAppSelector((state) => state.materialRequestItems);
+    const filteredItems = items.filter((i) => i.material_request_id === materialRequestId);
+    const estimateTypeId = 1;
+    const addTypeId = 2;
 
     const [page, setPage] = useState(1);
 
@@ -64,6 +68,17 @@ export default function MaterialRequestItemsTable({
             }
         );
     };
+
+    if (filteredItems.length === 0) {
+        return (
+            <div className="py-20 text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
+                    <FolderOpen className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="mb-1 text-base font-medium text-gray-900">Нет материалов</h3>
+            </div>
+        );
+    }
     /********************************************************************************************************/
     return (
         <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
@@ -71,6 +86,9 @@ export default function MaterialRequestItemsTable({
                 <thead className="text-gray-700 bg-gray-50">
                     <tr className="border-b">
                         <th className="w-12 px-3 py-3 text-sm font-semibold text-left">№</th>
+                        <th className="px-3 py-2 text-sm text-left">Тип заявки</th>
+                        <th className="px-3 py-2 text-sm text-left">Этап</th>
+                        <th className="px-3 py-2 text-sm text-left">Подэтап</th>
                         <th className="px-3 py-2 text-sm text-left">Тип</th>
                         <th className="px-3 py-2 text-sm text-left">Материал</th>
                         <th className="px-3 py-2 text-sm text-left">Ед. изм</th>
@@ -86,7 +104,7 @@ export default function MaterialRequestItemsTable({
                 </thead>
 
                 <tbody>
-                    {items?.map((item, index) => {
+                    {filteredItems?.map((item, index) => {
                         const statusInfo = getStatusConfig(item.status);
 
                         return (
@@ -95,49 +113,65 @@ export default function MaterialRequestItemsTable({
                                 <td className="px-2 py-2 text-xs font-medium text-gray-700">
                                     {index + 1}
                                 </td>
-
+                                {/* Тип заявки */}
+                                <td className="px-2 py-2 text-center text-gray-900 border-l">
+                                    <span
+                                        className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold border rounded
+                                            ${
+                                                item.item_type === estimateTypeId //из сметы
+                                                    ? 'text-pink-800 bg-pink-100 border-pink-200'
+                                                    : item.item_type === addTypeId //дополнительно
+                                                      ? 'text-orange-800 bg-orange-100 border-orange-200'
+                                                      : 'text-gray-800 bg-gray-100 border-gray-200'
+                                            }
+                                        `}
+                                    >
+                                        {item.item_type != null
+                                            ? refs.materialRequestItemTypes.lookup(
+                                                  Number(item.item_type),
+                                              )
+                                            : '—'}
+                                    </span>
+                                </td>
+                                <td className="px-2 py-2 text-sm text-gray-600">
+                                    {refs.blockStages.lookup(item.stage_id)}
+                                </td>
+                                <td className="px-2 py-2 text-sm text-gray-600">
+                                    {refs.stageSubsections.lookup(item.subsection_id)}
+                                </td>
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.materialTypes.lookup(item.material_type)}
                                 </td>
-
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.materials.lookup(item.material_id)}
                                 </td>
-
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.unitsOfMeasure.lookup(item.unit_of_measure)}
                                 </td>
-
                                 {/* Количество */}
                                 <td className="px-2 py-2 text-sm text-right text-gray-900">
                                     {item.quantity}
                                 </td>
-
                                 {/* Валюта */}
                                 <td className="px-2 py-2 text-sm text-right text-blue-700">
                                     {item.currency != null
                                         ? refs.currencies.lookup(item.currency)
                                         : '—'}
                                 </td>
-
                                 {/* Курс */}
                                 <td className="px-2 py-2 font-medium text-right">
                                     {item.currency_rate}
                                 </td>
-
                                 {/* Цена */}
                                 <td className="px-2 py-2 font-medium text-right">{item.price}</td>
-
                                 {/* Сумма */}
                                 <td className="px-2 py-2 font-medium text-right text-green-600">
                                     {/* если есть функция расчета — вставь */}
                                 </td>
-
                                 {/* Примечание */}
                                 <td className="px-2 py-2 text-xs text-center text-gray-600">
                                     {item.comment || '—'}
                                 </td>
-
                                 {/* Статус */}
                                 <td className="px-3 py-2.5">
                                     <span
@@ -150,7 +184,6 @@ export default function MaterialRequestItemsTable({
                                         {refs.materialRequestItemStatuses.lookup(item.status)}
                                     </span>
                                 </td>
-
                                 {/* Действия */}
                                 <td className="px-2 py-2">
                                     <div className="flex items-center justify-center gap-1.5">

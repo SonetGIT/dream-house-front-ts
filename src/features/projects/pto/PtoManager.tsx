@@ -35,7 +35,6 @@ export default function PtoManager() {
         () => blocks.find((b) => b.id === selectedProjectBlockId) ?? null,
         [blocks, selectedProjectBlockId],
     );
-    console.log('cnl', currentBlock);
 
     /* FETCH */
     useEffect(() => {
