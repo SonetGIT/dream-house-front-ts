@@ -127,11 +127,16 @@ export default function MaterialEstimateItemsCreate({
                 r.subsection_id &&
                 r.material_type &&
                 r.material_id &&
-                r.unit_of_measure,
+                r.unit_of_measure &&
+                r.price &&
+                r.quantity_planned &&
+                r.coefficient &&
+                r.currency &&
+                r.price,
         );
 
         if (!valid.length) {
-            alert('Добавьте хотя бы один материалы');
+            toast.error('Заполните все поля!');
             return;
         }
 

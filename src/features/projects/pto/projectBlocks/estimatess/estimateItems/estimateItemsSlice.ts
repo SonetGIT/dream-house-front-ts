@@ -10,7 +10,7 @@ export interface EstimateItem {
     subsection_id: number | null;
 
     item_type: number;
-
+    entry_type: number;
     service_type: number | null;
     service_id: number | null;
 

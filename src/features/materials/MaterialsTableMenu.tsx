@@ -17,7 +17,7 @@ interface Props {
 }
 
 /*********************************************************************************************************/
-export function MaterialsTable(props: Props) {
+export function MaterialsTableMenu(props: Props) {
     return (
         <div className="table-container">
             <Table className="table">
@@ -67,11 +67,11 @@ export function MaterialsTable(props: Props) {
             </Table>
 
             {/*Пагинация***********************************************************************************************************/}
-            <TablePagination
+            {/* <TablePagination
                 pagination={props.pagination}
                 onPrev={props.onPrevPage}
                 onNext={props.onNextPage}
-            />
+            /> */}
         </div>
     );
 }

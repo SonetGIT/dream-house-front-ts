@@ -10,7 +10,6 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
 import toast from 'react-hot-toast';
 import { approveMatReq } from './approveMatReq';
-import MaterialRequestItemsTable from '../material_request_items/MatReqItemsTable';
 import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
 
 interface PropsType {

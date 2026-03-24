@@ -41,6 +41,8 @@ const matReqItemStatuses: Record<number, { label: string; className: string }> =
         className: 'bg-red-100 text-red-800 border-red-200',
     },
 };
+export const estimateTypeId = 1;
+export const addTypeId = 2;
 
 export default function MatReqItemsTable({
     materialRequestId,
@@ -49,9 +51,6 @@ export default function MatReqItemsTable({
     currentUser,
     onChange,
 }: MatReqItemsProps) {
-    const estimateTypeId = 1;
-    const addTypeId = 2;
-
     const dispatch = useAppDispatch();
     const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
 
@@ -170,7 +169,6 @@ export default function MatReqItemsTable({
                                     {index + 1}
                                 </td>
 
-                                {/* Тип заявки */}
                                 {/* Тип заявки */}
                                 <td className="px-2 py-2 text-center text-gray-900 border-l">
                                     <span

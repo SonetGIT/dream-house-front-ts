@@ -9,7 +9,7 @@ import {
 } from './materialsSlice';
 import { Button, Box, CircularProgress, Typography } from '@mui/material';
 import { MdOutlinePlaylistAdd, MdOutlineRestartAlt } from 'react-icons/md';
-import { MaterialsTable } from './MaterialsTable';
+import { MaterialsTableMenu } from './MaterialsTableMenu';
 import { MaterialCreateEditDialog } from './MaterialCreateEditDialog';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
@@ -207,7 +207,7 @@ export default function MaterialsPage() {
             </div>
 
             {/* TABLE */}
-            <MaterialsTable
+            <MaterialsTableMenu
                 data={data}
                 refs={refs}
                 onEdit={handleEdit}

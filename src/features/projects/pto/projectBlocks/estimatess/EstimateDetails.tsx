@@ -47,6 +47,7 @@ export default function EstimateDetails({
         currencies: useReference('currencies'),
         blockStages: useReference('blockStages'),
         stageSubsections: useReference('stageSubsections'),
+        materialRequestItemTypes: useReference('materialRequestItemTypes'),
     };
 
     const handleAddMaterial = (rowId: number) => {
