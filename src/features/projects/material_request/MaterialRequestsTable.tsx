@@ -8,7 +8,10 @@ import type { User } from '@/features/users/userSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
-import MaterialRequestItemsTable from './MaterialRequestItemsTable';
+import toast from 'react-hot-toast';
+import { approveMatReq } from './approveMatReq';
+import MaterialRequestItemsTable from '../material_request_items/MatReqItemsTable';
+import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
 
 interface PropsType {
     data: MaterialRequest[];
@@ -16,12 +19,35 @@ interface PropsType {
     onDeleteMatReqId: (id: number) => void;
     onDeleteMatReqItemId: (id: number) => void;
 }
-
+const matReqStatuses: Record<number, { label: string; className: string }> = {
+    1: {
+        label: 'На одобрении',
+        className: 'bg-violet text-violet-800 border-violet-200',
+    },
+    2: {
+        label: 'Одобрена',
+        className: 'bg-blue-100 text-blue-800 border-blue-200',
+    },
+    3: {
+        label: 'На исполнении',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    },
+    4: {
+        label: 'Исполнена',
+        className: 'bg-green-100 text-green-800 border-green-200',
+    },
+    5: {
+        label: 'Отменена',
+        className: 'bg-red-100 text-red-800 border-red-200',
+    },
+};
 /*************************************************************************************************************************/
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
+    const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
+    const [selectedEstimateId, setSelectedEstimateId] = useState<number | null>(null);
     const toggleRow = (id: number) => {
         setOpenRows((prev) => {
             const isOpening = !prev[id];
@@ -38,6 +64,15 @@ export default function MaterialRequestsTable(props: PropsType) {
 
             return { ...prev, [id]: isOpening };
         });
+    };
+
+    const getStatusConfig = (statusId: number) => {
+        return (
+            matReqStatuses[statusId] || {
+                label: 'Неизвестно',
+                className: 'bg-gray-100 text-gray-800 border-gray-200',
+            }
+        );
     };
 
     // Проверка, может ли текущий пользователь подписать заявку
@@ -93,14 +128,57 @@ export default function MaterialRequestsTable(props: PropsType) {
     const handleSign = (req: MaterialRequest) => {
         if (!currentUser || !canSign(req, currentUser)) return;
 
-        dispatch(
-            signMaterialRequest({
-                id: req.id,
-                role_id: currentUser.role_id,
-                userId: currentUser.id,
-            }),
-        );
+        const items = itemsMap[req.id] || [];
+
+        const manualItems = items.filter((i) => Number(i.item_type) === 2);
+
+        // 🔴 если есть manual — нужна смета
+        if (manualItems.length > 0 && !selectedEstimateId) {
+            toast.error('Выберите смету');
+            return;
+        }
+
+        // 🔴 валидация
+        const invalid = manualItems.some((i) => !i.price || !i.currency || !i.currency_rate);
+
+        if (invalid) {
+            toast.error('Заполните цену, валюту и курс');
+            return;
+        }
+
+        // 🔥 ВАЖНО: выбираем что вызвать
+        if (manualItems.length > 0) {
+            dispatch(
+                approveMatReq({
+                    requestId: req.id,
+                    role_id: currentUser.role_id,
+                    userId: currentUser.id,
+                    material_estimate_id: selectedEstimateId!,
+                    items,
+                }),
+            );
+        } else {
+            // если нет manual — обычная подпись
+            dispatch(
+                signMaterialRequest({
+                    id: req.id,
+                    role_id: currentUser.role_id,
+                    userId: currentUser.id,
+                }),
+            );
+        }
     };
+    // const handleSign = (req: MaterialRequest) => {
+    //     if (!currentUser || !canSign(req, currentUser)) return;
+
+    //     dispatch(
+    //         signMaterialRequest({
+    //             id: req.id,
+    //             role_id: currentUser.role_id,
+    //             userId: currentUser.id,
+    //         }),
+    //     );
+    // };
 
     /********************************************************************************************************************************/
     return (
@@ -171,6 +249,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                         approvedTime: req.approved_by_main_engineer_time,
                                     },
                                 ];
+                                const statusInfo = getStatusConfig(req.status);
 
                                 return (
                                     <React.Fragment key={req.id}>
@@ -200,7 +279,13 @@ export default function MaterialRequestsTable(props: PropsType) {
                                             </td>
                                             {/* статус */}
                                             <td className="px-2 py-2 text-center text-gray-900 border-l">
-                                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
+                                                <span
+                                                    className={`
+                                        inline-flex text-center px-2 py-0.5
+                                        text-xs font-semibold border rounded-full
+                                        ${statusInfo.className}
+                                    `}
+                                                >
                                                     {req.status != null
                                                         ? props.refs.materialRequestStatuses.lookup(
                                                               req.status,
@@ -308,9 +393,10 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             Материалы
                                                         </p>
 
-                                                        <MaterialRequestItemsTable
+                                                        <MatReqItemsTable
                                                             materialRequestId={req.id}
                                                             refs={props.refs}
+                                                            currentUser={currentUser}
                                                             onDelete={props.onDeleteMatReqItemId}
                                                         />
                                                         {/* КНОПКА ПОДПИСАТЬ */}

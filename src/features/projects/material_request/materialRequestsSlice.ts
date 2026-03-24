@@ -1,35 +1,13 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { MaterialRequestCreatePayload } from './MaterialReqCreateEditForm';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 import type { MaterialRequestItem } from '../material_request_items/materialRequestItemsSlice';
-
-// Типы
-// export interface MaterialRequestItem {
-//     id: number;
-//     material_request_id: number;
-//     material_estimate_item_id: number | null;
-//     material_type: number;
-//     material_id: number;
-//     unit_of_measure: number;
-//     quantity: number;
-//     price: number | null;
-//     currency: number | null;
-//     currency_rate: number | null;
-//     summ: number | null;
-//     status: number;
-//     stage_id: number;
-//     subsection_id: number;
-//     comment: string;
-//     created_at: string;
-//     updated_at: string;
-//     deleted: boolean;
-// }
 
 export interface MaterialRequest {
     id: number;
     project_id: number;
     status: number;
+
     approved_by_foreman: boolean | null;
     approved_by_foreman_time: string | null;
     foreman_user_id: number | null;
@@ -53,6 +31,7 @@ export interface MaterialRequest {
     created_at: string;
     updated_at: string;
     deleted: boolean;
+
     items: MaterialRequestItem[];
 }
 
@@ -61,7 +40,31 @@ export interface MaterialRequestSearchResponse {
     data: MaterialRequest[];
     pagination: Pagination;
 }
+export interface MaterialRequestCreatePayload {
+    project_id: number;
+    block_id: number;
+    status?: number;
 
+    items: {
+        material_id: number | null;
+        material_type: number | null;
+        unit_of_measure: number | null;
+
+        stage_id: number | null;
+        subsection_id: number | null;
+
+        quantity: number;
+        coefficient?: number;
+
+        currency?: number | null;
+        currency_rate?: number;
+        price?: number;
+
+        comment?: string;
+
+        item_type: number;
+    }[];
+}
 interface MaterialRequestsState {
     data: MaterialRequest[];
     pagination: Pagination | null;
@@ -77,15 +80,16 @@ const initialState: MaterialRequestsState = {
     error: null,
     projectId: null,
 };
-//??? ПРИ ДОБАВЛЕНИИ ФИЛЬТРА НАДО ПОСМОТРЕТЬ
+
+//FILTERS
 interface MaterialRequestFilters {
     status?: number;
     dateFrom?: string;
     dateTo?: string;
 }
 
-//THUNK
-// Search / List
+//THUNKS
+// SEARCH
 interface FetchSearchMaterialReqParams {
     page?: number;
     size?: number;
@@ -106,6 +110,7 @@ export const fetchSearchMaterialReq = createAsyncThunk<
     }
 });
 
+// CREATE
 export const createMaterialReq = createAsyncThunk<
     MaterialRequest,
     MaterialRequestCreatePayload,
@@ -124,17 +129,24 @@ export const createMaterialReq = createAsyncThunk<
     }
 });
 
+// UPDATE
 export const updateMaterialRequest = createAsyncThunk<
     MaterialRequest,
-    { id: number; data: MaterialRequestCreatePayload },
+    {
+        id: number;
+        items: {
+            id: number;
+            price: number;
+            currency: number;
+            currency_rate: number;
+        }[];
+    },
     { rejectValue: string }
->('materialRequests/update', async ({ id, data }, { rejectWithValue }) => {
+>('materialRequests/update', async ({ id, items }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MaterialRequest>(
-            `/materialRequests/update/${id}`,
-            'PUT',
-            data,
-        );
+        const res = await apiRequest<MaterialRequest>(`/materialRequests/update/${id}`, 'PUT', {
+            items,
+        });
 
         return res.data;
     } catch (err: any) {
@@ -142,7 +154,7 @@ export const updateMaterialRequest = createAsyncThunk<
     }
 });
 
-/* DELETE*/
+// DELETE
 export const deleteMaterialRequest = createAsyncThunk<number, number, { rejectValue: string }>(
     'materialRequests/delete',
     async (id, { rejectWithValue }) => {
@@ -154,13 +166,25 @@ export const deleteMaterialRequest = createAsyncThunk<number, number, { rejectVa
         }
     },
 );
+
+//SIGN (ОБНОВЛЁН)
 export const signMaterialRequest = createAsyncThunk<
     MaterialRequest,
-    { id: number; role_id: number; userId: number },
+    {
+        id: number;
+        role_id: number;
+        userId: number;
+        items?: {
+            id: number;
+            price: number;
+            currency: number;
+            currency_rate: number;
+        }[];
+    },
     { rejectValue: string }
->('materialRequests/sign', async ({ id, role_id, userId }, { rejectWithValue }) => {
+>('materialRequests/sign', async ({ id, role_id, userId, items }, { rejectWithValue }) => {
     try {
-        const update: Partial<MaterialRequest> = {};
+        const update: any = {};
         const now = new Date().toISOString();
 
         switch (role_id) {
@@ -220,6 +244,11 @@ export const signMaterialRequest = createAsyncThunk<
                 return rejectWithValue('Неизвестная роль');
         }
 
+        //ДОБАВИЛИ ITEMS
+        if (items && items.length > 0) {
+            update.items = items;
+        }
+
         const res = await apiRequest<MaterialRequest>(
             `/materialRequests/update/${id}`,
             'PUT',
@@ -232,13 +261,12 @@ export const signMaterialRequest = createAsyncThunk<
     }
 });
 
-// SLICE
+//SLICE
 export const materialRequestsSlice = createSlice({
     name: 'materialRequests',
     initialState,
 
     reducers: {
-        // Если нужно ручное очищение:
         clearMaterialRequests(state) {
             state.data = [];
             state.pagination = null;
@@ -250,13 +278,13 @@ export const materialRequestsSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
-            // Pending
+            // SEARCH
             .addCase(fetchSearchMaterialReq.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
                 state.projectId = action.meta.arg.project_id;
             })
-            // Fulfilled
+
             .addCase(fetchSearchMaterialReq.fulfilled, (state, action) => {
                 if (state.projectId !== action.meta.arg.project_id) return;
 
@@ -264,38 +292,39 @@ export const materialRequestsSlice = createSlice({
                 state.data = action.payload.data;
                 state.pagination = action.payload.pagination ?? null;
             })
-            // Rejected
+
             .addCase(fetchSearchMaterialReq.rejected, (state, action) => {
                 state.loading = false;
                 state.error = (action.payload as string) || 'Ошибка загрузки';
             })
 
-            // CREATE MaterialReq
+            // CREATE
             .addCase(createMaterialReq.fulfilled, (state, action) => {
                 if (state.projectId === action.payload.project_id) {
                     state.data.unshift(action.payload);
                 }
-
-                // state.data.unshift(action.payload);
             })
+
             .addCase(createMaterialReq.rejected, (state, action) => {
                 state.error = action.payload as string;
             })
 
+            // UPDATE
             .addCase(updateMaterialRequest.fulfilled, (state, action) => {
-                state.data = state.data.map((u) =>
-                    u.id === action.payload.id ? action.payload : u,
+                state.data = state.data.map((req) =>
+                    req.id === action.payload.id ? action.payload : req,
                 );
             })
 
-            /* DELETE */
+            // DELETE
             .addCase(deleteMaterialRequest.fulfilled, (state, action) => {
                 state.data = state.data.filter((m) => m.id !== action.payload);
                 if (state.pagination) {
                     state.pagination.total -= 1;
                 }
             })
-            //SIGN
+
+            // SIGN
             .addCase(signMaterialRequest.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -303,12 +332,13 @@ export const materialRequestsSlice = createSlice({
 
             .addCase(signMaterialRequest.fulfilled, (state, action) => {
                 state.loading = false;
+
                 const index = state.data.findIndex((req) => req.id === action.payload.id);
 
                 if (index !== -1) {
                     state.data[index] = {
-                        ...state.data[index], //сохраняем items
-                        ...action.payload, // обновляем подпись
+                        ...state.data[index],
+                        ...action.payload,
                     };
                 }
             })

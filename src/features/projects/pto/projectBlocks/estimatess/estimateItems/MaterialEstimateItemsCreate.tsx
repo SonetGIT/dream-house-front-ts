@@ -49,6 +49,7 @@ export default function MaterialEstimateItemsCreate({
         stage_id: null,
         subsection_id: null,
         item_type: 1, // 1 - материал
+        entry_type: 1, //из сметы
         material_type: null,
         material_id: null,
         unit_of_measure: null,
@@ -120,7 +121,14 @@ export default function MaterialEstimateItemsCreate({
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const valid = rows.filter((r) => r.material_type && r.material_id && r.unit_of_measure);
+        const valid = rows.filter(
+            (r) =>
+                r.stage_id &&
+                r.subsection_id &&
+                r.material_type &&
+                r.material_id &&
+                r.unit_of_measure,
+        );
 
         if (!valid.length) {
             alert('Добавьте хотя бы один материалы');

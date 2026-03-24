@@ -1,15 +1,22 @@
+//добавь эти импорты
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
+import { fetchMaterialRequestItems } from './materialRequestItemsSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { RowActions } from '@/components/ui/RowActions';
 import { FolderOpen, Trash2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
+import type { User } from '@/features/users/userSlice';
+import ReferencesSelect from '@/components/ui/ReferencesSelect';
+import { useCurrencyRates } from '@/utils/useCurrencyRates';
+import { parseNumber } from '@/utils/parseNumber';
 
-interface MatREqItemsProps {
+interface MatReqItemsProps {
     materialRequestId: number;
     refs: Record<string, ReferenceResult>;
     onDelete: (id: number) => void;
+    currentUser: User;
+    onChange?: (items: any[]) => void;
 }
 
 const matReqItemStatuses: Record<number, { label: string; className: string }> = {
@@ -35,21 +42,52 @@ const matReqItemStatuses: Record<number, { label: string; className: string }> =
     },
 };
 
-/*******************************************************************************************************/
-export default function MaterialRequestItemsTable({
+export default function MatReqItemsTable({
     materialRequestId,
     refs,
     onDelete,
-}: MatREqItemsProps) {
-    const dispatch = useAppDispatch();
-
-    const { items, loading, pagination } = useAppSelector((state) => state.materialRequestItems);
-    const filteredItems = items.filter((i) => i.material_request_id === materialRequestId);
+    currentUser,
+    onChange,
+}: MatReqItemsProps) {
     const estimateTypeId = 1;
     const addTypeId = 2;
 
+    const dispatch = useAppDispatch();
+    const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
+
+    const rates = useCurrencyRates();
+
+    const filteredItems = items.filter((i) => i.material_request_id === materialRequestId);
+
+    const isPTO = currentUser?.role_id === 10;
+    const isMainEngineer = currentUser?.role_id === 11;
+
     const [page, setPage] = useState(1);
 
+    const [editedItems, setEditedItems] = useState<Record<number, any>>({});
+
+    //init
+    useEffect(() => {
+        setEditedItems((prev) => {
+            const updated = { ...prev };
+
+            filteredItems.forEach((item) => {
+                if (!updated[item.id]) {
+                    updated[item.id] = {
+                        id: item.id,
+                        price: item.price ?? 0,
+                        currency: item.currency ?? null,
+                        currency_rate: item.currency_rate ?? 1,
+                        item_type: item.item_type,
+                    };
+                }
+            });
+
+            return updated;
+        });
+    }, [materialRequestId]);
+
+    //fetch
     useEffect(() => {
         dispatch(
             fetchMaterialRequestItems({
@@ -68,6 +106,21 @@ export default function MaterialRequestItemsTable({
             }
         );
     };
+    //change handler
+    const handleChange = (id: number, field: string, value: any) => {
+        setEditedItems((prev) => {
+            const updated = {
+                ...prev,
+                [id]: {
+                    ...prev[id],
+                    [field]: value,
+                },
+            };
+
+            onChange?.(Object.values(updated));
+            return updated;
+        });
+    };
 
     if (filteredItems.length === 0) {
         return (
@@ -79,7 +132,7 @@ export default function MaterialRequestItemsTable({
             </div>
         );
     }
-    /********************************************************************************************************/
+
     return (
         <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
             <table className="w-full">
@@ -104,23 +157,28 @@ export default function MaterialRequestItemsTable({
                 </thead>
 
                 <tbody>
-                    {filteredItems?.map((item, index) => {
+                    {filteredItems.map((item, index) => {
                         const statusInfo = getStatusConfig(item.status);
+                        const edited = editedItems[item.id] || {};
+
+                        const isManual = Number(item.item_type) === addTypeId;
+                        const canEdit = isManual && (isPTO || isMainEngineer) && item.status === 1;
 
                         return (
                             <tr key={item.id}>
-                                {/* Номер */}
                                 <td className="px-2 py-2 text-xs font-medium text-gray-700">
                                     {index + 1}
                                 </td>
+
+                                {/* Тип заявки */}
                                 {/* Тип заявки */}
                                 <td className="px-2 py-2 text-center text-gray-900 border-l">
                                     <span
                                         className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold border rounded
                                             ${
-                                                item.item_type === estimateTypeId //из сметы
+                                                item.item_type === estimateTypeId
                                                     ? 'text-pink-800 bg-pink-100 border-pink-200'
-                                                    : item.item_type === addTypeId //дополнительно
+                                                    : item.item_type === addTypeId
                                                       ? 'text-orange-800 bg-orange-100 border-orange-200'
                                                       : 'text-gray-800 bg-gray-100 border-gray-200'
                                             }
@@ -133,46 +191,103 @@ export default function MaterialRequestItemsTable({
                                             : '—'}
                                     </span>
                                 </td>
+
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.blockStages.lookup(item.stage_id)}
                                 </td>
+
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.stageSubsections.lookup(item.subsection_id)}
                                 </td>
+
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.materialTypes.lookup(item.material_type)}
                                 </td>
+
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.materials.lookup(item.material_id)}
                                 </td>
+
                                 <td className="px-2 py-2 text-sm text-gray-600">
                                     {refs.unitsOfMeasure.lookup(item.unit_of_measure)}
                                 </td>
-                                {/* Количество */}
+
                                 <td className="px-2 py-2 text-sm text-right text-gray-900">
                                     {item.quantity}
                                 </td>
+
                                 {/* Валюта */}
                                 <td className="px-2 py-2 text-sm text-right text-blue-700">
-                                    {item.currency != null
-                                        ? refs.currencies.lookup(item.currency)
-                                        : '—'}
+                                    {canEdit ? (
+                                        <ReferencesSelect
+                                            options={refs.currencies.data || []}
+                                            value={edited.currency ?? null}
+                                            onChange={(v) => {
+                                                handleChange(item.id, 'currency', v);
+
+                                                const rate = rates.find(
+                                                    (r) => Number(r.currency_id) === Number(v),
+                                                )?.rate;
+
+                                                handleChange(item.id, 'currency_rate', rate ?? 1);
+                                            }}
+                                        />
+                                    ) : item.currency != null ? (
+                                        refs.currencies.lookup(item.currency)
+                                    ) : (
+                                        '—'
+                                    )}
                                 </td>
+
                                 {/* Курс */}
                                 <td className="px-2 py-2 font-medium text-right">
-                                    {item.currency_rate}
+                                    {canEdit ? (
+                                        <input
+                                            type="text"
+                                            value={edited.currency_rate ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    item.id,
+                                                    'currency_rate',
+                                                    parseNumber(e.target.value),
+                                                )
+                                            }
+                                            className="w-20 px-1 text-right border rounded"
+                                        />
+                                    ) : (
+                                        item.currency_rate
+                                    )}
                                 </td>
+
                                 {/* Цена */}
-                                <td className="px-2 py-2 font-medium text-right">{item.price}</td>
+                                <td className="px-2 py-2 font-medium text-right">
+                                    {canEdit ? (
+                                        <input
+                                            type="text"
+                                            value={edited.price ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    item.id,
+                                                    'price',
+                                                    parseNumber(e.target.value),
+                                                )
+                                            }
+                                            className="w-20 px-1 text-right border rounded"
+                                        />
+                                    ) : (
+                                        item.price
+                                    )}
+                                </td>
+
                                 {/* Сумма */}
                                 <td className="px-2 py-2 font-medium text-right text-green-600">
-                                    {/* если есть функция расчета — вставь */}
+                                    {item.quantity * (edited.price || 0)}
                                 </td>
-                                {/* Примечание */}
+
                                 <td className="px-2 py-2 text-xs text-center text-gray-600">
                                     {item.comment || '—'}
                                 </td>
-                                {/* Статус */}
+
                                 <td className="px-3 py-2.5">
                                     <span
                                         className={`
@@ -184,7 +299,7 @@ export default function MaterialRequestItemsTable({
                                         {refs.materialRequestItemStatuses.lookup(item.status)}
                                     </span>
                                 </td>
-                                {/* Действия */}
+
                                 <td className="px-2 py-2">
                                     <div className="flex items-center justify-center gap-1.5">
                                         <RowActions
@@ -206,46 +321,34 @@ export default function MaterialRequestItemsTable({
                 </tbody>
             </table>
 
-            {/* ПАГИНАЦИЯ + КНОПКА */}
-            <div className="space-y-3">
-                {pagination && (
-                    <div
-                        className={`
-                        w-full
-                        ${loading ? 'opacity-50 pointer-events-none' : ''}
-                    `}
-                    >
-                        <TablePagination
-                            pagination={pagination}
-                            onPageChange={(newPage) => {
-                                setPage(newPage);
-
-                                dispatch(
-                                    fetchMaterialRequestItems({
-                                        material_request_id: materialRequestId,
-                                        page: newPage,
-                                        size: pagination.size,
-                                    }),
-                                );
-                            }}
-                            onSizeChange={(newSize) => {
-                                setPage(1);
-
-                                dispatch(
-                                    fetchMaterialRequestItems({
-                                        material_request_id: materialRequestId,
-                                        page: 1,
-                                        size: newSize,
-                                    }),
-                                );
-                            }}
-                            sizeOptions={[10, 25, 50, 100]}
-                            showFirstButton
-                            showLastButton
-                        />
-                    </div>
-                )}
-            </div>
+            {pagination && (
+                <TablePagination
+                    pagination={pagination}
+                    onPageChange={(newPage) => {
+                        setPage(newPage);
+                        dispatch(
+                            fetchMaterialRequestItems({
+                                material_request_id: materialRequestId,
+                                page: newPage,
+                                size: pagination.size,
+                            }),
+                        );
+                    }}
+                    onSizeChange={(newSize) => {
+                        setPage(1);
+                        dispatch(
+                            fetchMaterialRequestItems({
+                                material_request_id: materialRequestId,
+                                page: 1,
+                                size: newSize,
+                            }),
+                        );
+                    }}
+                    sizeOptions={[10, 25, 50, 100]}
+                    showFirstButton
+                    showLastButton
+                />
+            )}
         </div>
     );
 }

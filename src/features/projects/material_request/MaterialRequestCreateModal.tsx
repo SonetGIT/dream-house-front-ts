@@ -11,7 +11,7 @@ interface MatReqCreateProps {
     onClose: () => void;
 }
 
-export default function MaterialReqCreateModal({
+export default function MaterialRequestCreateModal({
     blocks,
     estimates,
     loading = false,
@@ -20,15 +20,15 @@ export default function MaterialReqCreateModal({
 }: MatReqCreateProps) {
     const [blockId, setBlockId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
-    console.log('blocks', blocks);
-    // ---------------- CHECK ESTIMATE ----------------
+
+    //CHECK ESTIMATE
     const hasEstimateItems = useMemo(() => {
         if (!blockId) return false;
 
         return estimates.some((e) => e.block_id === blockId && (e.items?.length ?? 0) > 0);
     }, [blockId, estimates]);
 
-    // ---------------- HANDLER ----------------
+    //HANDLER
     const handleSelectMode = (mode: 'estimate' | 'manual') => {
         if (!blockId) {
             setError('Выберите блок');

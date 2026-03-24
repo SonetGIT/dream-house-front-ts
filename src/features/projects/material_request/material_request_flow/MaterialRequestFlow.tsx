@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '@/app/store';
 
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { ProjectBlock } from '../../pto/projectBlocks/projectBlocksSlice';
-import type { EstimateItem } from '../../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
+import {
+    fetchEstimateItems,
+    type EstimateItem,
+} from '../../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
 
-import MaterialReqCreateModal from '../MaterialReqCreateModal';
-import MaterialsSelectTable from './MaterialsSelectTable';
-import MaterialReqCreateEditForm from './MaterialReqCreateEditForm';
-import { useAppSelector } from '@/app/store';
+import MaterialReqCreateModal from '../MaterialRequestCreateModal';
+import MaterialsSelectTable from './MaterialsItemSelectTable';
+import MatReqItemsCreateEditForm from '../../material_request_items/MatReqItemsCreateEditForm';
 
 interface MaterialRequestFlowProps {
     step: 'select' | 'estimate' | 'form';
@@ -28,20 +31,27 @@ export default function MaterialRequestFlow({
     calcRowTotal,
     onClose,
 }: MaterialRequestFlowProps) {
-    const estimates = useAppSelector((state) => state.estimates.data || []);
+    const dispatch = useAppDispatch();
+    const { data: estimates } = useAppSelector((state) => state.estimates);
 
-    // ---------------- STATE ----------------
+    //STATE
     const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);
 
-    // ---------------- FILTER ITEMS BY BLOCK ----------------
+    //FILTER ITEMS BY BLOCK
     const estimateItems = useMemo(() => {
         if (!selectedBlock) return [];
 
         return estimates.filter((e) => e.block_id === selectedBlock).flatMap((e) => e.items || []);
     }, [estimates, selectedBlock]);
 
-    // ---------------- RENDER ----------------
+    useEffect(() => {
+        if (estimates.length > 0) {
+            dispatch(fetchEstimateItems());
+        }
+    }, [estimates, dispatch]);
+
+    //RENDER
     return (
         <div className="w-full">
             {/* HEADER */}
@@ -68,7 +78,7 @@ export default function MaterialRequestFlow({
             {step === 'select' && (
                 <MaterialReqCreateModal
                     blocks={blocks}
-                    estimates={estimates} // 👈 ВАЖНО
+                    estimates={estimates}
                     onClose={onClose}
                     onSubmit={({ block_id, mode }) => {
                         setSelectedBlock(block_id);
@@ -100,7 +110,7 @@ export default function MaterialRequestFlow({
 
             {/* STEP 3 — ЕДИНАЯ ФОРМА */}
             {step === 'form' && selectedBlock && (
-                <MaterialReqCreateEditForm
+                <MatReqItemsCreateEditForm
                     projectId={projectId}
                     blockId={selectedBlock}
                     initialItems={selectedItems}

@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useAppDispatch } from '@/app/store';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { EstimateItem } from '../../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
 
@@ -12,23 +11,19 @@ interface MaterialsSelectTableProps {
     onNext: (items: EstimateItem[]) => void;
 }
 
-export default function MaterialsSelectTable({
+export default function MaterialsItemSelectTable({
     items,
     refs,
     calcRowTotal,
-    projectId,
-    blockId,
     onNext,
 }: MaterialsSelectTableProps) {
-    const dispatch = useAppDispatch();
-
-    // ---------------- STATE ----------------
+    //STATE
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
 
     const materialItems = items.filter((i) => i.item_type === 1);
 
-    // ---------------- SELECT ----------------
+    //SELECT
     const isAllSelected = useMemo(() => {
         return materialItems.length > 0 && selectedIds.length === materialItems.length;
     }, [selectedIds, materialItems]);
@@ -51,46 +46,7 @@ export default function MaterialsSelectTable({
         return materialItems.filter((i) => selectedIds.includes(i.id));
     }, [selectedIds, materialItems]);
 
-    // ---------------- TRANSFORM ----------------
-    const buildPayload = () => {
-        return {
-            project_id: projectId,
-            block_id: blockId,
-            status: 1, //На одобрении
-
-            items: selectedItems.map((item) => ({
-                material_id: item.material_id,
-                unit_of_measure: item.unit_of_measure,
-                quantity: item.quantity_planned,
-                price: item.price,
-                currency: item.currency,
-                currency_rate: item.currency_rate,
-                comment: item.comment,
-            })),
-        };
-    };
-
-    // ---------------- CREATE ----------------
-    const handleCreateRequest = async () => {
-        if (!selectedItems.length) return;
-
-        try {
-            setLoading(true);
-
-            const payload = buildPayload();
-
-            // await dispatch(createMaterialReq(payload)).unwrap();
-
-            // очистка после успеха
-            setSelectedIds([]);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ---------------- RENDER ----------------
+    //RENDER
     return (
         <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
             {/* ACTION BAR */}

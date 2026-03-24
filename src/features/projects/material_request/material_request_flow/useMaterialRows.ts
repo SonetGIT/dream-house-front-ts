@@ -4,9 +4,11 @@ import { useCurrencyRates } from '@/utils/useCurrencyRates';
 import type { EstimateItem } from '../../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
-/* ================= TYPES ================= */
+/*TYPES*/
 
 export interface MaterialRow {
+    id: number | string;
+
     stage_id: number | null;
     subsection_id: number | null;
 
@@ -31,17 +33,17 @@ interface UseMaterialRowsParams {
     refs: Record<string, ReferenceResult>;
 }
 
-/* ================= HOOK ================= */
+/*HOOK*/
 
 export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
     const rates = useCurrencyRates();
-
     const materials = refs.materials?.data || [];
 
-    /* ================= MAPPERS ================= */
-
+    /*MAPPERS*/
     const mapFromEstimate = (items: EstimateItem[]): MaterialRow[] =>
         items.map((i) => ({
+            id: i.id,
+
             stage_id: i.stage_id,
             subsection_id: i.subsection_id,
 
@@ -52,8 +54,8 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
             quantity: i.quantity_planned || 0,
             coefficient: i.coefficient || 1,
 
-            currency: i.currency,
-            currency_rate: i.currency_rate || 1,
+            currency: i.currency || 1,
+            currency_rate: i.currency_rate || 0,
 
             price: i.price || 0,
             comment: i.comment || '',
@@ -62,6 +64,8 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
         }));
 
     const createEmptyRow = (): MaterialRow => ({
+        id: Math.random().toString(36).substr(2, 9),
+
         stage_id: null,
         subsection_id: null,
 
@@ -72,8 +76,8 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
         quantity: 0,
         coefficient: 1,
 
-        currency: null,
-        currency_rate: 1,
+        currency: 1,
+        currency_rate: 0,
 
         price: 0,
         comment: '',
@@ -81,57 +85,57 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
         isFromEstimate: false,
     });
 
-    /* ================= STATE ================= */
-
+    /*STATE*/
     const [rows, setRows] = useState<MaterialRow[]>(mapFromEstimate(initialItems));
 
-    /* ================= ACTIONS ================= */
+    /*ACTIONS*/
 
     const updateRow = <K extends keyof MaterialRow>(
-        index: number,
+        id: number | string,
         key: K,
         value: MaterialRow[K],
     ) => {
-        setRows((prev) => {
-            const updated = [...prev];
-            const row: MaterialRow = { ...updated[index], [key]: value };
+        setRows((prev) =>
+            prev.map((row) => {
+                if (row.id !== id) return row;
 
-            // зависимости
-            if (key === 'stage_id') {
-                row.subsection_id = null;
-            }
+                const updated: MaterialRow = { ...row, [key]: value };
 
-            if (key === 'material_type') {
-                row.material_id = null;
-                row.unit_of_measure = null;
-            }
+                // зависимости
+                if (key === 'stage_id') {
+                    updated.subsection_id = null;
+                }
 
-            if (key === 'material_id') {
-                const material = materials.find((m: any) => Number(m.id) === Number(value));
-                row.unit_of_measure = material?.unit_of_measure ?? null;
-            }
+                if (key === 'material_type') {
+                    updated.material_id = null;
+                    updated.unit_of_measure = null;
+                }
 
-            if (key === 'currency') {
-                const rate = rates.find((r) => Number(r.currency_id) === Number(value))?.rate;
+                if (key === 'material_id') {
+                    const material = materials.find((m: any) => Number(m.id) === Number(value));
+                    updated.unit_of_measure = material?.unit_of_measure ?? null;
+                }
 
-                row.currency_rate = rate ?? 1;
-            }
+                if (key === 'currency') {
+                    const rate = rates.find((r) => Number(r.currency_id) === Number(value))?.rate;
 
-            updated[index] = row;
-            return updated;
-        });
+                    updated.currency_rate = rate ?? 1;
+                }
+
+                return updated;
+            }),
+        );
     };
 
     const addRow = () => {
         setRows((prev) => [...prev, createEmptyRow()]);
     };
 
-    const removeRow = (index: number) => {
-        setRows((prev) => prev.filter((_, i) => i !== index));
+    const removeRow = (id: number | string) => {
+        setRows((prev) => prev.filter((row) => row.id !== id));
     };
 
-    /* ================= RETURN ================= */
-
+    /*RETURN*/
     return {
         rows,
         updateRow,

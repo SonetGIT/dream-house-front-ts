@@ -4,15 +4,18 @@ import { useAppDispatch } from '@/app/store';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
-import type { EstimateItem } from '../../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
-import { createMaterialReq } from '../materialRequestsSlice';
+import type { EstimateItem } from '../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
+import { createMaterialReq } from '../material_request/materialRequestsSlice';
 
-import { useMaterialRows, type MaterialRow } from './useMaterialRows';
+import {
+    useMaterialRows,
+    type MaterialRow,
+} from '../material_request/material_request_flow/useMaterialRows';
 import { parseNumber } from '@/utils/parseNumber';
 import toast from 'react-hot-toast';
+import { useCurrencyRates } from '@/utils/useCurrencyRates';
 
-/* ================= PROPS ================= */
-
+/*PROPS*/
 interface Props {
     projectId: number;
     blockId: number;
@@ -23,9 +26,8 @@ interface Props {
     onCancel: () => void;
 }
 
-/* ================= COMPONENT ================= */
-
-export default function MaterialReqCreateEditForm({
+/*COMPONENT*/
+export default function MatReqItemsCreateEditForm({
     projectId,
     blockId,
     initialItems = [],
@@ -33,6 +35,7 @@ export default function MaterialReqCreateEditForm({
     onCancel,
 }: Props) {
     const dispatch = useAppDispatch();
+    const rates = useCurrencyRates();
 
     const { rows, updateRow, addRow, removeRow } = useMaterialRows({
         initialItems,
@@ -63,6 +66,7 @@ export default function MaterialReqCreateEditForm({
                     block_id: blockId,
                     status: 1, //На одобрении
                     items: rows.map((r) => ({
+                        // id: r.id,
                         item_type: r.isFromEstimate ? 1 : 2,
                         stage_id: r.stage_id,
                         subsection_id: r.subsection_id,
@@ -84,25 +88,31 @@ export default function MaterialReqCreateEditForm({
         }
     };
 
+    /************************************************************************************************************/
     return (
         <div className="space-y-4">
-            <div className="overflow-hidden bg-white border rounded-lg">
-                <table className="w-full">
-                    <thead className="bg-gray-50">
-                        <tr className="text-xs text-gray-600 border-b">
-                            <th className="px-3 py-2 text-sm text-left">Этап</th>
-                            <th className="px-3 py-2 text-sm text-left">Подэтап</th>
-                            <th className="px-3 py-2 text-sm text-left">Тип</th>
-                            <th className="px-3 py-2 text-sm text-left">Материал</th>
-                            <th className="px-3 py-2 text-sm text-left">Ед. изм</th>
-                            <th className="px-3 py-2 text-sm text-right">Кол-во</th>
-                            <th className="px-3 py-2 text-sm text-right">Коэфф.</th>
-                            <th className="px-3 py-2 text-sm text-right">Валюта</th>
-                            <th className="px-3 py-2 text-sm text-right">Курс</th>
-                            <th className="px-3 py-2 text-sm text-right">Цена</th>
-                            <th className="px-3 py-2 text-sm text-right">Сумма</th>
-                            <th className="px-3 py-2 text-sm text-right">Примечание</th>
-                            <th className="px-3 py-2 text-sm text-center">Действие</th>
+            <div className="flex-1 p-4 overflow-y-auto">
+                <table className="w-full border-collapse">
+                    <thead className="sticky top-0 z-10 bg-gray-50">
+                        <tr>
+                            <th className="px-3 py-3 text-xs border">№</th>
+                            <th className="border px-3 py-3 text-xs min-w-[180px]">Этап</th>
+                            <th className="border px-3 py-3 text-xs min-w-[200px]">Подэтап</th>
+                            <th className="border px-3 py-3 text-xs min-w-[180px]">
+                                Тип материала
+                            </th>
+                            <th className="border px-3 py-3 text-xs min-w-[200px]">Материал</th>
+                            <th className="border px-3 py-3 text-xs min-w-[160px]">Ед. изм</th>
+                            <th className="border px-3 py-3 text-xs min-w-[100px]">Кол-во</th>
+                            <th className="border px-3 py-3 text-xs min-w-[90px]">Коэфф.</th>
+                            <th className="border px-3 py-3 text-xs min-w-[130px]">Валюта</th>
+                            <th className="border px-3 py-3 text-xs min-w-[120px]">Курс</th>
+                            <th className="border px-3 py-3 text-xs min-w-[100px]">Цена</th>
+                            <th className="border px-3 py-3 text-xs min-w-[100px] text-green-700">
+                                Сумма
+                            </th>
+                            <th className="border px-3 py-3 text-xs min-w-[150px]">Примечание</th>
+                            <th className="px-3 py-3 text-xs border">Действия</th>
                         </tr>
                     </thead>
 
@@ -123,65 +133,85 @@ export default function MaterialReqCreateEditForm({
                                 : [];
 
                             return (
-                                <tr key={index} className="border-b hover:bg-gray-50">
+                                <tr key={row.id} className="hover:bg-gray-50">
+                                    <td className="px-3 py-2 text-center border">{index + 1}</td>
                                     {/* Этап */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <ReferencesSelect
                                             options={blockStages}
                                             value={row.stage_id}
                                             disabled={isReadonly}
-                                            onChange={(v) => updateRow(index, 'stage_id', v)}
+                                            onChange={(v) => updateRow(row.id, 'stage_id', v)}
                                         />
                                     </td>
 
                                     {/* Подэтап */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <ReferencesSelect
                                             options={filteredSubStages}
                                             value={row.subsection_id}
-                                            disabled={!row.stage_id || isReadonly}
-                                            onChange={(v) => updateRow(index, 'subsection_id', v)}
+                                            disabled={isReadonly}
+                                            onChange={(v) => updateRow(row.id, 'subsection_id', v)}
                                         />
                                     </td>
 
                                     {/* Тип */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <ReferencesSelect
                                             options={materialTypes}
                                             value={row.material_type}
                                             disabled={isReadonly}
-                                            onChange={(v) => updateRow(index, 'material_type', v)}
+                                            onChange={(v) => {
+                                                updateRow(row.id, 'material_type', v);
+                                                updateRow(row.id, 'material_id', null);
+                                            }}
                                         />
                                     </td>
 
                                     {/* Материал */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <ReferencesSelect
                                             options={filteredMaterials}
                                             value={row.material_id}
                                             disabled={!row.material_type || isReadonly}
-                                            onChange={(v) => updateRow(index, 'material_id', v)}
+                                            onChange={(v) => {
+                                                updateRow(row.id, 'material_id', v);
+
+                                                const material = materials.find(
+                                                    (m) => Number(m.id) === Number(v),
+                                                );
+
+                                                updateRow(
+                                                    row.id,
+                                                    'unit_of_measure',
+                                                    material?.unit_of_measure
+                                                        ? Number(material.unit_of_measure)
+                                                        : null,
+                                                );
+                                            }}
                                         />
                                     </td>
 
                                     {/* Ед */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <ReferencesSelect
                                             options={units}
                                             value={row.unit_of_measure}
                                             disabled={isReadonly}
-                                            onChange={(v) => updateRow(index, 'unit_of_measure', v)}
+                                            onChange={(v) =>
+                                                updateRow(row.id, 'unit_of_measure', v)
+                                            }
                                         />
                                     </td>
 
                                     {/* Кол-во */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <input
                                             type="text"
                                             value={row.quantity}
                                             onChange={(e) =>
                                                 updateRow(
-                                                    index,
+                                                    row.id,
                                                     'quantity',
                                                     parseNumber(e.target.value),
                                                 )
@@ -191,21 +221,20 @@ export default function MaterialReqCreateEditForm({
                                     </td>
 
                                     {/* Коэфф */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <input
                                             type="text"
                                             value={row.coefficient ?? ''}
-                                            disabled={isReadonly}
                                             onChange={(e) =>
                                                 updateRow(
-                                                    index,
+                                                    row.id,
                                                     'coefficient',
                                                     e.target.value as any,
                                                 )
                                             }
                                             onBlur={(e) =>
                                                 updateRow(
-                                                    index,
+                                                    row.id,
                                                     'coefficient',
                                                     parseNumber(e.target.value),
                                                 )
@@ -215,51 +244,61 @@ export default function MaterialReqCreateEditForm({
                                     </td>
 
                                     {/* Валюта */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <ReferencesSelect
                                             options={currencies}
                                             value={row.currency}
                                             disabled={isReadonly}
-                                            onChange={(v) => updateRow(index, 'currency', v)}
+                                            onChange={(v) => {
+                                                updateRow(row.id, 'currency', v);
+
+                                                if (!v) return;
+
+                                                const rate = rates.find(
+                                                    (r) => Number(r.currency_id) === Number(v),
+                                                )?.rate;
+
+                                                updateRow(row.id, 'currency_rate', rate ?? 1);
+                                            }}
                                         />
                                     </td>
 
                                     {/* Курс */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <input
                                             type="text"
                                             value={row.currency_rate}
                                             disabled={isReadonly}
                                             onChange={(e) =>
                                                 updateRow(
-                                                    index,
+                                                    row.id,
                                                     'currency_rate',
                                                     parseNumber(e.target.value),
                                                 )
                                             }
-                                            className="w-full px-2 py-1 text-right border rounded"
+                                            className="w-full px-2 py-1.5 border rounded text-right"
                                         />
                                     </td>
 
                                     {/* Цена */}
-                                    <td className="px-3 py-2">
+                                    <td className="px-3 py-2 border">
                                         <input
                                             type="text"
                                             value={row.price}
                                             disabled={isReadonly}
                                             onChange={(e) =>
                                                 updateRow(
-                                                    index,
+                                                    row.id,
                                                     'price',
                                                     parseNumber(e.target.value),
                                                 )
                                             }
-                                            className="w-full px-2 py-1 text-right border rounded"
+                                            className="w-full px-2 py-1.5 border rounded text-right"
                                         />
                                     </td>
 
                                     {/* Сумма */}
-                                    <td className="px-3 py-2 text-right text-green-600">
+                                    <td className="px-3 py-2 font-bold text-right text-green-700 border bg-green-50">
                                         {calcSum(row)}
                                     </td>
                                     <td className="px-3 py-2 border">
@@ -267,17 +306,18 @@ export default function MaterialReqCreateEditForm({
                                             type="text"
                                             value={row.comment}
                                             onChange={(e) =>
-                                                updateRow(index, 'comment', e.target.value)
+                                                updateRow(row.id, 'comment', e.target.value)
                                             }
                                             className="w-full px-2 py-1.5 border rounded"
                                         />
                                     </td>
 
                                     {/* Delete */}
-                                    <td className="px-3 py-2 text-center">
+                                    <td className="px-3 py-2 text-center border">
                                         <button
-                                            onClick={() => removeRow(index)}
-                                            className="text-red-500 hover:text-red-700"
+                                            onClick={() => removeRow(row.id)}
+                                            disabled={rows.length === 1}
+                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>

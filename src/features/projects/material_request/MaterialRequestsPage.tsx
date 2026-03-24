@@ -83,23 +83,21 @@ export default function MaterialRequestsPage() {
         materialRequestItemTypes,
     };
 
-    // ================= EFFECTS =================
-
-    // 🔹 загрузка проекта
+    //загрузка проекта
     useEffect(() => {
         if (projectId && (!project || project.id !== projectId)) {
             dispatch(getProjectById(projectId));
         }
     }, [projectId, project, dispatch]);
 
-    // загрузка блоков
+    //загрузка блоков
     useEffect(() => {
         if (projectId && blocks.length === 0) {
             dispatch(fetchProjectBlocks({ project_id: projectId, page: 1, size: 10 }));
         }
     }, [projectId, blocks.length, dispatch]);
 
-    // 🔹 загрузка заявок
+    //загрузка заявок
     useEffect(() => {
         if (project?.id) {
             dispatch(clearMaterialRequests());
@@ -114,8 +112,7 @@ export default function MaterialRequestsPage() {
         }
     }, [project?.id, dispatch]);
 
-    // ================= HANDLERS =================
-
+    //HANDLERS
     const handleCreate = () => {
         setModal('create');
     };
@@ -142,8 +139,7 @@ export default function MaterialRequestsPage() {
         }
     }, [deleteState, dispatch, projectId]);
 
-    // ================= SAFE RETURNS =================
-
+    //SAFE RETURNS
     if (!projectId) {
         return <div>Нет projectId</div>;
     }

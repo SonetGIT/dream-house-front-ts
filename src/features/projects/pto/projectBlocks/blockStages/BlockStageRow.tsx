@@ -264,7 +264,7 @@ export default function BlockStageRow({
                                                         onClick={handleCancelEdit}
                                                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                                                     >
-                                                        <X className="w-3.5 h-3.5" />
+                                                        <X className="w-5 h-5 text-red-500" />
                                                     </button>
                                                 </StyledTooltip>
                                             </div>
@@ -359,7 +359,7 @@ export default function BlockStageRow({
                                                 className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                                                 title="Отменить"
                                             >
-                                                <X className="w-3.5 h-3.5" />
+                                                <X className="w-5 h-5 text-red-500" />
                                             </button>
                                         </div>
                                     </div>

@@ -5,7 +5,7 @@ import { apiRequest } from '@/utils/apiRequest';
 
 export interface EstimateItem {
     id: number;
-    material_estimate_id: number;
+    material_estimate_id: number; //id сметы
     stage_id: number | null;
     subsection_id: number | null;
 
@@ -35,11 +35,12 @@ export interface EstimateItem {
 export interface EstimateItemFormData {
     id: string;
 
-    material_estimate_id: number;
+    material_estimate_id: number; //
     stage_id: number | null;
     subsection_id: number | null;
 
-    item_type: number;
+    item_type: number; //материал - услуга
+    entry_type: number; //из сметы - дополнительно
 
     service_type?: number | null;
     service_id?: number | null;

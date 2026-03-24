@@ -50,6 +50,7 @@ export default function ServicesEstimateItemsCreate({
         stage_id: null,
         subsection_id: null,
         item_type: 2, // 2 - услуга
+        entry_type: 1, //из сметы
         service_type: null,
         service_id: null,
         unit_of_measure: null,

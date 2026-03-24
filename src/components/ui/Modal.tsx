@@ -73,7 +73,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'xl' }:
                             transition-colors
                         "
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5 text-red-500" />
                     </button>
                 </div>
 
