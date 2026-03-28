@@ -7,7 +7,7 @@ import BlockStagesPage from './blockStages/BlockStagesPage';
 
 interface Props {
     blockId: number | null;
-    blockName?: string;
+    blockName: string;
     currentBlock: ProjectBlock | null;
 }
 
@@ -93,7 +93,7 @@ export default function ProjectBlockPage({ blockId, blockName, currentBlock }: P
                                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                                     <span className="text-gray-600">Выполнено:</span>
                                     <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 bg-green-600 text-white text-xs font-semibold rounded-full">
-                                        {currentBlock.done_volume.toFixed(1)}
+                                        {Number(currentBlock.done_volume ?? 0).toFixed(1)}
                                     </span>
                                 </div>
 
@@ -102,7 +102,7 @@ export default function ProjectBlockPage({ blockId, blockName, currentBlock }: P
                                     <Clock className="w-4 h-4 text-orange-600" />
                                     <span className="text-gray-600">Осталось:</span>
                                     <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 bg-orange-600 text-white text-xs font-semibold rounded-full">
-                                        {currentBlock.remaining_volume.toFixed(1)}
+                                        {Number(currentBlock.remaining_volume ?? 0).toFixed(1)}
                                     </span>
                                 </div>
 
@@ -111,7 +111,7 @@ export default function ProjectBlockPage({ blockId, blockName, currentBlock }: P
                                     <TrendingUp className="w-4 h-4 text-purple-600" />
                                     <span className="text-gray-600">Прогресс:</span>
                                     <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 bg-purple-600 text-white text-xs font-semibold rounded-full">
-                                        {currentBlock.progress_percent.toFixed(1)}%
+                                        {Number(currentBlock.progress_percent ?? 0).toFixed(1)}%
                                     </span>
                                 </div>
                             </div>
@@ -127,7 +127,7 @@ export default function ProjectBlockPage({ blockId, blockName, currentBlock }: P
             <Divider sx={{ mb: 2 }} />
             <Box>
                 {tabIndex === 0 && <BlockStagesPage blockId={blockId} />}
-                {tabIndex === 1 && <EstimatesPage blockId={blockId} />}
+                {tabIndex === 1 && <EstimatesPage blockId={blockId} blockName={blockName} />}
             </Box>
         </Paper>
     );

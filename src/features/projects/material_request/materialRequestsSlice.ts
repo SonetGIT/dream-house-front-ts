@@ -6,6 +6,7 @@ import type { MaterialRequestItem } from '../material_request_items/materialRequ
 export interface MaterialRequest {
     id: number;
     project_id: number;
+    block_id: number;
     status: number;
 
     approved_by_foreman: boolean | null;
@@ -40,6 +41,7 @@ export interface MaterialRequestSearchResponse {
     data: MaterialRequest[];
     pagination: Pagination;
 }
+
 export interface MaterialRequestCreatePayload {
     project_id: number;
     block_id: number;
@@ -65,6 +67,7 @@ export interface MaterialRequestCreatePayload {
         item_type: number;
     }[];
 }
+
 interface MaterialRequestsState {
     data: MaterialRequest[];
     pagination: Pagination | null;
@@ -81,20 +84,16 @@ const initialState: MaterialRequestsState = {
     projectId: null,
 };
 
-//FILTERS
-interface MaterialRequestFilters {
-    status?: number;
-    dateFrom?: string;
-    dateTo?: string;
-}
-
-//THUNKS
 // SEARCH
 interface FetchSearchMaterialReqParams {
     page?: number;
     size?: number;
     search?: string;
-    filters?: MaterialRequestFilters;
+    filters?: {
+        status?: number;
+        dateFrom?: string;
+        dateTo?: string;
+    };
     project_id: number;
 }
 
@@ -106,7 +105,7 @@ export const fetchSearchMaterialReq = createAsyncThunk<
     try {
         return await apiRequest<MaterialRequest[]>('/materialRequests/search', 'POST', params);
     } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка при загрузке заявок на материалы');
+        return rejectWithValue(error.message || 'Ошибка загрузки заявок на материалы');
     }
 });
 
@@ -122,21 +121,23 @@ export const createMaterialReq = createAsyncThunk<
             'POST',
             materialRequest,
         );
-
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);
     }
 });
 
-// UPDATE
+//ОБНОВЛЁННЫЙ UPDATE
 export const updateMaterialRequest = createAsyncThunk<
     MaterialRequest,
     {
         id: number;
         items: {
             id: number;
+            material_estimate_item_id: number;
+            quantity: number;
             price: number;
+            coefficient?: number;
             currency: number;
             currency_rate: number;
         }[];
@@ -167,22 +168,16 @@ export const deleteMaterialRequest = createAsyncThunk<number, number, { rejectVa
     },
 );
 
-//SIGN (ОБНОВЛЁН)
+// SIGN
 export const signMaterialRequest = createAsyncThunk<
     MaterialRequest,
     {
         id: number;
         role_id: number;
         userId: number;
-        items?: {
-            id: number;
-            price: number;
-            currency: number;
-            currency_rate: number;
-        }[];
     },
     { rejectValue: string }
->('materialRequests/sign', async ({ id, role_id, userId, items }, { rejectWithValue }) => {
+>('materialRequests/sign', async ({ id, role_id, userId }, { rejectWithValue }) => {
     try {
         const update: any = {};
         const now = new Date().toISOString();
@@ -244,11 +239,6 @@ export const signMaterialRequest = createAsyncThunk<
                 return rejectWithValue('Неизвестная роль');
         }
 
-        //ДОБАВИЛИ ITEMS
-        if (items && items.length > 0) {
-            update.items = items;
-        }
-
         const res = await apiRequest<MaterialRequest>(
             `/materialRequests/update/${id}`,
             'PUT',
@@ -261,7 +251,7 @@ export const signMaterialRequest = createAsyncThunk<
     }
 });
 
-//SLICE
+// SLICE
 export const materialRequestsSlice = createSlice({
     name: 'materialRequests',
     initialState,
@@ -278,7 +268,6 @@ export const materialRequestsSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
-            // SEARCH
             .addCase(fetchSearchMaterialReq.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
@@ -298,25 +287,18 @@ export const materialRequestsSlice = createSlice({
                 state.error = (action.payload as string) || 'Ошибка загрузки';
             })
 
-            // CREATE
             .addCase(createMaterialReq.fulfilled, (state, action) => {
                 if (state.projectId === action.payload.project_id) {
                     state.data.unshift(action.payload);
                 }
             })
 
-            .addCase(createMaterialReq.rejected, (state, action) => {
-                state.error = action.payload as string;
-            })
-
-            // UPDATE
             .addCase(updateMaterialRequest.fulfilled, (state, action) => {
                 state.data = state.data.map((req) =>
                     req.id === action.payload.id ? action.payload : req,
                 );
             })
 
-            // DELETE
             .addCase(deleteMaterialRequest.fulfilled, (state, action) => {
                 state.data = state.data.filter((m) => m.id !== action.payload);
                 if (state.pagination) {
@@ -324,15 +306,7 @@ export const materialRequestsSlice = createSlice({
                 }
             })
 
-            // SIGN
-            .addCase(signMaterialRequest.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-
             .addCase(signMaterialRequest.fulfilled, (state, action) => {
-                state.loading = false;
-
                 const index = state.data.findIndex((req) => req.id === action.payload.id);
 
                 if (index !== -1) {
@@ -341,11 +315,6 @@ export const materialRequestsSlice = createSlice({
                         ...action.payload,
                     };
                 }
-            })
-
-            .addCase(signMaterialRequest.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload || 'Ошибка подписи';
             });
     },
 });

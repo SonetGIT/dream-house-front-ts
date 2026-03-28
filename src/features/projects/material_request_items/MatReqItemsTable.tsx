@@ -1,22 +1,28 @@
-//добавь эти импорты
-import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchMaterialRequestItems } from './materialRequestItemsSlice';
+import { useEffect, useMemo, useState } from 'react';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { RowActions } from '@/components/ui/RowActions';
 import { FolderOpen, Trash2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { User } from '@/features/users/userSlice';
+import type { Pagination, User } from '@/features/users/userSlice';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import { useCurrencyRates } from '@/utils/useCurrencyRates';
 import { parseNumber } from '@/utils/parseNumber';
+import { useAppDispatch } from '@/app/store';
+import { fetchMaterialRequestItems } from './materialRequestItemsSlice';
 
 interface MatReqItemsProps {
     materialRequestId: number;
     refs: Record<string, ReferenceResult>;
     onDelete: (id: number) => void;
-    currentUser: User;
-    onChange?: (items: any[]) => void;
+    currentUser: User | null;
+    items: any[];
+    pagination: Pagination | null;
+    //смета
+    // selectedEstimateId: number | null;
+    // onEstimateChange: (val: number | null) => void;
+
+    //синхронизация
+    onChange: (items: any[]) => void;
 }
 
 const matReqItemStatuses: Record<number, { label: string; className: string }> = {
@@ -41,62 +47,110 @@ const matReqItemStatuses: Record<number, { label: string; className: string }> =
         className: 'bg-red-100 text-red-800 border-red-200',
     },
 };
+
 export const estimateTypeId = 1;
 export const addTypeId = 2;
 
+/*******************************************************************************/
 export default function MatReqItemsTable({
     materialRequestId,
     refs,
     onDelete,
     currentUser,
+    items,
+    // selectedEstimateId,
+    // onEstimateChange,
     onChange,
+    pagination,
 }: MatReqItemsProps) {
     const dispatch = useAppDispatch();
-    const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
-
     const rates = useCurrencyRates();
 
-    const filteredItems = items.filter((i) => i.material_request_id === materialRequestId);
-
     const isPTO = currentUser?.role_id === 10;
-    const isMainEngineer = currentUser?.role_id === 11;
-
-    const [page, setPage] = useState(1);
 
     const [editedItems, setEditedItems] = useState<Record<number, any>>({});
 
-    //init
+    const filteredItems = useMemo(() => {
+        return items.filter((i) => i.material_request_id === materialRequestId);
+    }, [items, materialRequestId]);
+
+    const [page, setPage] = useState(1);
+
+    /* INIT */
     useEffect(() => {
         setEditedItems((prev) => {
             const updated = { ...prev };
+            let changed = false;
 
             filteredItems.forEach((item) => {
-                if (!updated[item.id]) {
+                if (!prev[item.id]) {
                     updated[item.id] = {
                         id: item.id,
+                        quantity: item.quantity ?? 1,
+
+                        coefficient: item.coefficient ?? 1,
+                        coefficientInput: String(item.coefficient ?? 1),
+
                         price: item.price ?? 0,
                         currency: item.currency ?? null,
                         currency_rate: item.currency_rate ?? 1,
                         item_type: item.item_type,
                     };
+                    changed = true;
                 }
             });
 
-            return updated;
+            return changed ? updated : prev;
         });
-    }, [materialRequestId]);
+    }, [filteredItems]);
 
-    //fetch
+    /* CHANGE */
+
+    const handleChange = (id: number, field: string, value: any) => {
+        setEditedItems((prev) => {
+            const current = prev[id] || {};
+
+            const updatedItem: any = {
+                ...current,
+                [field]: value,
+            };
+
+            //coefficient всегда number
+            if (field === 'coefficient') {
+                updatedItem.coefficient = parseNumber(value);
+            }
+
+            //если меняем валюту — сразу обновляем курс
+            if (field === 'currency') {
+                const rate = rates.find((r) => Number(r.currency_id) === Number(value))?.rate;
+                updatedItem.currency_rate = rate ?? 1;
+            }
+
+            return {
+                ...prev,
+                [id]: updatedItem,
+            };
+        });
+    };
+
+    /* MERGED */
+
+    const mergedItems = useMemo(() => {
+        return filteredItems.map((item) => ({
+            ...item,
+            ...editedItems[item.id],
+        }));
+    }, [filteredItems, editedItems]);
+
     useEffect(() => {
-        dispatch(
-            fetchMaterialRequestItems({
-                material_request_id: materialRequestId,
-                page: 1,
-                size: 10,
-            }),
-        );
-    }, [materialRequestId, dispatch]);
+        onChange?.(mergedItems);
+    }, [mergedItems]);
+    /* FILTERS */
+    // const manualItems = mergedItems.filter((i) => Number(i.item_type) === addTypeId);
 
+    // const showEstimateSelect = Number(currentUser?.role_id) === 10 && manualItems.length > 0;
+
+    /* STATUS */
     const getStatusConfig = (statusId: number) => {
         return (
             matReqItemStatuses[statusId] || {
@@ -105,22 +159,8 @@ export default function MatReqItemsTable({
             }
         );
     };
-    //change handler
-    const handleChange = (id: number, field: string, value: any) => {
-        setEditedItems((prev) => {
-            const updated = {
-                ...prev,
-                [id]: {
-                    ...prev[id],
-                    [field]: value,
-                },
-            };
 
-            onChange?.(Object.values(updated));
-            return updated;
-        });
-    };
-
+    /* EMPTY */
     if (filteredItems.length === 0) {
         return (
             <div className="py-20 text-center">
@@ -132,6 +172,7 @@ export default function MatReqItemsTable({
         );
     }
 
+    /*****************************************************************************************************************/
     return (
         <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
             <table className="w-full">
@@ -145,8 +186,9 @@ export default function MatReqItemsTable({
                         <th className="px-3 py-2 text-sm text-left">Материал</th>
                         <th className="px-3 py-2 text-sm text-left">Ед. изм</th>
                         <th className="px-3 py-2 text-sm text-right">Кол-во</th>
+                        <th className="px-3 py-2 text-sm text-right">Коэфф.</th>
                         <th className="px-3 py-2 text-sm text-right">Валюта</th>
-                        <th className="px-3 py-2 text-sm text-right">Курс</th>
+                        <th className="px-3 py-2 text-sm text-right">Курс НБКР</th>
                         <th className="px-3 py-2 text-sm text-right">Цена</th>
                         <th className="px-3 py-2 text-sm text-right">Сумма</th>
                         <th className="px-3 py-2 text-sm text-right">Примечание</th>
@@ -156,12 +198,13 @@ export default function MatReqItemsTable({
                 </thead>
 
                 <tbody>
-                    {filteredItems.map((item, index) => {
+                    {mergedItems.map((item, index) => {
                         const statusInfo = getStatusConfig(item.status);
                         const edited = editedItems[item.id] || {};
 
                         const isManual = Number(item.item_type) === addTypeId;
-                        const canEdit = isManual && (isPTO || isMainEngineer) && item.status === 1;
+                        const canEdit = isManual && isPTO && item.status === 1;
+                        // const canEdit = isManual && (isPTO || isMainEngineer) && item.status === 1;
 
                         return (
                             <tr key={item.id}>
@@ -169,7 +212,6 @@ export default function MatReqItemsTable({
                                     {index + 1}
                                 </td>
 
-                                {/* Тип заявки */}
                                 <td className="px-2 py-2 text-center text-gray-900 border-l">
                                     <span
                                         className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold border rounded
@@ -211,11 +253,47 @@ export default function MatReqItemsTable({
                                 </td>
 
                                 <td className="px-2 py-2 text-sm text-right text-gray-900">
-                                    {item.quantity}
+                                    {canEdit ? (
+                                        <input
+                                            type="text"
+                                            value={edited.quantity ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    item.id,
+                                                    'quantity',
+                                                    parseNumber(e.target.value),
+                                                )
+                                            }
+                                            className="w-16 px-2 py-1.5 border rounded text-right"
+                                        />
+                                    ) : (
+                                        item.quantity
+                                    )}
+                                </td>
+                                <td className="px-2 py-2 text-sm text-right text-gray-900">
+                                    {canEdit ? (
+                                        <input
+                                            type="text"
+                                            value={edited.coefficient ?? item.coefficient ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(item.id, 'coefficient', e.target.value)
+                                            }
+                                            onBlur={(e) =>
+                                                handleChange(
+                                                    item.id,
+                                                    'coefficient',
+                                                    parseNumber(e.target.value),
+                                                )
+                                            }
+                                            className="w-16 px-2 py-1.5 border rounded text-right"
+                                        />
+                                    ) : (
+                                        item.coefficient
+                                    )}
                                 </td>
 
                                 {/* Валюта */}
-                                <td className="px-2 py-2 text-sm text-right text-blue-700">
+                                <td className="px-3 py-2 text-sm text-right text-blue-500">
                                     {canEdit ? (
                                         <ReferencesSelect
                                             options={refs.currencies.data || []}
@@ -238,7 +316,7 @@ export default function MatReqItemsTable({
                                 </td>
 
                                 {/* Курс */}
-                                <td className="px-2 py-2 font-medium text-right">
+                                <td className="px-3 py-3 text-sm text-right">
                                     {canEdit ? (
                                         <input
                                             type="text"
@@ -250,7 +328,7 @@ export default function MatReqItemsTable({
                                                     parseNumber(e.target.value),
                                                 )
                                             }
-                                            className="w-20 px-1 text-right border rounded"
+                                            className="w-20 px-2 py-1.5 border rounded text-right"
                                         />
                                     ) : (
                                         item.currency_rate
@@ -270,7 +348,7 @@ export default function MatReqItemsTable({
                                                     parseNumber(e.target.value),
                                                 )
                                             }
-                                            className="w-20 px-1 text-right border rounded"
+                                            className="w-16 px-2 py-1.5 border rounded text-right"
                                         />
                                     ) : (
                                         item.price
@@ -279,7 +357,12 @@ export default function MatReqItemsTable({
 
                                 {/* Сумма */}
                                 <td className="px-2 py-2 font-medium text-right text-green-600">
-                                    {item.quantity * (edited.price || 0)}
+                                    {(
+                                        (edited.quantity ?? item.quantity ?? 0) *
+                                        (edited.coefficient ?? item.coefficient ?? 1) *
+                                        (edited.price ?? item.price ?? 0) *
+                                        (edited.currency_rate ?? item.currency_rate ?? 1)
+                                    ).toFixed(2)}
                                 </td>
 
                                 <td className="px-2 py-2 text-xs text-center text-gray-600">
@@ -288,11 +371,7 @@ export default function MatReqItemsTable({
 
                                 <td className="px-3 py-2.5">
                                     <span
-                                        className={`
-                                        inline-flex text-center px-2 py-0.5
-                                        text-xs font-semibold border rounded-full
-                                        ${statusInfo.className}
-                                    `}
+                                        className={`inline-flex text-center px-2 py-0.5 text-xs font-semibold border rounded-full ${statusInfo.className}`}
                                     >
                                         {refs.materialRequestItemStatuses.lookup(item.status)}
                                     </span>

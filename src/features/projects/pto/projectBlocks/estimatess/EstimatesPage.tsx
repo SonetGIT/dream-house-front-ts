@@ -10,13 +10,14 @@ import EstimatesTable from './EstimatesTable';
 
 interface Props {
     blockId: number;
+    blockName: string;
 }
 
 /**********************************************************************************************************/
-export default function EstimatesPage({ blockId }: Props) {
+export default function EstimatesPage({ blockId, blockName }: Props) {
     const dispatch = useAppDispatch();
     const { data, loading } = useAppSelector((state) => state.estimates);
-
+    // const refs = { materialEstimates: useReference('materialEstimates') };
     const [page, setPage] = useState(1);
     const size = 10;
 
@@ -64,19 +65,58 @@ export default function EstimatesPage({ blockId }: Props) {
                 );
             }
         } catch {
-            toast.error('Ошибка удаления');
+            toast.error(`Ошибка удаления или у вас недостаточно прав на удаление`);
         } finally {
             setDeleteState(null);
         }
     }, [deleteState, dispatch, blockId, page, size]);
 
+    const generateEstimateName = (blockName: string) => {
+        return `Смета — ${blockName}`;
+    };
+
     //CREATE
+    // const handleCreateEstimate = useCallback(async () => {
+    //     try {
+    //         const name = generateEstimateName(blockName);
+
+    //         await dispatch(
+    //             createEstimate({
+    //                 block_id: blockId,
+    //                 status: 1,
+    //                 name,
+    //             }),
+    //         ).unwrap();
+
+    //         toast.success('Смета создана');
+
+    //         dispatch(
+    //             fetchEstimates({
+    //                 block_id: blockId,
+    //                 page,
+    //                 size,
+    //             }),
+    //         );
+    //     } catch {
+    //         toast.error('Ошибка создания сметы');
+    //     }
+    // }, [dispatch, blockId, blockName, page, size, refs]);
+
     const handleCreateEstimate = useCallback(async () => {
         try {
+            //Проверка: уже есть смета в этом блоке
+            if (data.length > 0) {
+                toast.error('В этом блоке уже существует смета');
+                return;
+            }
+
+            const name = generateEstimateName(blockName);
+
             await dispatch(
                 createEstimate({
                     block_id: blockId,
                     status: 1,
+                    name,
                 }),
             ).unwrap();
 
@@ -92,7 +132,7 @@ export default function EstimatesPage({ blockId }: Props) {
         } catch {
             toast.error('Ошибка создания сметы');
         }
-    }, [dispatch, blockId, page, size]);
+    }, [dispatch, blockId, blockName, page, size, data]);
 
     /*************************************************************************************************************************/
     return (

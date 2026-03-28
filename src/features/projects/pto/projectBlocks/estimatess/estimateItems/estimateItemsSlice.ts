@@ -82,7 +82,6 @@ export const fetchEstimateItems = createAsyncThunk<EstimateItem[], void, { rejec
             const res = await apiRequest<any>('/materialEstimateItems/gets', 'GET');
 
             const items = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-
             return items;
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка загрузки позиций');

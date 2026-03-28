@@ -8,7 +8,7 @@ import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 export interface MaterialRow {
     id: number | string;
-
+    item_type: number;
     stage_id: number | null;
     subsection_id: number | null;
 
@@ -59,13 +59,13 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
 
             price: i.price || 0,
             comment: i.comment || '',
-
+            item_type: i.entry_type,
             isFromEstimate: true,
         }));
 
     const createEmptyRow = (): MaterialRow => ({
         id: Math.random().toString(36).substr(2, 9),
-
+        item_type: 2,
         stage_id: null,
         subsection_id: null,
 
@@ -90,33 +90,33 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
 
     /*ACTIONS*/
 
-    const updateRow = <K extends keyof MaterialRow>(
+    const updateRow = (
         id: number | string,
-        key: K,
-        value: MaterialRow[K],
+        field: keyof MaterialRow,
+        value: string | number | null,
     ) => {
         setRows((prev) =>
             prev.map((row) => {
                 if (row.id !== id) return row;
 
-                const updated: MaterialRow = { ...row, [key]: value };
+                const updated: MaterialRow = { ...row, [field]: value };
 
                 // зависимости
-                if (key === 'stage_id') {
+                if (field === 'stage_id') {
                     updated.subsection_id = null;
                 }
 
-                if (key === 'material_type') {
+                if (field === 'material_type') {
                     updated.material_id = null;
                     updated.unit_of_measure = null;
                 }
 
-                if (key === 'material_id') {
+                if (field === 'material_id') {
                     const material = materials.find((m: any) => Number(m.id) === Number(value));
                     updated.unit_of_measure = material?.unit_of_measure ?? null;
                 }
 
-                if (key === 'currency') {
+                if (field === 'currency') {
                     const rate = rates.find((r) => Number(r.currency_id) === Number(value))?.rate;
 
                     updated.currency_rate = rate ?? 1;

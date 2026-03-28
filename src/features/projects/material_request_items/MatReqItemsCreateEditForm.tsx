@@ -55,18 +55,40 @@ export default function MatReqItemsCreateEditForm({
             (row.price || 0) *
             (row.coefficient || 1) *
             (row.currency_rate || 1);
-        return Number(total.toFixed(2));
+        return Number(isNaN(total) ? '0.00' : total.toFixed(2));
     };
 
-    const handleSubmit = async () => {
+    const isRowValid = (r: MaterialRow) => {
+        return (
+            r.stage_id !== null &&
+            r.subsection_id !== null &&
+            r.material_type !== null &&
+            r.material_id !== null &&
+            r.unit_of_measure !== null &&
+            r.currency !== null &&
+            r.quantity > 0 &&
+            r.coefficient > 0 &&
+            r.price >= 0
+        );
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const invalidRows = rows.filter((r) => !isRowValid(r));
+
+        if (invalidRows.length > 0) {
+            toast.error('Заполните все обязательные поля!');
+            return;
+        }
+
         try {
             await dispatch(
                 createMaterialReq({
                     project_id: projectId,
                     block_id: blockId,
-                    status: 1, //На одобрении
+                    status: 1,
                     items: rows.map((r) => ({
-                        // id: r.id,
                         item_type: r.isFromEstimate ? 1 : 2,
                         stage_id: r.stage_id,
                         subsection_id: r.subsection_id,
@@ -82,6 +104,7 @@ export default function MatReqItemsCreateEditForm({
                     })),
                 }),
             ).unwrap();
+
             onCancel();
         } catch (e) {
             toast.error('Ошибка создания заявки');
@@ -106,7 +129,7 @@ export default function MatReqItemsCreateEditForm({
                             <th className="border px-3 py-3 text-xs min-w-[100px]">Кол-во</th>
                             <th className="border px-3 py-3 text-xs min-w-[90px]">Коэфф.</th>
                             <th className="border px-3 py-3 text-xs min-w-[130px]">Валюта</th>
-                            <th className="border px-3 py-3 text-xs min-w-[120px]">Курс</th>
+                            <th className="border px-3 py-3 text-xs min-w-[120px]">Курс НБКР</th>
                             <th className="border px-3 py-3 text-xs min-w-[100px]">Цена</th>
                             <th className="border px-3 py-3 text-xs min-w-[100px] text-green-700">
                                 Сумма
@@ -224,13 +247,9 @@ export default function MatReqItemsCreateEditForm({
                                     <td className="px-3 py-2 border">
                                         <input
                                             type="text"
-                                            value={row.coefficient ?? ''}
+                                            value={row.coefficient}
                                             onChange={(e) =>
-                                                updateRow(
-                                                    row.id,
-                                                    'coefficient',
-                                                    e.target.value as any,
-                                                )
+                                                updateRow(row.id, 'coefficient', e.target.value)
                                             }
                                             onBlur={(e) =>
                                                 updateRow(

@@ -66,18 +66,29 @@ export default function PtoManager() {
         setConfirmOpen(true);
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!selectedProjectBlockId) return;
 
-        dispatch(deleteProjectBlock(selectedProjectBlockId))
-            .unwrap()
-            .then(() => {
-                dispatch(fetchProjectBlocks({ page: 1, size: 100, project_id: projectId }));
-                toast.success('Блок проекта успешно удален');
-            });
+        try {
+            await dispatch(deleteProjectBlock(selectedProjectBlockId)).unwrap();
 
-        setConfirmOpen(false);
-        setSelectedProjectBlockId(null);
+            dispatch(
+                fetchProjectBlocks({
+                    page: 1,
+                    size: 100,
+                    project_id: projectId,
+                }),
+            );
+
+            toast.success('Блок проекта успешно удален');
+        } catch (error: any) {
+            toast.error(
+                error || 'Ошибка при удалении блока проекта. Проверьте права доступа на удаление.',
+            );
+        } finally {
+            setConfirmOpen(false);
+            setSelectedProjectBlockId(null);
+        }
     };
 
     const handleSubmit = async (data: Partial<ProjectBlock>) => {

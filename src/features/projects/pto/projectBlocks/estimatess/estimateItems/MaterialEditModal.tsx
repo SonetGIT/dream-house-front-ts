@@ -239,7 +239,9 @@ export default function MaterialEditModal({
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700">Курс</label>
+                                <label className="text-sm font-medium text-gray-700">
+                                    Курс НБКР
+                                </label>
                                 <input
                                     type="text"
                                     value={formData.currency_rate ?? ''}

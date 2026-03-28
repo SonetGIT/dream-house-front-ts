@@ -7,6 +7,7 @@ import type { EstimateItem } from './estimateItems/estimateItemsSlice';
 export interface Estimate {
     id: number;
     block_id: number;
+    name: string;
     status: number | null;
     created_user_id: number;
     approved_user_id: number | null;
@@ -21,6 +22,7 @@ export interface Estimate {
 export interface EstimateFormData {
     block_id: number;
     status?: number;
+    name: string;
 }
 
 /* ================= SEARCH PARAMS ================= */
@@ -99,6 +101,7 @@ export const deleteEstimate = createAsyncThunk<number, number, { rejectValue: st
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`/materialEstimates/delete/${id}`, 'DELETE');
+            console.log('id', id);
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка удаления сметы');

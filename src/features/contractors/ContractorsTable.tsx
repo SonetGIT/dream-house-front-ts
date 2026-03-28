@@ -159,7 +159,7 @@ export default function ContractorsTable({
                                 {/* Контактное лицо */}
                                 <td className="px-3 py-2.5">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {contractor.name}
+                                        {contractor.contact_person}
                                     </div>
                                 </td>
 

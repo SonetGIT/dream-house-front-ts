@@ -22,7 +22,7 @@ export default function ReferencesSelect({
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
             className={
                 className ??
-                'w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm'
+                'w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm'
             }
         >
             <option value="">{placeholder}</option>

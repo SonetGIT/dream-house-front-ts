@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Collapse, Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { signMaterialRequest, type MaterialRequest } from './materialRequestsSlice';
+import {
+    fetchSearchMaterialReq,
+    signMaterialRequest,
+    type MaterialRequest,
+} from './materialRequestsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { User } from '@/features/users/userSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
 import toast from 'react-hot-toast';
 import { approveMatReq } from './approveMatReq';
 import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
@@ -43,28 +46,23 @@ const matReqStatuses: Record<number, { label: string; className: string }> = {
 /*************************************************************************************************************************/
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
+    const { pagination } = useAppSelector((state) => state.materialRequestItems);
+    // console.log('AFTER FETCH', materialRequestItems);
+
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
-    const [selectedEstimateId, setSelectedEstimateId] = useState<number | null>(null);
+
+    /*TOGGLE*/
+
     const toggleRow = (id: number) => {
-        setOpenRows((prev) => {
-            const isOpening = !prev[id];
-
-            if (isOpening) {
-                dispatch(
-                    fetchMaterialRequestItems({
-                        material_request_id: id,
-                        page: 1,
-                        size: 10,
-                    }),
-                );
-            }
-
-            return { ...prev, [id]: isOpening };
-        });
+        setOpenRows((prev) => ({
+            ...prev,
+            [id]: !prev[id],
+        }));
     };
 
+    /*STATUS*/
     const getStatusConfig = (statusId: number) => {
         return (
             matReqStatuses[statusId] || {
@@ -74,110 +72,142 @@ export default function MaterialRequestsTable(props: PropsType) {
         );
     };
 
-    // Проверка, может ли текущий пользователь подписать заявку
+    /*PERMISSIONS*/
     const canSign = (req: MaterialRequest, user?: User) => {
         if (!user) return false;
 
         const userId = Number(user.id);
         const roleId = Number(user.role_id);
 
-        // Временная проверка для admin (например, роль = 1)
-        if (roleId === 1) {
-            // 1 = admin
-            return true; // admin может подписывать всё
-        }
+        if (roleId === 1) return true;
+
         switch (roleId) {
-            case 4: // Прораб
+            case 4:
                 return (
                     req.approved_by_foreman !== true &&
                     (!req.foreman_user_id || Number(req.foreman_user_id) === userId)
                 );
-
-            case 7: // Снабженец
+            case 7:
                 return (
                     req.approved_by_purchasing_agent !== true &&
                     (!req.purchasing_agent_user_id ||
                         Number(req.purchasing_agent_user_id) === userId)
                 );
-
-            case 9: // Нач. участка
+            case 9:
                 return (
                     req.approved_by_site_manager !== true &&
                     (!req.site_manager_user_id || Number(req.site_manager_user_id) === userId)
                 );
-
-            case 10: // Инженер ПТО
+            case 10:
                 return (
                     req.approved_by_planning_engineer !== true &&
                     (!req.planning_engineer_user_id ||
                         Number(req.planning_engineer_user_id) === userId)
                 );
-
-            case 11: // Гл. инженер
+            case 11:
                 return (
                     req.approved_by_main_engineer !== true &&
                     (!req.main_engineer_user_id || Number(req.main_engineer_user_id) === userId)
                 );
-
             default:
                 return false;
         }
     };
 
-    const handleSign = (req: MaterialRequest) => {
+    /*FLOW*/
+
+    const approvalFlow = [
+        'approved_by_foreman',
+        'approved_by_purchasing_agent',
+        'approved_by_site_manager',
+        'approved_by_planning_engineer',
+        'approved_by_main_engineer',
+    ];
+
+    const isLastApproval = (req: any) => {
+        const notApproved = approvalFlow.filter((field) => !req[field]);
+        return notApproved.length === 1;
+    };
+
+    /*SIGN*/
+    const handleSign = (req: MaterialRequest, items: any[]) => {
         if (!currentUser || !canSign(req, currentUser)) return;
 
-        const items = itemsMap[req.id] || [];
+        if (!items || items.length === 0) {
+            toast.error('Нет материалов');
+            return;
+        }
 
         const manualItems = items.filter((i) => Number(i.item_type) === 2);
 
-        // 🔴 если есть manual — нужна смета
-        if (manualItems.length > 0 && !selectedEstimateId) {
-            toast.error('Выберите смету');
-            return;
+        const realIsLast = isLastApproval(req);
+        const isLast = realIsLast || Number(currentUser.role_id) === 1;
+
+        const isPTO = Number(currentUser.role_id) === 10;
+
+        /*ПТО ВАЛИДАЦИЯ*/
+        if (isPTO && manualItems.length > 0) {
+            const invalid = manualItems.some(
+                (i) =>
+                    i.quantity == null ||
+                    i.price == null ||
+                    i.coefficient == null ||
+                    i.currency == null ||
+                    ((i.currency ?? 1) !== 1 && !i.currency_rate),
+            );
+
+            if (invalid) {
+                toast.error('Заполните цену, валюту и курс');
+                return;
+            }
         }
 
-        // 🔴 валидация
-        const invalid = manualItems.some((i) => !i.price || !i.currency || !i.currency_rate);
-
-        if (invalid) {
-            toast.error('Заполните цену, валюту и курс');
-            return;
-        }
-
-        // 🔥 ВАЖНО: выбираем что вызвать
-        if (manualItems.length > 0) {
+        /*СОЗДАНИЕ СМЕТЫ*/
+        if (manualItems.length > 0 && isLast) {
             dispatch(
                 approveMatReq({
                     requestId: req.id,
                     role_id: currentUser.role_id,
                     userId: currentUser.id,
-                    material_estimate_id: selectedEstimateId!,
+                    material_estimate_id: req.block_id,
+                    isLast,
                     items,
                 }),
-            );
-        } else {
-            // если нет manual — обычная подпись
-            dispatch(
-                signMaterialRequest({
-                    id: req.id,
-                    role_id: currentUser.role_id,
-                    userId: currentUser.id,
-                }),
-            );
-        }
-    };
-    // const handleSign = (req: MaterialRequest) => {
-    //     if (!currentUser || !canSign(req, currentUser)) return;
+            )
+                .unwrap()
+                .then(() => {
+                    //ОБНОВЛЯЕМ ВСЮ ЗАЯВКУ (а не items отдельно)
+                    dispatch(
+                        fetchSearchMaterialReq({
+                            project_id: req.project_id,
+                            page: 1,
+                            size: 10,
+                        }),
+                    );
+                });
 
-    //     dispatch(
-    //         signMaterialRequest({
-    //             id: req.id,
-    //             role_id: currentUser.role_id,
-    //             userId: currentUser.id,
-    //         }),
-    //     );
-    // };
+            return;
+        }
+
+        /*ПРОСТАЯ ПОДПИСЬ*/
+        dispatch(
+            signMaterialRequest({
+                id: req.id,
+                role_id: currentUser.role_id,
+                userId: currentUser.id,
+            }),
+        )
+            .unwrap()
+            .then(() => {
+                dispatch(
+                    fetchSearchMaterialReq({
+                        project_id: req.project_id,
+                        page: 1,
+                        size: 10,
+                    }),
+                );
+            });
+    };
 
     /********************************************************************************************************************************/
     return (
@@ -198,7 +228,11 @@ export default function MaterialRequestsTable(props: PropsType) {
                                         Статус
                                     </div>
                                 </th>
-
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Блок
+                                    </div>
+                                </th>
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата создание
@@ -255,7 +289,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                         {/* MATERIALREQEST_TABBLE */}
                                         <tr
                                             className="transition-colors border-b hover:bg-gray-50"
-                                            // onClick={() => toggleRow(req.id)}
+                                            onClick={() => toggleRow(req.id)}
                                         >
                                             {/* toggle */}
                                             <td className="px-2 py-2">
@@ -276,14 +310,15 @@ export default function MaterialRequestsTable(props: PropsType) {
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
                                                 {req.id}
                                             </td>
+
                                             {/* статус */}
                                             <td className="px-2 py-2 text-center text-gray-900 border-l">
                                                 <span
                                                     className={`
-                                        inline-flex text-center px-2 py-0.5
-                                        text-xs font-semibold border rounded-full
-                                        ${statusInfo.className}
-                                    `}
+                                                    inline-flex text-center px-2 py-0.5
+                                                    text-xs font-semibold border rounded-full
+                                                    ${statusInfo.className}
+                                                `}
                                                 >
                                                     {req.status != null
                                                         ? props.refs.materialRequestStatuses.lookup(
@@ -291,6 +326,11 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                           )
                                                         : '—'}
                                                 </span>
+                                            </td>
+                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
+                                                {req.block_id
+                                                    ? props.refs.prjBlocks.lookup(req.block_id)
+                                                    : '—'}
                                             </td>
                                             <td className="px-2 py-2 text-xs text-center text-gray-900 border-l ">
                                                 {formatDateTime(req.created_at)}
@@ -343,24 +383,6 @@ export default function MaterialRequestsTable(props: PropsType) {
                                             {/* Действия */}
                                             <td className="px-3 py-2 border-l bg-gray-50">
                                                 <div className="flex items-center justify-center gap-1.5">
-                                                    {/* <StyledTooltip title="Редактировать">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onEdit(contractor);
-                                                            }}
-                                                            className="
-                                                                p-1.5
-                                                                text-gray-400
-                                                                hover:text-blue-600
-                                                                hover:bg-blue-50
-                                                                rounded
-                                                                transition-colors
-                                                            "
-                                                        >
-                                                            <Pencil className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </StyledTooltip> */}
                                                     <StyledTooltip title="Удалить">
                                                         <button
                                                             onClick={(e) => {
@@ -391,13 +413,32 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                         <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
                                                             Материалы
                                                         </p>
-
                                                         <MatReqItemsTable
                                                             materialRequestId={req.id}
                                                             refs={props.refs}
                                                             currentUser={currentUser}
                                                             onDelete={props.onDeleteMatReqItemId}
+                                                            // НОВОЕ
+                                                            // items={itemsMap[req.id] || []}
+                                                            items={req.items || []}
+                                                            // selectedEstimateId={
+                                                            //     estimateMap[req.id] || null
+                                                            // }
+                                                            // onEstimateChange={(val) =>
+                                                            //     setEstimateMap((prev) => ({
+                                                            //         ...prev,
+                                                            //         [req.id]: val,
+                                                            //     }))
+                                                            // }
+                                                            onChange={(updatedItems) => {
+                                                                setItemsMap((prev) => ({
+                                                                    ...prev,
+                                                                    [req.id]: updatedItems,
+                                                                }));
+                                                            }}
+                                                            pagination={pagination}
                                                         />
+
                                                         {/* КНОПКА ПОДПИСАТЬ */}
                                                         {currentUser &&
                                                             canSign(req, currentUser) && (
@@ -407,7 +448,10 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                         variant="contained"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            handleSign(req);
+                                                                            handleSign(
+                                                                                req,
+                                                                                req.items || [],
+                                                                            );
                                                                         }}
                                                                     >
                                                                         Подписать

@@ -62,6 +62,11 @@ export default function EstimatesTable({
                                 <th className="w-24 px-4 py-3 text-left bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Статус</div>
                                 </th>
+                                <th className="w-24 px-4 py-3 text-left bg-gray-50">
+                                    <div className="text-xs text-gray-600 uppercase">
+                                        Наименование
+                                    </div>
+                                </th>
                                 <th className="px-4 py-3 text-right border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Материалы (сом)

@@ -126,7 +126,7 @@ export default function MaterialsTable({
                         <th className="px-3 py-2 text-xs text-right">Кол-во</th>
                         <th className="px-3 py-2 text-xs text-right">Коэфф.</th>
                         <th className="px-3 py-2 text-xs text-right">Валюта</th>
-                        <th className="px-3 py-2 text-xs text-right">Курс</th>
+                        <th className="px-3 py-2 text-xs text-right">Курс НБКР</th>
                         <th className="px-3 py-2 text-xs text-right">Цена</th>
                         <th className="px-3 py-2 text-xs text-right">Сумма</th>
                         <th className="px-3 py-2 text-xs text-right">Примечание</th>

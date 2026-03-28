@@ -11,6 +11,7 @@ import {
 import MaterialReqCreateModal from '../MaterialRequestCreateModal';
 import MaterialsSelectTable from './MaterialsItemSelectTable';
 import MatReqItemsCreateEditForm from '../../material_request_items/MatReqItemsCreateEditForm';
+import { fetchEstimates } from '../../pto/projectBlocks/estimatess/estimatesSlice';
 
 interface MaterialRequestFlowProps {
     step: 'select' | 'estimate' | 'form';
@@ -37,6 +38,7 @@ export default function MaterialRequestFlow({
     //STATE
     const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);
+    console.log('selectedBlock', selectedBlock);
 
     //FILTER ITEMS BY BLOCK
     const estimateItems = useMemo(() => {
@@ -51,6 +53,24 @@ export default function MaterialRequestFlow({
         }
     }, [estimates, dispatch]);
 
+    useEffect(() => {
+        dispatch(
+            fetchEstimates({
+                block_id: 0, // или без фильтра если API позволяет
+                page: 1,
+                size: 100,
+            }),
+        );
+    }, []);
+    const resetFlow = () => {
+        setStep('select');
+        setSelectedBlock(null);
+        setSelectedItems([]);
+    };
+    const handleClose = () => {
+        resetFlow();
+        onClose();
+    };
     //RENDER
     return (
         <div className="w-full">
@@ -79,7 +99,7 @@ export default function MaterialRequestFlow({
                 <MaterialReqCreateModal
                     blocks={blocks}
                     estimates={estimates}
-                    onClose={onClose}
+                    onClose={handleClose}
                     onSubmit={({ block_id, mode }) => {
                         setSelectedBlock(block_id);
 
@@ -115,12 +135,7 @@ export default function MaterialRequestFlow({
                     blockId={selectedBlock}
                     initialItems={selectedItems}
                     refs={refs}
-                    onCancel={onClose}
-                    // onCancel={() => {
-                    //     setSelectedBlock(null);
-                    //     setSelectedItems([]);
-                    //     setStep('select');
-                    // }}
+                    onCancel={handleClose}
                 />
             )}
         </div>

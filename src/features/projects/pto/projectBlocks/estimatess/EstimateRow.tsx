@@ -55,6 +55,9 @@ export default function EstimateRow({
                 </span>
             </td>
 
+            <td className="w-20 px-4 py-3 text-xs text-left border-l text-sky-800 bg-blue-50/30">
+                {item.name}
+            </td>
             {/* материалы */}
             <td className="px-4 py-3 font-medium text-right text-gray-900 border-l bg-blue-50/30">
                 {formatNumber(materialSum)}

@@ -162,7 +162,7 @@ export default function SuppliersTable({
                                 {/* Контактное лицо */}
                                 <td className="px-3 py-2.5">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                                        {supplier.name}
+                                        {supplier.contact_person}
                                     </div>
                                 </td>
                                 {/* Рейтинг */}

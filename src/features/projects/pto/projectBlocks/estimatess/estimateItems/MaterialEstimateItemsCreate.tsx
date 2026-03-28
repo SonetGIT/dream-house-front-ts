@@ -123,16 +123,15 @@ export default function MaterialEstimateItemsCreate({
 
         const valid = rows.filter(
             (r) =>
-                r.stage_id &&
-                r.subsection_id &&
-                r.material_type &&
-                r.material_id &&
-                r.unit_of_measure &&
-                r.price &&
-                r.quantity_planned &&
-                r.coefficient &&
-                r.currency &&
-                r.price,
+                r.stage_id !== null &&
+                r.subsection_id !== null &&
+                r.material_type !== null &&
+                r.material_id !== null &&
+                r.unit_of_measure !== null &&
+                r.currency !== null &&
+                r.quantity_planned > 0 &&
+                r.coefficient > 0 &&
+                r.price >= 0,
         );
 
         if (!valid.length) {
@@ -205,7 +204,9 @@ export default function MaterialEstimateItemsCreate({
                                     <th className="border px-3 py-3 text-xs min-w-[130px]">
                                         Валюта
                                     </th>
-                                    <th className="border px-3 py-3 text-xs min-w-[120px]">Курс</th>
+                                    <th className="border px-3 py-3 text-xs min-w-[120px]">
+                                        Курс НБКР
+                                    </th>
                                     <th className="border px-3 py-3 text-xs min-w-[100px]">Цена</th>
                                     <th className="border px-3 py-3 text-xs min-w-[100px] text-green-700">
                                         Сумма
@@ -319,7 +320,7 @@ export default function MaterialEstimateItemsCreate({
                                             <td className="px-3 py-2 border">
                                                 <input
                                                     type="text"
-                                                    value={row.coefficient ?? ''}
+                                                    value={row.coefficient}
                                                     onChange={(e) =>
                                                         updateRow(
                                                             row.id,

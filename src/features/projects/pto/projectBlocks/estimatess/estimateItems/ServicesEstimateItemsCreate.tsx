@@ -195,7 +195,9 @@ export default function ServicesEstimateItemsCreate({
                                     <th className="border px-3 py-3 text-xs min-w-[130px]">
                                         Валюта
                                     </th>
-                                    <th className="border px-3 py-3 text-xs min-w-[120px]">Курс</th>
+                                    <th className="border px-3 py-3 text-xs min-w-[120px]">
+                                        Курс НБКР
+                                    </th>
                                     <th className="border px-3 py-3 text-xs min-w-[100px]">Цена</th>
                                     <th className="border px-3 py-3 text-xs min-w-[100px] text-green-700">
                                         Сумма

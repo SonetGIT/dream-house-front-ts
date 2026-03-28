@@ -67,6 +67,8 @@ export default function MaterialRequestsPage() {
     const materialRequestStatuses = useReference('materialRequestStatuses');
     const materialRequestItemStatuses = useReference('materialRequestItemStatuses');
     const materialRequestItemTypes = useReference('materialRequestItemTypes');
+    const materialEstimates = useReference('materialEstimates');
+    const prjBlocks = useReference('projectBlocks');
 
     const refs = {
         projectTypes,
@@ -81,6 +83,8 @@ export default function MaterialRequestsPage() {
         materialRequestStatuses,
         materialRequestItemStatuses,
         materialRequestItemTypes,
+        materialEstimates,
+        prjBlocks,
     };
 
     //загрузка проекта
@@ -133,7 +137,7 @@ export default function MaterialRequestsPage() {
                 }
             }
         } catch {
-            toast.error('Ошибка удаления');
+            toast.error('Ошибка удаления, проверьте права доступа на удаления');
         } finally {
             setDeleteState(null);
         }

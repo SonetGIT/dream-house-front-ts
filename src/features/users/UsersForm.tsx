@@ -125,7 +125,6 @@ export default function UsersForm({
 
             required_action: formData.required_action ?? null,
         };
-        console.log('PAYLOAD', payload);
         // Пароль отправляем только при создании
         if (!user) {
             payload.password = formData.password.trim();

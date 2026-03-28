@@ -54,14 +54,6 @@ export default function MaterialsItemSelectTable({
                 <div className="text-sm font-medium text-sky-600">
                     Выбрано: {selectedItems.length}
                 </div>
-
-                {/* <button
-                    onClick={handleCreateRequest}
-                    disabled={!selectedItems.length || loading}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                    {loading ? 'Создание...' : 'Создать заявку'}
-                </button> */}
                 <button
                     className="px-4 py-2 text-sm font-medium text-white rounded-md bg-sky-600 hover:bg-sky-700 disabled:opacity-50"
                     disabled={!selectedItems.length || loading}
@@ -86,7 +78,7 @@ export default function MaterialsItemSelectTable({
                         <th className="px-3 py-2 text-xs text-right">Кол-во</th>
                         <th className="px-3 py-2 text-xs text-right">Коэфф.</th>
                         <th className="px-3 py-2 text-xs text-right">Валюта</th>
-                        <th className="px-3 py-2 text-xs text-right">Курс</th>
+                        <th className="px-3 py-2 text-xs text-right">Курс НБКР</th>
                         <th className="px-3 py-2 text-xs text-right">Цена</th>
                         <th className="px-3 py-2 text-xs text-right">Сумма</th>
                         <th className="px-3 py-2 text-xs text-right">Примечание</th>

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import type { Users } from '../users/userSlice';
+import type { User } from '../users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
@@ -12,19 +12,19 @@ export interface AuthCredentials {
 
 interface AuthResponse {
     success: boolean;
-    data: Users;
+    data: User;
     token: string;
     message?: string;
 }
 
 interface ProfileResponse {
     success: boolean;
-    data: Users;
+    data: User;
     message?: string;
 }
 
 interface AuthState {
-    user: Users | null;
+    user: User | null;
     token: string | null;
     loading: boolean;
     error: string | null;
@@ -82,7 +82,7 @@ export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValu
     'auth/fetchProfile',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<Users>('/auth/profile', 'GET');
+            const res = await apiRequest<User>('/auth/profile', 'GET');
 
             return {
                 success: true,
