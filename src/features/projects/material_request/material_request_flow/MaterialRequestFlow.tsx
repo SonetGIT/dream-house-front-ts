@@ -38,7 +38,6 @@ export default function MaterialRequestFlow({
     //STATE
     const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);
-    console.log('selectedBlock', selectedBlock);
 
     //FILTER ITEMS BY BLOCK
     const estimateItems = useMemo(() => {
@@ -58,7 +57,7 @@ export default function MaterialRequestFlow({
             fetchEstimates({
                 block_id: 0, // или без фильтра если API позволяет
                 page: 1,
-                size: 100,
+                size: 10,
             }),
         );
     }, []);

@@ -1,34 +1,54 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useAppSelector } from './app/store';
+import { useAppSelector, useAppDispatch } from './app/store';
+import { fetchProfile } from './features/auth/authSlice';
+
 import Header from './components/home/Header';
 import Footer from './components/home/Footer';
 import Menu from './components/home/Menu';
 
 export default function App() {
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const { user } = useAppSelector((state) => state.auth);
+
+    const { user, isAuthChecked } = useAppSelector((state) => state.auth);
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
     const handleMenuClick = () => setDrawerOpen(true);
     const handleDrawerClose = () => setDrawerOpen(false);
 
+    //Восстанавливаем сессию
     useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            dispatch(fetchProfile());
+        }
+    }, [dispatch]);
+
+    //Редирект ТОЛЬКО после проверки
+    useEffect(() => {
+        if (!isAuthChecked) return; //ЖДЁМ
+
         if (!user) {
             navigate('/login');
         }
-    }, [user, navigate]);
+    }, [user, isAuthChecked, navigate]);
 
-    /*RENDER*************************************************************************************************************************/
+    //Можно показать loader
+    if (!isAuthChecked) {
+        return <div>Loading...</div>;
+    }
+
+    /* RENDER */
     return (
         <div className="app-container">
             <Header onMenuClick={handleMenuClick} />
             <Menu open={drawerOpen} onClose={handleDrawerClose} />
+
             <main>
                 <Outlet />
-                {/* <div className="main-content">
-                </div> */}
             </main>
+
             <Footer />
         </div>
     );

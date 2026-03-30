@@ -55,7 +55,7 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
             coefficient: i.coefficient || 1,
 
             currency: i.currency || 1,
-            currency_rate: i.currency_rate || 0,
+            currency_rate: i.currency_rate || 1,
 
             price: i.price || 0,
             comment: i.comment || '',
@@ -77,7 +77,7 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
         coefficient: 1,
 
         currency: 1,
-        currency_rate: 0,
+        currency_rate: 1,
 
         price: 0,
         comment: '',

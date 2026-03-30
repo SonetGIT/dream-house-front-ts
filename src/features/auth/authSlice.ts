@@ -4,7 +4,7 @@ import { apiRequest } from '@/utils/apiRequest';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
 
-/* ===================== TYPES ===================== */
+/*TYPES*/
 export interface AuthCredentials {
     username: string;
     password: string;
@@ -29,23 +29,22 @@ interface AuthState {
     loading: boolean;
     error: string | null;
     resetRequired: boolean;
+    isAuthChecked: boolean; //ДОБАВИЛИ
 }
 
-/* ===================== INITIAL STATE ===================== */
+/*INITIAL STATE*/
 const initialState: AuthState = {
     user: null,
     token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
     loading: false,
     error: null,
     resetRequired: false,
+    isAuthChecked: false,
 };
 
-/* ===================== THUNKS ===================== */
+/*THUNKS*/
 
-/**
- * LOGIN
- * ❗ НЕЛЬЗЯ через apiRequest (токена ещё нет)
- */
+/*LOGIN*/
 export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { rejectValue: string }>(
     'auth/authUser',
     async ({ username, password }, { rejectWithValue }) => {
@@ -62,10 +61,8 @@ export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { reject
                 return rejectWithValue(data?.message || `Ошибка HTTP ${res.status}`);
             }
 
-            // Сохраняем токен только если НЕ нужен reset пароля
-            if (data.data.required_action !== 'RESET_PASSWORD') {
-                localStorage.setItem('token', data.token);
-            }
+            // сохраняем токен
+            localStorage.setItem('token', data.token);
 
             return data;
         } catch (err: any) {
@@ -74,10 +71,7 @@ export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { reject
     },
 );
 
-/**
- * PROFILE
- * ✅ apiRequest (Bearer автоматически)
- */
+/* PROFILE */
 export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValue: string }>(
     'auth/fetchProfile',
     async (_, { rejectWithValue }) => {
@@ -95,10 +89,7 @@ export const fetchProfile = createAsyncThunk<ProfileResponse, void, { rejectValu
     },
 );
 
-/**
- * CHANGE OWN PASSWORD
- * ✅ apiRequest
- */
+/*CHANGE OWN PASSWORD */
 export const changeOwnPassword = createAsyncThunk<
     { message: string },
     { oldPassword: string; newPassword: string },
@@ -120,7 +111,7 @@ export const changeOwnPassword = createAsyncThunk<
     }
 });
 
-/* ===================== SLICE ===================== */
+/*SLICE*/
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -130,6 +121,7 @@ const authSlice = createSlice({
             state.token = null;
             state.error = null;
             state.resetRequired = false;
+            state.isAuthChecked = true; //чтобы не зависало
             localStorage.removeItem('token');
         },
         clearError: (state) => {
@@ -141,7 +133,7 @@ const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            /* ===== LOGIN ===== */
+            /*LOGIN*/
             .addCase(authUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -149,34 +141,37 @@ const authSlice = createSlice({
             .addCase(authUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
                 state.loading = false;
                 state.user = action.payload.data;
+                state.token = action.payload.token; //фикс
+                state.isAuthChecked = true; //важно
 
                 if (action.payload.data.required_action === 'RESET_PASSWORD') {
                     state.resetRequired = true;
-                    state.token = action.payload.token;
-                    localStorage.setItem('token', action.payload.token);
                 }
             })
             .addCase(authUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка авторизации';
+                state.isAuthChecked = true; //чтобы не зависало
             })
 
-            /* ===== PROFILE ===== */
+            /*PROFILE*/
             .addCase(fetchProfile.pending, (state) => {
                 state.loading = true;
             })
             .addCase(fetchProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.data;
+                state.isAuthChecked = true; //ключевая строка
             })
             .addCase(fetchProfile.rejected, (state, action) => {
                 state.loading = false;
                 state.user = null;
                 state.token = null;
                 state.error = action.payload ?? 'Ошибка авторизации';
+                state.isAuthChecked = true; //ключевая строка
             })
 
-            /* ===== CHANGE PASSWORD ===== */
+            /*CHANGE PASSWORD*/
             .addCase(changeOwnPassword.pending, (state) => {
                 state.loading = true;
                 state.error = null;

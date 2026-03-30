@@ -1,6 +1,6 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../app/store';
-import { authUser, fetchProfile, changeOwnPassword } from '../features/auth/authSlice';
+import { authUser, changeOwnPassword } from '../features/auth/authSlice';
 import { type AuthCredentials } from '../features/auth/authSlice';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -10,7 +10,7 @@ export default function AuthPage() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const { user, loading, error, resetRequired } = useAppSelector((state) => state.auth);
+    const { loading, error, resetRequired } = useAppSelector((state) => state.auth);
     const [authForm, setAuthForm] = useState<AuthCredentials>({
         username: '',
         password: '',
@@ -20,20 +20,6 @@ export default function AuthPage() {
         oldPassword: '',
         newPassword: '',
     });
-
-    useEffect(() => {
-        if (!user && localStorage.getItem('token')) {
-            dispatch(fetchProfile());
-        }
-    }, [user, dispatch]);
-
-    /* Редирект если пользователь авторизован и НЕ нужно менять пароль */
-    useEffect(() => {
-        if (user && !resetRequired) {
-            navigate('/');
-        }
-    }, [user, resetRequired, navigate]);
-
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setAuthForm({ ...authForm, [e.target.id]: e.target.value });
     };
@@ -44,7 +30,15 @@ export default function AuthPage() {
 
     const onHandleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        dispatch(authUser(authForm));
+
+        dispatch(authUser(authForm))
+            .unwrap()
+            .then(() => {
+                navigate('/projects'); // только после логина
+            })
+            .catch((err) => {
+                toast.error(err);
+            });
     };
 
     const handlePasswordSave = () => {

@@ -58,8 +58,6 @@ export default function MatReqItemsTable({
     onDelete,
     currentUser,
     items,
-    // selectedEstimateId,
-    // onEstimateChange,
     onChange,
     pagination,
 }: MatReqItemsProps) {
@@ -89,10 +87,9 @@ export default function MatReqItemsTable({
                         quantity: item.quantity ?? 1,
 
                         coefficient: item.coefficient ?? 1,
-                        coefficientInput: String(item.coefficient ?? 1),
 
                         price: item.price ?? 0,
-                        currency: item.currency ?? null,
+                        currency: item.currency ?? 1,
                         currency_rate: item.currency_rate ?? 1,
                         item_type: item.item_type,
                     };
@@ -105,7 +102,6 @@ export default function MatReqItemsTable({
     }, [filteredItems]);
 
     /* CHANGE */
-
     const handleChange = (id: number, field: string, value: any) => {
         setEditedItems((prev) => {
             const current = prev[id] || {};
@@ -115,21 +111,27 @@ export default function MatReqItemsTable({
                 [field]: value,
             };
 
-            //coefficient всегда number
-            if (field === 'coefficient') {
-                updatedItem.coefficient = parseNumber(value);
-            }
-
-            //если меняем валюту — сразу обновляем курс
+            // если меняем валюту — сразу обновляем курс
             if (field === 'currency') {
                 const rate = rates.find((r) => Number(r.currency_id) === Number(value))?.rate;
                 updatedItem.currency_rate = rate ?? 1;
             }
 
-            return {
+            const newState = {
                 ...prev,
                 [id]: updatedItem,
             };
+
+            // 🔥 ВАЖНО: формируем mergedItems вручную
+            const newMergedItems = filteredItems.map((item) => ({
+                ...item,
+                ...newState[item.id],
+            }));
+
+            // 🔥 вызываем onChange только здесь
+            onChange?.(newMergedItems);
+
+            return newState;
         });
     };
 
@@ -142,13 +144,11 @@ export default function MatReqItemsTable({
         }));
     }, [filteredItems, editedItems]);
 
-    useEffect(() => {
-        onChange?.(mergedItems);
-    }, [mergedItems]);
-    /* FILTERS */
-    // const manualItems = mergedItems.filter((i) => Number(i.item_type) === addTypeId);
+    // useEffect(() => {
+    //     if (!mergedItems.length) return;
 
-    // const showEstimateSelect = Number(currentUser?.role_id) === 10 && manualItems.length > 0;
+    //     onChange?.(mergedItems);
+    // }, [mergedItems, onChange]);
 
     /* STATUS */
     const getStatusConfig = (statusId: number) => {

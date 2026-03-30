@@ -85,7 +85,7 @@ export default function MaterialMovementsTable(props: PropsType) {
             </Table>
 
             {/*Пагинация***************************************************************************************************************/}
-            <TablePagination pagination={props.pagination} />
+            {/* <TablePagination pagination={props.pagination} /> */}
         </TableContainer>
     );
 }

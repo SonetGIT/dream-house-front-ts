@@ -12,14 +12,15 @@ export interface Material {
 export interface MaterialRequestItem {
     id: number;
     material_request_id: number;
-    material_estimate_item_id: number | null;
+    material_estimate_item_id: number;
     material_type: number;
     material_id: number;
     unit_of_measure: number;
     quantity: number;
-    price: number | null;
-    currency: number | null;
-    currency_rate: number | null;
+    coefficient: number;
+    price: number;
+    currency: number;
+    currency_rate: number;
     summ: number | null;
     status: number;
     stage_id: number;
@@ -54,7 +55,7 @@ export const fetchMaterialRequestItems = createAsyncThunk(
                 'POST',
                 payload,
             );
-            console.log('RESIT', res);
+
             return {
                 items: res.data,
                 pagination: res.pagination,

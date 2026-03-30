@@ -13,32 +13,65 @@ import ContractorsPage from '@/features/contractors/ContractorsPage';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
 import UsersPage from '@/features/users/UsersPage';
 import MaterialRequestsPage from '@/features/projects/material_request/MaterialRequestsPage';
-
+import Dashboard from '@/components/ui/dashboard/Dashboard';
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
+
     {
         path: '/',
         element: <App />,
         children: [
             { path: 'users', element: <UsersPage /> },
-            { path: 'projects', element: <ProjectsPage /> },
             { path: 'suppliers', element: <SuppliersPage /> },
             { path: 'contractors', element: <ContractorsPage /> },
             { path: 'materials', element: <MaterialsPage /> },
+
             {
-                path: 'projects/:projectId',
-                element: <ProjectDashboardPage />,
+                path: 'projects',
                 children: [
-                    { index: true, element: null }, //дашборд
-                    { path: 'documentStages', element: <LegalDocStagesPage /> },
-                    { path: 'pto', element: <BlocksManager /> },
-                    { path: 'materialRequests', element: <MaterialRequestsPage /> },
-                    // { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
-                    // { path: 'warehouses', element: <WarehousesPage /> },
-                    // { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },
+                    { index: true, element: <ProjectsPage /> },
+                    {
+                        path: ':projectId',
+                        element: <ProjectDashboardPage />,
+                        children: [
+                            { index: true, element: <Dashboard /> },
+                            { path: 'documentStages', element: <LegalDocStagesPage /> },
+                            { path: 'pto', element: <BlocksManager /> },
+                            { path: 'materialRequests', element: <MaterialRequestsPage /> },
+                        ],
+                    },
                 ],
             },
         ],
     },
+
     { path: '*', element: <NotFoundPage /> },
 ]);
+// export const router = createBrowserRouter([
+//     { path: '/login', element: <AuthPage /> },
+//     {
+//         path: '/',
+//         element: <App />,
+//         children: [
+//             { path: 'users', element: <UsersPage /> },
+//             { path: 'projects', element: <ProjectsPage /> },
+//             { path: 'suppliers', element: <SuppliersPage /> },
+//             { path: 'contractors', element: <ContractorsPage /> },
+//             { path: 'materials', element: <MaterialsPage /> },
+//             {
+//                 path: 'projects/:projectId',
+//                 element: <ProjectDashboardPage />,
+//                 children: [
+//                     { index: true, element: <Dashboard /> }, //дашборд
+//                     { path: 'documentStages', element: <LegalDocStagesPage /> },
+//                     { path: 'pto', element: <BlocksManager /> },
+//                     { path: 'materialRequests', element: <MaterialRequestsPage /> },
+//                     // { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
+//                     // { path: 'warehouses', element: <WarehousesPage /> },
+//                     // { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },
+//                 ],
+//             },
+//         ],
+//     },
+//     { path: '*', element: <NotFoundPage /> },
+// ]);

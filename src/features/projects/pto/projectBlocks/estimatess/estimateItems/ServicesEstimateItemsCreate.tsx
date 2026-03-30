@@ -57,7 +57,7 @@ export default function ServicesEstimateItemsCreate({
         quantity_planned: 1,
         coefficient: 1,
         currency: 1,
-        currency_rate: 0,
+        currency_rate: 1,
         price: 0,
         comment: '',
     });

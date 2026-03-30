@@ -69,7 +69,7 @@ export default function MaterialsItemSelectTable({
                         <th className="px-3 py-2 text-xs">
                             <input type="checkbox" checked={isAllSelected} onChange={toggleAll} />
                         </th>
-
+                        <th className="px-3 py-2 text-xs text-left">К заказу</th>
                         <th className="px-3 py-2 text-xs text-left">Этап</th>
                         <th className="px-3 py-2 text-xs text-left">Подэтап</th>
                         <th className="px-3 py-2 text-xs text-left">Тип</th>
@@ -102,6 +102,19 @@ export default function MaterialsItemSelectTable({
                                         checked={isSelected}
                                         onChange={() => toggleOne(sub.id)}
                                     />
+                                </td>
+                                <td className="px-3 py-3 text-sm">
+                                    <span
+                                        className={
+                                            sub.remaining > 0
+                                                ? 'text-green-400'
+                                                : sub.remaining === 0
+                                                  ? 'text-yellow-400'
+                                                  : 'text-red-400'
+                                        }
+                                    >
+                                        {sub.remaining}
+                                    </span>
                                 </td>
 
                                 <td className="px-3 py-3 text-sm">

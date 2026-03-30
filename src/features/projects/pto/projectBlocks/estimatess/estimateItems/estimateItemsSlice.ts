@@ -26,7 +26,7 @@ export interface EstimateItem {
 
     price: number;
     comment: string | null;
-
+    remaining: number;
     created_at?: string;
     updated_at?: string;
     deleted: boolean;

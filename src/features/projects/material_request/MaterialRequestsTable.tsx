@@ -1,19 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Collapse, Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import {
-    fetchSearchMaterialReq,
-    signMaterialRequest,
-    type MaterialRequest,
-} from './materialRequestsSlice';
+import { fetchSearchMaterialReq, type MaterialRequest } from './materialRequestsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { User } from '@/features/users/userSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import toast from 'react-hot-toast';
-import { approveMatReq } from './approveMatReq';
 import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
+import { submitMaterialRequestFlow } from './submitMaterialRequestFlow';
+import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
 
 interface PropsType {
     data: MaterialRequest[];
@@ -43,23 +40,35 @@ const matReqStatuses: Record<number, { label: string; className: string }> = {
         className: 'bg-red-100 text-red-800 border-red-200',
     },
 };
+
 /*************************************************************************************************************************/
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
-    const { pagination } = useAppSelector((state) => state.materialRequestItems);
-    // console.log('AFTER FETCH', materialRequestItems);
+    const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
 
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
-
     /*TOGGLE*/
-
     const toggleRow = (id: number) => {
+        const isOpening = !openRows[id];
+
+        // 1. сначала обновляем state
         setOpenRows((prev) => ({
             ...prev,
-            [id]: !prev[id],
+            [id]: isOpening,
         }));
+
+        // 2. потом dispatch
+        if (isOpening) {
+            dispatch(
+                fetchMaterialRequestItems({
+                    material_request_id: id,
+                    page: 1,
+                    size: 10,
+                }),
+            );
+        }
     };
 
     /*STATUS*/
@@ -71,6 +80,16 @@ export default function MaterialRequestsTable(props: PropsType) {
             }
         );
     };
+    const handleItemsChange = useCallback((reqId: number, updatedItems: any[]) => {
+        setItemsMap((prev) => {
+            if (prev[reqId] === updatedItems) return prev;
+
+            return {
+                ...prev,
+                [reqId]: updatedItems,
+            };
+        });
+    }, []);
 
     /*PERMISSIONS*/
     const canSign = (req: MaterialRequest, user?: User) => {
@@ -84,131 +103,111 @@ export default function MaterialRequestsTable(props: PropsType) {
         switch (roleId) {
             case 4:
                 return (
-                    req.approved_by_foreman !== true &&
+                    !req.approved_by_foreman &&
                     (!req.foreman_user_id || Number(req.foreman_user_id) === userId)
                 );
+
             case 7:
                 return (
-                    req.approved_by_purchasing_agent !== true &&
+                    !req.approved_by_purchasing_agent &&
                     (!req.purchasing_agent_user_id ||
                         Number(req.purchasing_agent_user_id) === userId)
                 );
+
             case 9:
                 return (
-                    req.approved_by_site_manager !== true &&
+                    !req.approved_by_site_manager &&
                     (!req.site_manager_user_id || Number(req.site_manager_user_id) === userId)
                 );
+
             case 10:
                 return (
-                    req.approved_by_planning_engineer !== true &&
+                    !req.approved_by_planning_engineer &&
                     (!req.planning_engineer_user_id ||
                         Number(req.planning_engineer_user_id) === userId)
                 );
+
             case 11:
                 return (
-                    req.approved_by_main_engineer !== true &&
+                    !req.approved_by_main_engineer &&
                     (!req.main_engineer_user_id || Number(req.main_engineer_user_id) === userId)
                 );
+
             default:
                 return false;
         }
     };
 
-    /*FLOW*/
-
-    const approvalFlow = [
-        'approved_by_foreman',
-        'approved_by_purchasing_agent',
-        'approved_by_site_manager',
-        'approved_by_planning_engineer',
-        'approved_by_main_engineer',
-    ];
-
-    const isLastApproval = (req: any) => {
-        const notApproved = approvalFlow.filter((field) => !req[field]);
-        return notApproved.length === 1;
-    };
-
     /*SIGN*/
-    const handleSign = (req: MaterialRequest, items: any[]) => {
+    const handleSign = (req: MaterialRequest) => {
+        const openedId = req.id;
+
         if (!currentUser || !canSign(req, currentUser)) return;
 
-        if (!items || items.length === 0) {
+        const items = itemsMap[req.id] ?? req.items ?? [];
+        // const items = (itemsMap[req.id]?.length ? itemsMap[req.id] : req.items) ?? [];
+        // console.log('   items для отправки', items);
+
+        if (!items.length) {
             toast.error('Нет материалов');
             return;
         }
 
-        const manualItems = items.filter((i) => Number(i.item_type) === 2);
-
-        const realIsLast = isLastApproval(req);
-        const isLast = realIsLast || Number(currentUser.role_id) === 1;
-
-        const isPTO = Number(currentUser.role_id) === 10;
-
-        /*ПТО ВАЛИДАЦИЯ*/
-        if (isPTO && manualItems.length > 0) {
-            const invalid = manualItems.some(
-                (i) =>
-                    i.quantity == null ||
-                    i.price == null ||
-                    i.coefficient == null ||
-                    i.currency == null ||
-                    ((i.currency ?? 1) !== 1 && !i.currency_rate),
-            );
-
-            if (invalid) {
-                toast.error('Заполните цену, валюту и курс');
-                return;
-            }
-        }
-
-        /*СОЗДАНИЕ СМЕТЫ*/
-        if (manualItems.length > 0 && isLast) {
-            dispatch(
-                approveMatReq({
-                    requestId: req.id,
-                    role_id: currentUser.role_id,
-                    userId: currentUser.id,
-                    material_estimate_id: req.block_id,
-                    isLast,
-                    items,
-                }),
-            )
-                .unwrap()
-                .then(() => {
-                    //ОБНОВЛЯЕМ ВСЮ ЗАЯВКУ (а не items отдельно)
-                    dispatch(
-                        fetchSearchMaterialReq({
-                            project_id: req.project_id,
-                            page: 1,
-                            size: 10,
-                        }),
-                    );
-                });
-
-            return;
-        }
-
-        /*ПРОСТАЯ ПОДПИСЬ*/
         dispatch(
-            signMaterialRequest({
-                id: req.id,
-                role_id: currentUser.role_id,
-                userId: currentUser.id,
+            submitMaterialRequestFlow({
+                req,
+                items,
+                currentUser,
             }),
         )
             .unwrap()
             .then(() => {
-                dispatch(
+                // очистка локальных изменений
+                setItemsMap((prev) => {
+                    const copy = { ...prev };
+                    delete copy[req.id];
+                    return copy;
+                });
+
+                // обновляем список заявок
+                return dispatch(
                     fetchSearchMaterialReq({
                         project_id: req.project_id,
                         page: 1,
                         size: 10,
                     }),
+                ).unwrap();
+            })
+            .then(() => {
+                // открываем строку
+                setOpenRows((prev) => ({
+                    ...prev,
+                    [openedId]: true,
+                }));
+
+                //  ВАЖНО: заново загружаем items
+                dispatch(
+                    fetchMaterialRequestItems({
+                        material_request_id: openedId,
+                        page: 1,
+                        size: 10,
+                    }),
                 );
+            })
+            .catch((e) => {
+                toast.error(e || 'Ошибка');
             });
     };
 
+    const isFullyApproved = (req: MaterialRequest): boolean => {
+        return (
+            !!req.approved_by_foreman &&
+            !!req.approved_by_purchasing_agent &&
+            !!req.approved_by_site_manager &&
+            !!req.approved_by_planning_engineer &&
+            !!req.approved_by_main_engineer
+        );
+    };
     /********************************************************************************************************************************/
     return (
         <div className="space-y-4">
@@ -419,23 +418,13 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             currentUser={currentUser}
                                                             onDelete={props.onDeleteMatReqItemId}
                                                             // НОВОЕ
-                                                            // items={itemsMap[req.id] || []}
-                                                            items={req.items || []}
-                                                            // selectedEstimateId={
-                                                            //     estimateMap[req.id] || null
-                                                            // }
-                                                            // onEstimateChange={(val) =>
-                                                            //     setEstimateMap((prev) => ({
-                                                            //         ...prev,
-                                                            //         [req.id]: val,
-                                                            //     }))
-                                                            // }
-                                                            onChange={(updatedItems) => {
-                                                                setItemsMap((prev) => ({
-                                                                    ...prev,
-                                                                    [req.id]: updatedItems,
-                                                                }));
-                                                            }}
+                                                            items={itemsMap[req.id] ?? items ?? []}
+                                                            onChange={(updatedItems) =>
+                                                                handleItemsChange(
+                                                                    req.id,
+                                                                    updatedItems,
+                                                                )
+                                                            }
                                                             pagination={pagination}
                                                         />
 
@@ -446,12 +435,12 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                     <Button
                                                                         size="small"
                                                                         variant="contained"
+                                                                        disabled={isFullyApproved(
+                                                                            req,
+                                                                        )} // 🔥 вот это
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            handleSign(
-                                                                                req,
-                                                                                req.items || [],
-                                                                            );
+                                                                            handleSign(req);
                                                                         }}
                                                                     >
                                                                         Подписать

@@ -35,7 +35,7 @@ export default function MaterialRequestsPage() {
     );
 
     const {
-        data: materialRequests = [],
+        data: materialRequests,
         loading: materialLoading,
         pagination,
     } = useAppSelector((state) => state.materialRequests);
