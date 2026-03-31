@@ -16,7 +16,7 @@ export const fetchEnum = createAsyncThunk<
 >('reference/fetchEnum', async (enumName, { extra, rejectWithValue }) => {
     const token = getToken();
 
-    // 🔥 ВОТ ЗДЕСЬ — ПРАВИЛЬНОЕ МЕСТО
+    //ВОТ ЗДЕСЬ — ПРАВИЛЬНОЕ МЕСТО
     if (!token) {
         return rejectWithValue(null); // ⬅️ НЕ ошибка, просто нет токена
     }
@@ -56,7 +56,7 @@ const enumsSlice = createSlice({
             })
             .addCase(fetchEnum.fulfilled, (state, action) => {
                 state.loading[action.meta.arg] = false;
-                state.data[action.meta.arg] = action.payload; // 🔥 ОБЯЗАТЕЛЬНО
+                state.data[action.meta.arg] = action.payload; //ОБЯЗАТЕЛЬНО
             })
 
             .addCase(fetchEnum.rejected, (state, action) => {

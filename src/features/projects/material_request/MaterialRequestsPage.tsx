@@ -1,6 +1,6 @@
 import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
 import {
@@ -20,14 +20,11 @@ import MaterialRequestFlow from './material_request_flow/MaterialRequestFlow';
 import { calcRowTotal } from '@/utils/calcRowTotal';
 import { fetchProjectBlocks } from '../pto/projectBlocks/projectBlocksSlice';
 
-export interface ProjectOutletContext {
-    projectId: number;
-}
-
 /*************************************************************************************************************************/
 export default function MaterialRequestsPage() {
     const dispatch = useAppDispatch();
-    const { projectId } = useOutletContext<ProjectOutletContext>();
+    const { projectId } = useParams();
+    const projectIdNum = projectId ? Number(projectId) : null;
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);
 
     const { currentProject: project, loading: projectLoading } = useAppSelector(
@@ -41,13 +38,12 @@ export default function MaterialRequestsPage() {
     } = useAppSelector((state) => state.materialRequests);
 
     const projectBlocks = useMemo(
-        () => blocks.filter((b) => b.project_id === projectId),
-        [blocks, projectId],
+        () => blocks.filter((b) => b.project_id === projectIdNum),
+        [blocks, projectIdNum],
     );
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [step, setStep] = useState<'select' | 'estimate' | 'form'>('select');
-    const [currentPage, setCurrentPage] = useState(1);
 
     const [deleteState, setDeleteState] = useState<{
         type: 'matReq' | 'matReqItem';
@@ -89,17 +85,17 @@ export default function MaterialRequestsPage() {
 
     //загрузка проекта
     useEffect(() => {
-        if (projectId && (!project || project.id !== projectId)) {
-            dispatch(getProjectById(projectId));
+        if (projectIdNum && (!project || project.id !== projectIdNum)) {
+            dispatch(getProjectById(projectIdNum));
         }
-    }, [projectId, project, dispatch]);
+    }, [projectIdNum, project, dispatch]);
 
     //загрузка блоков
     useEffect(() => {
-        if (projectId && blocks.length === 0) {
-            dispatch(fetchProjectBlocks({ project_id: projectId, page: 1, size: 10 }));
+        if (projectIdNum && blocks.length === 0) {
+            dispatch(fetchProjectBlocks({ project_id: projectIdNum, page: 1, size: 10 }));
         }
-    }, [projectId, blocks.length, dispatch]);
+    }, [projectIdNum, blocks.length, dispatch]);
 
     //загрузка заявок
     useEffect(() => {
@@ -132,8 +128,8 @@ export default function MaterialRequestsPage() {
                 await dispatch(deleteMaterialRequestItem(deleteState.id)).unwrap();
                 toast.success('Позиция удалена');
 
-                if (projectId) {
-                    dispatch(fetchSearchMaterialReq({ project_id: projectId }));
+                if (projectIdNum) {
+                    dispatch(fetchSearchMaterialReq({ project_id: projectIdNum }));
                 }
             }
         } catch {
@@ -141,11 +137,11 @@ export default function MaterialRequestsPage() {
         } finally {
             setDeleteState(null);
         }
-    }, [deleteState, dispatch, projectId]);
+    }, [deleteState, dispatch, projectIdNum]);
 
     //SAFE RETURNS
-    if (!projectId) {
-        return <div>Нет projectId</div>;
+    if (!projectIdNum) {
+        return <div>Нет projectIdNum</div>;
     }
 
     if (projectLoading) {
@@ -188,22 +184,18 @@ export default function MaterialRequestsPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
-                                setCurrentPage(newPage);
-
                                 dispatch(
                                     fetchSearchMaterialReq({
-                                        project_id: projectId,
+                                        project_id: projectIdNum,
                                         page: newPage,
                                         size: pagination.size,
                                     }),
                                 );
                             }}
                             onSizeChange={(newSize) => {
-                                setCurrentPage(1);
-
                                 dispatch(
                                     fetchSearchMaterialReq({
-                                        project_id: projectId,
+                                        project_id: projectIdNum,
                                         page: 1,
                                         size: newSize,
                                     }),
@@ -226,7 +218,7 @@ export default function MaterialRequestsPage() {
                     step={step}
                     setStep={setStep}
                     blocks={projectBlocks}
-                    projectId={projectId}
+                    projectId={projectIdNum}
                     refs={refs}
                     calcRowTotal={calcRowTotal}
                     onClose={() => setModal(null)}

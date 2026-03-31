@@ -64,7 +64,6 @@ export const fetchProjectBlocks = createAsyncThunk<
 });
 
 /*CREATE*/
-
 export const createProjectBlock = createAsyncThunk<
     ProjectBlock,
     Partial<ProjectBlock>,
@@ -80,7 +79,6 @@ export const createProjectBlock = createAsyncThunk<
 });
 
 /*UPDATE*/
-
 export const updateProjectBlock = createAsyncThunk<
     ProjectBlock,
     { id: number; data: Partial<ProjectBlock> },
@@ -96,7 +94,6 @@ export const updateProjectBlock = createAsyncThunk<
 });
 
 /*DELETE*/
-
 export const deleteProjectBlock = createAsyncThunk<number, number, { rejectValue: string }>(
     'projectBlocks/delete',
     async (id, { rejectWithValue }) => {
@@ -111,7 +108,6 @@ export const deleteProjectBlock = createAsyncThunk<number, number, { rejectValue
 );
 
 /*SLICE*/
-
 const projectBlocksSlice = createSlice({
     name: 'projectBlocks',
     initialState,

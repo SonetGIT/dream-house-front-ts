@@ -1,7 +1,7 @@
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
-import { Pencil, Trash2, Loader2, FolderOpen, Star } from 'lucide-react';
+import { Pencil, Trash2, Loader2, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Project } from './projectsSlice';
 import { RowActions } from '@/components/ui/RowActions';
@@ -39,6 +39,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
     const handleRowClick = (project: Project) => {
         navigate(`/projects/${project.id}`, { state: { project } });
     };
+
     const getStatusConfig = (statusId: number) => {
         return (
             STATUS_CONFIG[statusId] || {

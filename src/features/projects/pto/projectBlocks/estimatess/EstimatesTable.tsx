@@ -6,6 +6,7 @@ import type { Estimate } from './estimatesSlice';
 import { calcRowTotal } from '@/utils/calcRowTotal';
 
 interface EstTblTableProps {
+    blockId: number;
     data: Estimate[];
     onDeleteEstimateId: (id: number) => void;
     onDeleteEstimateItemId: (id: number) => void;
@@ -13,6 +14,7 @@ interface EstTblTableProps {
 
 /*************************************************************************************************************************/
 export default function EstimatesTable({
+    blockId,
     data,
     onDeleteEstimateId,
     onDeleteEstimateItemId,
@@ -109,6 +111,7 @@ export default function EstimatesTable({
 
                                         {isExpanded && (
                                             <EstimateDetails
+                                                blockId={blockId}
                                                 item={item}
                                                 items={items}
                                                 onDeleteEstimateItemId={onDeleteEstimateItemId}

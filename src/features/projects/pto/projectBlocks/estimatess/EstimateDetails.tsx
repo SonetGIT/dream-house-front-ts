@@ -19,6 +19,7 @@ import MaterialsTable from './estimateItems/MaterialsTable';
 import { calcRowTotal } from '@/utils/calcRowTotal';
 
 interface EstimateDetailsProps {
+    blockId: number;
     item: Estimate;
     items: EstimateItem[];
     onDeleteEstimateItemId: (id: number) => void;
@@ -28,6 +29,7 @@ type TabType = 'materials' | 'services' | 'history';
 
 /****************************************************************************************************************/
 export default function EstimateDetails({
+    blockId,
     item,
     items,
     onDeleteEstimateItemId,
@@ -166,6 +168,7 @@ export default function EstimateDetails({
                 </td>
             </tr>
             <MaterialEstimateItemsCreate
+                blockId={blockId}
                 isOpen={formType === 'material'}
                 estimateId={currentRowId}
                 refs={refs}
@@ -173,6 +176,7 @@ export default function EstimateDetails({
             />
 
             <ServicesEstimateItemsCreate
+                blockId={blockId}
                 isOpen={formType === 'service'}
                 estimateId={currentRowId}
                 refs={refs}

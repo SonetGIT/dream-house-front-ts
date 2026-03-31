@@ -4,7 +4,7 @@ import { useReference } from '../../reference/useReference';
 import { fetchWarehouses } from './warehousesSlice';
 import WarehousesList from './WarehousesList';
 import { useOutletContext } from 'react-router-dom';
-import type { ProjectOutletContext } from '../material_request/MaterialRequestsPage';
+import type { ProjectOutletContext } from '../pto/PtoPage';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {

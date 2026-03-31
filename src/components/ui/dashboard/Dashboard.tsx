@@ -1,4 +1,4 @@
-import { MdAssignment, MdShoppingCart, MdWarehouse } from 'react-icons/md';
+import { MdWarehouse } from 'react-icons/md';
 import { Cards } from './Cards';
 import { CustomerPreview } from './CustomerPreview';
 import { StatusOverview } from './StatusOverview';
@@ -6,7 +6,6 @@ import { IoDocumentsSharp } from 'react-icons/io5';
 import WidgetsIcon from '@mui/icons-material/Widgets';
 
 export default function Dashboard() {
-    // console.log('Dashboard');
     const dashboardCards = [
         {
             title: 'Документы (юр.)',
@@ -23,22 +22,6 @@ export default function Dashboard() {
             value: '',
             to: 'pto',
             icon: <WidgetsIcon />,
-        },
-        {
-            title: 'Заявка на материалы',
-            label: 'Этот месяц',
-            value: '34 000 $',
-            color: '#22c55e',
-            to: 'materialRequests',
-            icon: <MdAssignment />,
-        },
-        {
-            title: 'Заявка на закупку',
-            label: 'Этот месяц',
-            value: '34 000 $',
-            color: '#2c7ecb',
-            to: 'purchaseRequestCard',
-            icon: <MdShoppingCart />,
         },
         {
             title: 'Склады',

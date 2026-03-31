@@ -36,8 +36,6 @@ export default function LegalDocTable({
     const [editingDocId, setEditingDocId] = useState<number | undefined>(undefined);
     const [initialData, setInitialData] = useState<LegalDocumentForm | null>(null);
     const [saving, setSaving] = useState(false);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     useEffect(() => {
         dispatch(fetchLegalDocuments({ entity_type: entityType, entity_id: entityId }));
     }, [dispatch, entityType, entityId]);
@@ -93,9 +91,7 @@ export default function LegalDocTable({
             }
 
             toast.success('Документ сохранён');
-            await dispatch(
-                fetchLegalDocuments({ page: page + 1, size: rowsPerPage, entity_id: entityId }),
-            );
+            await dispatch(fetchLegalDocuments({ page: 1, size: 10, entity_id: entityId }));
             setOpenForm(false);
         } catch {
             toast.error('Ошибка сохранения документа');

@@ -5,7 +5,7 @@ import AuthPage from '../pages/AuthPage';
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
 import MaterialsPage from '@/features/materials/MaterialsPage';
-import BlocksManager from '@/features/projects/pto/PtoManager';
+import PtoPage from '@/features/projects/pto/PtoPage';
 import LegalDocStagesPage from '@/features/projects/legal_department/legalDocStages/LegalDocStagesPage';
 import ProjectsPage from '@/features/projects/a_project/ProjectsPage';
 import ProjectDashboardPage from '@/features/projects/a_project/ProjectDashboardPage';
@@ -14,6 +14,8 @@ import SuppliersPage from '@/features/suppliers/SuppliersPage';
 import UsersPage from '@/features/users/UsersPage';
 import MaterialRequestsPage from '@/features/projects/material_request/MaterialRequestsPage';
 import Dashboard from '@/components/ui/dashboard/Dashboard';
+import EstimatesStagePage from '@/features/projects/pto/projectBlocks/EstimatesStagePage';
+import ProjectBlocksTabs from '@/features/projects/pto/projectBlocks/ProjectBlocksTabs';
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
 
@@ -36,17 +38,26 @@ export const router = createBrowserRouter([
                         children: [
                             { index: true, element: <Dashboard /> },
                             { path: 'documentStages', element: <LegalDocStagesPage /> },
-                            { path: 'pto', element: <BlocksManager /> },
-                            { path: 'materialRequests', element: <MaterialRequestsPage /> },
+                            { path: 'pto', element: <PtoPage /> },
+                            {
+                                path: 'prjBlocks/:prjBlockId',
+                                element: <ProjectBlocksTabs />,
+                                children: [
+                                    { index: true, element: <EstimatesStagePage /> }, // default
+                                    { path: 'materialRequests', element: <MaterialRequestsPage /> },
+                                    // { path: 'purchaseRequests', element: <PurchaseRequestsPage /> },
+                                    // { path: 'avr', element: <AvrPage /> },
+                                ],
+                            },
                         ],
                     },
                 ],
             },
         ],
     },
-
     { path: '*', element: <NotFoundPage /> },
 ]);
+
 // export const router = createBrowserRouter([
 //     { path: '/login', element: <AuthPage /> },
 //     {

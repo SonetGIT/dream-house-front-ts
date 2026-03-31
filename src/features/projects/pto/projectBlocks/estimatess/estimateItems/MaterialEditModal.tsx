@@ -1,6 +1,6 @@
 import { X, Package, DollarSign } from 'lucide-react';
 import type { EstimateItem } from './estimateItemsSlice';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import { parseNumber } from '@/utils/parseNumber';
 
@@ -17,8 +17,6 @@ export default function MaterialEditModal({
     onSubmit,
     onClose,
 }: MaterialEditModalProps) {
-    const firstInputRef = useRef<HTMLSelectElement>(null);
-
     const [formData, setFormData] = useState<Partial<EstimateItem>>({
         stage_id: item?.stage_id ?? null,
         subsection_id: item?.subsection_id ?? null,

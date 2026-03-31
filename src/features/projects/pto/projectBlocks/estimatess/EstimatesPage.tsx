@@ -17,8 +17,7 @@ interface Props {
 export default function EstimatesPage({ blockId, blockName }: Props) {
     const dispatch = useAppDispatch();
     const { data, loading } = useAppSelector((state) => state.estimates);
-    // const refs = { materialEstimates: useReference('materialEstimates') };
-    const [page, setPage] = useState(1);
+    const page = 1;
     const size = 10;
 
     const [deleteState, setDeleteState] = useState<{
@@ -76,32 +75,6 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
     };
 
     //CREATE
-    // const handleCreateEstimate = useCallback(async () => {
-    //     try {
-    //         const name = generateEstimateName(blockName);
-
-    //         await dispatch(
-    //             createEstimate({
-    //                 block_id: blockId,
-    //                 status: 1,
-    //                 name,
-    //             }),
-    //         ).unwrap();
-
-    //         toast.success('Смета создана');
-
-    //         dispatch(
-    //             fetchEstimates({
-    //                 block_id: blockId,
-    //                 page,
-    //                 size,
-    //             }),
-    //         );
-    //     } catch {
-    //         toast.error('Ошибка создания сметы');
-    //     }
-    // }, [dispatch, blockId, blockName, page, size, refs]);
-
     const handleCreateEstimate = useCallback(async () => {
         try {
             //Проверка: уже есть смета в этом блоке
@@ -154,6 +127,7 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
             ) : (
                 <>
                     <EstimatesTable
+                        blockId={blockId}
                         data={data}
                         onDeleteEstimateId={(id) => setDeleteState({ type: 'estimate', id })} // удалить смету
                         onDeleteEstimateItemId={(itemId: number) =>

@@ -25,9 +25,6 @@ export default function UsersPage() {
         search: '',
         role_id: null as number | null,
     });
-
-    const [currentPage, setCurrentPage] = useState(1);
-
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -60,8 +57,6 @@ export default function UsersPage() {
     //Поиск
     const handleSearch = (newFilters: typeof filters) => {
         setFilters(newFilters);
-        setCurrentPage(1);
-
         const params: any = {
             page: 1,
             size: pagination?.size ?? 10,
@@ -85,8 +80,6 @@ export default function UsersPage() {
         };
 
         setFilters(resetFilters);
-        setCurrentPage(1);
-
         dispatch(
             fetchUsers({
                 page: 1,
@@ -227,8 +220,6 @@ export default function UsersPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
-                                setCurrentPage(newPage);
-
                                 dispatch(
                                     fetchUsers({
                                         page: newPage,
@@ -238,8 +229,6 @@ export default function UsersPage() {
                                 );
                             }}
                             onSizeChange={(newSize) => {
-                                setCurrentPage(1);
-
                                 dispatch(
                                     fetchUsers({
                                         page: 1,

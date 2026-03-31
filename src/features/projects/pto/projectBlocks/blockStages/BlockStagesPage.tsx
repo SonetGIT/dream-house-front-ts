@@ -24,7 +24,6 @@ import { fetchEnum } from '@/features/reference/referenceSlice';
 /*ЭТАПЫ - БЛОКА************************************************************************************************************/
 export default function BlockStagesPage({ blockId }: { blockId: number }) {
     const dispatch = useAppDispatch();
-
     const allStages = useAppSelector((s) => s.blockStages.data);
     const subStagesByStageId = useAppSelector((s) => s.stageSubsections.byStageId);
     const loading = useAppSelector((s) => s.blockStages.loading);
@@ -34,8 +33,6 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
     }, [allStages, blockId]);
 
     const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const size = 10;
     const [editingStage, setEditingStage] = useState<BlockStage | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -63,12 +60,11 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
         dispatch(
             fetchBlockStages({
                 block_id: blockId,
-                page,
-                size,
+                page: 1,
+                size: 10,
             }),
         );
-    }, [dispatch, blockId, page]);
-
+    }, [dispatch, blockId]);
     /* фильтр поиска */
     const filteredStages = useMemo(() => {
         return stages.filter((stage) => stage.name.toLowerCase().includes(search.toLowerCase()));
@@ -130,8 +126,8 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
             dispatch(
                 fetchBlockStages({
                     block_id: blockId,
-                    page,
-                    size,
+                    page: 1,
+                    size: 10,
                 }),
             );
             dispatch(fetchEnum('blockStages')); //вызов обновление справочника
@@ -153,8 +149,8 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                 dispatch(
                     fetchBlockStages({
                         block_id: blockId,
-                        page,
-                        size,
+                        page: 1,
+                        size: 10,
                     }),
                 );
             }

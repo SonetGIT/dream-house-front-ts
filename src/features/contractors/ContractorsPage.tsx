@@ -23,8 +23,6 @@ export default function ContractorsPage() {
 
     const [filters, setFilters] = useState({ search: '' });
 
-    const [currentPage, setCurrentPage] = useState(1);
-
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
 
@@ -44,7 +42,6 @@ export default function ContractorsPage() {
     //Поиск
     const handleSearch = (newFilters: typeof filters) => {
         setFilters(newFilters);
-        setCurrentPage(1);
 
         dispatch(
             fetchContractors({
@@ -64,7 +61,6 @@ export default function ContractorsPage() {
         };
 
         setFilters(resetFilters);
-        setCurrentPage(1);
 
         dispatch(
             fetchContractors({
@@ -204,8 +200,6 @@ export default function ContractorsPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
-                                setCurrentPage(newPage);
-
                                 dispatch(
                                     fetchContractors({
                                         page: newPage,
@@ -215,8 +209,6 @@ export default function ContractorsPage() {
                                 );
                             }}
                             onSizeChange={(newSize) => {
-                                setCurrentPage(1);
-
                                 dispatch(
                                     fetchContractors({
                                         page: 1,

@@ -1,27 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
-import type { ProjectBlock } from './projectBlocksSlice';
 import { CheckCircle2, Clock, DollarSign, Home, Ruler, TrendingUp } from 'lucide-react';
 import EstimatesPage from './estimatess/EstimatesPage';
 import BlockStagesPage from './blockStages/BlockStagesPage';
-
-interface Props {
-    blockId: number | null;
-    blockName: string;
-    currentBlock: ProjectBlock | null;
-}
+import { useParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '@/app/store';
+import { fetchProjectBlocks } from './projectBlocksSlice';
 
 /*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
-export default function ProjectBlockPage({ blockId, blockName, currentBlock }: Props) {
-    console.log();
-    const [tabIndex, setTabIndex] = useState(0);
-    if (!blockId) {
+export default function EstimatesStagePage() {
+    const { projectId, prjBlockId } = useParams();
+    const dispatch = useAppDispatch();
+    const blockId = prjBlockId ? Number(prjBlockId) : null;
+    const projectIdNum = projectId ? Number(projectId) : null;
+
+    const { data: blocks } = useAppSelector((state) => state.projectBlocks);
+
+    const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
+
+    const blockName = currentBlock?.name || '';
+    console.log('projectIdNum', projectIdNum);
+
+    useEffect(() => {
+        if (projectIdNum) {
+            dispatch(
+                fetchProjectBlocks({
+                    page: 1,
+                    size: 10,
+                    project_id: projectIdNum,
+                }),
+            );
+        }
+    }, [dispatch, projectIdNum]);
+
+    if (blockId === null) {
         return (
             <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }}>
                 <Typography color="text.secondary">Блоки отсутствуют</Typography>
             </Paper>
         );
     }
+    console.log(prjBlockId);
+    console.log(blockId);
+
+    const [tabIndex, setTabIndex] = useState(0);
+
     return (
         <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }}>
             <Box

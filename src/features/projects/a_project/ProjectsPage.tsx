@@ -28,8 +28,6 @@ export default function ProjectsPage() {
         customerId: null as number | null,
     });
 
-    const [currentPage, setCurrentPage] = useState(1);
-
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
@@ -62,7 +60,6 @@ export default function ProjectsPage() {
     //Поиск
     const handleSearch = (newFilters: typeof filters) => {
         setFilters(newFilters);
-        setCurrentPage(1);
 
         dispatch(
             fetchProjects({
@@ -82,7 +79,6 @@ export default function ProjectsPage() {
         };
 
         setFilters(resetFilters);
-        setCurrentPage(1);
 
         dispatch(
             fetchProjects({
@@ -219,8 +215,6 @@ export default function ProjectsPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
-                                setCurrentPage(newPage);
-
                                 dispatch(
                                     fetchProjects({
                                         page: newPage,
@@ -230,8 +224,6 @@ export default function ProjectsPage() {
                                 );
                             }}
                             onSizeChange={(newSize) => {
-                                setCurrentPage(1);
-
                                 dispatch(
                                     fetchProjects({
                                         page: 1,

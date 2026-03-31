@@ -71,84 +71,69 @@ export default function MatReqItemsTable({
     const filteredItems = useMemo(() => {
         return items.filter((i) => i.material_request_id === materialRequestId);
     }, [items, materialRequestId]);
-
-    const [page, setPage] = useState(1);
-
     /* INIT */
     useEffect(() => {
+        let hasNew = false;
+
+        for (const item of filteredItems) {
+            if (!editedItems[item.id]) {
+                hasNew = true;
+                break;
+            }
+        }
+
+        if (!hasNew) return; // 🚀 ВЫХОД — нет обновлений
+
         setEditedItems((prev) => {
             const updated = { ...prev };
-            let changed = false;
 
             filteredItems.forEach((item) => {
                 if (!prev[item.id]) {
                     updated[item.id] = {
                         id: item.id,
                         quantity: item.quantity ?? 1,
-
                         coefficient: item.coefficient ?? 1,
-
                         price: item.price ?? 0,
                         currency: item.currency ?? 1,
                         currency_rate: item.currency_rate ?? 1,
                         item_type: item.item_type,
                     };
-                    changed = true;
                 }
             });
 
-            return changed ? updated : prev;
+            return updated;
         });
-    }, [filteredItems]);
+    }, [filteredItems, editedItems]);
+
+    useEffect(() => {
+        const newMergedItems = items
+            .filter((i) => i.material_request_id === materialRequestId)
+            .map((item) => ({
+                ...item,
+                ...editedItems[item.id],
+            }));
+
+        onChange?.(newMergedItems);
+    }, [editedItems]);
 
     /* CHANGE */
     const handleChange = (id: number, field: string, value: any) => {
-        setEditedItems((prev) => {
-            const current = prev[id] || {};
-
-            const updatedItem: any = {
-                ...current,
+        setEditedItems((prev) => ({
+            ...prev,
+            [id]: {
+                ...prev[id],
                 [field]: value,
-            };
-
-            // если меняем валюту — сразу обновляем курс
-            if (field === 'currency') {
-                const rate = rates.find((r) => Number(r.currency_id) === Number(value))?.rate;
-                updatedItem.currency_rate = rate ?? 1;
-            }
-
-            const newState = {
-                ...prev,
-                [id]: updatedItem,
-            };
-
-            // 🔥 ВАЖНО: формируем mergedItems вручную
-            const newMergedItems = filteredItems.map((item) => ({
-                ...item,
-                ...newState[item.id],
-            }));
-
-            // 🔥 вызываем onChange только здесь
-            onChange?.(newMergedItems);
-
-            return newState;
-        });
+            },
+        }));
     };
 
     /* MERGED */
-
     const mergedItems = useMemo(() => {
         return filteredItems.map((item) => ({
             ...item,
             ...editedItems[item.id],
         }));
     }, [filteredItems, editedItems]);
-
-    // useEffect(() => {
-    //     if (!mergedItems.length) return;
-
-    //     onChange?.(mergedItems);
-    // }, [mergedItems, onChange]);
 
     /* STATUS */
     const getStatusConfig = (statusId: number) => {
@@ -402,7 +387,6 @@ export default function MatReqItemsTable({
                 <TablePagination
                     pagination={pagination}
                     onPageChange={(newPage) => {
-                        setPage(newPage);
                         dispatch(
                             fetchMaterialRequestItems({
                                 material_request_id: materialRequestId,
@@ -412,7 +396,6 @@ export default function MatReqItemsTable({
                         );
                     }}
                     onSizeChange={(newSize) => {
-                        setPage(1);
                         dispatch(
                             fetchMaterialRequestItems({
                                 material_request_id: materialRequestId,

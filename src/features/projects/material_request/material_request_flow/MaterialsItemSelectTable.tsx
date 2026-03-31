@@ -4,6 +4,7 @@ import type { EstimateItem } from '../../pto/projectBlocks/estimatess/estimateIt
 
 interface MaterialsSelectTableProps {
     items: EstimateItem[];
+    loading: boolean;
     refs: Record<string, ReferenceResult>;
     calcRowTotal: (row: any) => number;
     projectId: number;
@@ -13,13 +14,13 @@ interface MaterialsSelectTableProps {
 
 export default function MaterialsItemSelectTable({
     items,
+    loading,
     refs,
     calcRowTotal,
     onNext,
 }: MaterialsSelectTableProps) {
     //STATE
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [loading, setLoading] = useState(false);
 
     const materialItems = items.filter((i) => i.item_type === 1);
 

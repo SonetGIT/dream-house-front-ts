@@ -5,7 +5,10 @@ import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 import type { EstimateItem } from '../pto/projectBlocks/estimatess/estimateItems/estimateItemsSlice';
-import { createMaterialReq } from '../material_request/materialRequestsSlice';
+import {
+    createMaterialReq,
+    fetchSearchMaterialReq,
+} from '../material_request/materialRequestsSlice';
 
 import {
     useMaterialRows,
@@ -14,6 +17,7 @@ import {
 import { parseNumber } from '@/utils/parseNumber';
 import toast from 'react-hot-toast';
 import { useCurrencyRates } from '@/utils/useCurrencyRates';
+import { fetchMaterialRequestItems } from './materialRequestItemsSlice';
 
 /*PROPS*/
 interface Props {
@@ -83,7 +87,7 @@ export default function MatReqItemsCreateEditForm({
         }
 
         try {
-            await dispatch(
+            const res = await dispatch(
                 createMaterialReq({
                     project_id: projectId,
                     block_id: blockId,
@@ -104,7 +108,26 @@ export default function MatReqItemsCreateEditForm({
                     })),
                 }),
             ).unwrap();
-
+            console.log('CREATE RESPONSE:', res);
+            //достаём id
+            const newId = res?.id;
+            console.log(newId);
+            if (newId) {
+                await dispatch(
+                    fetchMaterialRequestItems({
+                        material_request_id: newId,
+                        page: 1,
+                        size: 10,
+                    }),
+                );
+            }
+            await dispatch(
+                fetchSearchMaterialReq({
+                    project_id: projectId,
+                    page: 1,
+                    size: 10,
+                }),
+            );
             onCancel();
         } catch (e) {
             toast.error('Ошибка создания заявки');

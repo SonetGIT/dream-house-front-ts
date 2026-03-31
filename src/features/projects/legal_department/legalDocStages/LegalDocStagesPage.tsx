@@ -14,9 +14,9 @@ import {
 import { Add } from '@mui/icons-material';
 import LegalDocStageModal from './LegalDocStageModal';
 import { useOutletContext } from 'react-router-dom';
-import type { ProjectOutletContext } from '../../material_request/MaterialRequestsPage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { deleteLegalDocument } from '../legalDoc/legalDocSlice';
+import type { ProjectOutletContext } from '../../pto/PtoPage';
 
 export default function LegalDocStagesPage() {
     /* HOOKS */
@@ -33,9 +33,6 @@ export default function LegalDocStagesPage() {
     const [editingStage, setEditingStage] = useState<LegalDocStages | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [formData, setFormData] = useState({ name: '' });
-
-    const [page, setPage] = useState(1);
-    const size = 10;
 
     const [search, setSearch] = useState('');
 
@@ -68,11 +65,11 @@ export default function LegalDocStagesPage() {
         dispatch(
             fetchLegalDocStages({
                 project_id: projectId,
-                page,
-                size,
+                page: 1,
+                size: 10,
             }),
         );
-    }, [dispatch, projectId, page]);
+    }, [dispatch, projectId]);
 
     /* ошибки */
     useEffect(() => {
@@ -129,8 +126,8 @@ export default function LegalDocStagesPage() {
             dispatch(
                 fetchLegalDocStages({
                     project_id: projectId,
-                    page,
-                    size,
+                    page: 1,
+                    size: 10,
                 }),
             );
         } catch {
@@ -151,8 +148,8 @@ export default function LegalDocStagesPage() {
                 dispatch(
                     fetchLegalDocStages({
                         project_id: projectId,
-                        page,
-                        size,
+                        page: 1,
+                        size: 10,
                     }),
                 );
             }

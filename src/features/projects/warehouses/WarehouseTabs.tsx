@@ -5,11 +5,11 @@ import { fetchWarehouseStocks } from '../warehouseStocks/warehouseStocksSlice';
 import WarehouseStocksTable from '../warehouseStocks/WarehouseStocksTable';
 import WarehousePurchaseOrdersTable from './WarehousePurchaseOrdersTable';
 import { useOutletContext, useParams } from 'react-router-dom';
-import type { ProjectOutletContext } from '../material_request/MaterialRequestsPage';
 import { fetchPurchaseOrders } from '../purchaseOrders/purchaseOrdersSlice';
 import MaterialMovementsTable from '../materialMovements/MaterialMovementsTable';
 import { fetchMaterialMovements } from '../materialMovements/materialMovementsSlice';
 import { useReference } from '@/features/reference/useReference';
+import type { ProjectOutletContext } from '../pto/PtoPage';
 
 export default function WarehouseTabs() {
     const [tab, setTab] = useState(0);

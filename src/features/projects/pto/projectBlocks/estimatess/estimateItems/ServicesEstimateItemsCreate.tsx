@@ -17,6 +17,7 @@ import { calcRowTotal } from '@/utils/calcRowTotal';
 import { formatNumber } from '@/utils/formatNumber';
 
 interface MaterialFormProps {
+    blockId: number;
     isOpen: boolean;
     estimateId: number;
     refs: Record<string, ReferenceResult>;
@@ -25,6 +26,7 @@ interface MaterialFormProps {
 
 /************************************************************************************************************/
 export default function ServicesEstimateItemsCreate({
+    blockId,
     isOpen,
     estimateId,
     refs,
@@ -219,11 +221,20 @@ export default function ServicesEstimateItemsCreate({
                                           )
                                         : [];
 
-                                    const filteredSubStages = row.stage_id
-                                        ? stageSubsections.filter(
-                                              (s) => Number(s.stage_id) === Number(row.stage_id),
-                                          )
+                                    const filteredStages = blockId
+                                        ? blockStages.filter((s) => Number(s.block_id) === blockId)
                                         : [];
+
+                                    const filteredSubStages =
+                                        row.stage_id != null &&
+                                        filteredStages.some(
+                                            (s) => Number(s.id) === Number(row.stage_id),
+                                        )
+                                            ? stageSubsections.filter(
+                                                  (s) =>
+                                                      Number(s.stage_id) === Number(row.stage_id),
+                                              )
+                                            : [];
 
                                     return (
                                         <tr key={row.id} className="hover:bg-gray-50">
@@ -235,9 +246,16 @@ export default function ServicesEstimateItemsCreate({
                                                 <ReferencesSelect
                                                     options={blockStages}
                                                     value={row.stage_id}
-                                                    onChange={(v) =>
-                                                        updateRow(row.id, 'stage_id', v)
-                                                    }
+                                                    onChange={(v) => {
+                                                        updateRow(row.id, 'stage_id', v);
+
+                                                        // сброс подэтапа
+                                                        updateRow(row.id, 'subsection_id', null);
+                                                    }}
+                                                    // onChange={(v) =>
+                                                    //     updateRow(row.id, 'stage_id', v)
+
+                                                    // }
                                                 />
                                             </td>
 
@@ -428,7 +446,7 @@ export default function ServicesEstimateItemsCreate({
                                             className="flex justify-center w-full gap-2 py-2 text-blue-600 border-2 border-blue-200 border-dashed rounded-lg hover:bg-blue-50"
                                         >
                                             <Plus className="w-5 h-5" />
-                                            Добавить строку
+                                            Добавить услугу
                                         </button>
                                     </td>
                                 </tr>

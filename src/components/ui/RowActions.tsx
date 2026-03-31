@@ -35,7 +35,7 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
                 {/* Кнопка */}
                 <button
                     onClick={(e) => {
-                        e.stopPropagation(); // 🔥 важно
+                        e.stopPropagation(); //важно
                         setOpen((prev) => !prev);
                     }}
                     aria-label="Действия"
@@ -48,7 +48,7 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
                 {/* Dropdown */}
                 {open && (
                     <div
-                        onClick={(e) => e.stopPropagation()} // 🔥 защита от закрытия строки
+                        onClick={(e) => e.stopPropagation()} //защита от закрытия строки
                         className="
                             absolute right-0 top-full mt-1 z-50
                             min-w-[11rem]
@@ -65,7 +65,7 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
                                 <button
                                     key={action.label} // ✅ стабильный key
                                     onClick={(e) => {
-                                        e.stopPropagation(); // 🔥 фикс collapse бага
+                                        e.stopPropagation(); //фикс collapse бага
                                         action.onClick(row);
                                         setOpen(false);
                                     }}

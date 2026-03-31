@@ -33,44 +33,49 @@ export default function MaterialRequestFlow({
     onClose,
 }: MaterialRequestFlowProps) {
     const dispatch = useAppDispatch();
-    const { data: estimates } = useAppSelector((state) => state.estimates);
+    const { data: estimates, loading } = useAppSelector((state) => state.estimates);
 
-    //STATE
+    // STATE
     const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);
 
-    //FILTER ITEMS BY BLOCK
+    // FILTER ITEMS BY BLOCK
     const estimateItems = useMemo(() => {
         if (!selectedBlock) return [];
 
         return estimates.filter((e) => e.block_id === selectedBlock).flatMap((e) => e.items || []);
     }, [estimates, selectedBlock]);
 
-    useEffect(() => {
-        if (estimates.length > 0) {
-            dispatch(fetchEstimateItems());
-        }
-    }, [estimates, dispatch]);
-
+    // ✅ загрузка estimates один раз
     useEffect(() => {
         dispatch(
             fetchEstimates({
-                block_id: 0, // или без фильтра если API позволяет
+                block_id: 0,
                 page: 1,
                 size: 10,
             }),
         );
-    }, []);
+    }, [dispatch]);
+
+    // ✅ загрузка estimateItems ТОЛЬКО когда выбран блок
+    useEffect(() => {
+        if (selectedBlock) {
+            dispatch(fetchEstimateItems());
+        }
+    }, [selectedBlock, dispatch]);
+
     const resetFlow = () => {
         setStep('select');
         setSelectedBlock(null);
         setSelectedItems([]);
     };
+
     const handleClose = () => {
         resetFlow();
         onClose();
     };
-    //RENDER
+
+    // RENDER
     return (
         <div className="w-full">
             {/* HEADER */}
@@ -116,6 +121,7 @@ export default function MaterialRequestFlow({
             {step === 'estimate' && selectedBlock && (
                 <MaterialsSelectTable
                     items={estimateItems}
+                    loading={loading}
                     refs={refs}
                     calcRowTotal={calcRowTotal}
                     projectId={projectId}

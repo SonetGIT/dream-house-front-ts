@@ -17,6 +17,7 @@ import { calcRowTotal } from '@/utils/calcRowTotal';
 import { formatNumber } from '@/utils/formatNumber';
 
 interface MaterialFormProps {
+    blockId: number;
     isOpen: boolean;
     estimateId: number;
     refs: Record<string, ReferenceResult>;
@@ -25,11 +26,13 @@ interface MaterialFormProps {
 
 /************************************************************************************************************/
 export default function MaterialEstimateItemsCreate({
+    blockId,
     isOpen,
     estimateId,
     refs,
     onClose,
 }: MaterialFormProps) {
+    console.log('blockId', blockId);
     //HOOKS
     const dispatch = useAppDispatch();
     const rates = useCurrencyRates();
@@ -41,7 +44,6 @@ export default function MaterialEstimateItemsCreate({
     const currencies = refs.currencies?.data ?? [];
     const blockStages = refs.blockStages?.data ?? [];
     const stageSubsections = refs.stageSubsections?.data ?? [];
-
     //HELPERS
     const createEmptyRow = (): EstimateItemFormData => ({
         id: Math.random().toString(36).substr(2, 9),
@@ -226,12 +228,20 @@ export default function MaterialEstimateItemsCreate({
                                           )
                                         : [];
 
-                                    const filteredSubStages = row.stage_id
-                                        ? stageSubsections.filter(
-                                              (s) => Number(s.stage_id) === Number(row.stage_id),
-                                          )
+                                    const filteredStages = blockId
+                                        ? blockStages.filter((s) => Number(s.block_id) === blockId)
                                         : [];
 
+                                    const filteredSubStages =
+                                        row.stage_id != null &&
+                                        filteredStages.some(
+                                            (s) => Number(s.id) === Number(row.stage_id),
+                                        )
+                                            ? stageSubsections.filter(
+                                                  (s) =>
+                                                      Number(s.stage_id) === Number(row.stage_id),
+                                              )
+                                            : [];
                                     return (
                                         <tr key={row.id} className="hover:bg-gray-50">
                                             <td className="px-3 py-2 text-center border">
@@ -240,11 +250,14 @@ export default function MaterialEstimateItemsCreate({
 
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
-                                                    options={blockStages}
+                                                    options={filteredStages}
                                                     value={row.stage_id}
-                                                    onChange={(v) =>
-                                                        updateRow(row.id, 'stage_id', v)
-                                                    }
+                                                    onChange={(v) => {
+                                                        updateRow(row.id, 'stage_id', v);
+
+                                                        // сброс подэтапа
+                                                        updateRow(row.id, 'subsection_id', null);
+                                                    }}
                                                 />
                                             </td>
 
@@ -435,7 +448,7 @@ export default function MaterialEstimateItemsCreate({
                                             className="flex justify-center w-full gap-2 py-2 text-blue-600 border-2 border-blue-200 border-dashed rounded-lg hover:bg-blue-50"
                                         >
                                             <Plus className="w-5 h-5" />
-                                            Добавить строку
+                                            Добавить материал
                                         </button>
                                     </td>
                                 </tr>

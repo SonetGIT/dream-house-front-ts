@@ -383,37 +383,11 @@ export function ProjectForm({
                         </label>
                         <input
                             type="number"
-                            value={formData.actual_budget || ''}
-                            onChange={(e) =>
-                                handleChange(
-                                    'actual_budget',
-                                    e.target.value ? Number(e.target.value) : null,
-                                )
-                            }
-                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent placeholder:text-gray-400"
-                            placeholder="0"
-                            min="0"
-                            disabled={loading}
+                            value={formData.actual_budget ?? ''}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-100 border border-gray-200 rounded-lg cursor-default"
                         />
                     </div>
-
-                    {/* Прогресс */}
-                    {/* <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Прогресс выполнения: {formData.progress_percent}%
-                        </label>
-                        <input
-                            type="range"
-                            value={formData.progress_percent}
-                            onChange={(e) =>
-                                handleChange('progress_percent', Number(e.target.value))
-                            }
-                            min="0"
-                            max="100"
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
-                            disabled={loading}
-                        />
-                    </div> */}
                 </div>
             </div>
 

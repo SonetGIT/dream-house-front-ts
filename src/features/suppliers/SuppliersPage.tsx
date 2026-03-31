@@ -27,9 +27,6 @@ export default function SuppliersPage() {
     const { items, pagination, loading } = useAppSelector((state) => state.suppliers);
 
     const [filters, setFilters] = useState({ search: '' });
-
-    const [currentPage, setCurrentPage] = useState(1);
-
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | 'rating' | null>(null);
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
@@ -49,7 +46,6 @@ export default function SuppliersPage() {
     //Поиск
     const handleSearch = (newFilters: typeof filters) => {
         setFilters(newFilters);
-        setCurrentPage(1);
 
         dispatch(
             fetchSuppliers({
@@ -69,7 +65,6 @@ export default function SuppliersPage() {
         };
 
         setFilters(resetFilters);
-        setCurrentPage(1);
 
         dispatch(
             fetchSuppliers({
@@ -247,8 +242,6 @@ export default function SuppliersPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
-                                setCurrentPage(newPage);
-
                                 dispatch(
                                     fetchSuppliers({
                                         page: newPage,
@@ -258,8 +251,6 @@ export default function SuppliersPage() {
                                 );
                             }}
                             onSizeChange={(newSize) => {
-                                setCurrentPage(1);
-
                                 dispatch(
                                     fetchSuppliers({
                                         page: 1,

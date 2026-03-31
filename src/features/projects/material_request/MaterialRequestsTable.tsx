@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Collapse, Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { fetchSearchMaterialReq, type MaterialRequest } from './materialRequestsSlice';
@@ -44,8 +44,8 @@ const matReqStatuses: Record<number, { label: string; className: string }> = {
 /*************************************************************************************************************************/
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
-    const { items, pagination } = useAppSelector((state) => state.materialRequestItems);
-
+    const { pagination } = useAppSelector((state) => state.materialRequestItems);
+    console.log();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
@@ -418,7 +418,10 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             currentUser={currentUser}
                                                             onDelete={props.onDeleteMatReqItemId}
                                                             // НОВОЕ
-                                                            items={itemsMap[req.id] ?? items ?? []}
+                                                            // items={itemsMap[req.id] ?? items ?? []}
+                                                            items={
+                                                                itemsMap[req.id] ?? req.items ?? []
+                                                            }
                                                             onChange={(updatedItems) =>
                                                                 handleItemsChange(
                                                                     req.id,
@@ -437,7 +440,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                                         variant="contained"
                                                                         disabled={isFullyApproved(
                                                                             req,
-                                                                        )} // 🔥 вот это
+                                                                        )} //вот это
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             handleSign(req);
