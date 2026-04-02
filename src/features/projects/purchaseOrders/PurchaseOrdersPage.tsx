@@ -23,7 +23,11 @@ import {
 import { deletePurchaseOrderItem } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import PurchaseOrdersTable from './PurchaseOrdersTable';
 import { FolderOpen } from 'lucide-react';
-import PurchaseItemsSelector from '../purchaseOrderItems/PurchaseItemsSelector';
+import {
+    clearMaterialRequests,
+    fetchSearchMaterialReq,
+} from '../material_request/materialRequestsSlice';
+import MatReqItemsSelectTable from './MatReqItemsSelectTable';
 
 /*************************************************************************************************************************/
 export default function PurchaseOrdersPage() {
@@ -38,9 +42,9 @@ export default function PurchaseOrdersPage() {
         pagination: purchaseOrdersPagination,
     } = useAppSelector((state) => state.purchaseOrders);
 
-    const { items: materialRequestItems } = useAppSelector((state) => state.materialRequestItems);
-    console.log('materialRequestItems', materialRequestItems);
-    console.log('purchaseOrders', purchaseOrders);
+    const { data } = useAppSelector((state) => state.materialRequests);
+    const filteredItems = data?.filter((req) => req.status === 2).flatMap((req) => req.items) || [];
+
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
@@ -53,30 +57,44 @@ export default function PurchaseOrdersPage() {
     // hooks всегда вызываются одинаково
     const purchaseOrderStatuses = useReference('purchaseOrderStatuses');
     const prjBlocks = useReference('projectBlocks');
-    //
+    const materials = useReference('materials');
+    const unitsOfMeasure = useReference('unitsOfMeasure');
+    const currencies = useReference('currencies');
+    const supplierRating = useReference('supplierRating');
 
     const refs = {
         purchaseOrderStatuses,
         prjBlocks,
+        materials,
+        unitsOfMeasure,
+        currencies,
+        supplierRating,
     };
 
     //заявка на закупку - purchase order
     useEffect(() => {
-        if (projectId && blockId) {
+        if (projectIdNum && blockId) {
             dispatch(
                 fetchPurchaseOrders({ project_id: projectIdNum, block_id: blockId, page, size }),
             );
         }
-    }, [projectId, blockId, page, size]);
+    }, [projectIdNum, blockId, page, size]);
 
-    //заявка на закупку - purchase order
-    const { items: materialRequestItems } = useAppSelector((state) => state.materialRequestItems);
+    //загрузка заявок на материалы для селектора при создании заявки на закупку
     useEffect(() => {
-        if (projectId && blockId) {
-            dispatch(fetchMaterialRequestItems({ status: Number(2) })); //одобрено
+        if (projectIdNum && blockId) {
+            dispatch(clearMaterialRequests());
+
+            dispatch(
+                fetchSearchMaterialReq({
+                    page,
+                    size,
+                    block_id: blockId,
+                    project_id: projectIdNum,
+                }),
+            );
         }
-    }, [projectId, blockId, page, size]);
-    console.log('materialRequestItems', materialRequestItems);
+    }, [projectIdNum, blockId, dispatch]);
 
     //HANDLERS
     const handleCreate = () => {
@@ -163,13 +181,15 @@ export default function PurchaseOrdersPage() {
                 </>
             )}
             <Modal
-                // size={step === 'estimate' || step === 'form' ? 'full' : 'xl'}
+                // size={'xl'}
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
-                title="Создать новую заявку на закуп"
+                title="Список одобренных материалов"
             >
-                <PurchaseItemsSelector
-                    items={materialRequestItems}
+                <MatReqItemsSelectTable
+                    items={filteredItems}
+                    refs={refs}
+                    onCancel={() => setModal(null)}
                     // onSubmit={(rows) => {
                     //     dispatch(
                     //         createPurchaseOrder({

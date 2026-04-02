@@ -95,6 +95,7 @@ interface FetchSearchMaterialReqParams {
         dateTo?: string;
     };
     project_id: number;
+    block_id?: number;
 }
 
 export const fetchSearchMaterialReq = createAsyncThunk<

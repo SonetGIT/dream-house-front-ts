@@ -196,5 +196,12 @@
             "id": "id",
             "name": ["name"]
         }
+    },
+    "supplierRating": {
+        "apiName": "/supplierRating/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }
