@@ -19,7 +19,6 @@ export default function EstimatesStagePage() {
     const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
 
     const blockName = currentBlock?.name || '';
-    console.log('projectIdNum', projectIdNum);
 
     useEffect(() => {
         if (projectIdNum) {

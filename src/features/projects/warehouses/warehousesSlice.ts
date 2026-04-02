@@ -72,7 +72,7 @@ const warehousesSlice = createSlice({
             .addCase(fetchWarehouses.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
-                state.pagination = action.payload.pagination;
+                state.pagination = action.payload.pagination || null;
             })
             .addCase(fetchWarehouses.rejected, (state, action) => {
                 state.loading = false;

@@ -108,7 +108,7 @@ export default function MatReqItemsCreateEditForm({
                     })),
                 }),
             ).unwrap();
-            console.log('CREATE RESPONSE:', res);
+
             //достаём id
             const newId = res?.id;
             console.log(newId);

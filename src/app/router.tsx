@@ -16,6 +16,7 @@ import MaterialRequestsPage from '@/features/projects/material_request/MaterialR
 import Dashboard from '@/components/ui/dashboard/Dashboard';
 import EstimatesStagePage from '@/features/projects/pto/projectBlocks/EstimatesStagePage';
 import ProjectBlocksTabs from '@/features/projects/pto/projectBlocks/ProjectBlocksTabs';
+import PurchaseOrdersPage from '@/features/projects/purchaseOrders/PurchaseOrdersPage';
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
 
@@ -45,7 +46,7 @@ export const router = createBrowserRouter([
                                 children: [
                                     { index: true, element: <EstimatesStagePage /> }, // default
                                     { path: 'materialRequests', element: <MaterialRequestsPage /> },
-                                    // { path: 'purchaseRequests', element: <PurchaseRequestsPage /> },
+                                    { path: 'purchaseOrders', element: <PurchaseOrdersPage /> },
                                     // { path: 'avr', element: <AvrPage /> },
                                 ],
                             },

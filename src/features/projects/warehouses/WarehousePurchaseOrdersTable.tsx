@@ -23,7 +23,7 @@ import { useAppDispatch } from '@/app/store';
 import {
     receivePurchaseOrderItems,
     type ReceiveItemPayload,
-} from '../purchaseOrderItems/purchaseOrderItemsSlice';
+} from '../purchaseOrderItems/purchaseOrderItemsSliceRecive';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { AppButton } from '@/components/ui/AppButton';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
@@ -214,7 +214,7 @@ export default function WarehousePurchaseOrdersTable({ orders, warehouseId, refs
                                 </TableCell>
                                 <TableCell>
                                     Поставщик:{' '}
-                                    <strong>{refs.suppliers.lookup(req.supplier_id)}</strong>
+                                    {/* <strong>{refs.suppliers.lookup(req.supplier_id)}</strong> */}
                                 </TableCell>
                                 <TableCell>
                                     Статус:{' '}

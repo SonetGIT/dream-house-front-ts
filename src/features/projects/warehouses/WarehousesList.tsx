@@ -89,11 +89,11 @@ export default function WarehousesList(props: PropsType) {
             </Table>
 
             {/*Пагинация***************************************************************************************************************/}
-            <TablePagination
+            {/* <TablePagination
                 pagination={props.pagination}
                 // onPrev={props.onPrevPage}
                 // onNext={props.onNextPage}
-            />
+            /> */}
         </TableContainer>
     );
 }

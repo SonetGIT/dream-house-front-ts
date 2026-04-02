@@ -1,25 +1,9 @@
-import type { Pagination } from '@/features/users/userSlice';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { createSlice } from '@reduxjs/toolkit';
+import type { Pagination } from '@/features/users/userSlice';
 
-export interface PurchaseOrderItemPayload {
-    material_request_item_id: number | string;
-    material_type: number;
-    material_id: number;
-    unit_of_measure: number;
-    quantity: number;
-    price: number | null;
-    summ: number | null;
-}
+/* TYPES */
 
-export interface PurchaseOrderCreatePayload {
-    project_id: number;
-    supplier_id: number | string | null;
-    created_user_id: number;
-    comment?: string;
-    items: PurchaseOrderItemPayload[];
-}
 export interface PurchaseOrderItem {
     id: number;
     purchase_order_id: number;
@@ -28,36 +12,42 @@ export interface PurchaseOrderItem {
     material_id: number;
     quantity: number;
     unit_of_measure: number;
+    currency: number;
+    currency_rate: number;
     price: number;
     summ: number;
     status: number;
-    comment?: string;
     delivered_quantity: number;
-    received_quantity: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
+    supplier_id: number;
+    material?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface PurchaseOrder {
     id: number;
     project_id: number;
-    supplier_id: number;
+    block_id: number;
     status: number;
     created_user_id: number;
     created_at: string;
     updated_at: string;
     deleted: boolean;
+
+    project?: { id: number; name: string };
+    block?: { id: number; name: string };
+
     items: PurchaseOrderItem[];
 }
 
-//TYPE FOR SLICE
+/* STATE */
+
 interface PurchaseOrdersState {
     data: PurchaseOrder[];
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
-    success: boolean;
 }
 
 const initialState: PurchaseOrdersState = {
@@ -65,75 +55,88 @@ const initialState: PurchaseOrdersState = {
     pagination: null,
     loading: false,
     error: null,
-    success: false,
 };
 
-//THUNK
+/* ================== THUNKS ================== */
+
+/* FETCH */
 export const fetchPurchaseOrders = createAsyncThunk<
-    {
-        data: PurchaseOrder[];
-        pagination?: Pagination;
-    },
-    {
-        project_id?: number;
-        supplier_id?: number;
-        created_user_id?: number;
-        status?: number;
-        page: number;
-        size: number;
-    },
+    { data: PurchaseOrder[]; pagination: Pagination | null },
+    any,
     { rejectValue: string }
->('purchaseOrders/fetch', async (params, { rejectWithValue }) => {
+>('purchaseOrders/search', async (params, { rejectWithValue }) => {
     try {
-        return await apiRequest<PurchaseOrder[]>('/purchaseOrders/search', 'POST', params);
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки');
+        const res = await apiRequest<any>('/purchaseOrders/search', 'POST', params);
+
+        return {
+            data: res.data ?? [],
+            pagination: res.pagination ?? null,
+        };
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка загрузки закупок');
     }
 });
 
+/* CREATE */
 export const createPurchaseOrder = createAsyncThunk<
     PurchaseOrder,
-    PurchaseOrderCreatePayload,
+    Partial<PurchaseOrder>,
     { rejectValue: string }
->('purchaseOrders/create', async (payload, { rejectWithValue }) => {
+>('purchaseOrders/create', async (data, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<PurchaseOrder>('/purchaseOrders/create', 'POST', payload);
+        const res = await apiRequest<PurchaseOrder>('/purchaseOrders/create', 'POST', data);
 
         return res.data;
     } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка создания заказа');
+        return rejectWithValue(err.message || 'Ошибка создания');
     }
 });
 
-//SLICE
+/* UPDATE */
+export const updatePurchaseOrder = createAsyncThunk<
+    PurchaseOrder,
+    { id: number; data: Partial<PurchaseOrder> },
+    { rejectValue: string }
+>('purchaseOrders/update', async ({ id, data }, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<PurchaseOrder>(`/purchaseOrders/update/${id}`, 'PUT', data);
+
+        return res.data;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка обновления');
+    }
+});
+
+/* DELETE */
+export const deletePurchaseOrder = createAsyncThunk<number, number, { rejectValue: string }>(
+    'purchaseOrders/delete',
+    async (id, { rejectWithValue }) => {
+        try {
+            await apiRequest(`/purchaseOrders/delete/${id}`, 'DELETE');
+            return id;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Ошибка удаления');
+        }
+    },
+);
+
+/* ================== SLICE ================== */
+
 const purchaseOrdersSlice = createSlice({
     name: 'purchaseOrders',
     initialState,
     reducers: {
-        resetPurchaseOrderState(state) {
-            state.loading = false;
+        clearPurchaseOrders: (state) => {
+            state.data = [];
+            state.pagination = null;
             state.error = null;
-            state.success = false;
         },
     },
+
     extraReducers: (builder) => {
         builder
-            // CREATE
-            .addCase(createPurchaseOrder.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-                state.success = false;
-            })
-            .addCase(createPurchaseOrder.fulfilled, (state) => {
-                state.loading = false;
-                state.success = true;
-            })
-            .addCase(createPurchaseOrder.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload || 'Ошибка создания заказа';
-            })
 
-            // FETCH
+            /* FETCH */
             .addCase(fetchPurchaseOrders.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -141,14 +144,42 @@ const purchaseOrdersSlice = createSlice({
             .addCase(fetchPurchaseOrders.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
-                state.pagination = action.payload.pagination ?? null;
+                state.pagination = action.payload.pagination;
             })
             .addCase(fetchPurchaseOrders.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload || 'Ошибка при загрузке заявок';
+                state.error = action.payload ?? 'Ошибка загрузки';
+            })
+
+            /* CREATE */
+            .addCase(createPurchaseOrder.fulfilled, (state, action) => {
+                state.data.unshift(action.payload);
+
+                if (state.pagination) {
+                    state.pagination.total += 1;
+                }
+            })
+
+            /* UPDATE */
+            .addCase(updatePurchaseOrder.fulfilled, (state, action) => {
+                const index = state.data.findIndex((o) => o.id === action.payload.id);
+
+                if (index !== -1) {
+                    state.data[index] = action.payload;
+                }
+            })
+
+            /* DELETE */
+            .addCase(deletePurchaseOrder.fulfilled, (state, action) => {
+                state.data = state.data.filter((o) => o.id !== action.payload);
+
+                if (state.pagination) {
+                    state.pagination.total -= 1;
+                }
             });
     },
 });
 
-export const { resetPurchaseOrderState } = purchaseOrdersSlice.actions;
+export const { clearPurchaseOrders } = purchaseOrdersSlice.actions;
+
 export default purchaseOrdersSlice.reducer;

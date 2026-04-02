@@ -16,7 +16,7 @@ export default function PurchaseRequestTabs() {
 
             <Box>
                 {tab === 0 && <MaterialRequestItems />}
-                {tab === 1 && <PurchaseOrdersTable />}
+                {/* {tab === 1 && <PurchaseOrdersTable />} */}
                 {/* {tab === 2 && <SentPurchaseRequestsTab />} */}
             </Box>
         </Paper>

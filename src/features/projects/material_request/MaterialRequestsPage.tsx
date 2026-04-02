@@ -26,6 +26,8 @@ export default function MaterialRequestsPage() {
     const { projectId } = useParams();
     const projectIdNum = projectId ? Number(projectId) : null;
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);
+    const [page, setPage] = useState(1);
+    const [size, setSize] = useState(10);
 
     const { currentProject: project, loading: projectLoading } = useAppSelector(
         (state) => state.projects,
@@ -104,8 +106,8 @@ export default function MaterialRequestsPage() {
 
             dispatch(
                 fetchSearchMaterialReq({
-                    page: 1,
-                    size: 10,
+                    page,
+                    size,
                     project_id: project.id,
                 }),
             );
@@ -183,23 +185,10 @@ export default function MaterialRequestsPage() {
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
-                            onPageChange={(newPage) => {
-                                dispatch(
-                                    fetchSearchMaterialReq({
-                                        project_id: projectIdNum,
-                                        page: newPage,
-                                        size: pagination.size,
-                                    }),
-                                );
-                            }}
+                            onPageChange={(newPage) => setPage(newPage)}
                             onSizeChange={(newSize) => {
-                                dispatch(
-                                    fetchSearchMaterialReq({
-                                        project_id: projectIdNum,
-                                        page: 1,
-                                        size: newSize,
-                                    }),
-                                );
+                                setPage(1);
+                                setSize(newSize);
                             }}
                             sizeOptions={[10, 25, 50, 100]}
                             showFirstButton
