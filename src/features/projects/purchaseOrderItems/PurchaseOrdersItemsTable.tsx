@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Ban, Trash2, Truck } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { PurchaseOrderItem } from './purchaseOrderItemsSlice';
@@ -7,9 +7,17 @@ interface PropsType {
     items: PurchaseOrderItem[];
     refs: Record<string, ReferenceResult>;
     onDelete: (id: number) => void;
+    onForDelivery: (id: number) => void;
+    onRefusalToDeliver: (id: number) => void;
 }
 
-export default function PurchaseOrdersItemsTable({ items, refs, onDelete }: PropsType) {
+export default function PurchaseOrdersItemsTable({
+    items,
+    refs,
+    onDelete,
+    onForDelivery,
+    onRefusalToDeliver,
+}: PropsType) {
     const calcSum = (item: PurchaseOrderItem) => {
         return Number(
             (
@@ -40,8 +48,9 @@ export default function PurchaseOrdersItemsTable({ items, refs, onDelete }: Prop
                         <th className="px-3 py-2 text-xs text-center w-28">Курс</th>
                         <th className="px-3 py-2 text-xs text-center w-28">Цена</th>
                         <th className="w-32 px-3 py-2 text-xs text-right">Сумма</th>
-                        <th className="w-32 px-3 py-2 text-xs text-center">Поставлено</th>
-                        <th className="w-24 px-3 py-2 text-xs text-center">Действия</th>
+                        <th className="w-32 px-3 py-2 text-xs text-center">Статус</th>
+                        <th className="w-32 px-3 py-2 text-xs text-center">Доставлено</th>
+                        <th className="w-24 px-3 py-2 text-xs text-center border-l">Действия</th>
                     </tr>
                 </thead>
 
@@ -64,18 +73,46 @@ export default function PurchaseOrdersItemsTable({ items, refs, onDelete }: Prop
                                 {calcSum(item)}
                             </td>
                             <td className="px-3 py-2 text-center">
+                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-violet-500 bg-violet-100 border border-violet-200 rounded">
+                                    {refs.purchaseOrderItemStatuses.lookup(Number(item.status))}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
                                 {item.delivered_quantity ?? 0}
                             </td>
-                            <td className="px-3 py-2">
-                                <div className="flex justify-center">
-                                    <StyledTooltip title="Удалить">
-                                        <button
-                                            onClick={() => onDelete(item.id)}
-                                            className="p-1.5 text-gray-400 rounded hover:text-red-600 hover:bg-red-50 transition-colors"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </StyledTooltip>
+
+                            <td className="px-3 py-2 border-l">
+                                <div className="flex items-center justify-center gap-1">
+                                    <div className="flex justify-center rounded">
+                                        <StyledTooltip title="На поставку">
+                                            <button
+                                                onClick={() => onForDelivery(item.id)}
+                                                className="p-1.5 text-green-600 transition-colors hover:text-white hover:bg-green-400"
+                                            >
+                                                <Truck className="w-4 h-4" />
+                                            </button>
+                                        </StyledTooltip>
+                                    </div>
+                                    <div className="flex justify-center rounded">
+                                        <StyledTooltip title="Отказано в поставке">
+                                            <button
+                                                onClick={() => onRefusalToDeliver(item.id)}
+                                                className="p-1.5 text-red-600 transition-colors hover:text-white hover:bg-red-400"
+                                            >
+                                                <Ban className="w-4 h-4" />
+                                            </button>
+                                        </StyledTooltip>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <StyledTooltip title="Удалить">
+                                            <button
+                                                onClick={() => onDelete(item.id)}
+                                                className="p-1.5 text-gray-400 rounded hover:text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </StyledTooltip>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

@@ -12,6 +12,8 @@ interface PropsType {
     refs: Record<string, ReferenceResult>;
     onDeleteMatReqOrderId: (id: number) => void;
     onDeleteMatReqOrderItemId: (id: number) => void;
+    onForDelivery: (id: number) => void;
+    onRefusalToDeliver: (id: number) => void;
 }
 const purchaseOrderStatuses: Record<number, { label: string; className: string }> = {
     1: {
@@ -43,6 +45,8 @@ const purchaseOrderStatuses: Record<number, { label: string; className: string }
         className: 'bg-red-600/15 text-red-700 border border-red-500',
     },
 };
+
+/******************************************************************************************************************/
 //  Таблица заявок на закупку
 export default function PurchaseOrdersTable(props: PropsType) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
@@ -197,6 +201,10 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                                             refs={props.refs}
                                                             onDelete={
                                                                 props.onDeleteMatReqOrderItemId
+                                                            }
+                                                            onForDelivery={props.onForDelivery}
+                                                            onRefusalToDeliver={
+                                                                props.onRefusalToDeliver
                                                             }
                                                         />
                                                     </div>

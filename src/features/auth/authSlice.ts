@@ -29,13 +29,13 @@ interface AuthState {
     loading: boolean;
     error: string | null;
     resetRequired: boolean;
-    isAuthChecked: boolean; //ДОБАВИЛИ
+    isAuthChecked: boolean;
 }
 
 /*INITIAL STATE*/
 const initialState: AuthState = {
     user: null,
-    token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+    token: typeof window !== 'undefined' ? localStorage.getItem('token') : null, //typeof window !== 'undefined'есть ли объект window т.е. выполняется ли код в браузере
     loading: false,
     error: null,
     resetRequired: false,
@@ -61,7 +61,6 @@ export const authUser = createAsyncThunk<AuthResponse, AuthCredentials, { reject
                 return rejectWithValue(data?.message || `Ошибка HTTP ${res.status}`);
             }
 
-            // сохраняем токен
             localStorage.setItem('token', data.token);
 
             return data;
@@ -121,7 +120,7 @@ const authSlice = createSlice({
             state.token = null;
             state.error = null;
             state.resetRequired = false;
-            state.isAuthChecked = true; //чтобы не зависало
+            state.isAuthChecked = true;
             localStorage.removeItem('token');
         },
         clearError: (state) => {
@@ -129,6 +128,11 @@ const authSlice = createSlice({
         },
         closeResetModal: (state) => {
             state.resetRequired = false;
+        },
+
+        //ДОБАВИЛИ
+        setAuthChecked: (state) => {
+            state.isAuthChecked = true;
         },
     },
     extraReducers: (builder) => {
@@ -141,8 +145,8 @@ const authSlice = createSlice({
             .addCase(authUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
                 state.loading = false;
                 state.user = action.payload.data;
-                state.token = action.payload.token; //фикс
-                state.isAuthChecked = true; //важно
+                state.token = action.payload.token;
+                state.isAuthChecked = true;
 
                 if (action.payload.data.required_action === 'RESET_PASSWORD') {
                     state.resetRequired = true;
@@ -151,7 +155,7 @@ const authSlice = createSlice({
             .addCase(authUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка авторизации';
-                state.isAuthChecked = true; //чтобы не зависало
+                state.isAuthChecked = true;
             })
 
             /*PROFILE*/
@@ -161,14 +165,14 @@ const authSlice = createSlice({
             .addCase(fetchProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.data;
-                state.isAuthChecked = true; //ключевая строка
+                state.isAuthChecked = true;
             })
             .addCase(fetchProfile.rejected, (state, action) => {
                 state.loading = false;
                 state.user = null;
                 state.token = null;
                 state.error = action.payload ?? 'Ошибка авторизации';
-                state.isAuthChecked = true; //ключевая строка
+                state.isAuthChecked = true;
             })
 
             /*CHANGE PASSWORD*/
@@ -187,5 +191,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { logout, clearError, closeResetModal } = authSlice.actions;
+export const { logout, clearError, closeResetModal, setAuthChecked } = authSlice.actions;
 export default authSlice.reducer;

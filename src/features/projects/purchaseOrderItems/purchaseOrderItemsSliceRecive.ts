@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
-import type { PurchaseOrderItem } from '../purchaseOrders/purchaseOrdersSlice';
+import type { PurchaseOrderItem } from './purchaseOrderItemsSlice';
 
 interface PurchaseOrderItemsState {
     items: PurchaseOrderItem[];

@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from './app/store';
-import { fetchProfile } from './features/auth/authSlice';
+import { fetchProfile, setAuthChecked } from './features/auth/authSlice';
 
 import Header from './components/home/Header';
 import Footer from './components/home/Footer';
@@ -20,8 +20,11 @@ export default function App() {
     //Восстанавливаем сессию
     useEffect(() => {
         const token = localStorage.getItem('token');
+
         if (token) {
             dispatch(fetchProfile());
+        } else {
+            dispatch(setAuthChecked()); //ВАЖНО
         }
     }, [dispatch]);
 

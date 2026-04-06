@@ -14,7 +14,10 @@ import {
     fetchPurchaseOrders,
     type CreatePurchaseOrderPayload,
 } from './purchaseOrdersSlice';
-import { deletePurchaseOrderItem } from '../purchaseOrderItems/purchaseOrderItemsSlice';
+import {
+    deletePurchaseOrderItem,
+    updatePurchaseOrderItem,
+} from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import PurchaseOrdersTable from './PurchaseOrdersTable';
 import { FolderOpen } from 'lucide-react';
 import {
@@ -56,6 +59,7 @@ export default function PurchaseOrdersPage() {
     const unitsOfMeasure = useReference('unitsOfMeasure');
     const currencies = useReference('currencies');
     const supplierRating = useReference('supplierRating');
+    const purchaseOrderItemStatuses = useReference('purchaseOrderItemStatuses');
 
     const refs = {
         purchaseOrderStatuses,
@@ -64,6 +68,7 @@ export default function PurchaseOrdersPage() {
         unitsOfMeasure,
         currencies,
         supplierRating,
+        purchaseOrderItemStatuses,
     };
 
     //заявка на закупку - purchase order
@@ -96,6 +101,7 @@ export default function PurchaseOrdersPage() {
         setModal('create');
     };
 
+    //создание заявки на закупку на основе одобренных заявок на материалы
     const handleCreatePurchaseOrder = async (items: EditableItem[]) => {
         try {
             const payload: CreatePurchaseOrderPayload = {
@@ -140,6 +146,40 @@ export default function PurchaseOrdersPage() {
             toast.error('Ошибка при создании заявки на закупку');
         }
     };
+
+    const changePurchaseOrderItemStatus = async (id: number, status: 2 | 3) => {
+        try {
+            await dispatch(
+                updatePurchaseOrderItem({
+                    id,
+                    data: { status },
+                }),
+            ).unwrap();
+
+            toast.success(
+                status === 2
+                    ? 'Позиция переведена в статус "Подтверждён поставщиком"'
+                    : 'Позиция переведена в статус "Отменён (нет у поставщика)"',
+            );
+
+            if (projectIdNum && blockId) {
+                dispatch(
+                    fetchPurchaseOrders({
+                        project_id: projectIdNum,
+                        block_id: blockId,
+                        page,
+                        size,
+                    }),
+                );
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Не удалось изменить статус позиции');
+        }
+    };
+
+    const onForDelivery = (id: number) => changePurchaseOrderItemStatus(id, 2); //Подтверждён поставщиком
+    const onRefusalToDeliver = (id: number) => changePurchaseOrderItemStatus(id, 3); //Отменён (нет у поставщика)
 
     const confirmDelete = useCallback(async () => {
         if (!deleteState) return;
@@ -204,6 +244,8 @@ export default function PurchaseOrdersPage() {
                         onDeleteMatReqOrderItemId={(itemId) =>
                             setDeleteState({ type: 'matReqOrderItem', id: itemId })
                         }
+                        onForDelivery={onForDelivery}
+                        onRefusalToDeliver={onRefusalToDeliver}
                     />
                     {purchaseOrdersPagination && (
                         <TablePagination

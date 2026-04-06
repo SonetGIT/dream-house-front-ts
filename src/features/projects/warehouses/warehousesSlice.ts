@@ -1,8 +1,21 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { Pagination } from '@/features/users/userSlice';
-import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
+import { apiRequest } from '@/utils/apiRequest';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-/* TYPES */
+//TYPES
+export interface WarehouseItem {
+    id: number;
+    warehouse_id: number;
+    material_id: number;
+    material_type: number;
+    unit_of_measure: number;
+    quantity: number;
+    min: number;
+    max: number;
+    created_at: string;
+    updated_at: string;
+    deleted: boolean;
+}
+
 export interface Warehouse {
     id: number;
     project_id: number;
@@ -14,72 +27,137 @@ export interface Warehouse {
     created_at: string;
     updated_at: string;
     deleted: boolean;
+    items: WarehouseItem[];
 }
 
-interface WarehousesSearchParams {
-    project_id: number;
-    manager_id?: number;
-    name?: string;
-    page?: number;
-    size?: number;
+interface Pagination {
+    page: number;
+    size: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
 }
 
 interface WarehousesState {
     data: Warehouse[];
+    map: Record<number, Warehouse>;
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
 }
 
-/* INITIAL STATE */
+//INITIAL
 const initialState: WarehousesState = {
     data: [],
+    map: {},
     pagination: null,
     loading: false,
     error: null,
 };
 
-/* THUNK */
-export const fetchWarehouses = createAsyncThunk<
-    ApiResponse<Warehouse[]>,
-    WarehousesSearchParams,
-    { rejectValue: string }
->('suppliers/search', async (params, { rejectWithValue }) => {
-    try {
-        return await apiRequest<Warehouse[]>('/warehouses/search', 'POST', params);
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки движений');
-    }
-});
+//THUNKS
+//GET
+export const fetchWarehouses = createAsyncThunk(
+    'warehouses/fetch',
+    async (params: { project_id: number; page?: number; size?: number }, { rejectWithValue }) => {
+        try {
+            return await apiRequest<Warehouse[]>('/warehouses/search', 'POST', params);
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
 
-/* SLICE */
+//CREATE
+export const createWarehouse = createAsyncThunk(
+    'warehouses/create',
+    async (payload: Partial<Warehouse>, { rejectWithValue }) => {
+        try {
+            return await apiRequest<Warehouse>('/warehouses/create', 'POST', payload);
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+// UPDATE
+export const updateWarehouse = createAsyncThunk(
+    'warehouses/update',
+    async ({ id, data }: { id: number; data: Partial<Warehouse> }, { rejectWithValue }) => {
+        try {
+            return await apiRequest<Warehouse>(`/warehouses/update/${id}`, 'PUT', data);
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+//DELETE
+export const deleteWarehouse = createAsyncThunk(
+    'warehouses/delete',
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiRequest(`/warehouses/delete/${id}`, 'DELETE');
+            return id; // важно вернуть id
+        } catch (e: any) {
+            return rejectWithValue(e.message);
+        }
+    },
+);
+
+//SLICE
 const warehousesSlice = createSlice({
     name: 'warehouses',
     initialState,
-    reducers: {
-        clearWarehouses(state) {
-            state.data = [];
-            state.pagination = null;
-            state.error = null;
-        },
-    },
+    reducers: {},
+
     extraReducers: (builder) => {
         builder
+
+            //FETCH
             .addCase(fetchWarehouses.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchWarehouses.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data = action.payload.data;
+
+                const data = action.payload.data;
+
+                state.data = data;
+                state.map = Object.fromEntries(data.map((w) => [w.id, w]));
                 state.pagination = action.payload.pagination || null;
             })
             .addCase(fetchWarehouses.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+
+            //CREATE
+            .addCase(createWarehouse.fulfilled, (state, action) => {
+                const item = action.payload.data;
+
+                state.data.unshift(item);
+                state.map[item.id] = item;
+            })
+
+            //UPDATE
+            .addCase(updateWarehouse.fulfilled, (state, action) => {
+                const updated = action.payload.data;
+
+                state.map[updated.id] = updated;
+                state.data = state.data.map((w) => (w.id === updated.id ? updated : w));
+            })
+
+            //DELETE
+            .addCase(deleteWarehouse.fulfilled, (state, action) => {
+                const id = action.payload;
+
+                delete state.map[id];
+                state.data = state.data.filter((w) => w.id !== id);
             });
     },
 });
 
-export const { clearWarehouses } = warehousesSlice.actions;
 export default warehousesSlice.reducer;

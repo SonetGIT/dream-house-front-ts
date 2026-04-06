@@ -13,5 +13,11 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5173,
         strictPort: true,
+
+        hmr: {
+            host: '77.235.27.71', // 👈 ВАЖНО
+            protocol: 'ws',
+            port: 5173,
+        },
     },
 });
