@@ -1,24 +1,18 @@
-import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Box, Button, CircularProgress, Paper } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
-import { getProjectById } from '../a_project/projectsSlice';
 import { Add } from '@mui/icons-material';
-import {
-    deleteMaterialRequestItem,
-    fetchMaterialRequestItems,
-} from '../material_request_items/materialRequestItemsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Modal from '@/components/ui/Modal';
-import { calcRowTotal } from '@/utils/calcRowTotal';
-import { fetchProjectBlocks } from '../pto/projectBlocks/projectBlocksSlice';
 import {
     createPurchaseOrder,
     deletePurchaseOrder,
     fetchPurchaseOrders,
+    type CreatePurchaseOrderPayload,
 } from './purchaseOrdersSlice';
 import { deletePurchaseOrderItem } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import PurchaseOrdersTable from './PurchaseOrdersTable';
@@ -27,7 +21,7 @@ import {
     clearMaterialRequests,
     fetchSearchMaterialReq,
 } from '../material_request/materialRequestsSlice';
-import MatReqItemsSelectTable from './MatReqItemsSelectTable';
+import MatReqItemsSelectTable, { type EditableItem } from './MatReqItemsSelectTable';
 
 /*************************************************************************************************************************/
 export default function PurchaseOrdersPage() {
@@ -43,6 +37,7 @@ export default function PurchaseOrdersPage() {
     } = useAppSelector((state) => state.purchaseOrders);
 
     const { data } = useAppSelector((state) => state.materialRequests);
+    const user = useAppSelector((state) => state.auth.user);
     const filteredItems = data?.filter((req) => req.status === 2).flatMap((req) => req.items) || [];
 
     const [page, setPage] = useState(1);
@@ -99,6 +94,51 @@ export default function PurchaseOrdersPage() {
     //HANDLERS
     const handleCreate = () => {
         setModal('create');
+    };
+
+    const handleCreatePurchaseOrder = async (items: EditableItem[]) => {
+        try {
+            const payload: CreatePurchaseOrderPayload = {
+                project_id: projectIdNum!,
+                block_id: blockId!,
+                status: 1, //'Отправлен поставщику'
+                created_user_id: user?.id || 0,
+                items: items.map((item) => ({
+                    material_request_item_id: item.id,
+                    material_type: item.material_type,
+                    material_id: item.material_id,
+                    quantity: Number(item.quantity) || 0,
+                    unit_of_measure: item.unit_of_measure,
+                    currency: item.currency,
+                    currency_rate: Number(item.currency_rate) || 1,
+                    price: Number(item.price) || 0,
+                    summ:
+                        (Number(item.quantity) || 0) *
+                        (Number(item.price) || 0) *
+                        (Number(item.currency_rate) || 1),
+                    supplier_id: item.supplier_id ?? item.supplier_id,
+                })),
+            };
+            console.log('payload', payload);
+            await dispatch(createPurchaseOrder(payload)).unwrap();
+
+            toast.success('Заявка на закупку создана');
+            setModal(null);
+
+            if (projectIdNum && blockId) {
+                dispatch(
+                    fetchPurchaseOrders({
+                        project_id: projectIdNum,
+                        block_id: blockId,
+                        page,
+                        size,
+                    }),
+                );
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Ошибка при создании заявки на закупку');
+        }
     };
 
     const confirmDelete = useCallback(async () => {
@@ -181,7 +221,7 @@ export default function PurchaseOrdersPage() {
                 </>
             )}
             <Modal
-                // size={'xl'}
+                size={'full'}
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
                 title="Список одобренных материалов"
@@ -190,24 +230,7 @@ export default function PurchaseOrdersPage() {
                     items={filteredItems}
                     refs={refs}
                     onCancel={() => setModal(null)}
-                    // onSubmit={(rows) => {
-                    //     dispatch(
-                    //         createPurchaseOrder({
-                    //             project_id,
-                    //             block_id,
-                    //             status: 1,
-                    //             items: rows.map((r) => ({
-                    //                 material_request_item_id: r.id,
-                    //                 material_id: r.material_id,
-                    //                 quantity: r.quantity,
-                    //                 price: r.price,
-                    //                 currency: r.currency,
-                    //                 currency_rate: r.currency_rate,
-                    //                 supplier_id: r.supplier_id,
-                    //             })),
-                    //         }),
-                    //     );
-                    // }}
+                    onSubmit={handleCreatePurchaseOrder}
                 />
             </Modal>
 

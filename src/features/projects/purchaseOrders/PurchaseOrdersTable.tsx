@@ -1,15 +1,11 @@
-import React, { useCallback, useState } from 'react';
-import { Collapse, Button } from '@mui/material';
-import { useAppDispatch, useAppSelector } from '@/app/store';
+import React, { useState } from 'react';
+import { Collapse } from '@mui/material';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { User } from '@/features/users/userSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import toast from 'react-hot-toast';
-import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
-import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
 import type { PurchaseOrder } from './purchaseOrdersSlice';
+import PurchaseOrdersItemsTable from '../purchaseOrderItems/PurchaseOrdersItemsTable';
 
 interface PropsType {
     data: PurchaseOrder[];
@@ -49,31 +45,13 @@ const purchaseOrderStatuses: Record<number, { label: string; className: string }
 };
 //  Таблица заявок на закупку
 export default function PurchaseOrdersTable(props: PropsType) {
-    const dispatch = useAppDispatch();
-    console.log();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    const currentUser = useAppSelector((state) => state.auth.user);
-    const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
     /*TOGGLE*/
     const toggleRow = (id: number) => {
-        const isOpening = !openRows[id];
-
-        // 1. сначала обновляем state
         setOpenRows((prev) => ({
             ...prev,
-            [id]: isOpening,
+            [id]: !prev[id],
         }));
-
-        // 2. потом dispatch
-        if (isOpening) {
-            dispatch(
-                fetchMaterialRequestItems({
-                    material_request_id: id,
-                    page: 1,
-                    size: 10,
-                }),
-            );
-        }
     };
 
     /*STATUS*/
@@ -85,16 +63,6 @@ export default function PurchaseOrdersTable(props: PropsType) {
             }
         );
     };
-    const handleItemsChange = useCallback((reqId: number, updatedItems: any[]) => {
-        setItemsMap((prev) => {
-            if (prev[reqId] === updatedItems) return prev;
-
-            return {
-                ...prev,
-                [reqId]: updatedItems,
-            };
-        });
-    }, []);
 
     /********************************************************************************************************************************/
     return (
@@ -215,36 +183,26 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                             </td>
                                         </tr>
 
-                                        {/* MaterialRequestItemsTable*/}
-                                        {/* <tr className="border-b bg-gradient-to-r to-blue-50/50">
-                                            <td colSpan={8} className="px-3 py-2">
-                                                <Collapse in={openRows[req.id]} unmountOnExit>
+                                        {/* PurchaseOrdersItemsTable*/}
+                                        <tr className="border-b bg-gradient-to-r to-blue-50/50">
+                                            <td colSpan={6} className="px-3 py-2">
+                                                <Collapse in={openRows[po.id]} unmountOnExit>
                                                     <div className="px-3 py-2">
                                                         <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
                                                             Материалы
                                                         </p>
-                                                        <MatReqItemsTable
-                                                            materialRequestId={req.id}
+
+                                                        <PurchaseOrdersItemsTable
+                                                            items={po.items}
                                                             refs={props.refs}
-                                                            currentUser={currentUser}
-                                                            onDelete={props.onDeleteMatReqOrderItemId}
-                                                            // НОВОЕ
-                                                            // items={itemsMap[req.id] ?? items ?? []}
-                                                            items={
-                                                                itemsMap[req.id] ?? req.items ?? []
+                                                            onDelete={
+                                                                props.onDeleteMatReqOrderItemId
                                                             }
-                                                            onChange={(updatedItems) =>
-                                                                handleItemsChange(
-                                                                    req.id,
-                                                                    updatedItems,
-                                                                )
-                                                            }
-                                                            pagination={pagination}
                                                         />
                                                     </div>
                                                 </Collapse>
                                             </td>
-                                        </tr> */}
+                                        </tr>
                                     </React.Fragment>
                                 );
                             })}

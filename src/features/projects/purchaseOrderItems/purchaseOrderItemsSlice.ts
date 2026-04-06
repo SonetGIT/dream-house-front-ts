@@ -3,7 +3,6 @@ import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 
 /* TYPES */
-
 export interface PurchaseOrderItem {
     id: number;
     purchase_order_id: number;
@@ -22,6 +21,10 @@ export interface PurchaseOrderItem {
     created_at: string;
     updated_at: string;
     deleted: boolean;
+    material?: {
+        id: number;
+        name: string;
+    };
 }
 
 /* STATE */
@@ -107,7 +110,7 @@ export const deletePurchaseOrderItem = createAsyncThunk<number, number, { reject
     },
 );
 
-/* RECEIVE (очень важно для тебя 🔥) */
+/* RECEIVE (очень важно для тебя) */
 export const receivePurchaseOrderItems = createAsyncThunk<
     PurchaseOrderItem[],
     { warehouse_id: number; items: { id: number; received_quantity: number }[] },

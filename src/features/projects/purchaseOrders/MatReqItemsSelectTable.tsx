@@ -8,19 +8,22 @@ import { Save } from 'lucide-react';
 import { fetchRecommendSuppliers, type SupplierRecommend } from '@/utils/fetchRecommendSuppliers';
 import SupplierRecommendSelect from '@/components/ui/SupplierRecommendSelect';
 
-type EditableItem = MaterialRequestItem & {
-    supplierRating_id?: number;
+export type EditableItem = MaterialRequestItem & {
+    supplier_id?: number;
+    best_price?: number;
 };
 
 interface MatReqItemsSelectTableProps {
     items: MaterialRequestItem[];
     refs: Record<string, ReferenceResult>;
+    onSubmit: (items: EditableItem[]) => void;
     onCancel: () => void;
 }
 
 export default function MatReqItemsSelectTable({
     items,
     refs,
+    onSubmit,
     onCancel,
 }: MatReqItemsSelectTableProps) {
     const rates = useCurrencyRates();
@@ -36,8 +39,8 @@ export default function MatReqItemsSelectTable({
         setEditedItems(items);
     }, [items]);
 
-    // ===== LOAD SUPPLIERS =====
-    const loadSuppliers = async (item: MaterialRequestItem) => {
+    // LOAD SUPPLIERS
+    const loadSuppliers = async (item: EditableItem) => {
         if (!item.material_id || !item.currency) return;
 
         // кеш
@@ -50,6 +53,24 @@ export default function MatReqItemsSelectTable({
                 ...prev,
                 [item.id]: data,
             }));
+
+            //АВТОПОДСТАНОВКА ЛУЧШЕГО
+            const best = data?.[0];
+            if (best?.best_price != null) {
+                const best_price = best.best_price;
+                setEditedItems((prev) =>
+                    prev.map((row) =>
+                        row.id === item.id
+                            ? {
+                                  ...row,
+                                  price: best_price,
+                                  best_price: best_price,
+                                  supplier_id: best.id,
+                              }
+                            : row,
+                    ),
+                );
+            }
         } catch (e) {
             console.error('Ошибка загрузки поставщиков', e);
         }
@@ -77,7 +98,11 @@ export default function MatReqItemsSelectTable({
                 return prev.filter((i) => i !== id);
             } else {
                 const item = editedItems.find((i) => i.id === id);
-                if (item) loadSuppliers(item); //
+
+                if (item) {
+                    loadSuppliers(item);
+                }
+
                 return [...prev, id];
             }
         });
@@ -103,12 +128,6 @@ export default function MatReqItemsSelectTable({
         return Number(isNaN(total) ? '0.00' : total.toFixed(2));
     };
 
-    const renderStars = (rating: number) => {
-        const fullStars = Math.round(rating);
-
-        return '⭐'.repeat(fullStars);
-    };
-
     // RENDER
     return (
         <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
@@ -124,15 +143,15 @@ export default function MatReqItemsSelectTable({
                         <th className="px-3 py-2 text-xs">
                             <input type="checkbox" checked={isAllSelected} onChange={toggleAll} />
                         </th>
-                        <th className="w-64 px-3 py-2 text-sm text-left">Материал</th>
-                        <th className="px-3 py-2 text-sm text-center">Ед.изм</th>
-                        <th className="px-3 py-2 text-sm text-center">Кол-во</th>
-                        <th className="px-3 py-2 text-sm text-center">Валюта</th>
-                        <th className="px-3 py-2 text-sm text-center">Курс НБКР</th>
-                        <th className="px-3 py-2 text-sm text-center">Цена</th>
-                        <th className="px-3 py-2 text-sm text-right">Сумма</th>
-                        <th className="px-3 py-2 text-sm text-center w-72">Поставщик</th>
-                        <th className="px-3 py-2 text-sm text-center">Лучшая цена</th>
+                        <th className="px-3 py-2 text-sm text-left">Материал</th>
+                        <th className="px-3 py-2 text-sm text-center w-28">Ед.изм</th>
+                        <th className="px-3 py-2 text-sm text-center w-28 ">Кол-во</th>
+                        <th className="px-3 py-2 text-sm text-center w-36">Валюта</th>
+                        <th className="px-3 py-2 text-sm text-center w-28">Курс НБКР</th>
+                        <th className="px-3 py-2 text-sm text-center w-28">Цена</th>
+                        <th className="px-3 py-2 text-sm text-right w-28">Сумма</th>
+                        <th className="px-3 py-2 text-sm text-center w-80">Поставщик</th>
+                        <th className="w-32 px-3 py-2 text-sm text-center ">Лучшая цена</th>
                     </tr>
                 </thead>
 
@@ -142,13 +161,8 @@ export default function MatReqItemsSelectTable({
                         const suppliers = suppliersMap[sub.id] || [];
 
                         return (
-                            <tr
-                                key={sub.id}
-                                className={`border-b ${
-                                    isSelected ? 'bg-blue-50/40' : 'hover:bg-gray-50'
-                                }`}
-                            >
-                                <td className="px-3 py-3">
+                            <tr key={sub.id} className="border-b bg-blue-50/40 hover:bg-gray-50">
+                                <td className="px-1 py-1 text-center">
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
@@ -156,15 +170,19 @@ export default function MatReqItemsSelectTable({
                                     />
                                 </td>
 
-                                <td className="w-64 px-1 py-1 border">
+                                <td className="px-1 py-1 border w-72 bg-blue-50/40">
                                     {refs.materials.lookup(Number(sub.material_id))}
                                 </td>
 
-                                <td className="px-1 py-1 text-center border">
+                                <td className="px-1 py-1 text-center border w-28 bg-blue-50/40">
                                     {refs.unitsOfMeasure.lookup(Number(sub.unit_of_measure))}
                                 </td>
 
-                                <td className="px-1 py-1 border">
+                                <td
+                                    className={`w-24 px-1 py-1 border ${
+                                        isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                    }`}
+                                >
                                     <input
                                         type="text"
                                         value={sub.quantity}
@@ -176,11 +194,17 @@ export default function MatReqItemsSelectTable({
                                                 parseNumber(e.target.value),
                                             )
                                         }
-                                        className="w-full px-2 py-1.5 border rounded text-right"
+                                        className={`w-full px-2 py-1.5 border rounded text-right ${
+                                            isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                        }`}
                                     />
                                 </td>
 
-                                <td className="px-1 py-1 border">
+                                <td
+                                    className={` px-1 py-1.5 border ${
+                                        isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                    }`}
+                                >
                                     <ReferencesSelect
                                         options={currencies}
                                         value={sub.currency}
@@ -201,7 +225,11 @@ export default function MatReqItemsSelectTable({
                                     />
                                 </td>
 
-                                <td className="px-1 py-1 border">
+                                <td
+                                    className={`w-24 px-1 py-1 border ${
+                                        isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                    }`}
+                                >
                                     <input
                                         type="text"
                                         value={sub.currency_rate}
@@ -213,11 +241,17 @@ export default function MatReqItemsSelectTable({
                                                 parseNumber(e.target.value),
                                             )
                                         }
-                                        className="w-full px-2 py-1.5 border rounded text-right"
+                                        className={`w-full px-2 py-1.5 border rounded text-right ${
+                                            isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                        }`}
                                     />
                                 </td>
 
-                                <td className="px-1 py-1 border">
+                                <td
+                                    className={`w-24 px-1 py-1 border ${
+                                        isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                    }`}
+                                >
                                     <input
                                         type="text"
                                         value={sub.price}
@@ -225,26 +259,70 @@ export default function MatReqItemsSelectTable({
                                         onChange={(e) =>
                                             updateRow(sub.id, 'price', parseNumber(e.target.value))
                                         }
-                                        className="w-full px-2 py-1.5 border rounded text-right"
+                                        className={`w-full px-2 py-1.5 border rounded text-right ${
+                                            isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                        }`}
                                     />
                                 </td>
 
                                 <td className="px-1 py-1 font-bold text-right text-green-700 border bg-green-50">
                                     {calcSum(sub)}
                                 </td>
+
                                 {/* Поставщик */}
-                                <td className="px-1 py-1 border w-72">
+                                <td
+                                    className={`px-1 py-1.5 border ${
+                                        isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                    }`}
+                                >
                                     <SupplierRecommendSelect
                                         suppliers={suppliers}
-                                        value={sub.supplierRating_id}
+                                        value={sub.supplier_id}
                                         disabled={!isSelected}
+                                        // onChange={(supplier) => {
+                                        //     if (supplier.best_price != null) {
+                                        //         updateRow(sub.id, 'supplier_id', supplier.id);
+                                        //         updateRow(sub.id, 'price', supplier.best_price);
+                                        //         updateRow(
+                                        //             sub.id,
+                                        //             'best_price',
+                                        //             supplier.best_price,
+                                        //         );
+                                        //     }
+                                        // }}
                                         onChange={(supplier) => {
-                                            updateRow(sub.id, 'supplierRating_id', supplier.id);
-                                            console.log('isSele', isSelected);
                                             if (supplier.best_price != null) {
+                                                updateRow(sub.id, 'supplier_id', supplier.id);
                                                 updateRow(sub.id, 'price', supplier.best_price);
+                                                updateRow(
+                                                    sub.id,
+                                                    'best_price',
+                                                    supplier.best_price,
+                                                );
                                             }
                                         }}
+                                    />
+                                </td>
+
+                                <td
+                                    className={`w-24 px-1 py-1 border ${
+                                        isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                    }`}
+                                >
+                                    <input
+                                        type="text"
+                                        value={sub.best_price ?? ''}
+                                        disabled={!isSelected}
+                                        onChange={(e) =>
+                                            updateRow(
+                                                sub.id,
+                                                'best_price',
+                                                parseNumber(e.target.value),
+                                            )
+                                        }
+                                        className={`w-full px-2 py-1.5 border rounded text-right ${
+                                            isSelected ? 'bg-white' : 'bg-blue-50/40'
+                                        }`}
                                     />
                                 </td>
                             </tr>
@@ -262,6 +340,7 @@ export default function MatReqItemsSelectTable({
                     Отмена
                 </button>
                 <button
+                    onClick={() => onSubmit(selectedItems)}
                     className="flex items-center gap-2 px-4 py-2 text-white border rounded-lg bg-sky-600 hover:bg-sky-700 disabled:opacity-50"
                     disabled={!selectedItems.length}
                 >

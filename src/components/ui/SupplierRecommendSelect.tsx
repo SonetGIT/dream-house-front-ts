@@ -26,6 +26,7 @@ export default function SupplierRecommendSelect({
     const ref = useRef<HTMLDivElement>(null);
 
     const selected = suppliers.find((s) => s.id === value);
+    console.log('selected', selected);
 
     // закрытие при клике вне
     useEffect(() => {
@@ -43,42 +44,44 @@ export default function SupplierRecommendSelect({
             {/* Trigger */}
             <div
                 className={`w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm ${
-                    disabled ? 'opacity-50 cursor-not-allowed' : ''
+                    disabled
+                        ? 'bg-blue-50/40 text-gray-400 cursor-not-allowed'
+                        : 'bg-white cursor-pointer'
                 }`}
                 onClick={() => !disabled && setOpen((prev) => !prev)}
             >
                 {selected ? (
-                    <div className="flex items-center justify-between">
-                        <span className="truncate">{selected.name}</span>
+                    <div className="flex items-center gap-1">
+                        <span>{selected.name}</span>
                         <Rating value={selected.avg_rating} size="sm" />
                     </div>
                 ) : (
-                    <span className="text-gray-400">Выбрать</span>
+                    <span className="text-gray-700">Выбрать</span>
                 )}
             </div>
 
             {/* Dropdown */}
             {open && (
-                <div className="absolute z-20 w-full mt-1 overflow-auto bg-white border rounded shadow max-h-60">
+                <div className="absolute z-20 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded shadow max-h-60">
                     {suppliers.map((s) => (
                         <div
                             key={s.id}
-                            className="flex items-center justify-between px-2 py-1 cursor-pointer hover:bg-gray-100"
+                            className="flex items-center justify-between px-2 py-1.5 text-xs cursor-pointer hover:bg-gray-100"
                             onClick={() => {
                                 onChange(s);
                                 setOpen(false);
                             }}
                         >
-                            <div className="flex flex-col">
-                                <span className="text-sm">{s.name}</span>
-                                {s.best_price != null && (
+                            {/* <div className="flex flex-col"> */}
+                            <div className="flex items-center gap-1">
+                                <span className="truncate">{s.name}</span>
+                                <Rating value={s.avg_rating} size="sm" />
+                                {/* {s.best_price != null && (
                                     <span className="text-xs font-medium text-green-600">
                                         {s.best_price}
                                     </span>
-                                )}
+                                )} */}
                             </div>
-
-                            <Rating value={s.avg_rating} size="sm" />
                         </div>
                     ))}
 
