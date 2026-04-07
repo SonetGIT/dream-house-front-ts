@@ -45,7 +45,6 @@ const matReqStatuses: Record<number, { label: string; className: string }> = {
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
     const { pagination } = useAppSelector((state) => state.materialRequestItems);
-    console.log();
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});

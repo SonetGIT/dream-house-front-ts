@@ -3,7 +3,6 @@ import App from '../App';
 import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../pages/AuthPage';
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
-import WarehouseTabs from '@/features/projects/warehouses/WarehouseTabs';
 import MaterialsPage from '@/features/materials/MaterialsPage';
 import PtoPage from '@/features/projects/pto/PtoPage';
 import LegalDocStagesPage from '@/features/projects/legal_department/legalDocStages/LegalDocStagesPage';

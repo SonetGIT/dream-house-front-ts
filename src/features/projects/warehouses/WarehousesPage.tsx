@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '../../reference/useReference';
-import { fetchWarehouses } from './warehousesSlice';
-import WarehousesList from './WarehousesTable';
+import {
+    createWarehouse,
+    deleteWarehouse,
+    fetchWarehouses,
+    updateWarehouse,
+    type Warehouse,
+    type WarehouseFormData,
+} from './warehousesSlice';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../pto/PtoPage';
 import Modal from '@/components/ui/Modal';
@@ -12,6 +18,9 @@ import { CheckCircle2, FolderOpen, TrendingUp, XCircle } from 'lucide-react';
 import { Add } from '@mui/icons-material';
 import WarehousesTable from './WarehousesTable';
 import { TablePagination } from '@/components/ui/TablePagination';
+import toast from 'react-hot-toast';
+import { deleteWarehouseItem } from '../warehouseStocks/warehouseStocksSlice';
+import { WarehouseForm } from './WarehouseForm';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {
@@ -19,30 +28,135 @@ export default function WarehousesPage() {
     const projectIdNum = projectId ? Number(projectId) : null;
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.warehouses);
+
+    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
+    const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
+    const [formLoading, setFormLoading] = useState(false);
+    const [deleteState, setDeleteState] = useState<{
+        type: 'warehouse' | 'warehouseItem';
+        id: number;
+    } | null>(null);
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
+
+    const emptyWarehouses = data.filter((w) => !w.items?.length).length;
+    const filledWarehouses = data.filter((w) => w.items && w.items.length > 0).length;
+    const fillPercent = data.length > 0 ? Math.round((filledWarehouses / data.length) * 100) : 0;
+
     // Справочники
-    const refs = { users: useReference('users') };
+    const refs = {
+        warehouses: useReference('warehouses'),
+        users: useReference('users'),
+        materials: useReference('materials'),
+        materialTypes: useReference('materialTypes'),
+        unitsOfMeasure: useReference('unitsOfMeasure'),
+    };
 
     //Первичная загрузка =====
     useEffect(() => {
         dispatch(fetchWarehouses({ page, size, project_id: projectId }));
     }, [projectId, page, size]);
 
-    const emptyWarehouses = data.filter((w) => !w.items?.length).length;
-    const filledWarehouses = data.filter((w) => w.items && w.items.length > 0).length;
-    const fillPercent = data.length > 0 ? Math.round((filledWarehouses / data.length) * 100) : 0;
+    const handleCreate = () => {
+        setSelectedWarehouse(null);
+        setModal('create');
+    };
+
+    const handleEdit = (warehouse: Warehouse) => {
+        setSelectedWarehouse(warehouse);
+        setModal('edit');
+    };
+
+    const refetchWHouse = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
+        dispatch(
+            fetchWarehouses({
+                project_id: projectId,
+                page,
+                size,
+                // ...filters,
+            }),
+        );
+    };
+
+    const handleCreateWhouse = async (data: WarehouseFormData) => {
+        try {
+            setFormLoading(true);
+
+            await dispatch(createWarehouse({ project_id: projectId, data })).unwrap();
+
+            toast.success(`Склад успешно создан: ${data.name}`);
+
+            refetchWHouse(1); //всегда на первую страницу
+
+            setModal(null);
+        } catch (err: any) {
+            toast.error(err || 'Ошибка создания склада');
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
+    const handleUpdateWhouse = async (data: WarehouseFormData) => {
+        if (!selectedWarehouse) return;
+
+        try {
+            setFormLoading(true);
+
+            await dispatch(
+                updateWarehouse({
+                    id: selectedWarehouse.id,
+                    data,
+                }),
+            ).unwrap();
+
+            toast.success(`Данные склада обновлены: ${data.name}`);
+
+            refetchWHouse(); //остаёмся на текущей странице
+
+            setModal(null);
+            setSelectedWarehouse(null);
+        } catch (err: any) {
+            toast.error(err || 'Ошибка обновления данных склада');
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
+    /* удаление */
+    const confirmDelete = useCallback(async () => {
+        if (!deleteState) return;
+
+        try {
+            if (deleteState.type === 'warehouse') {
+                await dispatch(deleteWarehouse(deleteState.id)).unwrap();
+                toast.success('Склад удален');
+            } else {
+                await dispatch(deleteWarehouseItem(deleteState.id)).unwrap();
+                toast.success('Позиция из склада удалена');
+
+                if (projectIdNum) {
+                    dispatch(
+                        fetchWarehouses({
+                            project_id: projectIdNum,
+                            page,
+                            size,
+                        }),
+                    );
+                }
+            }
+        } catch {
+            toast.error('Ошибка удаления, проверьте права доступа на удаления');
+        } finally {
+            setDeleteState(null);
+        }
+    }, [deleteState, dispatch, projectIdNum]);
 
     /********************************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* HEADER */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button
-                    variant="outlined"
-                    startIcon={<Add />}
-                    onClick={() => alert('handleCreate')}
-                >
+                <Button variant="outlined" startIcon={<Add />} onClick={handleCreate}>
                     Добавить склад
                 </Button>
             </Box>
@@ -117,10 +231,11 @@ export default function WarehousesPage() {
                     <WarehousesTable
                         data={data}
                         refs={refs}
-                        //     onDeleteMatReqOrderId={(id) => setDeleteState({ type: 'matReqOrder', id })}
-                        //     onDeleteMatReqOrderItemId={(itemId) =>
-                        //         setDeleteState({ type: 'matReqOrderItem', id: itemId })
-                        //     }
+                        onEdit={handleEdit}
+                        onDeleteWarehouseId={(id) => setDeleteState({ type: 'warehouse', id })}
+                        onDeleteWHouseItemId={(itemId) =>
+                            setDeleteState({ type: 'warehouseItem', id: itemId })
+                        }
                     />
                     {pagination && (
                         <TablePagination
@@ -137,36 +252,49 @@ export default function WarehousesPage() {
                     )}
                 </>
             )}
-            {/* <Modal
-                size={'full'}
+            <Modal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
-                title="Список одобренных материалов"
+                title="Создать новый склад"
             >
-                <MatReqItemsSelectTable
-                    items={filteredItems}
+                <WarehouseForm
                     refs={refs}
+                    onSubmit={handleCreateWhouse}
                     onCancel={() => setModal(null)}
-                    onSubmit={handleCreatePurchaseOrder}
+                    isLoading={loading}
                 />
-            </Modal> */}
+            </Modal>
+            {/* EDIT */}
+            <Modal
+                isOpen={modal === 'edit'}
+                onClose={() => setModal(null)}
+                title="Редактировать данные склада"
+            >
+                <WarehouseForm
+                    warehouse={selectedWarehouse}
+                    refs={refs}
+                    onSubmit={handleUpdateWhouse}
+                    onCancel={() => setModal(null)}
+                    isLoading={formLoading}
+                />
+            </Modal>
 
             {/* DELETE CONFIRM */}
-            {/* <ConfirmDialog
-                open={deleteState?.type === 'matReqOrder'}
+            <ConfirmDialog
+                open={deleteState?.type === 'warehouse'}
                 message="Это действие нельзя отменить."
-                title="Удалить заявку на закуп?"
+                title="Удалить склад?"
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteState(null)}
             />
 
             <ConfirmDialog
-                open={deleteState?.type === 'matReqOrderItem'}
+                open={deleteState?.type === 'warehouseItem'}
                 message="Это действие нельзя отменить."
-                title="Удалить позицию из заявки на закуп?"
+                title="Удалить позицию из склада?"
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteState(null)}
-            /> */}
+            />
         </Paper>
     );
 }

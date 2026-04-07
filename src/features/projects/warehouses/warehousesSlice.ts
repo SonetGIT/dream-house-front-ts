@@ -1,3 +1,4 @@
+import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
@@ -29,15 +30,17 @@ export interface Warehouse {
     deleted: boolean;
     items: WarehouseItem[];
 }
-
-interface Pagination {
-    page: number;
-    size: number;
-    total: number;
-    pages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+export interface WarehouseForm {
+    name: string;
+    code: string;
+    address: string;
+    manager_id: number | null;
+    phone: string | null;
 }
+export type WarehouseFormData = Omit<
+    Warehouse,
+    'id' | 'project_id' | 'items' | 'created_at' | 'updated_at' | 'deleted'
+>;
 
 interface WarehousesState {
     data: Warehouse[];
@@ -72,9 +75,15 @@ export const fetchWarehouses = createAsyncThunk(
 //CREATE
 export const createWarehouse = createAsyncThunk(
     'warehouses/create',
-    async (payload: Partial<Warehouse>, { rejectWithValue }) => {
+    async (
+        { project_id, data }: { project_id: number; data: Partial<Warehouse> },
+        { rejectWithValue },
+    ) => {
         try {
-            return await apiRequest<Warehouse>('/warehouses/create', 'POST', payload);
+            return await apiRequest<Warehouse>('/warehouses/create', 'POST', {
+                ...data,
+                project_id,
+            });
         } catch (e: any) {
             return rejectWithValue(e.message);
         }
