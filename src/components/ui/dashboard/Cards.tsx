@@ -6,17 +6,21 @@ type CardsProps = {
     label?: string;
     value?: string;
     color?: string;
+    bgColor?: string;
     to?: string;
     icon?: ReactNode;
 };
 
-export function Cards({ title, label, value, color, to, icon }: CardsProps) {
+export function Cards({ title, label, value, color, bgColor, to, icon }: CardsProps) {
     const navigate = useNavigate();
 
     return (
         <div
             className="cards"
-            style={{ borderLeft: `4px double ${color || 'var(--primary)'}` }}
+            style={{
+                background: bgColor,
+                borderLeft: `4px double ${color || 'var(--primary)'}`,
+            }}
             onClick={() => to && navigate(to)}
             role="button"
         >
@@ -33,14 +37,14 @@ export function Cards({ title, label, value, color, to, icon }: CardsProps) {
                 </div>
             )}
 
-            <div className="cards-row">
+            {/* <div className="cards-row">
                 <div>
-                    {/* <span>{label}</span> */}
+                    <span>{label}</span>
                     <div className="cards-value" style={{ color }}>
                         Доп. информация {value}
                     </div>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }

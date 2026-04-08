@@ -27,8 +27,18 @@ export interface PurchaseOrderItem {
     };
 }
 
-/* STATE */
+/* RECEIVE (очень важно для тебя) */
+export interface ReceivePurchaseOrderItemPayload {
+    purchase_order_item_id: number;
+    received_quantity: number;
+    comment?: string;
+}
 
+export interface ReceivePurchaseOrderItemsPayload {
+    warehouse_id: number;
+    items: ReceivePurchaseOrderItemPayload[];
+}
+/* STATE */
 interface PurchaseOrderItemsState {
     data: PurchaseOrderItem[];
     pagination: Pagination | null;
@@ -43,7 +53,7 @@ const initialState: PurchaseOrderItemsState = {
     error: null,
 };
 
-/* ================== THUNKS ================== */
+/*THUNKS*/
 
 /* FETCH */
 export const fetchPurchaseOrderItems = createAsyncThunk<
@@ -110,10 +120,10 @@ export const deletePurchaseOrderItem = createAsyncThunk<number, number, { reject
     },
 );
 
-/* RECEIVE (очень важно для тебя) */
+/* RECEIVE */
 export const receivePurchaseOrderItems = createAsyncThunk<
     PurchaseOrderItem[],
-    { warehouse_id: number; items: { id: number; received_quantity: number }[] },
+    ReceivePurchaseOrderItemsPayload,
     { rejectValue: string }
 >('purchaseOrderItems/receive', async (payload, { rejectWithValue }) => {
     try {
@@ -129,7 +139,7 @@ export const receivePurchaseOrderItems = createAsyncThunk<
     }
 });
 
-/* ================== SLICE ================== */
+/*SLICE*/
 
 const purchaseOrderItemsSlice = createSlice({
     name: 'purchaseOrderItems',
@@ -188,16 +198,29 @@ const purchaseOrderItemsSlice = createSlice({
             })
 
             /* RECEIVE */
+            /* RECEIVE */
+            .addCase(receivePurchaseOrderItems.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
             .addCase(receivePurchaseOrderItems.fulfilled, (state, action) => {
-                const updatedItems = action.payload;
+                state.loading = false;
+
+                const updatedItems = action.payload ?? [];
 
                 updatedItems.forEach((updated) => {
                     const index = state.data.findIndex((i) => i.id === updated.id);
 
                     if (index !== -1) {
                         state.data[index] = updated;
+                    } else {
+                        state.data.unshift(updated);
                     }
                 });
+            })
+            .addCase(receivePurchaseOrderItems.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка приёмки';
             });
     },
 });

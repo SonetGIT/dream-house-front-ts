@@ -79,8 +79,8 @@ export default function PurchaseOrdersTable(props: PropsType) {
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
-                                <th className="w-12 px-3 py-3 text-sm font-semibold text-center text-blue-700 bg-blue-50">
-                                    №
+                                <th className="px-3 py-3 text-sm font-semibold text-center text-blue-700 border-l w-18 bg-blue-50">
+                                    № заявки
                                 </th>
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
@@ -114,7 +114,7 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                             onClick={() => toggleRow(po.id)}
                                         >
                                             {/* toggle */}
-                                            <td className="px-2 py-2">
+                                            <td className="px-2 py-2 ">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -129,12 +129,12 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                                     )}
                                                 </button>
                                             </td>
-                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
+                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 border-l bg-blue-40/20">
                                                 {po.id}
                                             </td>
 
                                             {/* Блок */}
-                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
+                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 border-l bg-blue-40/20">
                                                 {po.block_id
                                                     ? props.refs.prjBlocks.lookup(po.block_id)
                                                     : '—'}

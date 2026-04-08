@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { Warehouse, WarehouseForm, WarehouseFormData } from './warehousesSlice';
+import type { WarehouseForm, WarehouseFormData } from './warehousesSlice';
 import { formatPhoneInput, toStoragePhone } from '@/utils/formatPhoneNumber';
 
 interface WarehouseFormProps {
@@ -158,7 +158,7 @@ export function WarehouseForm({
                                 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
                                 transition-all placeholder:text-gray-400 resize-none
                             `}
-                            placeholder="Введите адрес объекта"
+                            placeholder="Введите адрес склада"
                             disabled={isLoading}
                         />
                         {errors.address && (
@@ -187,7 +187,7 @@ export function WarehouseForm({
                             `}
                             disabled={isLoading}
                         >
-                            <option value="">Выберите заказчика</option>
+                            <option value="">Выберите кладовщик склада</option>
                             {refs.users.data?.map((user) => (
                                 <option key={user.id} value={user.id}>
                                     {user.name}

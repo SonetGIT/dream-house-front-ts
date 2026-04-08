@@ -16,6 +16,7 @@ import Dashboard from '@/components/ui/dashboard/Dashboard';
 import EstimatesStagePage from '@/features/projects/pto/projectBlocks/EstimatesStagePage';
 import ProjectBlocksTabs from '@/features/projects/pto/projectBlocks/ProjectBlocksTabs';
 import PurchaseOrdersPage from '@/features/projects/purchaseOrders/PurchaseOrdersPage';
+import TasksPage from '@/features/projects/tasks/TasksPage';
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
 
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
                                     // { path: 'avr', element: <AvrPage /> },
                                 ],
                             },
+                            { path: 'tasks', element: <TasksPage /> },
                             { path: 'warehouses', element: <WarehousesPage /> },
                         ],
                     },

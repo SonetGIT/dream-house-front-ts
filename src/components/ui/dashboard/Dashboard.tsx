@@ -4,6 +4,7 @@ import { CustomerPreview } from './CustomerPreview';
 import { StatusOverview } from './StatusOverview';
 import { IoDocumentsSharp } from 'react-icons/io5';
 import WidgetsIcon from '@mui/icons-material/Widgets';
+import { FaTasks } from 'react-icons/fa';
 
 export default function Dashboard() {
     const dashboardCards = [
@@ -12,22 +13,34 @@ export default function Dashboard() {
             label: 'Инфо',
             value: '',
             color: '#189e06',
+            bgColor: '#cae7cc',
             to: 'documentStages',
             icon: <IoDocumentsSharp />,
         },
         {
             title: 'ПТО',
             color: '#e11d48',
+            bgColor: '#ef9a9a',
             label: '',
             value: '',
             to: 'pto',
             icon: <WidgetsIcon />,
         },
         {
+            title: 'Задачи',
+            label: '',
+            value: '',
+            color: '#0b78f5',
+            bgColor: '#e3f2fd',
+            to: 'tasks',
+            icon: <FaTasks />,
+        },
+        {
             title: 'Склады',
             label: 'Этот месяц',
             value: '34 000 $',
             color: '#ab0bf5',
+            bgColor: '#e1bee7',
             to: 'warehouses',
             icon: <MdWarehouse />,
         },

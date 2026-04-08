@@ -203,5 +203,19 @@
             "id": "id",
             "name": ["name"]
         }
+    },
+    "taskPriorities": {
+        "apiName": "/taskPriorities/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
+    },
+    "taskStatuses": {
+        "apiName": "/taskStatuses/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }

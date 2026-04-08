@@ -264,6 +264,7 @@ export default function WarehousesPage() {
                     isLoading={loading}
                 />
             </Modal>
+
             {/* EDIT */}
             <Modal
                 isOpen={modal === 'edit'}

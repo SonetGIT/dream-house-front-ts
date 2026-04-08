@@ -7,6 +7,7 @@ import { RiMenu3Fill } from 'react-icons/ri';
 import UserAvatar from './UserAvatar';
 import LogoutButton from './LogoutButton';
 import USDRate from '../ui/USDRate';
+import AppBell from './AppBell';
 
 interface HeaderProps {
     onMenuClick?: () => void;
@@ -57,6 +58,7 @@ export default function Header(props: HeaderProps) {
                     >
                         {' '}
                         <USDRate />
+                        <AppBell />
                         <UserAvatar />
                         <LogoutButton />
                     </Box>
