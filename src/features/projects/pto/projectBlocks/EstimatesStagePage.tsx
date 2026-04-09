@@ -12,7 +12,6 @@ export default function EstimatesStagePage() {
     const { projectId, prjBlockId } = useParams();
     const dispatch = useAppDispatch();
     const blockId = prjBlockId ? Number(prjBlockId) : null;
-    const projectIdNum = projectId ? Number(projectId) : null;
 
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);
 
@@ -21,16 +20,16 @@ export default function EstimatesStagePage() {
     const blockName = currentBlock?.name || '';
 
     useEffect(() => {
-        if (projectIdNum) {
+        if (Number(projectId)) {
             dispatch(
                 fetchProjectBlocks({
                     page: 1,
                     size: 10,
-                    project_id: projectIdNum,
+                    project_id: Number(projectId),
                 }),
             );
         }
-    }, [dispatch, projectIdNum]);
+    }, [dispatch, Number(projectId)]);
 
     if (blockId === null) {
         return (

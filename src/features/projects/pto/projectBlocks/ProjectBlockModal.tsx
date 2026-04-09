@@ -18,7 +18,6 @@ export default function ProjectBlockModal({
     onSubmit,
 }: BlockModalProps) {
     const nameInputRef = useRef<HTMLInputElement>(null);
-    console.log('projectId', projectId);
     const [formData, setFormData] = useState({
         project_id: projectId,
         name: block?.name || '',

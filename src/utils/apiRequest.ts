@@ -1,10 +1,12 @@
 import { getToken } from '@/features/auth/getToken';
+import type { TasksStats } from '@/features/projects/tasks/tasksSlice';
 import type { Pagination } from '@/features/users/userSlice';
 
 const API_URL = import.meta.env.VITE_BASE_URL;
 
 export interface ApiResponse<T> {
     data: T;
+    stats?: TasksStats;
     pagination?: Pagination;
     success?: boolean;
     message?: string;
@@ -58,7 +60,7 @@ export async function apiRequest<T = any>(
             throw new Error(json?.message || 'Ошибка запроса');
         }
 
-        // 🔥 ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ
+        // ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ
         return {
             ...json,
             data: json.data ?? json, // ✅ нормализация

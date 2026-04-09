@@ -75,7 +75,7 @@ export function ConfirmDialogNew({
 
                     {/* Content */}
                     <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
-                    <p className="mb-6 text-sm text-gray-600">{message}</p>
+                    <p className="mb-6 text-base text-gray-800">{message}</p>
 
                     {/* Actions */}
                     <div className="flex items-center gap-3">

@@ -17,6 +17,7 @@ export const getStatusColor = (statusId: number | null, lookup: (id: number) => 
     );
 };
 
+// taskStatuses/gets
 export const taskStatuses: Record<number, { label: string; className: string }> = {
     1: {
         label: 'Создана',
@@ -40,6 +41,7 @@ export const taskStatuses: Record<number, { label: string; className: string }> 
     },
 };
 
+// taskPriorities/gets
 export const taskPriorities: Record<number, { label: string; className: string }> = {
     1: {
         label: 'Низкий',

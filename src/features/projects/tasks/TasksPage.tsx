@@ -1,158 +1,66 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '../../reference/useReference';
 import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../pto/PtoPage';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
-import { CheckCircle2, FolderOpen, TrendingUp, XCircle } from 'lucide-react';
+import { FolderOpen, XCircle } from 'lucide-react';
 import { Add } from '@mui/icons-material';
 import { TablePagination } from '@/components/ui/TablePagination';
 import toast from 'react-hot-toast';
-import { deleteWarehouseItem } from '../warehouseStocks/warehouseStocksSlice';
-import { deleteTask, fetchTasks, type Task } from './tasksSlice';
+import { createTask, deleteTask, fetchTasks, updateTask, type Task } from './tasksSlice';
 import TasksTable from './TasksTable';
-import { ConfirmDialogNew } from '@/components/ui/ConfirmDialogNew';
+import TaskForm from './TasksForm';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
+export const TASK_STATUS_CREATED = 1;
+export const TASK_STATUS_ACKNOWLEDGED = 2;
+export const TASK_STATUS_IN_PROGRESS = 3;
+export const TASK_STATUS_COMPLETED = 4;
+export const TASK_STATUS_CANCELED = 6;
 /*******************************************************************************************************************************************************************/
 export default function TasksPage() {
     const { projectId } = useOutletContext<ProjectOutletContext>();
-    const projectIdNum = projectId ? Number(projectId) : null;
     const dispatch = useAppDispatch();
-    const { items, pagination, loading } = useAppSelector((s) => s.tasks);
+    const { items, stats, pagination, loading } = useAppSelector((s) => s.tasks);
 
-    const newCount = items.filter((t) => t.status === 1).length; //Создана
-    const activeCount = items.filter((t) => t.status === 3).length; //в работе
-    const doneCount = items.filter((t) => t.status === 4).length; //Исполнена
-    const reviewCount = items.filter((t) => t.status === 2).length; //Ознакомлен
-    const cancelCount = items.filter((t) => t.status === 5).length; //Отменена
-    const overdueCount = items.filter(
-        (t) => t.status !== 3 && t.status !== 4 && new Date(t.deadline) < new Date(),
-    ).length;
-    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
-    // const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
-    // const [formLoading, setFormLoading] = useState(false);
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const newCount = stats?.statuses?.[1] ?? 0; // Создана
+    const readCount = stats?.statuses?.[2] ?? 0; //Ознакомлен
+    const activeCount = stats?.statuses?.[3] ?? 0; // В работе
+    const doneCount = stats?.statuses?.[4] ?? 0; // Исполнена
+    const cancelCount = stats?.statuses?.[5] ?? 0; // Отменена
+    const overdueCount = stats?.overdueCount ?? 0; // просрочена
 
-    const [formLoading, setFormLoading] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+    const [openCreate, setOpenCreate] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
+    const currentUser = useAppSelector((state) => state.auth.user);
+    const isAdmin = currentUser?.role_id === 1;
 
-    // const emptyWarehouses = data.filter((w) => !w.items?.length).length;
-    // const filledWarehouses = data.filter((w) => w.items && w.items.length > 0).length;
-    // const fillPercent = data.length > 0 ? Math.round((filledWarehouses / data.length) * 100) : 0;
-
-    // // Справочники
+    //Справочники
     const refs = {
         users: useReference('users'),
         taskStatuses: useReference('taskStatuses'),
         taskPriorities: useReference('taskPriorities'),
     };
 
-    // //Первичная загрузка =====
+    //Первичная загрузка =====
     useEffect(() => {
-        dispatch(fetchTasks({ page, size, project_id: projectId }));
-    }, [projectId, page, size]);
+        if (!projectId) return;
 
-    // const handleCreate = () => {
-    //     setSelectedWarehouse(null);
-    //     setModal('create');
-    // };
-
-    // const handleEdit = (warehouse: Warehouse) => {
-    //     setSelectedWarehouse(warehouse);
-    //     setModal('edit');
-    // };
-
-    // const refetchWHouse = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
-    //     dispatch(
-    //         fetchWarehouses({
-    //             project_id: projectId,
-    //             page,
-    //             size,
-    //             // ...filters,
-    //         }),
-    //     );
-    // };
-
-    // const handleCreateWhouse = async (data: WarehouseFormData) => {
-    //     try {
-    //         setFormLoading(true);
-
-    //         await dispatch(createWarehouse({ project_id: projectId, data })).unwrap();
-
-    //         toast.success(`Склад успешно создан: ${data.name}`);
-
-    //         refetchWHouse(1); //всегда на первую страницу
-
-    //         setModal(null);
-    //     } catch (err: any) {
-    //         toast.error(err || 'Ошибка создания склада');
-    //     } finally {
-    //         setFormLoading(false);
-    //     }
-    // };
-
-    // const handleUpdateWhouse = async (data: WarehouseFormData) => {
-    //     if (!selectedWarehouse) return;
-
-    //     try {
-    //         setFormLoading(true);
-
-    //         await dispatch(
-    //             updateWarehouse({
-    //                 id: selectedWarehouse.id,
-    //                 data,
-    //             }),
-    //         ).unwrap();
-
-    //         toast.success(`Данные склада обновлены: ${data.name}`);
-
-    //         refetchWHouse(); //остаёмся на текущей странице
-
-    //         setModal(null);
-    //         setSelectedWarehouse(null);
-    //     } catch (err: any) {
-    //         toast.error(err || 'Ошибка обновления данных склада');
-    //     } finally {
-    //         setFormLoading(false);
-    //     }
-    // };
-
-    // /* удаление */
-    const handleDelete = (task: Task) => {
-        setSelectedTask(task);
-        setModal('delete');
-    };
-    const handleDeleteTask = async () => {
-        if (!selectedTask) return;
-
-        try {
-            setDeleteLoading(true);
-
-            await dispatch(deleteTask(selectedTask.id)).unwrap();
-
-            toast.success(`Задача успешно удалёна: ${selectedTask.title}`);
-
-            dispatch(
-                fetchTasks({
-                    page: pagination?.page ?? page,
-                    size: pagination?.size ?? size,
-                    // ...filters,
-                }),
-            );
-
-            setModal(null);
-            setSelectedTask(null);
-        } catch (err: any) {
-            toast.error(err || 'Ошибка удаления задачи');
-        } finally {
-            setDeleteLoading(false);
-        }
-    };
+        dispatch(
+            fetchTasks({
+                project_id: Number(projectId),
+                page,
+                size,
+                ...(isAdmin ? {} : { user_id: currentUser?.id }),
+            }),
+        );
+    }, [dispatch, projectId, page, size, isAdmin, currentUser?.id]);
 
     function StatusBadge({
         color,
@@ -185,16 +93,101 @@ export default function TasksPage() {
         );
     }
 
+    /*CREATE*/
+    const handleCreate = async (data: Partial<Task>) => {
+        try {
+            if (editingTask) {
+                await dispatch(
+                    updateTask({
+                        id: editingTask.id,
+                        data,
+                    }),
+                ).unwrap();
+
+                toast.success('Задача успешно обновлена');
+            } else {
+                await dispatch(createTask(data)).unwrap();
+
+                toast.success('Задача успешно создана');
+            }
+
+            dispatch(
+                fetchTasks({
+                    page,
+                    size,
+                    project_id: projectId,
+                }),
+            );
+
+            setOpenCreate(false);
+            setEditingTask(null);
+        } catch (error: any) {
+            toast.error(error || 'Ошибка при сохранении задачи');
+        }
+    };
+
+    /* удаление */
+    const handleDelete = (id: number) => {
+        setSelectedTaskId(id);
+        setConfirmOpen(true);
+    };
+
+    /* CONFIRM DELETE */
+    const handleConfirm = async () => {
+        if (!selectedTaskId) return;
+
+        try {
+            await dispatch(deleteTask(selectedTaskId)).unwrap();
+
+            dispatch(
+                fetchTasks({
+                    page,
+                    size,
+                    project_id: projectId,
+                }),
+            );
+
+            toast.success(`Задача успешно удалёна`);
+        } catch (error: any) {
+            toast.error(
+                error || 'Ошибка при удалении задачи. Проверьте права доступа на удаление.',
+            );
+        } finally {
+            setConfirmOpen(false);
+            setSelectedTaskId(null);
+        }
+    };
+
+    /**********************************************/
+    const handleChangeTaskStatus = async (taskId: number, status: number) => {
+        const statusMessages: Record<number, string> = {
+            [TASK_STATUS_ACKNOWLEDGED]: 'Задача переведена в статус "Ознакомлен"',
+            [TASK_STATUS_IN_PROGRESS]: 'Задача переведена в статус "В работе"',
+            [TASK_STATUS_COMPLETED]: 'Задача переведена в статус "Выполнена"',
+            [TASK_STATUS_CANCELED]: 'Задача переведена в статус "Отменена"',
+        };
+
+        try {
+            await dispatch(
+                updateTask({
+                    id: taskId,
+                    data: { status },
+                }),
+            ).unwrap();
+
+            toast.success(statusMessages[status] || 'Статус задачи обновлён');
+        } catch (e) {
+            console.error(e);
+            toast.error('Не удалось изменить статус задачи');
+        }
+    };
+
     /********************************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* HEADER */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button
-                    variant="outlined"
-                    startIcon={<Add />}
-                    onClick={() => alert('handleCreate')}
-                >
+                <Button variant="outlined" startIcon={<Add />} onClick={() => setOpenCreate(true)}>
                     Добавить задачу
                 </Button>
             </Box>
@@ -215,7 +208,7 @@ export default function TasksPage() {
                         color="#6a1b9a"
                         bg="#f3e5f5"
                         label="Ознакомлен"
-                        count={reviewCount}
+                        count={readCount}
                     />
                     <StatusBadge color="#2e7d32" bg="#e8f5e9" label="Исполнена" count={doneCount} />
                     <StatusBadge
@@ -253,7 +246,7 @@ export default function TasksPage() {
                         <FolderOpen className="w-8 h-8 text-gray-400" />
                     </div>
                     <h3 className="mb-1 text-base font-medium text-gray-900">
-                        В объекте отсутствуют задачи. Добавьте новую ЗАДАЧУ нажав на кнопку "
+                        В объекте отсутствуют задачи. Добавьте новую задачу нажав на кнопку "
                         Добавить задачу".
                     </h3>
                 </div>
@@ -262,9 +255,15 @@ export default function TasksPage() {
                     <TasksTable
                         items={items}
                         refs={refs}
-                        onEdit={() => alert('handleEdit')}
+                        currentUserId={currentUser?.id ?? null}
+                        onEdit={setEditingTask}
                         onDeleteTasksId={handleDelete}
+                        onAcknowledgeTask={(id) => handleChangeTaskStatus(id, 2)}
+                        onStartTask={(id) => handleChangeTaskStatus(id, 3)}
+                        onCompleteTask={(id) => handleChangeTaskStatus(id, 4)}
+                        onCancelTask={(id) => handleChangeTaskStatus(id, 6)}
                     />
+
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
@@ -280,32 +279,26 @@ export default function TasksPage() {
                     )}
                 </>
             )}
-            {/* <Modal
-                isOpen={modal === 'create'}
-                onClose={() => setModal(null)}
-                title="Создать новый склад"
-            >
-                <WarehouseForm
-                    refs={refs}
-                    onSubmit={handleCreateWhouse}
-                    onCancel={() => setModal(null)}
-                    isLoading={loading}
-                />
-            </Modal> */}
+            {/* CREATE/EDIT MODAL */}
+            <TaskForm
+                open={openCreate || !!editingTask}
+                projectId={projectId}
+                task={editingTask}
+                refs={refs}
+                onSubmit={handleCreate}
+                onClose={() => {
+                    setOpenCreate(false);
+                    setEditingTask(null);
+                }}
+            />
 
-            {/* EDIT */}
-
-            {/* DELETE CONFIRM */}
-            <ConfirmDialogNew
-                isOpen={modal === 'delete'}
-                onClose={() => setModal(null)}
-                onConfirm={handleDeleteTask}
-                title="Удалить подрядчика?"
-                message={`Вы уверены, что хотите удалить подрядчика "${selectedTask?.title}"`}
-                confirmText="Удалить"
-                cancelText="Отмена"
-                variant="danger"
-                loading={deleteLoading}
+            {/* Диалог подтверждения */}
+            <ConfirmDialog
+                open={confirmOpen}
+                title="Удаление задачи"
+                message="Вы уверены, что хотите удалить задачу?"
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmOpen(false)}
             />
         </Paper>
     );

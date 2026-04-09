@@ -24,7 +24,6 @@ import { fetchProjectBlocks } from '../pto/projectBlocks/projectBlocksSlice';
 export default function MaterialRequestsPage() {
     const dispatch = useAppDispatch();
     const { projectId } = useParams();
-    const projectIdNum = projectId ? Number(projectId) : null;
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
@@ -40,8 +39,8 @@ export default function MaterialRequestsPage() {
     } = useAppSelector((state) => state.materialRequests);
 
     const projectBlocks = useMemo(
-        () => blocks.filter((b) => b.project_id === projectIdNum),
-        [blocks, projectIdNum],
+        () => blocks.filter((b) => b.project_id === Number(projectId)),
+        [blocks, Number(projectId)],
     );
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
@@ -87,17 +86,17 @@ export default function MaterialRequestsPage() {
 
     //загрузка проекта
     useEffect(() => {
-        if (projectIdNum && (!project || project.id !== projectIdNum)) {
-            dispatch(getProjectById(projectIdNum));
+        if (Number(projectId) && (!project || project.id !== Number(projectId))) {
+            dispatch(getProjectById(Number(projectId)));
         }
-    }, [projectIdNum, project, dispatch]);
+    }, [Number(projectId), project, dispatch]);
 
     //загрузка блоков
     useEffect(() => {
-        if (projectIdNum && blocks.length === 0) {
-            dispatch(fetchProjectBlocks({ project_id: projectIdNum, page: 1, size: 10 }));
+        if (Number(projectId) && blocks.length === 0) {
+            dispatch(fetchProjectBlocks({ project_id: Number(projectId), page: 1, size: 10 }));
         }
-    }, [projectIdNum, blocks.length, dispatch]);
+    }, [Number(projectId), blocks.length, dispatch]);
 
     //загрузка заявок
     useEffect(() => {
@@ -130,8 +129,8 @@ export default function MaterialRequestsPage() {
                 await dispatch(deleteMaterialRequestItem(deleteState.id)).unwrap();
                 toast.success('Позиция удалена');
 
-                if (projectIdNum) {
-                    dispatch(fetchSearchMaterialReq({ project_id: projectIdNum }));
+                if (Number(projectId)) {
+                    dispatch(fetchSearchMaterialReq({ project_id: Number(projectId) }));
                 }
             }
         } catch {
@@ -139,11 +138,11 @@ export default function MaterialRequestsPage() {
         } finally {
             setDeleteState(null);
         }
-    }, [deleteState, dispatch, projectIdNum]);
+    }, [deleteState, dispatch, Number(projectId)]);
 
     //SAFE RETURNS
-    if (!projectIdNum) {
-        return <div>Нет projectIdNum</div>;
+    if (!Number(projectId)) {
+        return <div>Нет projectId</div>;
     }
 
     if (projectLoading) {
@@ -207,7 +206,7 @@ export default function MaterialRequestsPage() {
                     step={step}
                     setStep={setStep}
                     blocks={projectBlocks}
-                    projectId={projectIdNum}
+                    projectId={Number(projectId)}
                     refs={refs}
                     calcRowTotal={calcRowTotal}
                     onClose={() => setModal(null)}
