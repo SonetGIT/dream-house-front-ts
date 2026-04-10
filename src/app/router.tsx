@@ -17,6 +17,8 @@ import EstimatesStagePage from '@/features/projects/pto/projectBlocks/EstimatesS
 import ProjectBlocksTabs from '@/features/projects/pto/projectBlocks/ProjectBlocksTabs';
 import PurchaseOrdersPage from '@/features/projects/purchaseOrders/PurchaseOrdersPage';
 import TasksPage from '@/features/projects/tasks/TasksPage';
+import WorkPerformedPage from '@/features/projects/pto/workPerformed/WorkPerformedPage';
+
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
 
@@ -47,7 +49,7 @@ export const router = createBrowserRouter([
                                     { index: true, element: <EstimatesStagePage /> }, // default
                                     { path: 'materialRequests', element: <MaterialRequestsPage /> },
                                     { path: 'purchaseOrders', element: <PurchaseOrdersPage /> },
-                                    // { path: 'avr', element: <AvrPage /> },
+                                    { path: 'workPerformed', element: <WorkPerformedPage /> },
                                 ],
                             },
                             { path: 'tasks', element: <TasksPage /> },

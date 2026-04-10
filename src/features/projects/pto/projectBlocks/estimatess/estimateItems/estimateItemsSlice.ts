@@ -1,8 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 
-/* ================= TYPES ================= */
-
+/*TYPES*/
 export interface EstimateItem {
     id: number;
     material_estimate_id: number; //id сметы
@@ -73,8 +72,7 @@ const initialState: EstimateItemsState = {
     error: null,
 };
 
-/* ================= FETCH ================= */
-
+/*FETCH*/
 export const fetchEstimateItems = createAsyncThunk<EstimateItem[], void, { rejectValue: string }>(
     'estimateItems/gets',
     async (_, { rejectWithValue }) => {
@@ -89,8 +87,7 @@ export const fetchEstimateItems = createAsyncThunk<EstimateItem[], void, { rejec
     },
 );
 
-/* ================= CREATE ================= */
-
+/*CREATE*/
 export const createEstimateItems = createAsyncThunk<
     EstimateItem[],
     EstimateItemCreatePayload[],
@@ -107,8 +104,7 @@ export const createEstimateItems = createAsyncThunk<
     }
 });
 
-/* ================= UPDATE ================= */
-
+/*UPDATE*/
 export const updateEstimateItem = createAsyncThunk<
     EstimateItem,
     { id: number; data: Partial<EstimateItem> },
@@ -127,8 +123,7 @@ export const updateEstimateItem = createAsyncThunk<
     }
 });
 
-/* ================= DELETE ================= */
-
+/*DELETE*/
 export const deleteEstimateItem = createAsyncThunk<number, number, { rejectValue: string }>(
     'estimateItems/delete',
     async (id, { rejectWithValue }) => {
@@ -141,8 +136,7 @@ export const deleteEstimateItem = createAsyncThunk<number, number, { rejectValue
     },
 );
 
-/* ================= SLICE ================= */
-
+/*SLICE*/
 const estimateItemsSlice = createSlice({
     name: 'estimateItems',
     initialState,
@@ -157,7 +151,6 @@ const estimateItemsSlice = createSlice({
         builder
 
             /* FETCH */
-
             .addCase(fetchEstimateItems.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -185,7 +178,6 @@ const estimateItemsSlice = createSlice({
             })
 
             /* CREATE */
-
             .addCase(createEstimateItems.fulfilled, (state, action) => {
                 action.payload.forEach((item) => {
                     const estimateId = item.material_estimate_id;
@@ -199,7 +191,6 @@ const estimateItemsSlice = createSlice({
             })
 
             /* UPDATE */
-
             .addCase(updateEstimateItem.fulfilled, (state, action) => {
                 const item = action.payload;
                 const estimateId = item.material_estimate_id;
@@ -216,7 +207,6 @@ const estimateItemsSlice = createSlice({
             })
 
             /* DELETE */
-
             .addCase(deleteEstimateItem.fulfilled, (state, action) => {
                 const id = action.payload;
 

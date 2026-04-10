@@ -25,6 +25,8 @@ import legalDocStageReducer from '@/features/projects/legal_department/legalDocS
 import legalDocumentReducer from '@/features/projects/legal_department/legalDoc/legalDocSlice';
 import notificationsReducer from '@/features/notification/notificationSlice';
 import tasksReducer from '@/features/projects/tasks/tasksSlice';
+import workPerformedReducer from '@/features/projects/pto/workPerformed/workPerformedSlice';
+import workPerformedItemsReducer from '@/features/projects/pto/workPerformed/workPerformedItems/workPerformedItemsSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -53,6 +55,8 @@ export const rootReducer = combineReducers({
     estimateItems: estimateItemsReducer,
     notifications: notificationsReducer,
     tasks: tasksReducer,
+    workPerformed: workPerformedReducer,
+    workPerformedItems: workPerformedItemsReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { BellOff, Clock, Search, X, ChevronDown, Loader2, Eye, Bell } from 'lucide-react';
+import { BellOff, Clock, ChevronDown, Loader2, Eye, Bell } from 'lucide-react';
 import { fetchNotifications, markAsRead } from './notificationSlice';
 import { formatDate } from '@/utils/formatData';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
