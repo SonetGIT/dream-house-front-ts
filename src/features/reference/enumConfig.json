@@ -217,5 +217,12 @@
             "id": "id",
             "name": ["name"]
         }
+    },
+    "workPerformedItemTypes": {
+        "apiName": "/workPerformedItemTypes/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }

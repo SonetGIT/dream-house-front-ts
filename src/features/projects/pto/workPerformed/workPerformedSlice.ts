@@ -43,7 +43,7 @@ export interface WorkPerformed {
     signed_by_main_engineer_time: string | null;
 
     performed_person_name: string;
-
+    advance_payment: number | null;
     created_at: string;
     updated_at: string;
     deleted: boolean;

@@ -5,10 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { createWorkPerformed, deleteWorkPerformed, fetchWorkPerformed } from './workPerformedSlice';
-import {
-    deleteWorkPerformedItem,
-    fetchWorkPerformedItems,
-} from './workPerformedItems/workPerformedItemsSlice';
+import { deleteWorkPerformedItem } from './workPerformedItems/workPerformedItemsSlice';
 import { useParams } from 'react-router-dom';
 import WorkPerformedTable from './WorkPerformedTable';
 import { useReference } from '@/features/reference/useReference';
@@ -19,7 +16,6 @@ export default function WorkPerformedPage() {
     const { prjBlockId } = useParams();
     const blockId = Number(prjBlockId);
     const { data, loading } = useAppSelector((state) => state.workPerformed);
-    console.log('data', data);
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);
 
     const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
@@ -36,10 +32,26 @@ export default function WorkPerformedPage() {
 
     const prjBlocks = useReference('projectBlocks');
     const users = useReference('users');
+    const generalStatuses = useReference('generalStatuses');
+    const serviceTypes = useReference('serviceTypes');
+    const services = useReference('services');
+    const unitsOfMeasure = useReference('unitsOfMeasure');
+    const currencies = useReference('currencies');
+    const blockStages = useReference('blockStages');
+    const stageSubsections = useReference('stageSubsections');
+    const workPerformedItemTypes = useReference('workPerformedItemTypes');
 
     const refs = {
         prjBlocks,
         users,
+        generalStatuses,
+        serviceTypes,
+        services,
+        unitsOfMeasure,
+        currencies,
+        blockStages,
+        stageSubsections,
+        workPerformedItemTypes,
     };
 
     //LOAD WorkPerformed
@@ -70,7 +82,7 @@ export default function WorkPerformedPage() {
                 toast.success('Позиция удалена');
             } else {
                 await dispatch(deleteWorkPerformed(deleteState.id)).unwrap();
-                toast.success('АВР удален');
+                toast.success('АВР успешно удален');
 
                 dispatch(
                     fetchWorkPerformed({
@@ -87,10 +99,6 @@ export default function WorkPerformedPage() {
         }
     }, [deleteState, dispatch, blockId, page, size]);
 
-    const generateEstimateName = (blockName: string) => {
-        return `Смета — ${blockName}`;
-    };
-
     //CREATE
     const handleCreateWorkPerformed = useCallback(async () => {
         try {
@@ -99,8 +107,6 @@ export default function WorkPerformedPage() {
                 toast.error('В этом блоке уже существует смета');
                 return;
             }
-
-            const name = generateEstimateName(blockName);
 
             await dispatch(
                 createWorkPerformed({
@@ -130,7 +136,7 @@ export default function WorkPerformedPage() {
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                 <Button variant="outlined" startIcon={<Add />} onClick={handleCreateWorkPerformed}>
-                    Добавить смету
+                    Добавить АВР
                 </Button>
             </Box>
 

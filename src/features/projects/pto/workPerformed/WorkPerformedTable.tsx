@@ -9,6 +9,8 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import toast from 'react-hot-toast';
 import type { WorkPerformed } from './workPerformedSlice';
 import { fetchMaterialRequestItems } from '../../material_request_items/materialRequestItemsSlice';
+import { formatDate } from '@/utils/formatData';
+import WorkPerformedItemsTable from './workPerformedItems/WorkPerformedItemsTable';
 
 interface PropsType {
     blockId: number;
@@ -217,8 +219,8 @@ export default function WorkPerformedTable(props: PropsType) {
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
-                                <th className="w-12 px-3 py-3 text-sm font-semibold text-center text-blue-700 bg-blue-50">
-                                    №
+                                <th className="w-12 px-3 py-3 text-sm font-semibold text-left text-blue-700 bg-blue-50">
+                                    Код
                                 </th>
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
@@ -233,6 +235,16 @@ export default function WorkPerformedTable(props: PropsType) {
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата создание
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Исполнитель работ
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Предоплата
                                     </div>
                                 </th>
                                 <th className="px-4 py-3 text-center border-l bg-blue-50 w-[900px]">
@@ -250,29 +262,28 @@ export default function WorkPerformedTable(props: PropsType) {
                                 const signatures = [
                                     {
                                         label: 'Прораб',
-                                        approved: workPerf.foreman_user_id,
-                                        userId: workPerf.signed_by_foreman,
+                                        userId: workPerf.foreman_user_id,
+                                        approved: workPerf.signed_by_foreman,
                                         approvedTime: workPerf.signed_by_foreman_time,
                                     },
                                     {
                                         label: 'Инженер ПТО',
-                                        approved: workPerf.planning_engineer_user_id,
-                                        userId: workPerf.signed_by_planning_engineer,
+                                        userId: workPerf.planning_engineer_user_id,
+                                        approved: workPerf.signed_by_planning_engineer,
                                         approvedTime: workPerf.signed_by_planning_engineer_time,
                                     },
                                     {
                                         label: 'Гл. инженер',
-                                        approved: workPerf.main_engineer_user_id,
-                                        userId: workPerf.signed_by_main_engineer,
+                                        userId: workPerf.main_engineer_user_id,
+                                        approved: workPerf.signed_by_main_engineer,
                                         approvedTime: workPerf.signed_by_main_engineer_time,
                                     },
-                                    // performed_person_name: 'Исполнитель работ',
                                 ];
                                 const statusInfo = getStatusConfig(workPerf.status);
 
                                 return (
                                     <React.Fragment key={workPerf.id}>
-                                        {/* MATERIALREQEST_TABBLE */}
+                                        {/* WorkPerformedTable */}
                                         <tr
                                             className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(workPerf.id)}
@@ -293,12 +304,12 @@ export default function WorkPerformedTable(props: PropsType) {
                                                     )}
                                                 </button>
                                             </td>
-                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
+                                            <td className="px-2 py-2 text-xs font-medium text-left text-gray-700 bg-blue-40/20">
                                                 {workPerf.id}
                                             </td>
 
                                             {/* статус */}
-                                            <td className="px-2 py-2 text-center text-gray-900 border-l">
+                                            <td className="px-2 py-2 text-center text-gray-900 ">
                                                 <span
                                                     className={`
                                                     inline-flex text-center px-2 py-0.5
@@ -306,27 +317,32 @@ export default function WorkPerformedTable(props: PropsType) {
                                                     ${statusInfo.className}
                                                 `}
                                                 >
-                                                    {' '}
-                                                    CNFNE
-                                                    {/* {workPerf.status != null
-                                                        ? props.refs.materialRequestStatuses.lookup(
-                                                              workPerf.status,
+                                                    {workPerf.status != null
+                                                        ? props.refs.generalStatuses.lookup(
+                                                              Number(workPerf.status),
                                                           )
-                                                        : '—'} */}
+                                                        : '—'}
                                                 </span>
                                             </td>
+
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
                                                 {workPerf.block_id
                                                     ? props.refs.prjBlocks.lookup(workPerf.block_id)
                                                     : '—'}
                                             </td>
-                                            <td className="px-2 py-2 text-xs text-center text-gray-900 border-l ">
-                                                {formatDateTime(workPerf.created_at)}
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900 ">
+                                                {formatDate(workPerf.created_at)}
+                                            </td>
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900 ">
+                                                {workPerf.performed_person_name}
+                                            </td>
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900 ">
+                                                {workPerf.advance_payment}
                                             </td>
 
-                                            {/*ЭТАП СОГЛАСОВАНИЯ  */}
-                                            <td className="px-2 py-2 text-sm text-center text-gray-900 border-l ">
-                                                <div className="grid grid-cols-5 gap-3 text-xs items-left">
+                                            {/*ЭТАП ПОДПИСИ  */}
+                                            <td className="px-2 py-2 pl-8 text-sm text-center text-gray-900 ">
+                                                <div className="grid grid-cols-3 gap-4 text-xs items-left">
                                                     {signatures.map((s) => (
                                                         <div
                                                             key={s.label}
@@ -342,29 +358,28 @@ export default function WorkPerformedTable(props: PropsType) {
                                                             {/* USER */}
                                                             <div className="text-[0.75rem] text-gray-500 italic truncate pl-1">
                                                                 {s.userId}
-                                                                {/* {s.userId
+                                                                {s.userId
                                                                     ? props.refs.users.lookup(
                                                                           s.userId,
                                                                       )
-                                                                    : '—'} */}
+                                                                    : '—'}
                                                             </div>
 
                                                             {/* STATUS */}
                                                             <div
-                                                            // className={`text-[0.75rem] pl-1 whitespace-nowrap ${
-                                                            //     s.approved
-                                                            //         ? 'text-green-600'
-                                                            //         : s.approved === false
-                                                            //           ? 'text-red-500'
-                                                            //           : 'text-gray-400'
-                                                            // }`}
+                                                                className={`text-[0.75rem] pl-1 whitespace-nowrap ${
+                                                                    s.approved
+                                                                        ? 'text-green-600'
+                                                                        : s.approved === false
+                                                                          ? 'text-red-500'
+                                                                          : 'text-gray-400'
+                                                                }`}
                                                             >
-                                                                Ожидает
-                                                                {/* {s.approved === true
+                                                                {s.approved === true
                                                                     ? `✔ ${formatDateTime(s.approvedTime)}`
                                                                     : s.approved === false
                                                                       ? `✖ ${formatDateTime(s.approvedTime)}`
-                                                                      : '⏳ Ожидает'} */}
+                                                                      : '⏳ Ожидает'}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -397,7 +412,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                             </td>
                                         </tr>
 
-                                        {/* MaterialRequestItemsTable*/}
+                                        {/* WorkPerformedItemsTable*/}
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
                                             <td colSpan={8} className="px-3 py-2">
                                                 <Collapse in={openRows[workPerf.id]} unmountOnExit>
@@ -405,12 +420,11 @@ export default function WorkPerformedTable(props: PropsType) {
                                                         <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
                                                             Материалы
                                                         </p>
-                                                        MatReqItemsTable
-                                                        {/* <MatReqItemsTable
-                                                            materialRequestId={workPerf.id}
+                                                        <WorkPerformedItemsTable
+                                                            workPerformedId={workPerf.id}
                                                             refs={props.refs}
                                                             currentUser={currentUser}
-                                                            onDelete={props.onDeleteMatReqItemId}
+                                                            onDelete={props.onDeleteWorkPerformedId}
                                                             // НОВОЕ
                                                             // items={itemsMap[workPerf.id] ?? items ?? []}
                                                             items={
@@ -425,7 +439,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                                                 )
                                                             }
                                                             pagination={pagination}
-                                                        /> */}
+                                                        />
                                                         {/* КНОПКА ПОДПИСАТЬ */}
                                                         {/* {currentUser &&
                                                             canSign(workPerf, currentUser) && (
