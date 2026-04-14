@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TablePagination } from '@/components/ui/TablePagination';
-import { RowActions } from '@/components/ui/RowActions';
 import { FolderOpen, Trash2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { Pagination, User } from '@/features/users/userSlice';
@@ -8,45 +6,20 @@ import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import { useCurrencyRates } from '@/utils/useCurrencyRates';
 import { parseNumber } from '@/utils/parseNumber';
 import { useAppDispatch } from '@/app/store';
-import { fetchWorkPerformedItems } from './workPerformedItemsSlice';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { fetchWorkPerformedItems, type WorkPerformedItem } from './workPerformedItemsSlice';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
 
 interface WorkPerformedItemsProps {
     workPerformedId: number;
     refs: Record<string, ReferenceResult>;
     onDelete: (id: number) => void;
     currentUser: User | null;
-    items: any[];
+    items: WorkPerformedItem[];
     pagination: Pagination | null;
-    //смета
-    // selectedEstimateId: number | null;
-    // onEstimateChange: (val: number | null) => void;
-
     //синхронизация
-    onChange: (items: any[]) => void;
+    onChange: (items: WorkPerformedItem[]) => void;
 }
-
-const matReqItemStatuses: Record<number, { label: string; className: string }> = {
-    1: {
-        label: 'Создан',
-        className: 'bg-lime-100 text-lime-800 border-lime-200',
-    },
-    2: {
-        label: 'Одобрено',
-        className: 'bg-green-100 text-green-800 border-green-200',
-    },
-    3: {
-        label: 'Частично заказано',
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    },
-    4: {
-        label: 'Полностью заказано',
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-    },
-    5: {
-        label: 'Отменено',
-        className: 'bg-red-100 text-red-800 border-red-200',
-    },
-};
 
 export const estimateTypeId = 1;
 export const addTypeId = 2;
@@ -58,8 +31,8 @@ export default function WorkPerformedItemsTable({
     onDelete,
     currentUser,
     items,
-    onChange,
     pagination,
+    onChange,
 }: WorkPerformedItemsProps) {
     const dispatch = useAppDispatch();
     const rates = useCurrencyRates();
@@ -93,7 +66,6 @@ export default function WorkPerformedItemsTable({
                     updated[item.id] = {
                         id: item.id,
                         quantity: item.quantity ?? 1,
-                        coefficient: item.coefficient ?? 1,
                         price: item.price ?? 0,
                         currency: item.currency ?? 1,
                         currency_rate: item.currency_rate ?? 1,
@@ -136,16 +108,6 @@ export default function WorkPerformedItemsTable({
         }));
     }, [filteredItems, editedItems]);
 
-    /* STATUS */
-    const getStatusConfig = (statusId: number) => {
-        return (
-            matReqItemStatuses[statusId] || {
-                label: 'Неизвестно',
-                className: 'bg-gray-100 text-gray-800 border-gray-200',
-            }
-        );
-    };
-
     /* EMPTY */
     if (filteredItems.length === 0) {
         return (
@@ -153,41 +115,36 @@ export default function WorkPerformedItemsTable({
                 <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
                     <FolderOpen className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="mb-1 text-base font-medium text-gray-900">Нет материалов</h3>
+                <h3 className="mb-1 text-base font-medium text-gray-900">Нет услуг</h3>
             </div>
         );
     }
 
     /*****************************************************************************************************************/
     return (
-        <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
+        // <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
+        <div className="overflow-visible bg-white border rounded-lg shadow-sm">
             <table className="w-full">
                 <thead className="text-gray-700 bg-gray-50">
                     <tr className="border-b">
                         <th className="w-12 px-3 py-3 text-sm font-semibold text-left">№</th>
-                        <th className="px-3 py-2 text-sm text-left">Смета</th>
-                        <th className="px-3 py-2 text-sm text-left">name</th>
                         <th className="px-3 py-2 text-sm text-left">Тип заявки</th>
                         <th className="px-3 py-2 text-sm text-left">Этап</th>
                         <th className="px-3 py-2 text-sm text-left">Подэтап</th>
-                        <th className="px-3 py-2 text-sm text-left">Тип улсуги</th>
+                        <th className="px-3 py-2 text-sm text-left">Тип услуги</th>
                         <th className="px-3 py-2 text-sm text-left">Услуга</th>
                         <th className="px-3 py-2 text-sm text-left">Ед. изм</th>
                         <th className="px-3 py-2 text-sm text-right">Кол-во</th>
-                        <th className="px-3 py-2 text-sm text-right">Коэфф.</th>
                         <th className="px-3 py-2 text-sm text-right">Валюта</th>
                         <th className="px-3 py-2 text-sm text-right">Курс НБКР</th>
                         <th className="px-3 py-2 text-sm text-right">Цена</th>
                         <th className="px-3 py-2 text-sm text-right">Сумма</th>
-                        <th className="px-3 py-2 text-sm text-right">Примечание</th>
-                        <th className="px-3 py-2 text-sm text-center">Статус ???</th>
                         <th className="px-3 py-2 text-sm text-center">Действия</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     {mergedItems?.map((item, index) => {
-                        const statusInfo = getStatusConfig(item.status);
                         const edited = editedItems[item.id] || {};
 
                         const isManual = Number(item.item_type) === addTypeId;
@@ -256,27 +213,6 @@ export default function WorkPerformedItemsTable({
                                         />
                                     ) : (
                                         item.quantity
-                                    )}
-                                </td>
-                                <td className="px-2 py-2 text-sm text-right text-gray-900">
-                                    {canEdit ? (
-                                        <input
-                                            type="text"
-                                            value={edited.coefficient ?? item.coefficient ?? ''}
-                                            onChange={(e) =>
-                                                handleChange(item.id, 'coefficient', e.target.value)
-                                            }
-                                            onBlur={(e) =>
-                                                handleChange(
-                                                    item.id,
-                                                    'coefficient',
-                                                    parseNumber(e.target.value),
-                                                )
-                                            }
-                                            className="w-16 px-2 py-1.5 border rounded text-right"
-                                        />
-                                    ) : (
-                                        item.coefficient
                                     )}
                                 </td>
 
@@ -352,33 +288,26 @@ export default function WorkPerformedItemsTable({
                                         (edited.currency_rate ?? item.currency_rate ?? 1)
                                     ).toFixed(2)}
                                 </td>
-
-                                <td className="px-2 py-2 text-xs text-center text-gray-600">
-                                    {item.comment || '—'}
-                                </td>
-
-                                <td className="px-3 py-2.5">
-                                    <span
-                                        className={`inline-flex text-center px-2 py-0.5 text-xs font-semibold border rounded-full ${statusInfo.className}`}
-                                    >
-                                        СТАТУС
-                                        {/* {refs.materialRequestItemStatuses.lookup(item.status)} */}
-                                    </span>
-                                </td>
-
                                 <td className="px-2 py-2">
                                     <div className="flex items-center justify-center gap-1.5">
-                                        <RowActions
-                                            row={item}
-                                            actions={[
-                                                {
-                                                    label: 'Удалить',
-                                                    icon: Trash2,
-                                                    onClick: () => onDelete(item.id),
-                                                    className: 'text-red-600 hover:bg-red-50',
-                                                },
-                                            ]}
-                                        />
+                                        <StyledTooltip title="Удалить">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDelete(item.id);
+                                                }}
+                                                className="
+                                                    p-1.5
+                                                    text-red-600
+                                                    hover:text-red-900
+                                                    hover:bg-red-200
+                                                    rounded
+                                                    transition-colors
+                                                "
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </StyledTooltip>
                                     </div>
                                 </td>
                             </tr>
@@ -386,7 +315,6 @@ export default function WorkPerformedItemsTable({
                     })}
                 </tbody>
             </table>
-
             {pagination && (
                 <TablePagination
                     pagination={pagination}

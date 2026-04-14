@@ -1,30 +1,44 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { createWorkPerformed, deleteWorkPerformed, fetchWorkPerformed } from './workPerformedSlice';
-import { deleteWorkPerformedItem } from './workPerformedItems/workPerformedItemsSlice';
+import {
+    deleteWorkPerformedItem,
+    fetchWorkPerformedItems,
+} from './workPerformedItems/workPerformedItemsSlice';
 import { useParams } from 'react-router-dom';
 import WorkPerformedTable from './WorkPerformedTable';
 import { useReference } from '@/features/reference/useReference';
+import { TablePagination } from '@/components/ui/TablePagination';
+import Modal from '@/components/ui/Modal';
+import WorkPerformedFlow from './creatAVR/WorkPerformedFlow';
+import { calcRowTotal } from '@/utils/calcRowTotal';
 
 /**********************************************************************************************************/
 export default function WorkPerformedPage() {
     const dispatch = useAppDispatch();
+    const { projectId } = useParams();
     const { prjBlockId } = useParams();
     const blockId = Number(prjBlockId);
-    const { data, loading } = useAppSelector((state) => state.workPerformed);
+    const { data, pagination, loading } = useAppSelector((state) => state.workPerformed);
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);
 
-    const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
+    const projectBlocks = useMemo(
+        () => blocks.filter((b) => b.project_id === Number(projectId)),
+        [blocks, Number(projectId)],
+    );
 
-    const blockName = currentBlock?.name || '';
+    // const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
 
-    const page = 1;
-    const size = 10;
+    // const blockName = currentBlock?.name || '';
 
+    const [page, setPage] = useState(1);
+    const [size, setSize] = useState(10);
+    const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
+    const [step, setStep] = useState<'select' | 'estimate' | 'form'>('select');
     const [deleteState, setDeleteState] = useState<{
         type: 'avr' | 'avrItem';
         id: number;
@@ -100,42 +114,16 @@ export default function WorkPerformedPage() {
     }, [deleteState, dispatch, blockId, page, size]);
 
     //CREATE
-    const handleCreateWorkPerformed = useCallback(async () => {
-        try {
-            //Проверка: уже есть смета в этом блоке
-            if (data.length > 0) {
-                toast.error('В этом блоке уже существует смета');
-                return;
-            }
-
-            await dispatch(
-                createWorkPerformed({
-                    block_id: blockId,
-                    status: 1,
-                    // name,
-                }),
-            ).unwrap();
-
-            toast.success('АВР создан');
-
-            dispatch(
-                fetchWorkPerformed({
-                    block_id: blockId,
-                    page,
-                    size,
-                }),
-            );
-        } catch {
-            toast.error('Ошибка создания АВР');
-        }
-    }, [dispatch, blockId, blockName, page, size, data]);
+    const handleCreate = () => {
+        setModal('create');
+    };
 
     /*************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button variant="outlined" startIcon={<Add />} onClick={handleCreateWorkPerformed}>
+                <Button variant="outlined" startIcon={<Add />} onClick={handleCreate}>
                     Добавить АВР
                 </Button>
             </Box>
@@ -158,8 +146,37 @@ export default function WorkPerformedPage() {
                             setDeleteState({ type: 'avrItem', id: itemId })
                         } // удалить позицию
                     />
+                    {pagination && (
+                        <TablePagination
+                            pagination={pagination}
+                            onPageChange={(newPage) => setPage(newPage)}
+                            onSizeChange={(newSize) => {
+                                setPage(1);
+                                setSize(newSize);
+                            }}
+                            sizeOptions={[10, 25, 50, 100]}
+                            showFirstButton
+                            showLastButton
+                        />
+                    )}
                 </>
             )}
+            <Modal
+                size={step === 'estimate' || step === 'form' ? 'full' : 'xl'}
+                isOpen={modal === 'create'}
+                onClose={() => setModal(null)}
+                title="Создать АВР"
+            >
+                <WorkPerformedFlow
+                    step={step}
+                    setStep={setStep}
+                    blocks={projectBlocks}
+                    projectId={Number(projectId)}
+                    refs={refs}
+                    calcRowTotal={calcRowTotal}
+                    onClose={() => setModal(null)}
+                />
+            </Modal>
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog

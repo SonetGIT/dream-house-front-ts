@@ -17,6 +17,30 @@ export const getStatusColor = (statusId: number | null, lookup: (id: number) => 
     );
 };
 
+//generalStatuses/gets
+export const generalStatuses: Record<number, { label: string; className: string }> = {
+    1: {
+        label: 'На одобрении',
+        className: 'bg-violet text-violet-800 border-violet-200',
+    },
+    2: {
+        label: 'Одобрена',
+        className: 'bg-blue-100 text-blue-800 border-blue-200',
+    },
+    3: {
+        label: 'На исполнении',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    },
+    4: {
+        label: 'Исполнена',
+        className: 'bg-green-100 text-green-800 border-green-200',
+    },
+    5: {
+        label: 'Отменена',
+        className: 'bg-red-100 text-red-800 border-red-200',
+    },
+};
+
 // taskStatuses/gets
 export const taskStatuses: Record<number, { label: string; className: string }> = {
     1: {

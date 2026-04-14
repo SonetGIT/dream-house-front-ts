@@ -1,16 +1,18 @@
 import React, { useCallback, useState } from 'react';
-import { Collapse, Button } from '@mui/material';
+import { Button, Collapse } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { User } from '@/features/users/userSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import toast from 'react-hot-toast';
-import type { WorkPerformed } from './workPerformedSlice';
-import { fetchMaterialRequestItems } from '../../material_request_items/materialRequestItemsSlice';
+import { fetchWorkPerformed, type WorkPerformed } from './workPerformedSlice';
 import { formatDate } from '@/utils/formatData';
 import WorkPerformedItemsTable from './workPerformedItems/WorkPerformedItemsTable';
+import { generalStatuses } from '@/utils/getStatusColor';
+import { fetchWorkPerformedItems } from './workPerformedItems/workPerformedItemsSlice';
+import toast from 'react-hot-toast';
+import type { User } from '@/features/users/userSlice';
+import { submitWorkPerformedFlow } from './submitWorkPerformedFlow';
 
 interface PropsType {
     blockId: number;
@@ -19,28 +21,6 @@ interface PropsType {
     onDeleteWorkPerformedId: (id: number) => void;
     onDeleteWorkPerformedItemId: (id: number) => void;
 }
-const matReqStatuses: Record<number, { label: string; className: string }> = {
-    1: {
-        label: 'На одобрении',
-        className: 'bg-violet text-violet-800 border-violet-200',
-    },
-    2: {
-        label: 'Одобрена',
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-    },
-    3: {
-        label: 'На исполнении',
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    },
-    4: {
-        label: 'Исполнена',
-        className: 'bg-green-100 text-green-800 border-green-200',
-    },
-    5: {
-        label: 'Отменена',
-        className: 'bg-red-100 text-red-800 border-red-200',
-    },
-};
 
 /*************************************************************************************************************************/
 export default function WorkPerformedTable(props: PropsType) {
@@ -49,6 +29,9 @@ export default function WorkPerformedTable(props: PropsType) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
+
+    const [page, setPage] = useState(1);
+    const [size, setSize] = useState(10);
     /*TOGGLE*/
     const toggleRow = (id: number) => {
         const isOpening = !openRows[id];
@@ -62,10 +45,10 @@ export default function WorkPerformedTable(props: PropsType) {
         // 2. потом dispatch
         if (isOpening) {
             dispatch(
-                fetchMaterialRequestItems({
-                    material_request_id: id,
-                    page: 1,
-                    size: 10,
+                fetchWorkPerformedItems({
+                    work_performed_id: id,
+                    page,
+                    size,
                 }),
             );
         }
@@ -74,12 +57,13 @@ export default function WorkPerformedTable(props: PropsType) {
     /*STATUS*/
     const getStatusConfig = (statusId: number) => {
         return (
-            matReqStatuses[statusId] || {
+            generalStatuses[statusId] || {
                 label: 'Неизвестно',
                 className: 'bg-gray-100 text-gray-800 border-gray-200',
             }
         );
     };
+
     const handleItemsChange = useCallback((reqId: number, updatedItems: any[]) => {
         setItemsMap((prev) => {
             if (prev[reqId] === updatedItems) return prev;
@@ -92,122 +76,109 @@ export default function WorkPerformedTable(props: PropsType) {
     }, []);
 
     /*PERMISSIONS*/
-    // const canSign = (workPerf: MaterialRequest, user?: User) => {
-    //     if (!user) return false;
+    const canSign = (workPerf: WorkPerformed, user?: User) => {
+        if (!user) return false;
 
-    //     const userId = Number(user.id);
-    //     const roleId = Number(user.role_id);
+        const userId = Number(user.id);
+        const roleId = Number(user.role_id);
 
-    //     if (roleId === 1) return true;
+        if (roleId === 1) return true;
 
-    //     switch (roleId) {
-    //         case 4:
-    //             return (
-    //                 !workPerf.approved_by_foreman &&
-    //                 (!workPerf.foreman_user_id || Number(workPerf.foreman_user_id) === userId)
-    //             );
+        switch (roleId) {
+            case 4:
+                return (
+                    !workPerf.signed_by_foreman &&
+                    (!workPerf.foreman_user_id || Number(workPerf.foreman_user_id) === userId)
+                );
 
-    //         case 7:
-    //             return (
-    //                 !workPerf.approved_by_purchasing_agent &&
-    //                 (!workPerf.purchasing_agent_user_id ||
-    //                     Number(workPerf.purchasing_agent_user_id) === userId)
-    //             );
+            case 10:
+                return (
+                    !workPerf.signed_by_planning_engineer &&
+                    (!workPerf.planning_engineer_user_id ||
+                        Number(workPerf.planning_engineer_user_id) === userId)
+                );
 
-    //         case 9:
-    //             return (
-    //                 !workPerf.approved_by_site_manager &&
-    //                 (!workPerf.site_manager_user_id || Number(workPerf.site_manager_user_id) === userId)
-    //             );
+            case 11:
+                return (
+                    !workPerf.signed_by_main_engineer &&
+                    (!workPerf.main_engineer_user_id ||
+                        Number(workPerf.main_engineer_user_id) === userId)
+                );
 
-    //         case 10:
-    //             return (
-    //                 !workPerf.approved_by_planning_engineer &&
-    //                 (!workPerf.planning_engineer_user_id ||
-    //                     Number(workPerf.planning_engineer_user_id) === userId)
-    //             );
-
-    //         case 11:
-    //             return (
-    //                 !workPerf.approved_by_main_engineer &&
-    //                 (!workPerf.main_engineer_user_id || Number(workPerf.main_engineer_user_id) === userId)
-    //             );
-
-    //         default:
-    //             return false;
-    //     }
-    // };
+            default:
+                return false;
+        }
+    };
 
     /*SIGN*/
-    // const handleSign = (workPerf: MaterialRequest) => {
-    //     const openedId = workPerf.id;
+    const handleSign = (workPerf: WorkPerformed) => {
+        const openedId = workPerf.id;
 
-    //     if (!currentUser || !canSign(workPerf, currentUser)) return;
+        if (!currentUser || !canSign(workPerf, currentUser)) return;
 
-    //     const items = itemsMap[workPerf.id] ?? workPerf.items ?? [];
-    //     // const items = (itemsMap[workPerf.id]?.length ? itemsMap[workPerf.id] : workPerf.items) ?? [];
-    //     // console.log('   items для отправки', items);
+        const items = itemsMap[workPerf.id] ?? workPerf.items ?? [];
+        // const items = (itemsMap[workPerf.id]?.length ? itemsMap[workPerf.id] : workPerf.items) ?? [];
+        // console.log('   items для отправки', items);
 
-    //     if (!items.length) {
-    //         toast.error('Нет материалов');
-    //         return;
-    //     }
+        if (!items.length) {
+            toast.error('Нет материалов');
+            return;
+        }
 
-    //     dispatch(
-    //         submitMaterialRequestFlow({
-    //             workPerf,
-    //             items,
-    //             currentUser,
-    //         }),
-    //     )
-    //         .unwrap()
-    //         .then(() => {
-    //             // очистка локальных изменений
-    //             setItemsMap((prev) => {
-    //                 const copy = { ...prev };
-    //                 delete copy[workPerf.id];
-    //                 return copy;
-    //             });
+        dispatch(
+            submitWorkPerformedFlow({
+                workPerf,
+                items,
+                currentUser,
+            }),
+        )
+            .unwrap()
+            .then(() => {
+                // очистка локальных изменений
+                setItemsMap((prev) => {
+                    const copy = { ...prev };
+                    delete copy[workPerf.id];
+                    return copy;
+                });
 
-    //             // обновляем список заявок
-    //             return dispatch(
-    //                 fetchSearchMaterialReq({
-    //                     project_id: workPerf.project_id,
-    //                     page: 1,
-    //                     size: 10,
-    //                 }),
-    //             ).unwrap();
-    //         })
-    //         .then(() => {
-    //             // открываем строку
-    //             setOpenRows((prev) => ({
-    //                 ...prev,
-    //                 [openedId]: true,
-    //             }));
+                // обновляем список заявок
+                return dispatch(
+                    fetchWorkPerformed({
+                        project_id: workPerf.project_id,
+                        block_id: props.blockId,
+                        page,
+                        size,
+                    }),
+                ).unwrap();
+            })
+            .then(() => {
+                // открываем строку
+                setOpenRows((prev) => ({
+                    ...prev,
+                    [openedId]: true,
+                }));
 
-    //             //  ВАЖНО: заново загружаем items
-    //             dispatch(
-    //                 fetchMaterialRequestItems({
-    //                     material_request_id: openedId,
-    //                     page: 1,
-    //                     size: 10,
-    //                 }),
-    //             );
-    //         })
-    //         .catch((e) => {
-    //             toast.error(e || 'Ошибка');
-    //         });
-    // };
+                //  ВАЖНО: заново загружаем items
+                dispatch(
+                    fetchWorkPerformedItems({
+                        work_performed_id: openedId,
+                        page,
+                        size,
+                    }),
+                );
+            })
+            .catch((e) => {
+                toast.error(e || 'Ошибка');
+            });
+    };
 
-    // const isFullyApproved = (workPerf: MaterialRequest): boolean => {
-    //     return (
-    //         !!workPerf.approved_by_foreman &&
-    //         !!workPerf.approved_by_purchasing_agent &&
-    //         !!workPerf.approved_by_site_manager &&
-    //         !!workPerf.approved_by_planning_engineer &&
-    //         !!workPerf.approved_by_main_engineer
-    //     );
-    // };
+    const isFullyApproved = (workPerf: WorkPerformed): boolean => {
+        return (
+            !!workPerf.signed_by_foreman &&
+            !!workPerf.signed_by_main_engineer &&
+            !!workPerf.signed_by_planning_engineer
+        );
+    };
     /********************************************************************************************************************************/
     return (
         <div className="space-y-4">
@@ -218,9 +189,9 @@ export default function WorkPerformedTable(props: PropsType) {
                         {/* MATERIALREQ- HEADER */}
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
-                                <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
-                                <th className="w-12 px-3 py-3 text-sm font-semibold text-left text-blue-700 bg-blue-50">
-                                    Код
+                                <th className="px-4 py-3 text-left bg-blue-50"></th>
+                                <th className="w-20 px-3 py-3 text-sm font-semibold text-left text-blue-700 bg-blue-50">
+                                    Акт №
                                 </th>
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
@@ -414,19 +385,17 @@ export default function WorkPerformedTable(props: PropsType) {
 
                                         {/* WorkPerformedItemsTable*/}
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
-                                            <td colSpan={8} className="px-3 py-2">
+                                            <td colSpan={9} className="px-3 py-2">
                                                 <Collapse in={openRows[workPerf.id]} unmountOnExit>
                                                     <div className="px-3 py-2">
                                                         <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
-                                                            Материалы
+                                                            Услуги
                                                         </p>
                                                         <WorkPerformedItemsTable
                                                             workPerformedId={workPerf.id}
                                                             refs={props.refs}
                                                             currentUser={currentUser}
                                                             onDelete={props.onDeleteWorkPerformedId}
-                                                            // НОВОЕ
-                                                            // items={itemsMap[workPerf.id] ?? items ?? []}
                                                             items={
                                                                 itemsMap[workPerf.id] ??
                                                                 workPerf.items ??
@@ -440,8 +409,9 @@ export default function WorkPerformedTable(props: PropsType) {
                                                             }
                                                             pagination={pagination}
                                                         />
+
                                                         {/* КНОПКА ПОДПИСАТЬ */}
-                                                        {/* {currentUser &&
+                                                        {currentUser &&
                                                             canSign(workPerf, currentUser) && (
                                                                 <div className="flex justify-center p-3">
                                                                     <Button
@@ -458,7 +428,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                                                         Подписать
                                                                     </Button>
                                                                 </div>
-                                                            )} */}
+                                                            )}
                                                     </div>
                                                 </Collapse>
                                             </td>

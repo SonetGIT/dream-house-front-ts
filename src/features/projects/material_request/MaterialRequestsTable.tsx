@@ -416,8 +416,6 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             refs={props.refs}
                                                             currentUser={currentUser}
                                                             onDelete={props.onDeleteMatReqItemId}
-                                                            // НОВОЕ
-                                                            // items={itemsMap[req.id] ?? items ?? []}
                                                             items={
                                                                 itemsMap[req.id] ?? req.items ?? []
                                                             }

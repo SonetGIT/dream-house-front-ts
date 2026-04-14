@@ -5,11 +5,10 @@ import type { Pagination } from '@/features/users/userSlice';
 /*TYPES*/
 export interface WorkPerformedItem {
     id: number;
-    service_type: number;
-    service_id: number;
-    name: string | null;
     stage_id: number;
     subsection_id: number;
+    service_type: number;
+    service_id: number;
     item_type: number;
     unit_of_measure: number;
     quantity: number;
