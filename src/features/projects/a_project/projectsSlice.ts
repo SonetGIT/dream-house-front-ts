@@ -8,7 +8,7 @@ export interface Project {
     code: string;
     type: number;
     address: string;
-    customer_id: number;
+    customer_name: string;
 
     start_date: string;
     end_date: string;
@@ -37,7 +37,7 @@ export interface ProjectForm {
     code: string;
     type: number | null;
     address: string;
-    customer_id: number | null;
+    customer_name: string;
     start_date: string;
     end_date: string;
     planned_budget: number | null;

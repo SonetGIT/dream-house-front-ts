@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { ProjectForm, ProjectFormData } from './projectsSlice';
+import { generateCode } from '@/utils/generateCode';
 
 interface ProjectFormProps {
     project?: ProjectFormData | null;
@@ -15,10 +16,10 @@ interface ProjectFormProps {
 function getInitialFormData(project?: ProjectFormData | null): ProjectForm {
     return {
         name: project?.name ?? '',
-        code: project?.code ?? '',
+        code: project?.code ?? generateCode(),
         type: project?.type ?? null,
         address: project?.address ?? '',
-        customer_id: project?.customer_id ?? null,
+        customer_name: project?.customer_name ?? '',
         start_date: project?.start_date?.slice(0, 10) ?? '',
         end_date: project?.end_date?.slice(0, 10) ?? '',
         planned_budget: project?.planned_budget ?? null,
@@ -57,7 +58,7 @@ export function ProjectForm({
         if (!formData.code.trim()) newErrors.code = 'Код обязателен';
         if (!formData.type) newErrors.type = 'Выберите тип объекта';
         if (!formData.address.trim()) newErrors.address = 'Адрес обязателен';
-        if (!formData.customer_id) newErrors.customer_id = 'Выберите заказчика';
+        if (!formData.customer_name) newErrors.customer_name = 'Заполните данные заказчика';
         if (!formData.start_date) newErrors.start_date = 'Дата начала обязательна';
         if (!formData.end_date) newErrors.end_date = 'Дата окончания обязательна';
         if (!formData.planned_budget) newErrors.planned_budget = 'Плановый бюджет обязателен';
@@ -86,7 +87,7 @@ export function ProjectForm({
         const payload: ProjectFormData = {
             ...formData,
             type: formData.type!,
-            customer_id: formData.customer_id!,
+            customer_name: formData.customer_name!,
             planned_budget: formData.planned_budget!,
             actual_budget: formData.actual_budget ?? 0,
             status: formData.status!,
@@ -145,24 +146,15 @@ export function ProjectForm({
                     {/* Код */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Код объекта <span className="text-red-500">*</span>
+                            Код объекта
                         </label>
                         <input
                             type="text"
                             value={formData.code}
-                            onChange={(e) => handleChange('code', e.target.value)}
-                            className={`
-                                w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                border ${errors.code ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                transition-all placeholder:text-gray-400
-                            `}
-                            placeholder="PRJ-001"
-                            disabled={loading}
+                            readOnly
+                            className="w-full h-9 px-3 py-1.5 font-bold text-blue-600 border border-gray-300 rounded-lg cursor-not-allowed bg-gray-50"
                         />
-                        {errors.code && <p className="mt-1 text-xs text-red-600">{errors.code}</p>}
                     </div>
-
                     {/* Тип объекта */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -192,35 +184,25 @@ export function ProjectForm({
                     </div>
 
                     {/* Заказчик */}
-                    <div>
+                    <div className="col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Заказчик <span className="text-red-500">*</span>
                         </label>
-                        <select
-                            value={formData.customer_id || ''}
-                            onChange={(e) =>
-                                handleChange(
-                                    'customer_id',
-                                    e.target.value ? Number(e.target.value) : null,
-                                )
-                            }
+                        <textarea
+                            value={formData.customer_name}
+                            onChange={(e) => handleChange('customer_name', e.target.value)}
+                            rows={2}
                             className={`
                                 w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                border ${errors.customer_id ? 'border-red-300' : 'border-gray-300'}
+                                border ${errors.customer_name ? 'border-red-300' : 'border-gray-300'}
                                 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                transition-all cursor-pointer
+                                transition-all placeholder:text-gray-400 resize-none
                             `}
+                            placeholder="Название, ИНН, адресс, и т д..."
                             disabled={loading}
-                        >
-                            <option value="">Выберите заказчика</option>
-                            {refs.projectTypes.data?.map((customer) => (
-                                <option key={customer.id} value={customer.id}>
-                                    {customer.name}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.customer_id && (
-                            <p className="mt-1 text-xs text-red-600">{errors.customer_id}</p>
+                        />
+                        {errors.customer_name && (
+                            <p className="mt-1 text-xs text-red-600">{errors.customer_name}</p>
                         )}
                     </div>
 

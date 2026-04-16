@@ -221,7 +221,17 @@ export function LegalDocModal({
                             fullWidth
                             InputLabelProps={{ shrink: true }}
                         />
-
+                        <div className="col-span-full">
+                            <TextField
+                                label="Местонахождение документа"
+                                multiline
+                                rows={2}
+                                value={formData.loaction}
+                                onChange={(e) => handleChange('loaction', e.target.value)}
+                                size="small"
+                                fullWidth
+                            />
+                        </div>
                         {/* Статус */}
                         <div className="flex items-center justify-end gap-3 p-4 mt-2 border border-dashed rounded-lg col-span-full bg-blue-50/20 border-blue-200/50">
                             <span className="text-sm font-medium text-blue-900">

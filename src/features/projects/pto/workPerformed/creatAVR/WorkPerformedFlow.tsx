@@ -57,7 +57,7 @@ export default function WorkPerformedFlow({
     useEffect(() => {
         dispatch(
             fetchEstimates({
-                block_id: 0,
+                block_id: blockId,
                 page: 1,
                 size: 10,
             }),

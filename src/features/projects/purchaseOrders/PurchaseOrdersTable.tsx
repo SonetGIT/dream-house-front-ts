@@ -129,24 +129,24 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                                     )}
                                                 </button>
                                             </td>
-                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 border-l bg-blue-40/20">
+                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
                                                 {po.id}
                                             </td>
 
                                             {/* Блок */}
-                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 border-l bg-blue-40/20">
+                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
                                                 {po.block_id
                                                     ? props.refs.prjBlocks.lookup(po.block_id)
                                                     : '—'}
                                             </td>
 
                                             {/* Дата создания */}
-                                            <td className="px-2 py-2 text-xs text-center text-gray-900 border-l ">
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900 ">
                                                 {formatDateTime(po.created_at)}
                                             </td>
 
                                             {/* статус */}
-                                            <td className="px-2 py-2 text-center text-gray-900 border-l">
+                                            <td className="px-2 py-2 text-center text-gray-900 ">
                                                 <span
                                                     className={`
                                                     inline-flex text-center px-2 py-0.5

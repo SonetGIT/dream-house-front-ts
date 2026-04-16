@@ -51,6 +51,7 @@ export default function LegalDocTable({
             description: '',
             responsible_users: [],
             deadline: '',
+            loaction: '',
             status: 0,
         });
 
@@ -68,6 +69,7 @@ export default function LegalDocTable({
             description: doc.description,
             responsible_users: doc.responsible_users,
             deadline: doc.deadline,
+            loaction: doc.loaction,
             status: doc.status,
         });
 
@@ -140,6 +142,7 @@ export default function LegalDocTable({
                                 <th className="px-3 py-2 text-sm text-left">Стоимость</th>
                                 <th className="px-3 py-2 text-sm text-left">Создан</th>
                                 <th className="px-3 py-2 text-sm text-left">Крайний cрок</th>
+                                <th className="px-3 py-2 text-sm text-left">Местонахождение</th>
                                 <th className="px-3 py-2 text-sm text-left">Статус</th>
                                 <th className="px-3 py-2 text-sm text-center">Действия</th>
                             </tr>
@@ -168,7 +171,9 @@ export default function LegalDocTable({
                                     <td className="px-3 py-3 text-sm text-gray-600">
                                         {formatDateTime(doc.deadline)}
                                     </td>
-
+                                    <td className="px-3 py-3 font-medium text-purple-600">
+                                        {doc.loaction}
+                                    </td>
                                     <td className="px-3 py-3 text-sm text-gray-600">
                                         <span
                                             className={`px-2 py-1 font-medium rounded ${getStatusColor(

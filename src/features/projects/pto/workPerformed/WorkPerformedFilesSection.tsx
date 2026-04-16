@@ -413,7 +413,7 @@ export default function WorkPerformedFilesSection({ workPerformedId }: Props) {
                 >
                     <Upload
                         className={`w-4 h-4 transition ${
-                            isDragging ? 'text-blue-600' : 'text-gray-400'
+                            isDragging ? 'text-blue-600' : 'text-blue-700'
                         }`}
                     />
                 </div>
@@ -422,7 +422,7 @@ export default function WorkPerformedFilesSection({ workPerformedId }: Props) {
                     <p className="text-xs font-medium text-gray-600">
                         {isDragging
                             ? 'Отпустите для загрузки'
-                            : 'Перетащите файлы или нажмите для выбора'}
+                            : 'Перетащите файлы или нажмите для выбора файла'}
                     </p>
                     <p className="text-[10px] text-gray-400 mt-0.5">
                         PDF, DOC, DOCX, XLS, XLSX, JPG, PNG

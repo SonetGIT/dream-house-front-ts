@@ -163,27 +163,6 @@ export function ProjectFiltersPanel({ refs, onSearch, onReset, onCreate }: Filte
                                 ))}
                             </select>
                         </div>
-
-                        {/* Заказчик */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Заказчик
-                            </label>
-                            <select
-                                value={customerId || ''}
-                                onChange={(e) =>
-                                    setCustomerId(e.target.value ? Number(e.target.value) : null)
-                                }
-                                className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
-                            >
-                                <option value="">Все заказчики</option>
-                                {refs.projectStatuses.data?.map((customer) => (
-                                    <option key={customer.id} value={customer.id}>
-                                        {customer.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
                     </div>
                 </div>
             )}

@@ -1,6 +1,6 @@
 export const getStatusColor = (statusId: number | null, lookup: (id: number) => string) => {
     if (statusId === null) {
-        return 'bg-gray-100 text-gray-700 border border-gray-200 rounded-lg';
+        return 'bg-gray-100 text-gray-700 border  text-xs border-gray-200 rounded-lg';
     }
 
     const fullStatus = lookup(statusId);
@@ -13,7 +13,8 @@ export const getStatusColor = (statusId: number | null, lookup: (id: number) => 
     };
 
     return (
-        statusColorMap[fullStatus] || 'bg-gray-100 text-gray-700 border border-gray-200 rounded-lg'
+        statusColorMap[fullStatus] ||
+        'bg-gray-100 text-gray-700 text-xs  border border-gray-200 rounded-lg'
     );
 };
 
@@ -85,7 +86,7 @@ export const taskPriorities: Record<number, { label: string; className: string }
     },
 };
 
-//purchaseOrderItemStatuses
+//
 export const purchaseOrderItemStatuses: Record<number, { label: string; className: string }> = {
     1: {
         label: 'Отправлен поставщику',

@@ -185,10 +185,10 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                 </td>
 
                                 {/* Заказчик */}
-                                <td className="px-3 py-2.5 text-xs text-gray-700">
-                                    {project.customer_id
-                                        ? refs.users.lookup(project.customer_id)
-                                        : '_'}
+                                <td className="px-3 py-2.5">
+                                    <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
+                                        {project.customer_name}
+                                    </div>
                                 </td>
 
                                 {/* Статус */}
