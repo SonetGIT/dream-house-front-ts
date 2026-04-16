@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { ProjectBlock } from '../../pto/projectBlocks/projectBlocksSlice';
 import {
     fetchEstimateItems,
     type EstimateItem,
@@ -17,7 +16,7 @@ interface MaterialRequestFlowProps {
     step: 'select' | 'estimate' | 'form';
     setStep: React.Dispatch<React.SetStateAction<'select' | 'estimate' | 'form'>>;
     projectId: number;
-    blocks: ProjectBlock[];
+    blockId: number;
     refs: Record<string, ReferenceResult>;
     calcRowTotal: (row: any) => number;
     onClose: () => void;
@@ -27,7 +26,7 @@ export default function MaterialRequestFlow({
     step,
     setStep,
     projectId,
-    blocks,
+    blockId,
     refs,
     calcRowTotal,
     onClose,
@@ -36,37 +35,37 @@ export default function MaterialRequestFlow({
     const { data: estimates, loading } = useAppSelector((state) => state.estimates);
 
     // STATE
-    const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
+    // const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);
 
     // FILTER ITEMS BY BLOCK
     const estimateItems = useMemo(() => {
-        if (!selectedBlock) return [];
+        if (!blockId) return [];
 
-        return estimates.filter((e) => e.block_id === selectedBlock).flatMap((e) => e.items || []);
-    }, [estimates, selectedBlock]);
+        return estimates.filter((e) => e.block_id === blockId).flatMap((e) => e.items || []);
+    }, [estimates, blockId]);
 
-    // ✅ загрузка estimates один раз
+    //загрузка estimates один раз
     useEffect(() => {
         dispatch(
             fetchEstimates({
-                block_id: 0,
+                block_id: blockId,
                 page: 1,
                 size: 10,
             }),
         );
     }, [dispatch]);
 
-    // ✅ загрузка estimateItems ТОЛЬКО когда выбран блок
+    //загрузка estimateItems ТОЛЬКО когда выбран блок
     useEffect(() => {
-        if (selectedBlock) {
+        if (blockId) {
             dispatch(fetchEstimateItems());
         }
-    }, [selectedBlock, dispatch]);
+    }, [blockId, dispatch]);
 
     const resetFlow = () => {
         setStep('select');
-        setSelectedBlock(null);
+        // setSelectedBlock(null);
         setSelectedItems([]);
     };
 
@@ -87,7 +86,7 @@ export default function MaterialRequestFlow({
                 {step !== 'select' && (
                     <button
                         onClick={() => {
-                            setSelectedBlock(null);
+                            // setSelectedBlock(null);
                             setSelectedItems([]);
                             setStep('select');
                         }}
@@ -101,12 +100,11 @@ export default function MaterialRequestFlow({
             {/* STEP 1 */}
             {step === 'select' && (
                 <MaterialReqCreateModal
-                    blocks={blocks}
+                    blockId={blockId}
                     estimates={estimates}
+                    refs={refs}
                     onClose={handleClose}
-                    onSubmit={({ block_id, mode }) => {
-                        setSelectedBlock(block_id);
-
+                    onSubmit={({ mode }) => {
                         if (mode === 'estimate') {
                             setStep('estimate');
                         } else {
@@ -118,14 +116,14 @@ export default function MaterialRequestFlow({
             )}
 
             {/* STEP 2 — выбор из сметы */}
-            {step === 'estimate' && selectedBlock && (
+            {step === 'estimate' && blockId && (
                 <MaterialsSelectTable
                     items={estimateItems}
                     loading={loading}
                     refs={refs}
                     calcRowTotal={calcRowTotal}
                     projectId={projectId}
-                    blockId={selectedBlock}
+                    blockId={blockId}
                     onNext={(items) => {
                         setSelectedItems(items);
                         setStep('form');
@@ -134,10 +132,10 @@ export default function MaterialRequestFlow({
             )}
 
             {/* STEP 3 — ЕДИНАЯ ФОРМА */}
-            {step === 'form' && selectedBlock && (
+            {step === 'form' && blockId && (
                 <MatReqItemsCreateEditForm
                     projectId={projectId}
-                    blockId={selectedBlock}
+                    blockId={blockId}
                     initialItems={selectedItems}
                     refs={refs}
                     onCancel={handleClose}

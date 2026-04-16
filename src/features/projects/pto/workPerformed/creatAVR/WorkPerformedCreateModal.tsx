@@ -1,56 +1,94 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
-import type { ProjectBlock } from '../../projectBlocks/projectBlocksSlice';
 import type { Estimate } from '../../projectBlocks/estimatess/estimatesSlice';
+import { TextField } from '@mui/material';
+import { parseNumber } from '@/utils/parseNumber';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
-interface MatReqCreateProps {
-    blocks: ProjectBlock[];
+interface WorkPerformedCreateData {
+    block_id: number;
+    mode: 'estimate' | 'manual';
+    performed_person_name: string;
+    advance_payment: number | null;
+}
+
+interface WorkPerformedCreateProps {
+    blockId: number;
     estimates: Estimate[];
+    refs: Record<string, ReferenceResult>;
     loading?: boolean;
-    onSubmit: (data: { block_id: number; mode: 'estimate' | 'manual' }) => void;
+    onSubmit: (data: WorkPerformedCreateData) => void;
     onClose: () => void;
 }
 
+type Errors = Partial<
+    Record<'block_id' | 'performed_person_name' | 'advance_payment' | 'mode', string>
+>;
+
 export default function WorkPerformedCreateModal({
-    blocks,
+    blockId,
     estimates,
+    refs,
     loading = false,
     onSubmit,
     onClose,
-}: MatReqCreateProps) {
-    const [blockId, setBlockId] = useState<number | null>(null);
-    const [error, setError] = useState<string | null>(null);
+}: WorkPerformedCreateProps) {
+    const [performedPersonName, setPerformedPersonName] = useState('');
+    const [advancePayment, setAdvancePayment] = useState<number | null>(null);
+    const [errors, setErrors] = useState<Errors>({});
 
-    //CHECK ESTIMATE
     const hasEstimateItems = useMemo(() => {
         if (!blockId) return false;
 
-        return estimates.some((e) => e.block_id === blockId && (e.items?.length ?? 0) > 0);
+        return estimates.some((estimate) => {
+            return estimate.block_id === blockId && (estimate.items?.length ?? 0) > 0;
+        });
     }, [blockId, estimates]);
 
-    //HANDLER
-    const handleSelectMode = (mode: 'estimate' | 'manual') => {
+    const clearError = (field: keyof Errors) => {
+        setErrors((prev) => {
+            const { [field]: _, ...rest } = prev;
+            return rest;
+        });
+    };
+
+    const validate = (mode: 'estimate' | 'manual') => {
+        const nextErrors: Errors = {};
+
         if (!blockId) {
-            setError('Выберите блок');
-            return;
+            nextErrors.block_id = 'Выберите блок';
+        }
+
+        if (!performedPersonName.trim()) {
+            nextErrors.performed_person_name = 'Введите исполнителя работ';
+        }
+
+        if (advancePayment != null && advancePayment < 0) {
+            nextErrors.advance_payment = 'Предоплата не может быть меньше 0';
         }
 
         if (mode === 'estimate' && !hasEstimateItems) {
-            setError('В этом блоке нет услуг из сметы');
-            return;
+            nextErrors.mode = 'В этом блоке нет услуг из сметы';
         }
-        setError(null);
+
+        setErrors(nextErrors);
+
+        return Object.keys(nextErrors).length === 0;
+    };
+
+    const handleSelectMode = (mode: 'estimate' | 'manual') => {
+        if (!validate(mode) || !blockId) return;
 
         onSubmit({
             block_id: blockId,
             mode,
+            performed_person_name: performedPersonName.trim(),
+            advance_payment: advancePayment,
         });
     };
 
-    /**************************************************************************************************************/
     return (
         <div className="space-y-6">
-            {/* Block selection */}
             <div>
                 <h3 className="pb-2 mb-3 text-sm font-semibold text-gray-900 border-b border-gray-200">
                     Основные параметры АВР
@@ -62,48 +100,71 @@ export default function WorkPerformedCreateModal({
                             Блок проекта <span className="text-red-500">*</span>
                         </label>
 
-                        <select
-                            value={blockId || ''}
-                            onChange={(e) =>
-                                setBlockId(e.target.value ? Number(e.target.value) : null)
-                            }
+                        <input
+                            type="text"
+                            value={blockId ? refs.prjBlocks.lookup(blockId) : '—'}
+                            readOnly
                             className={`
-                                w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                border ${error && !blockId ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                transition-all cursor-pointer
+                                w-full px-3 py-2 text-sm text-gray-900 bg-green-50
+                                border border-green-300 ${errors && !blockId ? 'border-red-300' : 'border-gray-300'}
+                                rounded-lg cursor-default
                             `}
-                        >
-                            <option value="">Выберите блок</option>
-                            {blocks.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {b.name}
-                                </option>
-                            ))}
-                        </select>
+                        />
+                    </div>
 
-                        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+                    <div className="col-span-2">
+                        <TextField
+                            label="Исполнитель работ"
+                            value={performedPersonName}
+                            onChange={(e) => {
+                                setPerformedPersonName(e.target.value);
+                                clearError('performed_person_name');
+                            }}
+                            error={Boolean(errors.performed_person_name)}
+                            helperText={errors.performed_person_name}
+                            size="small"
+                            fullWidth
+                            required
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <div className="col-span-2">
+                        <TextField
+                            label="Предоплата"
+                            type="text"
+                            value={advancePayment ?? ''}
+                            onChange={(e) => {
+                                setAdvancePayment(
+                                    e.target.value ? parseNumber(e.target.value) : null,
+                                );
+                                clearError('advance_payment');
+                            }}
+                            error={Boolean(errors.advance_payment)}
+                            helperText={errors.advance_payment}
+                            size="small"
+                            fullWidth
+                            disabled={loading}
+                        />
                     </div>
                 </div>
             </div>
 
-            {/* Mode selection */}
             <div>
                 <h3 className="pb-2 mb-3 text-sm font-semibold text-gray-900 border-b border-gray-200">
                     Добавление услуг
                 </h3>
 
                 <div className="flex gap-3">
-                    {/* ИЗ СМЕТЫ */}
                     <button
                         type="button"
-                        disabled={!blockId || !hasEstimateItems}
+                        disabled={loading || !blockId || !hasEstimateItems}
                         onClick={() => handleSelectMode('estimate')}
                         className={`
                             flex items-center justify-center w-full gap-2 px-3 py-2 mt-4 
                             transition-colors bg-white border border-dashed rounded-lg
                             ${
-                                !blockId || !hasEstimateItems
+                                loading || !blockId || !hasEstimateItems
                                     ? 'text-gray-400 border-gray-200 cursor-not-allowed'
                                     : 'text-red-600 border-pink-300 hover:bg-gray-50'
                             }
@@ -113,16 +174,15 @@ export default function WorkPerformedCreateModal({
                         <span className="text-sm">УСЛУГИ ИЗ СМЕТЫ</span>
                     </button>
 
-                    {/* ДОПОЛНИТЕЛЬНО */}
                     <button
                         type="button"
-                        disabled={!blockId}
+                        disabled={loading || !blockId}
                         onClick={() => handleSelectMode('manual')}
                         className={`
                             flex items-center justify-center w-full gap-2 px-3 py-2 mt-4 
                             transition-colors bg-white border border-dashed rounded-lg
                             ${
-                                !blockId
+                                loading || !blockId
                                     ? 'text-gray-400 border-gray-200 cursor-not-allowed'
                                     : 'text-orange-600 border-orange-300 hover:bg-gray-50'
                             }
@@ -133,7 +193,8 @@ export default function WorkPerformedCreateModal({
                     </button>
                 </div>
 
-                {/* Подсказка */}
+                {errors.mode && <p className="mt-2 text-xs text-red-500">{errors.mode}</p>}
+
                 {blockId && !hasEstimateItems && (
                     <p className="mt-2 text-xs text-red-500">
                         В выбранном блоке нет услуг из сметы
@@ -141,7 +202,6 @@ export default function WorkPerformedCreateModal({
                 )}
             </div>
 
-            {/* Buttons */}
             <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
                 <button
                     type="button"
@@ -153,6 +213,7 @@ export default function WorkPerformedCreateModal({
                         bg-white border border-blue-300
                         hover:bg-blue-50
                         rounded-lg transition-colors
+                        disabled:opacity-50 disabled:cursor-not-allowed
                     "
                 >
                     ОТМЕНА

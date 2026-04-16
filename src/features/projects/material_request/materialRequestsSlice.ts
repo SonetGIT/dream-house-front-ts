@@ -46,7 +46,6 @@ export interface MaterialRequestCreatePayload {
     project_id: number;
     block_id: number;
     status?: number;
-
     items: {
         material_id: number | null;
         material_type: number | null;

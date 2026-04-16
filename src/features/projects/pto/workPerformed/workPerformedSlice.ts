@@ -47,7 +47,25 @@ export interface WorkPerformed {
     updated_at: string;
     deleted: boolean;
 
-    items: WorkPerformedItem[];
+    // items: WorkPerformedItem[];
+    items: {
+        service_id: number | null;
+        service_type: number | null;
+        unit_of_measure: number | null;
+
+        stage_id: number | null;
+        subsection_id: number | null;
+
+        quantity: number;
+
+        currency?: number | null;
+        currency_rate?: number;
+        price?: number;
+
+        comment?: string;
+
+        item_type: number;
+    }[];
 }
 
 export interface FetchWorkPerformedPayload {

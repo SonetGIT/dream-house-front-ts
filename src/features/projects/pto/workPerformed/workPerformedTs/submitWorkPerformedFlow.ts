@@ -1,7 +1,7 @@
 import { apiRequest } from '@/utils/apiRequest';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import type { User } from '@/features/users/userSlice';
-import type { WorkPerformed, WorkPerformedItem } from './workPerformedSlice';
+import type { WorkPerformed, WorkPerformedItem } from '../workPerformedSlice';
 
 const WORK_PERFORMED_STATUS_SIGNED = 2; // если у вас другой статус "подписан", поменяйте
 
@@ -35,7 +35,6 @@ export const submitWorkPerformedFlow = createAsyncThunk<
             await apiRequest(`/workPerformedItems/update/${item.id}`, 'PUT', {
                 service_type: item.service_type,
                 service_id: item.service_id,
-                name: item.name,
                 stage_id: item.stage_id,
                 subsection_id: item.subsection_id,
                 item_type: item.item_type,

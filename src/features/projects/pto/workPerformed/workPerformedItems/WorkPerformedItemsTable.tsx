@@ -127,19 +127,19 @@ export default function WorkPerformedItemsTable({
             <table className="w-full">
                 <thead className="text-gray-700 bg-gray-50">
                     <tr className="border-b">
-                        <th className="w-12 px-3 py-3 text-sm font-semibold text-left">№</th>
-                        <th className="px-3 py-2 text-sm text-left">Тип заявки</th>
-                        <th className="px-3 py-2 text-sm text-left">Этап</th>
-                        <th className="px-3 py-2 text-sm text-left">Подэтап</th>
-                        <th className="px-3 py-2 text-sm text-left">Тип услуги</th>
-                        <th className="px-3 py-2 text-sm text-left">Услуга</th>
-                        <th className="px-3 py-2 text-sm text-left">Ед. изм</th>
-                        <th className="px-3 py-2 text-sm text-right">Кол-во</th>
-                        <th className="px-3 py-2 text-sm text-right">Валюта</th>
-                        <th className="px-3 py-2 text-sm text-right">Курс НБКР</th>
-                        <th className="px-3 py-2 text-sm text-right">Цена</th>
-                        <th className="px-3 py-2 text-sm text-right">Сумма</th>
-                        <th className="px-3 py-2 text-sm text-center">Действия</th>
+                        <th className="w-12 px-3 py-3 text-xs font-semibold text-left">№</th>
+                        <th className="px-3 py-2 text-xs text-left">Тип заявки</th>
+                        <th className="px-3 py-2 text-xs text-left">Этап</th>
+                        <th className="px-3 py-2 text-xs text-left">Подэтап</th>
+                        <th className="px-3 py-2 text-xs text-left">Тип услуги</th>
+                        <th className="px-3 py-2 text-xs text-left">Услуга</th>
+                        <th className="px-3 py-2 text-xs text-left">Ед. изм</th>
+                        <th className="px-3 py-2 text-xs text-right">Кол-во</th>
+                        <th className="px-3 py-2 text-xs text-right">Валюта</th>
+                        <th className="px-3 py-2 text-xs text-right">Курс НБКР</th>
+                        <th className="px-3 py-2 text-xs text-right">Цена</th>
+                        <th className="px-3 py-2 text-xs text-right">Сумма</th>
+                        <th className="px-3 py-2 text-xs text-center">Действия</th>
                     </tr>
                 </thead>
 

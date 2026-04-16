@@ -2,6 +2,7 @@ import { Ban, Trash2, Truck } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { PurchaseOrderItem } from './purchaseOrderItemsSlice';
+import { purchaseOrderItemStatuses } from '@/utils/getStatusColor';
 
 interface PropsType {
     items: PurchaseOrderItem[];
@@ -57,6 +58,8 @@ export default function PurchaseOrdersItemsTable({
                 <tbody>
                     {items.map((item) => (
                         <tr key={item.id} className="border-b hover:bg-gray-50">
+                            const purchaseOrderItemStatuses =
+                            purchaseOrderItemStatuses[item.status];
                             <td className="px-3 py-2">
                                 {refs.materials.lookup(Number(item.material_id))}
                             </td>
@@ -80,7 +83,6 @@ export default function PurchaseOrdersItemsTable({
                             <td className="px-3 py-2 text-center">
                                 {item.delivered_quantity ?? 0}
                             </td>
-
                             <td className="px-3 py-2 border-l">
                                 <div className="flex items-center justify-center gap-1">
                                     <div className="flex justify-center rounded">

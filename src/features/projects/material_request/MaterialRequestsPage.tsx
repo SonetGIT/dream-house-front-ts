@@ -1,5 +1,5 @@
 import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
@@ -18,13 +18,12 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Modal from '@/components/ui/Modal';
 import MaterialRequestFlow from './material_request_flow/MaterialRequestFlow';
 import { calcRowTotal } from '@/utils/calcRowTotal';
-import { fetchProjectBlocks } from '../pto/projectBlocks/projectBlocksSlice';
 
 /*************************************************************************************************************************/
 export default function MaterialRequestsPage() {
     const dispatch = useAppDispatch();
-    const { projectId } = useParams();
-    const { data: blocks } = useAppSelector((state) => state.projectBlocks);
+    const { projectId, prjBlockId } = useParams();
+    const blockId = prjBlockId ? Number(prjBlockId) : null;
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
 
@@ -37,11 +36,6 @@ export default function MaterialRequestsPage() {
         loading: materialLoading,
         pagination,
     } = useAppSelector((state) => state.materialRequests);
-
-    const projectBlocks = useMemo(
-        () => blocks.filter((b) => b.project_id === Number(projectId)),
-        [blocks, Number(projectId)],
-    );
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [step, setStep] = useState<'select' | 'estimate' | 'form'>('select');
@@ -90,13 +84,6 @@ export default function MaterialRequestsPage() {
             dispatch(getProjectById(Number(projectId)));
         }
     }, [Number(projectId), project, dispatch]);
-
-    //загрузка блоков
-    useEffect(() => {
-        if (Number(projectId) && blocks.length === 0) {
-            dispatch(fetchProjectBlocks({ project_id: Number(projectId), page: 1, size: 10 }));
-        }
-    }, [Number(projectId), blocks.length, dispatch]);
 
     //загрузка заявок
     useEffect(() => {
@@ -205,8 +192,8 @@ export default function MaterialRequestsPage() {
                 <MaterialRequestFlow
                     step={step}
                     setStep={setStep}
-                    blocks={projectBlocks}
                     projectId={Number(projectId)}
+                    blockId={Number(blockId)}
                     refs={refs}
                     calcRowTotal={calcRowTotal}
                     onClose={() => setModal(null)}

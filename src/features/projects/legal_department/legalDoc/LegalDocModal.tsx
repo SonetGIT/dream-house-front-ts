@@ -26,16 +26,6 @@ import toast from 'react-hot-toast';
 import StatusChip from '@/components/ui/StatusChip';
 import { fetchLegalDocuments, signDocument, type LegalDocumentForm } from './legalDocSlice';
 
-// export interface DocumentFormData {
-//     project_id: number;
-//     stage_id?: number;
-//     name: string;
-//     price: number;
-//     description: string;
-//     status: number;
-//     deadline: null;
-// }
-
 interface LegalDocModalProps {
     open: boolean;
     onClose: () => void;
@@ -232,7 +222,7 @@ export function LegalDocModal({
                             InputLabelProps={{ shrink: true }}
                         />
 
-                        {/* 🎯 Статус */}
+                        {/* Статус */}
                         <div className="flex items-center justify-end gap-3 p-4 mt-2 border border-dashed rounded-lg col-span-full bg-blue-50/20 border-blue-200/50">
                             <span className="text-sm font-medium text-blue-900">
                                 Статус документа:

@@ -84,3 +84,31 @@ export const taskPriorities: Record<number, { label: string; className: string }
         className: 'bg-red-600/15 text-red-700 border border-red-500',
     },
 };
+
+//purchaseOrderItemStatuses
+export const purchaseOrderItemStatuses: Record<number, { label: string; className: string }> = {
+    1: {
+        label: 'Отправлен поставщику',
+        className: 'bg-violet-500/15 text-violet-700 border border-violet-400',
+    },
+    2: {
+        label: 'Подтверждён поставщиком',
+        className: 'bg-blue-500/15 text-blue-700 border border-blue-400',
+    },
+    3: {
+        label: 'Отменён (нет у поставщика)',
+        className: 'bg-red-500/15 text-red-700 border border-red-400',
+    },
+    4: {
+        label: 'Полностью доставлен',
+        className: 'bg-green-600/15 text-green-700 border border-green-500',
+    },
+    5: {
+        label: 'Частично доставлен',
+        className: 'bg-emerald-500/15 text-emerald-700 border border-emerald-400',
+    },
+    6: {
+        label: 'Не доставлен',
+        className: 'bg-gray-500/15 text-gray-700 border border-gray-400',
+    },
+};

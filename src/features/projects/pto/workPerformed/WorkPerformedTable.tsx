@@ -3,7 +3,7 @@ import { Button, Collapse } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, ListChecks, Paperclip, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { fetchWorkPerformed, type WorkPerformed } from './workPerformedSlice';
 import { formatDate } from '@/utils/formatData';
@@ -12,7 +12,12 @@ import { generalStatuses } from '@/utils/getStatusColor';
 import { fetchWorkPerformedItems } from './workPerformedItems/workPerformedItemsSlice';
 import toast from 'react-hot-toast';
 import type { User } from '@/features/users/userSlice';
-import { submitWorkPerformedFlow } from './submitWorkPerformedFlow';
+import { submitWorkPerformedFlow } from './workPerformedTs/submitWorkPerformedFlow';
+import { downloadWorkPerformedReport } from '@/features/projects/pto/workPerformed/workPerformedTs/downloadWorkPerformedReport';
+import { FaFileExcel, FaFilePdf, FaFileWord } from 'react-icons/fa';
+import WorkPerformedFilesSection from './WorkPerformedFilesSection';
+
+type RowTab = 'items' | 'files';
 
 interface PropsType {
     blockId: number;
@@ -22,16 +27,45 @@ interface PropsType {
     onDeleteWorkPerformedItemId: (id: number) => void;
 }
 
+//Tab button
+function TabBtn({
+    active,
+    icon,
+    label,
+    onClick,
+}: {
+    active: boolean;
+    icon: React.ReactNode;
+    label: string;
+    onClick: (e: React.MouseEvent) => void;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={`
+                flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px
+                ${
+                    active
+                        ? 'border-blue-600 text-blue-700'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+            `}
+        >
+            {icon}
+            {label}
+        </button>
+    );
+}
+
 /*************************************************************************************************************************/
 export default function WorkPerformedTable(props: PropsType) {
     const dispatch = useAppDispatch();
     const { pagination } = useAppSelector((state) => state.workPerformedItems);
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
+    const [rowTabs, setRowTabs] = useState<Record<number, RowTab>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
 
-    const [page, setPage] = useState(1);
-    const [size, setSize] = useState(10);
     /*TOGGLE*/
     const toggleRow = (id: number) => {
         const isOpening = !openRows[id];
@@ -47,13 +81,17 @@ export default function WorkPerformedTable(props: PropsType) {
             dispatch(
                 fetchWorkPerformedItems({
                     work_performed_id: id,
-                    page,
-                    size,
+                    page: 1,
+                    size: 10,
                 }),
             );
         }
     };
 
+    // NEW: переключение вкладки внутри строки
+    const setRowTab = (id: number, tab: RowTab) => {
+        setRowTabs((prev) => ({ ...prev, [id]: tab }));
+    };
     /*STATUS*/
     const getStatusConfig = (statusId: number) => {
         return (
@@ -146,8 +184,8 @@ export default function WorkPerformedTable(props: PropsType) {
                     fetchWorkPerformed({
                         project_id: workPerf.project_id,
                         block_id: props.blockId,
-                        page,
-                        size,
+                        page: 1,
+                        size: 10,
                     }),
                 ).unwrap();
             })
@@ -162,8 +200,8 @@ export default function WorkPerformedTable(props: PropsType) {
                 dispatch(
                     fetchWorkPerformedItems({
                         work_performed_id: openedId,
-                        page,
-                        size,
+                        page: 1,
+                        size: 10,
                     }),
                 );
             })
@@ -179,6 +217,18 @@ export default function WorkPerformedTable(props: PropsType) {
             !!workPerf.signed_by_planning_engineer
         );
     };
+
+    // DOWNLOAD REPORT
+    const handleDownloadReport = async (id: number, format: 'pdf' | 'xlsx' | 'docx') => {
+        try {
+            await downloadWorkPerformedReport(id, format);
+            toast.success('Отчёт скачан');
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e.message || 'Не удалось скачать отчёт');
+        }
+    };
+
     /********************************************************************************************************************************/
     return (
         <div className="space-y-4">
@@ -218,7 +268,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                         Предоплата
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center border-l bg-blue-50 w-[900px]">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50 w-[700px]">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Этап подписи
                                     </div>
@@ -251,6 +301,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                     },
                                 ];
                                 const statusInfo = getStatusConfig(workPerf.status);
+                                const activeTab: RowTab = rowTabs[workPerf.id] ?? 'items';
 
                                 return (
                                     <React.Fragment key={workPerf.id}>
@@ -312,7 +363,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                             </td>
 
                                             {/*ЭТАП ПОДПИСИ  */}
-                                            <td className="px-2 py-2 pl-8 text-sm text-center text-gray-900 ">
+                                            <td className="px-2 py-2 pl-2 text-sm text-center text-gray-900 ">
                                                 <div className="grid grid-cols-3 gap-4 text-xs items-left">
                                                     {signatures.map((s) => (
                                                         <div
@@ -358,7 +409,51 @@ export default function WorkPerformedTable(props: PropsType) {
                                             </td>
                                             {/* Действия */}
                                             <td className="px-3 py-2 border-l bg-gray-50">
-                                                <div className="flex items-center justify-center gap-1.5">
+                                                <div className="flex items-center justify-center">
+                                                    <StyledTooltip title="Скачать PDF">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDownloadReport(
+                                                                    workPerf.id,
+                                                                    'pdf',
+                                                                );
+                                                            }}
+                                                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-200 rounded transition-colors"
+                                                        >
+                                                            <FaFilePdf className="w-4 h-4" />
+                                                        </button>
+                                                    </StyledTooltip>
+
+                                                    <StyledTooltip title="Скачать Excel">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDownloadReport(
+                                                                    workPerf.id,
+                                                                    'xlsx',
+                                                                );
+                                                            }}
+                                                            className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-200 rounded transition-colors"
+                                                        >
+                                                            <FaFileExcel className="w-4 h-4" />
+                                                        </button>
+                                                    </StyledTooltip>
+
+                                                    <StyledTooltip title="Скачать Word">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDownloadReport(
+                                                                    workPerf.id,
+                                                                    'docx',
+                                                                );
+                                                            }}
+                                                            className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-200 rounded transition-colors"
+                                                        >
+                                                            <FaFileWord className="w-4 h-4" />
+                                                        </button>
+                                                    </StyledTooltip>
                                                     <StyledTooltip title="Удалить">
                                                         <button
                                                             onClick={(e) => {
@@ -376,7 +471,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                                                 transition-colors
                                                             "
                                                         >
-                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </StyledTooltip>
                                                 </div>
@@ -388,47 +483,93 @@ export default function WorkPerformedTable(props: PropsType) {
                                             <td colSpan={9} className="px-3 py-2">
                                                 <Collapse in={openRows[workPerf.id]} unmountOnExit>
                                                     <div className="px-3 py-2">
-                                                        <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
-                                                            Услуги
-                                                        </p>
-                                                        <WorkPerformedItemsTable
-                                                            workPerformedId={workPerf.id}
-                                                            refs={props.refs}
-                                                            currentUser={currentUser}
-                                                            onDelete={props.onDeleteWorkPerformedId}
-                                                            items={
-                                                                itemsMap[workPerf.id] ??
-                                                                workPerf.items ??
-                                                                []
-                                                            }
-                                                            onChange={(updatedItems) =>
-                                                                handleItemsChange(
-                                                                    workPerf.id,
-                                                                    updatedItems,
-                                                                )
-                                                            }
-                                                            pagination={pagination}
-                                                        />
+                                                        {/* ── Tab switcher ── */}
+                                                        <div className="flex items-center gap-0 mb-3 border-b border-gray-200">
+                                                            <TabBtn
+                                                                active={activeTab === 'items'}
+                                                                icon={
+                                                                    <ListChecks className="w-3.5 h-3.5" />
+                                                                }
+                                                                label="Услуги"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setRowTab(workPerf.id, 'items');
+                                                                }}
+                                                            />
+                                                            <TabBtn
+                                                                active={activeTab === 'files'}
+                                                                icon={
+                                                                    <Paperclip className="w-3.5 h-3.5" />
+                                                                }
+                                                                label="Файлы"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setRowTab(workPerf.id, 'files');
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        {/* ── Контент вкладок ── */}
+                                                        {activeTab === 'items' && (
+                                                            <>
+                                                                <WorkPerformedItemsTable
+                                                                    workPerformedId={workPerf.id}
+                                                                    refs={props.refs}
+                                                                    currentUser={currentUser}
+                                                                    onDelete={
+                                                                        props.onDeleteWorkPerformedItemId
+                                                                    }
+                                                                    items={
+                                                                        itemsMap[workPerf.id] ??
+                                                                        workPerf.items ??
+                                                                        []
+                                                                    }
+                                                                    onChange={(items) =>
+                                                                        handleItemsChange(
+                                                                            workPerf.id,
+                                                                            items,
+                                                                        )
+                                                                    }
+                                                                    pagination={pagination}
+                                                                />
 
-                                                        {/* КНОПКА ПОДПИСАТЬ */}
-                                                        {currentUser &&
-                                                            canSign(workPerf, currentUser) && (
-                                                                <div className="flex justify-center p-3">
-                                                                    <Button
-                                                                        size="small"
-                                                                        variant="contained"
-                                                                        disabled={isFullyApproved(
-                                                                            workPerf,
-                                                                        )} //вот это
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleSign(workPerf);
-                                                                        }}
-                                                                    >
-                                                                        Подписать
-                                                                    </Button>
-                                                                </div>
-                                                            )}
+                                                                {currentUser &&
+                                                                    canSign(
+                                                                        workPerf,
+                                                                        currentUser,
+                                                                    ) && (
+                                                                        <div className="flex justify-center p-3">
+                                                                            <Button
+                                                                                size="small"
+                                                                                variant="contained"
+                                                                                disabled={isFullyApproved(
+                                                                                    workPerf,
+                                                                                )}
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleSign(
+                                                                                        workPerf,
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                Подписать
+                                                                            </Button>
+                                                                        </div>
+                                                                    )}
+                                                            </>
+                                                        )}
+
+                                                        {activeTab === 'files' && (
+                                                            <div
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <WorkPerformedFilesSection
+                                                                    workPerformedId={workPerf.id}
+                                                                />
+                                                                {/* <DocumentFilesList
+                                                                    documentId={workPerf.id}
+                                                                /> */}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </Collapse>
                                             </td>

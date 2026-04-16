@@ -9,8 +9,8 @@ import { fetchProjectBlocks } from './projectBlocksSlice';
 
 /*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
 export default function EstimatesStagePage() {
-    const { projectId, prjBlockId } = useParams();
     const dispatch = useAppDispatch();
+    const { projectId, prjBlockId } = useParams();
     const blockId = prjBlockId ? Number(prjBlockId) : null;
 
     const { data: blocks } = useAppSelector((state) => state.projectBlocks);

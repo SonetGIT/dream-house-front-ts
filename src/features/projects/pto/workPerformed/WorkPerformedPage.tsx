@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
-import { createWorkPerformed, deleteWorkPerformed, fetchWorkPerformed } from './workPerformedSlice';
-import {
-    deleteWorkPerformedItem,
-    fetchWorkPerformedItems,
-} from './workPerformedItems/workPerformedItemsSlice';
+import { deleteWorkPerformed, fetchWorkPerformed } from './workPerformedSlice';
+import { deleteWorkPerformedItem } from './workPerformedItems/workPerformedItemsSlice';
 import { useParams } from 'react-router-dom';
 import WorkPerformedTable from './WorkPerformedTable';
 import { useReference } from '@/features/reference/useReference';
@@ -20,20 +17,9 @@ import { calcRowTotal } from '@/utils/calcRowTotal';
 /**********************************************************************************************************/
 export default function WorkPerformedPage() {
     const dispatch = useAppDispatch();
-    const { projectId } = useParams();
-    const { prjBlockId } = useParams();
-    const blockId = Number(prjBlockId);
+    const { projectId, prjBlockId } = useParams();
+    const blockId = prjBlockId ? Number(prjBlockId) : null;
     const { data, pagination, loading } = useAppSelector((state) => state.workPerformed);
-    const { data: blocks } = useAppSelector((state) => state.projectBlocks);
-
-    const projectBlocks = useMemo(
-        () => blocks.filter((b) => b.project_id === Number(projectId)),
-        [blocks, Number(projectId)],
-    );
-
-    // const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
-
-    // const blockName = currentBlock?.name || '';
 
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
@@ -138,7 +124,7 @@ export default function WorkPerformedPage() {
             ) : (
                 <>
                     <WorkPerformedTable
-                        blockId={blockId}
+                        blockId={Number(blockId)}
                         data={data}
                         refs={refs}
                         onDeleteWorkPerformedId={(id) => setDeleteState({ type: 'avr', id })} // удалить АВР
@@ -170,7 +156,7 @@ export default function WorkPerformedPage() {
                 <WorkPerformedFlow
                     step={step}
                     setStep={setStep}
-                    blocks={projectBlocks}
+                    blockId={Number(blockId)}
                     projectId={Number(projectId)}
                     refs={refs}
                     calcRowTotal={calcRowTotal}

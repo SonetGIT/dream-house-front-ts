@@ -40,7 +40,7 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
                     }}
                     aria-label="Действия"
                     aria-expanded={open}
-                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 transition-all duration-150 rounded-md  hover:text-gray-600 hover:bg-gray-100"
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 transition-all duration-150 rounded-md hover:text-gray-600 hover:bg-gray-100"
                 >
                     <MoreVertical className="w-4 h-4" />
                 </button>

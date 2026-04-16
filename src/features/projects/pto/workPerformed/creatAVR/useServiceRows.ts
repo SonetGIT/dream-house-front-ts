@@ -17,7 +17,6 @@ export interface ServiceRow {
     unit_of_measure: number | null;
 
     quantity: number;
-
     currency: number | null;
     currency_rate: number;
 
@@ -86,7 +85,6 @@ export function useServiceRows({ initialItems, refs }: UseServiceRowsParams) {
     const [rows, setRows] = useState<ServiceRow[]>(mapFromEstimate(initialItems));
 
     /*ACTIONS*/
-
     const updateRow = (
         id: number | string,
         field: keyof ServiceRow,

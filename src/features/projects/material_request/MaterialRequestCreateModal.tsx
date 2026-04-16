@@ -1,24 +1,25 @@
 import { useState, useMemo } from 'react';
 import { Plus } from 'lucide-react';
-import type { ProjectBlock } from '../pto/projectBlocks/projectBlocksSlice';
 import type { Estimate } from '../pto/projectBlocks/estimatess/estimatesSlice';
+import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
 interface MatReqCreateProps {
-    blocks: ProjectBlock[];
+    blockId: number;
     estimates: Estimate[];
+    refs: Record<string, ReferenceResult>;
     loading?: boolean;
     onSubmit: (data: { block_id: number; mode: 'estimate' | 'manual' }) => void;
     onClose: () => void;
 }
 
 export default function MaterialRequestCreateModal({
-    blocks,
+    blockId,
     estimates,
+    refs,
     loading = false,
     onSubmit,
     onClose,
 }: MatReqCreateProps) {
-    const [blockId, setBlockId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     //CHECK ESTIMATE
@@ -30,11 +31,6 @@ export default function MaterialRequestCreateModal({
 
     //HANDLER
     const handleSelectMode = (mode: 'estimate' | 'manual') => {
-        if (!blockId) {
-            setError('Выберите блок');
-            return;
-        }
-
         if (mode === 'estimate' && !hasEstimateItems) {
             setError('В этом блоке нет материалов из сметы');
             return;
@@ -62,26 +58,16 @@ export default function MaterialRequestCreateModal({
                             Блок проекта <span className="text-red-500">*</span>
                         </label>
 
-                        <select
-                            value={blockId || ''}
-                            onChange={(e) =>
-                                setBlockId(e.target.value ? Number(e.target.value) : null)
-                            }
+                        <input
+                            type="text"
+                            value={blockId ? refs.prjBlocks.lookup(blockId) : '—'}
+                            readOnly
                             className={`
-                                w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                border ${error && !blockId ? 'border-red-300' : 'border-gray-300'}
-                                rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                transition-all cursor-pointer
+                                w-full px-3 py-2 text-sm text-gray-900 bg-green-50
+                                border border-green-300 ${error && !blockId ? 'border-red-300' : 'border-gray-300'}
+                                rounded-lg cursor-default
                             `}
-                        >
-                            <option value="">Выберите блок</option>
-                            {blocks.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {b.name}
-                                </option>
-                            ))}
-                        </select>
-
+                        />
                         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
                     </div>
                 </div>

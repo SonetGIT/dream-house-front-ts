@@ -27,6 +27,7 @@ import notificationsReducer from '@/features/notification/notificationSlice';
 import tasksReducer from '@/features/projects/tasks/tasksSlice';
 import workPerformedReducer from '@/features/projects/pto/workPerformed/workPerformedSlice';
 import workPerformedItemsReducer from '@/features/projects/pto/workPerformed/workPerformedItems/workPerformedItemsSlice';
+import documentReducer from '@/features/projects/documents/documentsSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -57,6 +58,7 @@ export const rootReducer = combineReducers({
     tasks: tasksReducer,
     workPerformed: workPerformedReducer,
     workPerformedItems: workPerformedItemsReducer,
+    documents: documentReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

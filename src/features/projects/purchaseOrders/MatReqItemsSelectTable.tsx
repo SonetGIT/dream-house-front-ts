@@ -40,11 +40,34 @@ export default function MatReqItemsSelectTable({
     }, [items]);
 
     // LOAD SUPPLIERS
+    const applyBestSupplier = (itemId: number, suppliers: SupplierRecommend[]) => {
+        const best = suppliers?.[0];
+
+        if (!best) return;
+
+        setEditedItems((prev) =>
+            prev.map((row) => {
+                if (row.id !== itemId) return row;
+
+                return {
+                    ...row,
+                    supplier_id: best.id,
+                    price: best.best_price ?? row.price,
+                    best_price: best.best_price ?? row.best_price,
+                };
+            }),
+        );
+    };
+
     const loadSuppliers = async (item: EditableItem) => {
         if (!item.material_id || !item.currency) return;
 
-        // кеш
-        if (suppliersMap[item.id]) return;
+        const cachedSuppliers = suppliersMap[item.id];
+
+        if (cachedSuppliers) {
+            applyBestSupplier(item.id, cachedSuppliers);
+            return;
+        }
 
         try {
             const data = await fetchRecommendSuppliers(item.material_id, item.currency);
@@ -54,23 +77,7 @@ export default function MatReqItemsSelectTable({
                 [item.id]: data,
             }));
 
-            //АВТОПОДСТАНОВКА ЛУЧШЕГО
-            const best = data?.[0];
-            if (best?.best_price != null) {
-                const best_price = best.best_price;
-                setEditedItems((prev) =>
-                    prev.map((row) =>
-                        row.id === item.id
-                            ? {
-                                  ...row,
-                                  price: best_price,
-                                  best_price: best_price,
-                                  supplier_id: best.id,
-                              }
-                            : row,
-                    ),
-                );
-            }
+            applyBestSupplier(item.id, data);
         } catch (e) {
             console.error('Ошибка загрузки поставщиков', e);
         }
@@ -84,10 +91,11 @@ export default function MatReqItemsSelectTable({
     const toggleAll = () => {
         if (isAllSelected) {
             setSelectedIds([]);
-        } else {
-            setSelectedIds(editedItems.map((i) => i.id));
-            editedItems.forEach(loadSuppliers); // загрузка для всех
+            return;
         }
+
+        setSelectedIds(editedItems.map((i) => i.id));
+        editedItems.forEach((item) => loadSuppliers(item));
     };
 
     const toggleOne = (id: number) => {
@@ -279,17 +287,6 @@ export default function MatReqItemsSelectTable({
                                         suppliers={suppliers}
                                         value={sub.supplier_id}
                                         disabled={!isSelected}
-                                        // onChange={(supplier) => {
-                                        //     if (supplier.best_price != null) {
-                                        //         updateRow(sub.id, 'supplier_id', supplier.id);
-                                        //         updateRow(sub.id, 'price', supplier.best_price);
-                                        //         updateRow(
-                                        //             sub.id,
-                                        //             'best_price',
-                                        //             supplier.best_price,
-                                        //         );
-                                        //     }
-                                        // }}
                                         onChange={(supplier) => {
                                             if (supplier.best_price != null) {
                                                 updateRow(sub.id, 'supplier_id', supplier.id);

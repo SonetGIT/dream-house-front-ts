@@ -19,7 +19,8 @@ interface Props {
 
     initialItems?: EstimateItem[];
     refs: Record<string, ReferenceResult>;
-
+    performedPersonName: string;
+    advancePayment: number | null;
     onCancel: () => void;
 }
 
@@ -29,6 +30,8 @@ export default function WorkPerformedItemCreateEditForm({
     blockId,
     initialItems = [],
     refs,
+    performedPersonName,
+    advancePayment,
     onCancel,
 }: Props) {
     const dispatch = useAppDispatch();
@@ -80,6 +83,8 @@ export default function WorkPerformedItemCreateEditForm({
                     project_id: projectId,
                     block_id: blockId,
                     status: 1,
+                    performed_person_name: performedPersonName,
+                    advance_payment: advancePayment,
                     items: rows.map((r) => ({
                         item_type: r.isFromEstimate ? 1 : 2,
                         stage_id: r.stage_id,

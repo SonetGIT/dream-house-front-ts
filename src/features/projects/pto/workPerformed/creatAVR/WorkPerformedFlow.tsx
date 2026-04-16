@@ -2,23 +2,26 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { ProjectBlock } from '../../projectBlocks/projectBlocksSlice';
 import {
     fetchEstimateItems,
     type EstimateItem,
 } from '../../projectBlocks/estimatess/estimateItems/estimateItemsSlice';
 
-import MatReqItemsCreateEditForm from '../../../material_request_items/MatReqItemsCreateEditForm';
 import { fetchEstimates } from '../../projectBlocks/estimatess/estimatesSlice';
 import WorkPerformedCreateModal from './WorkPerformedCreateModal';
 import WorkPerformedItemSelectTable from './WorkPerformedItemSelectTable';
 import WorkPerformedItemCreateEditForm from './WorkPerformedItemCreateEditForm';
 
+type WorkPerformedMeta = {
+    performed_person_name: string;
+    advance_payment: number | null;
+};
+
 interface WorkPerformedFlowProps {
     step: 'select' | 'estimate' | 'form';
     setStep: React.Dispatch<React.SetStateAction<'select' | 'estimate' | 'form'>>;
     projectId: number;
-    blocks: ProjectBlock[];
+    blockId: number;
     refs: Record<string, ReferenceResult>;
     calcRowTotal: (row: any) => number;
     onClose: () => void;
@@ -28,7 +31,7 @@ export default function WorkPerformedFlow({
     step,
     setStep,
     projectId,
-    blocks,
+    blockId,
     refs,
     calcRowTotal,
     onClose,
@@ -37,15 +40,19 @@ export default function WorkPerformedFlow({
     const { data: estimates, loading } = useAppSelector((state) => state.estimates);
     console.log();
     // STATE
-    const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
+    const [workPerformedMeta, setWorkPerformedMeta] = useState<WorkPerformedMeta>({
+        performed_person_name: '',
+        advance_payment: null,
+    });
+
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);
 
     // FILTER ITEMS BY BLOCK
     const estimateItems = useMemo(() => {
-        if (!selectedBlock) return [];
+        if (!blockId) return [];
 
-        return estimates.filter((e) => e.block_id === selectedBlock).flatMap((e) => e.items || []);
-    }, [estimates, selectedBlock]);
+        return estimates.filter((e) => e.block_id === blockId).flatMap((e) => e.items || []);
+    }, [estimates, blockId]);
     //загрузка estimates один раз
     useEffect(() => {
         dispatch(
@@ -59,15 +66,18 @@ export default function WorkPerformedFlow({
 
     //загрузка estimateItems ТОЛЬКО когда выбран блок
     useEffect(() => {
-        if (selectedBlock) {
+        if (blockId) {
             dispatch(fetchEstimateItems());
         }
-    }, [selectedBlock, dispatch]);
+    }, [blockId, dispatch]);
 
     const resetFlow = () => {
         setStep('select');
-        setSelectedBlock(null);
         setSelectedItems([]);
+        setWorkPerformedMeta({
+            performed_person_name: '',
+            advance_payment: null,
+        });
     };
 
     const handleClose = () => {
@@ -85,7 +95,6 @@ export default function WorkPerformedFlow({
                 {step !== 'select' && (
                     <button
                         onClick={() => {
-                            setSelectedBlock(null);
                             setSelectedItems([]);
                             setStep('select');
                         }}
@@ -99,11 +108,15 @@ export default function WorkPerformedFlow({
             {/* STEP 1 */}
             {step === 'select' && (
                 <WorkPerformedCreateModal
-                    blocks={blocks}
+                    blockId={blockId}
                     estimates={estimates}
+                    refs={refs}
                     onClose={handleClose}
-                    onSubmit={({ block_id, mode }) => {
-                        setSelectedBlock(block_id);
+                    onSubmit={({ mode, performed_person_name, advance_payment }) => {
+                        setWorkPerformedMeta({
+                            performed_person_name,
+                            advance_payment,
+                        });
 
                         if (mode === 'estimate') {
                             setStep('estimate');
@@ -116,14 +129,14 @@ export default function WorkPerformedFlow({
             )}
 
             {/* STEP 2 — выбор из сметы */}
-            {step === 'estimate' && selectedBlock && (
+            {step === 'estimate' && blockId && (
                 <WorkPerformedItemSelectTable
                     items={estimateItems}
                     loading={loading}
                     refs={refs}
                     calcRowTotal={calcRowTotal}
                     projectId={projectId}
-                    blockId={selectedBlock}
+                    blockId={blockId}
                     onNext={(items) => {
                         setSelectedItems(items);
                         setStep('form');
@@ -132,12 +145,14 @@ export default function WorkPerformedFlow({
             )}
 
             {/* STEP 3 — ЕДИНАЯ ФОРМА */}
-            {step === 'form' && selectedBlock && (
+            {step === 'form' && blockId && (
                 <WorkPerformedItemCreateEditForm
                     projectId={projectId}
-                    blockId={selectedBlock}
+                    blockId={blockId}
                     initialItems={selectedItems}
                     refs={refs}
+                    performedPersonName={workPerformedMeta.performed_person_name}
+                    advancePayment={workPerformedMeta.advance_payment}
                     onCancel={handleClose}
                 />
             )}
