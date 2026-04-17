@@ -35,6 +35,16 @@ interface LegalDocModalProps {
     onSubmit: (data: LegalDocumentForm, files: File[]) => void | Promise<void>;
 }
 
+const normalizeLegalDocumentForm = (data: LegalDocumentForm): LegalDocumentForm => ({
+    ...data,
+    responsible_users: Array.isArray(data.responsible_users) ? data.responsible_users : [],
+    name: data.name ?? '',
+    description: data.description ?? '',
+    location: data.location ?? '',
+    deadline: data.deadline ?? '',
+    price: data.price ?? 0,
+});
+
 export function LegalDocModal({
     open,
     onClose,
@@ -44,7 +54,10 @@ export function LegalDocModal({
     onSubmit,
 }: LegalDocModalProps) {
     const dispatch = useAppDispatch();
-    const [formData, setFormData] = useState<LegalDocumentForm>(initialData);
+
+    const [formData, setFormData] = useState<LegalDocumentForm>(
+        normalizeLegalDocumentForm(initialData),
+    );
     const [errors, setErrors] = useState<Partial<Record<keyof LegalDocumentForm, string>>>({});
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [openHistory, setOpenHistory] = useState(false);
@@ -52,12 +65,14 @@ export function LegalDocModal({
     const documentStatuses = useReference('documentStatuses');
     const users = useReference('users');
     const currentUser = useAppSelector((state) => state.auth.user);
-    const lawyers = users.data?.filter((u) => u.role_id === String(currentUser?.role_id)) ?? [];
+
+    const lawyers =
+        users.data?.filter((u) => Number(u.role_id) === Number(currentUser?.role_id)) ?? [];
 
     useEffect(() => {
         if (open) {
             setFormData({
-                ...initialData,
+                ...normalizeLegalDocumentForm(initialData),
                 status: documentId ? initialData.status : 1,
             });
             setErrors({});
@@ -66,19 +81,29 @@ export function LegalDocModal({
     }, [open, initialData, documentId]);
 
     const handleChange = (field: keyof LegalDocumentForm, value: any) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({
+            ...prev,
+            [field]: field === 'responsible_users' && !Array.isArray(value) ? [] : value,
+        }));
+
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: undefined }));
         }
     };
 
     const handleSubmit = () => {
-        onSubmit(formData, pendingFiles);
-        console.log('pendingFiles', pendingFiles);
+        onSubmit(
+            {
+                ...formData,
+                responsible_users: formData.responsible_users ?? [],
+            },
+            pendingFiles,
+        );
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return;
+
         const files = Array.from(e.target.files);
         setPendingFiles((prev) => [...prev, ...files]);
     };
@@ -95,7 +120,11 @@ export function LegalDocModal({
             .unwrap()
             .then(() => {
                 dispatch(
-                    fetchLegalDocuments({ page: 1, size: 10, entity_id: initialData.entity_id }),
+                    fetchLegalDocuments({
+                        page: 1,
+                        size: 10,
+                        entity_id: initialData.entity_id,
+                    }),
                 );
                 toast.success('Документ успешно подписан');
             })
@@ -104,10 +133,11 @@ export function LegalDocModal({
             });
     };
 
+    const selectedResponsibleUsers = formData.responsible_users ?? [];
+
     return (
         <>
             <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-                {/* 📋 Шапка */}
                 <div className="p-6 pb-4 border-b border-gray-200 bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
                     <div className="flex flex-row flex-wrap items-start justify-between gap-4">
                         <div className="flex-1">
@@ -136,7 +166,6 @@ export function LegalDocModal({
                 </div>
 
                 <DialogContent dividers className="p-6">
-                    {/* 📝 Основные поля */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <TextField
                             label="Название"
@@ -182,29 +211,38 @@ export function LegalDocModal({
                             <Select
                                 multiple
                                 label="Исполнители"
-                                value={formData.responsible_users}
+                                value={selectedResponsibleUsers}
                                 onChange={(e) =>
-                                    handleChange('responsible_users', e.target.value as number[])
+                                    handleChange(
+                                        'responsible_users',
+                                        Array.isArray(e.target.value)
+                                            ? e.target.value.map(Number)
+                                            : [],
+                                    )
                                 }
                                 renderValue={(selected) =>
                                     lawyers
-                                        ?.filter((u) => selected.includes(Number(u.id)))
+                                        ?.filter((u) =>
+                                            (selected as number[]).includes(Number(u.id)),
+                                        )
                                         .map((u) => u.name)
                                         .join(', ')
                                 }
                             >
                                 {lawyers?.map((u) => {
                                     const id = Number(u.id);
+
                                     return (
                                         <MenuItem key={id} value={id}>
                                             <Checkbox
-                                                checked={formData.responsible_users.includes(id)}
+                                                checked={selectedResponsibleUsers.includes(id)}
                                             />
                                             <ListItemText primary={u.name} />
                                         </MenuItem>
                                     );
                                 })}
                             </Select>
+
                             {errors.responsible_users && (
                                 <FormHelperText>{errors.responsible_users}</FormHelperText>
                             )}
@@ -221,18 +259,19 @@ export function LegalDocModal({
                             fullWidth
                             InputLabelProps={{ shrink: true }}
                         />
+
                         <div className="col-span-full">
                             <TextField
                                 label="Местонахождение документа"
                                 multiline
                                 rows={2}
-                                value={formData.loaction}
-                                onChange={(e) => handleChange('loaction', e.target.value)}
+                                value={formData.location}
+                                onChange={(e) => handleChange('location', e.target.value)}
                                 size="small"
                                 fullWidth
                             />
                         </div>
-                        {/* Статус */}
+
                         <div className="flex items-center justify-end gap-3 p-4 mt-2 border border-dashed rounded-lg col-span-full bg-blue-50/20 border-blue-200/50">
                             <span className="text-sm font-medium text-blue-900">
                                 Статус документа:
@@ -244,7 +283,6 @@ export function LegalDocModal({
                         </div>
                     </div>
 
-                    {/* 📎 Сохранённые файлы */}
                     {documentId && (
                         <>
                             <Divider className="my-6" />
@@ -260,7 +298,6 @@ export function LegalDocModal({
 
                     <Divider className="my-6" />
 
-                    {/* 📁 Прикреплённые файлы */}
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <MdAttachFile className="w-5 h-5 text-blue-900" />
@@ -279,7 +316,7 @@ export function LegalDocModal({
                             <div className="flex flex-col gap-2 mb-4">
                                 {pendingFiles.map((file, index) => (
                                     <div
-                                        key={index}
+                                        key={`${file.name}-${index}`}
                                         className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md hover:border-blue-300"
                                     >
                                         <MdAttachFile className="w-4 h-4 text-blue-600" />
@@ -332,6 +369,7 @@ export function LegalDocModal({
                     >
                         Отмена
                     </button>
+
                     <button
                         onClick={handleSubmit}
                         disabled={submitting}
@@ -342,7 +380,6 @@ export function LegalDocModal({
                 </DialogActions>
             </Dialog>
 
-            {/* 📜 История изменений */}
             <Dialog
                 open={openHistory}
                 onClose={() => setOpenHistory(false)}
@@ -360,7 +397,7 @@ export function LegalDocModal({
 
                 <DialogContent dividers>
                     <AuditLogTable
-                        entity_type={'document'}
+                        entity_type="document"
                         entity_id={documentId || 0}
                         formMetadata={documentFormData}
                     />

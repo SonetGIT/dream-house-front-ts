@@ -51,7 +51,7 @@ export default function LegalDocTable({
             description: '',
             responsible_users: [],
             deadline: '',
-            loaction: '',
+            location: '',
             status: 0,
         });
 
@@ -69,7 +69,7 @@ export default function LegalDocTable({
             description: doc.description,
             responsible_users: doc.responsible_users,
             deadline: doc.deadline,
-            loaction: doc.loaction,
+            location: doc.location,
             status: doc.status,
         });
 
@@ -172,7 +172,7 @@ export default function LegalDocTable({
                                         {formatDateTime(doc.deadline)}
                                     </td>
                                     <td className="px-3 py-3 font-medium text-purple-600">
-                                        {doc.loaction}
+                                        {doc.location}
                                     </td>
                                     <td className="px-3 py-3 text-sm text-gray-600">
                                         <span

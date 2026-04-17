@@ -3,8 +3,6 @@ import type { WarehouseItem } from './warehouseStocksSlice';
 import { useMemo, useState } from 'react';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import { parseNumber } from '@/utils/parseNumber';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { Check, Pencil, Trash2, X } from 'lucide-react';
 import type { Pagination } from '@/features/users/userSlice';
 import { TablePagination } from '@/components/ui/TablePagination';
 
@@ -108,7 +106,6 @@ export default function WarehouseStocksTable({
                         <th className="px-3 py-2 text-sm text-right">Кол-во</th>
                         <th className="px-3 py-2 text-sm text-right">Мин. кол-во</th>
                         <th className="px-3 py-2 text-sm text-right">Мах. кол-во</th>
-                        <th className="px-3 py-2 text-sm text-center">Действия</th>
                     </tr>
                 </thead>
 
@@ -226,52 +223,6 @@ export default function WarehouseStocksTable({
                                     ) : (
                                         whItem.max
                                     )}
-                                </td>
-                                {/* Действия */}
-                                <td className="px-3 py-3">
-                                    <div className="flex items-center justify-center gap-1">
-                                        {isEditing ? (
-                                            <>
-                                                <StyledTooltip title="Сохранить изменения">
-                                                    <button
-                                                        // onClick={handleSave}
-                                                        className="p-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-                                                    >
-                                                        <Check className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </StyledTooltip>
-
-                                                <StyledTooltip title="Отменить">
-                                                    <button
-                                                        // onClick={handleCancel}
-                                                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                                                    >
-                                                        <X className="w-5 h-5 text-red-500" />
-                                                    </button>
-                                                </StyledTooltip>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <StyledTooltip title="Редактировать вопрос на уточнении">
-                                                    <button
-                                                        // onClick={() => handleEdit(whItem)}
-                                                        className="inline-flex items-center justify-center text-blue-600 transition-colors rounded-md h-7 w-7 hover:bg-blue-50"
-                                                    >
-                                                        <Pencil className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </StyledTooltip>
-
-                                                <StyledTooltip title="Удалить материал">
-                                                    <button
-                                                        onClick={() => onDelete(whItem.id)}
-                                                        className="inline-flex items-center justify-center text-red-600 transition-colors rounded-md h-7 w-7 hover:bg-red-50"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </StyledTooltip>
-                                            </>
-                                        )}
-                                    </div>
                                 </td>
                             </tr>
                         );

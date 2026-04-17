@@ -16,7 +16,6 @@ export interface WarehouseItem {
     updated_at: string;
     deleted: boolean;
 }
-
 export interface Warehouse {
     id: number;
     project_id: number;

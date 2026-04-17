@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Collapse } from '@mui/material';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
@@ -14,7 +14,9 @@ interface PropsType {
     onDeleteMatReqOrderItemId: (id: number) => void;
     onForDelivery: (id: number) => void;
     onRefusalToDeliver: (id: number) => void;
+    openOrderId?: number | null;
 }
+
 const purchaseOrderStatuses: Record<number, { label: string; className: string }> = {
     1: {
         label: 'Отправлен поставщику',
@@ -46,11 +48,29 @@ const purchaseOrderStatuses: Record<number, { label: string; className: string }
     },
 };
 
-/******************************************************************************************************************/
-//  Таблица заявок на закупку
-export default function PurchaseOrdersTable(props: PropsType) {
+export default function PurchaseOrdersTable({
+    data,
+    refs,
+    onDeleteMatReqOrderId,
+    onDeleteMatReqOrderItemId,
+    onForDelivery,
+    onRefusalToDeliver,
+    openOrderId,
+}: PropsType) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    /*TOGGLE*/
+
+    useEffect(() => {
+        if (!openOrderId) return;
+
+        const exists = data?.some((po) => po.id === openOrderId);
+        if (!exists) return;
+
+        setOpenRows((prev) => ({
+            ...prev,
+            [openOrderId]: true,
+        }));
+    }, [openOrderId, data]);
+
     const toggleRow = (id: number) => {
         setOpenRows((prev) => ({
             ...prev,
@@ -58,7 +78,6 @@ export default function PurchaseOrdersTable(props: PropsType) {
         }));
     };
 
-    /*STATUS*/
     const getStatusConfig = (statusId: number) => {
         return (
             purchaseOrderStatuses[statusId] || {
@@ -68,54 +87,56 @@ export default function PurchaseOrdersTable(props: PropsType) {
         );
     };
 
-    /********************************************************************************************************************************/
     return (
         <div className="space-y-4">
-            {/* Table - MATERIALREQ*/}
             <div className="overflow-hidden bg-white border rounded-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        {/* MATERIALREQ- HEADER */}
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
+
                                 <th className="px-3 py-3 text-sm font-semibold text-center text-blue-700 border-l w-18 bg-blue-50">
                                     № заявки
                                 </th>
+
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Блок
                                     </div>
                                 </th>
+
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата создание
                                     </div>
                                 </th>
+
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Статус
                                     </div>
                                 </th>
+
                                 <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
                             </tr>
                         </thead>
+
                         <tbody>
-                            {props.data?.map((po) => {
+                            {data?.map((po) => {
                                 const statusInfo = getStatusConfig(po.status);
 
                                 return (
                                     <React.Fragment key={po.id}>
-                                        {/* MATERIALREQEST_TABBLE */}
                                         <tr
                                             className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(po.id)}
                                         >
-                                            {/* toggle */}
-                                            <td className="px-2 py-2 ">
+                                            <td className="px-2 py-2">
                                                 <button
+                                                    type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         toggleRow(po.id);
@@ -129,47 +150,45 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                                     )}
                                                 </button>
                                             </td>
+
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
                                                 {po.id}
                                             </td>
 
-                                            {/* Блок */}
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
                                                 {po.block_id
-                                                    ? props.refs.prjBlocks.lookup(po.block_id)
+                                                    ? refs.prjBlocks.lookup(po.block_id)
                                                     : '—'}
                                             </td>
 
-                                            {/* Дата создания */}
-                                            <td className="px-2 py-2 text-xs text-center text-gray-900 ">
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900">
                                                 {formatDateTime(po.created_at)}
                                             </td>
 
-                                            {/* статус */}
-                                            <td className="px-2 py-2 text-center text-gray-900 ">
+                                            <td className="px-2 py-2 text-center text-gray-900">
                                                 <span
                                                     className={`
-                                                    inline-flex text-center px-2 py-0.5
-                                                    text-xs font-semibold border rounded-full
-                                                    ${statusInfo.className}
-                                                `}
+                                                        inline-flex text-center px-2 py-0.5
+                                                        text-xs font-semibold border rounded-full
+                                                        ${statusInfo.className}
+                                                    `}
                                                 >
                                                     {po.status != null
-                                                        ? props.refs.purchaseOrderStatuses.lookup(
+                                                        ? refs.purchaseOrderStatuses.lookup(
                                                               po.status,
                                                           )
                                                         : '—'}
                                                 </span>
                                             </td>
 
-                                            {/* Действия */}
                                             <td className="px-3 py-2 border-l bg-gray-50">
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <StyledTooltip title="Удалить">
                                                         <button
+                                                            type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                props.onDeleteMatReqOrderId(po.id);
+                                                                onDeleteMatReqOrderId(po.id);
                                                             }}
                                                             className="
                                                                 p-1.5
@@ -187,7 +206,6 @@ export default function PurchaseOrdersTable(props: PropsType) {
                                             </td>
                                         </tr>
 
-                                        {/* PurchaseOrdersItemsTable*/}
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
                                             <td colSpan={6} className="px-3 py-2">
                                                 <Collapse in={openRows[po.id]} unmountOnExit>
@@ -198,14 +216,10 @@ export default function PurchaseOrdersTable(props: PropsType) {
 
                                                         <PurchaseOrdersItemsTable
                                                             items={po.items}
-                                                            refs={props.refs}
-                                                            onDelete={
-                                                                props.onDeleteMatReqOrderItemId
-                                                            }
-                                                            onForDelivery={props.onForDelivery}
-                                                            onRefusalToDeliver={
-                                                                props.onRefusalToDeliver
-                                                            }
+                                                            refs={refs}
+                                                            onDelete={onDeleteMatReqOrderItemId}
+                                                            onForDelivery={onForDelivery}
+                                                            onRefusalToDeliver={onRefusalToDeliver}
                                                         />
                                                     </div>
                                                 </Collapse>

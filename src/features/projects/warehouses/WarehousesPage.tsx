@@ -232,7 +232,7 @@ export default function WarehousesPage() {
                         data={data}
                         refs={refs}
                         onEdit={handleEdit}
-                        onDeleteWarehouseId={(id) => setDeleteState({ type: 'warehouse', id })}
+                        // onDeleteWarehouseId={(id) => setDeleteState({ type: 'warehouse', id })}
                         onDeleteWHouseItemId={(itemId) =>
                             setDeleteState({ type: 'warehouseItem', id: itemId })
                         }

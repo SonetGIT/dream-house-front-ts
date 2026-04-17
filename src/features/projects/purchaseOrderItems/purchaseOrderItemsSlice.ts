@@ -62,7 +62,11 @@ export const fetchPurchaseOrderItems = createAsyncThunk<
     { rejectValue: string }
 >('purchaseOrderItems/search', async (params, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<any>('/purchaseOrderItems/search', 'POST', params);
+        const res = await apiRequest<PurchaseOrderItem[]>(
+            '/purchaseOrderItems/search',
+            'POST',
+            params,
+        );
 
         return {
             data: res.data ?? [],
@@ -127,13 +131,23 @@ export const receivePurchaseOrderItems = createAsyncThunk<
     { rejectValue: string }
 >('purchaseOrderItems/receive', async (payload, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<PurchaseOrderItem[]>(
+        const res = await apiRequest<PurchaseOrderItem[] | PurchaseOrderItem>(
             '/purchaseOrderItems/receive',
             'POST',
             payload,
         );
 
-        return res.data;
+        const data = res.data;
+
+        if (Array.isArray(data)) {
+            return data;
+        }
+
+        if (data) {
+            return [data];
+        }
+
+        return [];
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка приёмки');
     }
@@ -198,7 +212,6 @@ const purchaseOrderItemsSlice = createSlice({
             })
 
             /* RECEIVE */
-            /* RECEIVE */
             .addCase(receivePurchaseOrderItems.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -206,7 +219,7 @@ const purchaseOrderItemsSlice = createSlice({
             .addCase(receivePurchaseOrderItems.fulfilled, (state, action) => {
                 state.loading = false;
 
-                const updatedItems = action.payload ?? [];
+                const updatedItems = Array.isArray(action.payload) ? action.payload : [];
 
                 updatedItems.forEach((updated) => {
                     const index = state.data.findIndex((i) => i.id === updated.id);
@@ -218,6 +231,7 @@ const purchaseOrderItemsSlice = createSlice({
                     }
                 });
             })
+
             .addCase(receivePurchaseOrderItems.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка приёмки';

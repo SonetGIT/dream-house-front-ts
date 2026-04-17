@@ -10,7 +10,7 @@ export interface LegalDocument {
     price: number;
     description: string;
     deadline: string;
-    loaction: string;
+    location: string;
     responsible_users: number[];
     entity_type: string;
     entity_id: number;
@@ -25,7 +25,7 @@ export interface LegalDocumentForm {
     price: number;
     description: string;
     deadline: string;
-    loaction: string;
+    location: string;
     responsible_users: number[];
     entity_type: string;
     entity_id: number;

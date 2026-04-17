@@ -1,65 +1,72 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Button, Collapse } from '@mui/material';
-import { ChevronDown, ChevronRight, Pencil, Phone, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Phone } from 'lucide-react';
+import { Add } from '@mui/icons-material';
+import toast from 'react-hot-toast';
+
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import Modal from '@/components/ui/Modal';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 import { useAppDispatch, useAppSelector } from '@/app/store';
+
 import type { Warehouse } from './warehousesSlice';
 import WarehouseStocksTable from '../warehouseStocks/WarehouseStocksTable';
 import { fetchWarehouseItems } from '../warehouseStocks/warehouseStocksSlice';
 import MaterialMovementsTable from '../materialMovements/MaterialMovementsTable';
 import { fetchMaterialMovements } from '../materialMovements/materialMovementsSlice';
-import { Add } from '@mui/icons-material';
-import toast from 'react-hot-toast';
-import Modal from '@/components/ui/Modal';
 import {
     fetchPurchaseOrderItems,
     receivePurchaseOrderItems,
-    type PurchaseOrderItem,
+    type ReceivePurchaseOrderItemPayload,
 } from '../purchaseOrderItems/purchaseOrderItemsSlice';
+import PurchaseOrderItemsReceiveTable from './PurchaseOrderItemsReceiveTable';
 
 interface WarehousesTablePropsType {
     data: Warehouse[];
     refs: Record<string, ReferenceResult>;
     onEdit: (warehouse: Warehouse) => void;
-    onDeleteWarehouseId: (id: number) => void;
     onDeleteWHouseItemId: (id: number) => void;
 }
 
 type TabType = 'materials' | 'movements';
 
-/*******************************************************************************************************************************/
+const CONFIRMED_BY_SUPPLIER_STATUS = 2;
+const ALL_PURCHASE_ORDERS_ID = 0;
+
 export default function WarehousesTable({
     data,
     refs,
     onEdit,
-    onDeleteWarehouseId,
     onDeleteWHouseItemId,
 }: WarehousesTablePropsType) {
     const dispatch = useAppDispatch();
 
     const { pagination: whItemPagination } = useAppSelector((state) => state.warehouseStocks);
+
     const {
         items: movementItems,
         pagination: movementPagination,
         loading: movementLoading,
     } = useAppSelector((state) => state.materialMovements);
-    console.log('movementItems', movementItems);
-    const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    const [tabs, setTabs] = useState<Record<number, TabType>>({});
 
-    /*ПРИЕМКА*/
     const { data: purchaseOrderItems, loading: purchaseOrderItemsLoading } = useAppSelector(
         (state) => state.purchaseOrderItems,
     );
-    console.log('purchaseOrderItems', purchaseOrderItems);
-    const [receiveWarehouse, setReceiveWarehouse] = useState<Warehouse | null>(null);
-    const [receiveRows, setReceiveRows] = useState<
-        Record<number, { checked: boolean; received_quantity: number; comment: string }>
-    >({});
 
-    /* TOGGLE */
+    const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
+    const [tabs, setTabs] = useState<Record<number, TabType>>({});
+    const [receiveWarehouse, setReceiveWarehouse] = useState<Warehouse | null>(null);
+
+    const receivablePurchaseOrderItems = useMemo(() => {
+        return purchaseOrderItems.filter((item) => {
+            const quantity = Number(item.quantity || 0);
+            const delivered = Number(item.delivered_quantity || 0);
+
+            return item.status === CONFIRMED_BY_SUPPLIER_STATUS && quantity > delivered;
+        });
+    }, [purchaseOrderItems]);
+
     const toggleRow = (id: number) => {
         const isOpening = !openRows[id];
 
@@ -84,6 +91,7 @@ export default function WarehousesTable({
             ...prev,
             [warehouseId]: tab,
         }));
+
         if (tab === 'movements') {
             dispatch(
                 fetchMaterialMovements({
@@ -95,91 +103,71 @@ export default function WarehousesTable({
         }
     };
 
-    /*ПРИЕМКА*/
-    const handleOpenReceive = (warehouse: Warehouse, purchaseOrderId: number) => {
+    const handleOpenReceive = (warehouse: Warehouse) => {
         setReceiveWarehouse(warehouse);
-        setReceiveRows({});
 
         dispatch(
             fetchPurchaseOrderItems({
-                purchase_order_id: purchaseOrderId,
+                purchase_order_id: ALL_PURCHASE_ORDERS_ID,
                 page: 1,
-                size: 10,
+                size: 100,
             }),
         );
     };
 
-    const updateReceiveRow = (
-        item: PurchaseOrderItem,
-        patch: Partial<{ checked: boolean; received_quantity: number; comment: string }>,
-    ) => {
-        const remaining = Math.max(
-            Number(item.quantity || 0) - Number(item.delivered_quantity || 0),
-            0,
-        );
-
-        setReceiveRows((prev) => ({
-            ...prev,
-            [item.id]: {
-                checked: prev[item.id]?.checked ?? false,
-                received_quantity: prev[item.id]?.received_quantity ?? remaining,
-                comment: prev[item.id]?.comment ?? '',
-                ...patch,
-            },
-        }));
+    const handleCloseReceive = () => {
+        setReceiveWarehouse(null);
     };
 
-    const handleReceiveItems = async () => {
+    const handleReceiveItems = async (items: ReceivePurchaseOrderItemPayload[]) => {
         if (!receiveWarehouse) return;
-
-        const items = purchaseOrderItems
-            .filter((item) => receiveRows[item.id]?.checked)
-            .map((item) => ({
-                purchase_order_item_id: item.id,
-                received_quantity: Number(receiveRows[item.id]?.received_quantity || 0),
-                comment: receiveRows[item.id]?.comment || '',
-            }))
-            .filter((item) => item.received_quantity > 0);
 
         if (!items.length) {
             toast.error('Выберите товары для приёмки');
             return;
         }
 
+        const warehouseId = receiveWarehouse.id;
+
         try {
             await dispatch(
                 receivePurchaseOrderItems({
-                    warehouse_id: receiveWarehouse.id,
+                    warehouse_id: warehouseId,
                     items,
                 }),
             ).unwrap();
 
             toast.success('Товар принят на склад');
-            setReceiveWarehouse(null);
-            setReceiveRows({});
 
-            dispatch(
+            handleCloseReceive();
+
+            setTabs((prev) => ({
+                ...prev,
+                [warehouseId]: 'movements',
+            }));
+
+            await dispatch(
                 fetchWarehouseItems({
-                    warehouse_id: receiveWarehouse.id,
+                    warehouse_id: warehouseId,
                     page: 1,
                     size: 10,
                 }),
-            );
+            ).unwrap();
 
-            dispatch(
+            await dispatch(
                 fetchMaterialMovements({
-                    warehouse_id: receiveWarehouse.id,
+                    warehouse_id: warehouseId,
                     page: 1,
                     size: 10,
                 }),
-            );
+            ).unwrap();
         } catch (e) {
             console.error(e);
             toast.error('Ошибка при приёмке товара');
         }
     };
 
-    /*******************************************************************************************************************************/
+    /**************************************************************************************************************/
     return (
         <div className="space-y-4">
             <div className="overflow-hidden bg-white border rounded-lg">
@@ -321,28 +309,10 @@ export default function WarehousesTable({
                                                             <Pencil className="w-3.5 h-3.5" />
                                                         </button>
                                                     </StyledTooltip>
-
-                                                    <StyledTooltip title="Удалить">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onDeleteWarehouseId(whs.id);
-                                                            }}
-                                                            className="
-                                                                p-1.5
-                                                                text-gray-400
-                                                                hover:text-red-600
-                                                                hover:bg-red-50
-                                                                rounded
-                                                                transition-colors
-                                                            "
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </StyledTooltip>
                                                 </div>
                                             </td>
                                         </tr>
+
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
                                             <td colSpan={8} className="px-3 py-2">
                                                 <Collapse in={openRows[whs.id]} unmountOnExit>
@@ -387,7 +357,7 @@ export default function WarehousesTable({
                                                                     variant="outlined"
                                                                     startIcon={<Add />}
                                                                     onClick={() =>
-                                                                        handleOpenReceive(whs, 65)
+                                                                        handleOpenReceive(whs)
                                                                     }
                                                                     sx={{
                                                                         color: 'violet',
@@ -413,7 +383,7 @@ export default function WarehousesTable({
                                                                 onDelete={onDeleteWHouseItemId}
                                                                 onPageChange={(newPage) => {
                                                                     dispatch(
-                                                                        fetchMaterialMovements({
+                                                                        fetchWarehouseItems({
                                                                             warehouse_id: whs.id,
                                                                             page: newPage,
                                                                             size: 10,
@@ -422,7 +392,7 @@ export default function WarehousesTable({
                                                                 }}
                                                                 onSizeChange={(newSize) => {
                                                                     dispatch(
-                                                                        fetchMaterialMovements({
+                                                                        fetchWarehouseItems({
                                                                             warehouse_id: whs.id,
                                                                             page: 1,
                                                                             size: newSize,
@@ -468,132 +438,20 @@ export default function WarehousesTable({
                     </table>
                 </div>
             </div>
+
             <Modal
                 size="full"
                 isOpen={Boolean(receiveWarehouse)}
-                onClose={() => setReceiveWarehouse(null)}
-                title={`Приём товара${receiveWarehouse ? ` на склад: ${receiveWarehouse.name}` : ''}`}
+                onClose={handleCloseReceive}
+                title={'Список материалов подтверждённых поставщиком'}
             >
-                <div className="space-y-4">
-                    {purchaseOrderItemsLoading ? (
-                        <div className="p-4 text-sm text-gray-500">Загрузка...</div>
-                    ) : !purchaseOrderItems.length ? (
-                        <div className="p-4 text-sm text-gray-400 border rounded-lg">
-                            Нет товаров со статусом к поставке
-                        </div>
-                    ) : (
-                        <div className="overflow-hidden bg-white border rounded-lg">
-                            <table className="w-full text-sm">
-                                <thead className="bg-blue-50/40">
-                                    <tr className="border-b">
-                                        <th className="w-12 px-3 py-2 text-center"></th>
-                                        <th className="px-3 py-2 text-left">№ заявки на закуп</th>
-                                        <th className="px-3 py-2 text-left">Материал</th>
-                                        <th className="px-3 py-2 text-center">Заказано</th>
-                                        <th className="px-3 py-2 text-center">Уже принято</th>
-                                        <th className="px-3 py-2 text-center">Принять</th>
-                                        <th className="px-3 py-2 text-left">Комментарий</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {purchaseOrderItems.map((item) => {
-                                        const remaining = Math.max(
-                                            Number(item.quantity || 0) -
-                                                Number(item.delivered_quantity || 0),
-                                            0,
-                                        );
-                                        const row = receiveRows[item.id];
-
-                                        return (
-                                            <tr key={item.id} className="border-b hover:bg-gray-50">
-                                                <td className="px-3 py-2 text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={row?.checked ?? false}
-                                                        disabled={remaining <= 0}
-                                                        onChange={(e) =>
-                                                            updateReceiveRow(item, {
-                                                                checked: e.target.checked,
-                                                            })
-                                                        }
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    {item.purchase_order_id}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    {refs.materials.lookup(
-                                                        Number(item.material_id),
-                                                    )}
-                                                </td>
-
-                                                <td className="px-3 py-2 text-center">
-                                                    {item.quantity}
-                                                </td>
-
-                                                <td className="px-3 py-2 text-center">
-                                                    {item.delivered_quantity ?? 0}
-                                                </td>
-
-                                                <td className="px-3 py-2 text-center">
-                                                    <input
-                                                        type="number"
-                                                        min={0}
-                                                        max={remaining}
-                                                        value={row?.received_quantity ?? remaining}
-                                                        disabled={remaining <= 0}
-                                                        onChange={(e) =>
-                                                            updateReceiveRow(item, {
-                                                                received_quantity: Number(
-                                                                    e.target.value,
-                                                                ),
-                                                            })
-                                                        }
-                                                        className="px-2 py-1 text-right border rounded w-28"
-                                                    />
-                                                </td>
-
-                                                <td className="px-3 py-2">
-                                                    <input
-                                                        type="text"
-                                                        value={row?.comment ?? ''}
-                                                        onChange={(e) =>
-                                                            updateReceiveRow(item, {
-                                                                comment: e.target.value,
-                                                            })
-                                                        }
-                                                        placeholder="Комментарий"
-                                                        className="w-full px-2 py-1 border rounded"
-                                                    />
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    <div className="flex justify-end gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setReceiveWarehouse(null)}
-                            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100"
-                        >
-                            Отмена
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleReceiveItems}
-                            disabled={purchaseOrderItemsLoading}
-                            className="px-4 py-2 text-sm text-white rounded-lg bg-sky-600 hover:bg-sky-700 disabled:opacity-50"
-                        >
-                            Принять
-                        </button>
-                    </div>
-                </div>
+                <PurchaseOrderItemsReceiveTable
+                    items={receivablePurchaseOrderItems}
+                    refs={refs}
+                    loading={purchaseOrderItemsLoading}
+                    onCancel={handleCloseReceive}
+                    onSubmit={handleReceiveItems}
+                />
             </Modal>
         </div>
     );

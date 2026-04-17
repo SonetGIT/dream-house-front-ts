@@ -38,7 +38,6 @@ export default function WorkPerformedFlow({
 }: WorkPerformedFlowProps) {
     const dispatch = useAppDispatch();
     const { data: estimates, loading } = useAppSelector((state) => state.estimates);
-    console.log();
     // STATE
     const [workPerformedMeta, setWorkPerformedMeta] = useState<WorkPerformedMeta>({
         performed_person_name: '',

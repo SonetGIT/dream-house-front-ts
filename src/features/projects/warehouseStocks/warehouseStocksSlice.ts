@@ -20,7 +20,6 @@ export interface WarehouseItem {
     created_at: string;
     updated_at: string;
     deleted: boolean;
-    material?: MaterialShort;
 }
 
 interface WarehouseItemsState {
