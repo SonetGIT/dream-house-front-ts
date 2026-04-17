@@ -86,7 +86,7 @@ export const taskPriorities: Record<number, { label: string; className: string }
     },
 };
 
-//
+//purchaseOrderItemStatuses/gets
 export const purchaseOrderItemStatuses: Record<number, { label: string; className: string }> = {
     1: {
         label: 'Отправлен поставщику',
@@ -112,4 +112,19 @@ export const purchaseOrderItemStatuses: Record<number, { label: string; classNam
         label: 'Не доставлен',
         className: 'bg-gray-500/15 text-gray-700 border border-gray-400',
     },
+};
+
+//writeOffStatuses/gets
+export const writeOffStatuses: Record<number, { label: string; className: string }> = {
+    1: { label: 'Создан', className: 'bg-gray-500/15 text-gray-700 border border-gray-400' },
+    2: {
+        label: 'На подписании',
+        className: 'bg-blue-500/15 text-blue-700 border border-blue-400',
+    },
+    3: { label: 'Проведен', className: 'bg-green-600/15 text-green-700 border border-green-500' },
+    4: {
+        label: 'Проведён',
+        className: 'bg-emerald-500/15 text-emerald-700 border border-emerald-400',
+    },
+    5: { label: 'Отменен', className: 'bg-red-500/15 text-red-700 border border-red-400' },
 };

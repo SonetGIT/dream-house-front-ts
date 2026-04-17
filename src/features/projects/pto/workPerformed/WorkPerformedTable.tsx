@@ -28,7 +28,7 @@ interface PropsType {
 }
 
 //Tab button
-function TabBtn({
+export function TabBtn({
     active,
     icon,
     label,

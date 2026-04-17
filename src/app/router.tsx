@@ -18,6 +18,7 @@ import ProjectBlocksTabs from '@/features/projects/pto/projectBlocks/ProjectBloc
 import PurchaseOrdersPage from '@/features/projects/purchaseOrders/PurchaseOrdersPage';
 import TasksPage from '@/features/projects/tasks/TasksPage';
 import WorkPerformedPage from '@/features/projects/pto/workPerformed/WorkPerformedPage';
+import MaterialWriteOffPage from '@/features/projects/materialWriteOffs/MaterialWriteOffPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
                                     { path: 'materialRequests', element: <MaterialRequestsPage /> },
                                     { path: 'purchaseOrders', element: <PurchaseOrdersPage /> },
                                     { path: 'workPerformed', element: <WorkPerformedPage /> },
+                                    { path: 'materialWriteOff', element: <MaterialWriteOffPage /> },
                                 ],
                             },
                             { path: 'tasks', element: <TasksPage /> },

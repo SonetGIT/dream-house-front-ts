@@ -10,7 +10,7 @@ type WarehouseItemProps = {
     items: WarehouseItem[];
     whItemPagination: Pagination | null;
     refs: Record<string, ReferenceResult>;
-    onDelete: (id: number) => void;
+    // onDelete: (id: number) => void;
     onPageChange?: (page: number) => void;
     onSizeChange?: (size: number) => void;
     // onUpdateEstimateItem?: (id: number, data: Partial<EstimateItem>) => void;
@@ -20,7 +20,7 @@ export default function WarehouseStocksTable({
     items,
     whItemPagination,
     refs,
-    onDelete,
+    // onDelete,
     onPageChange,
     onSizeChange,
 }: WarehouseItemProps) {

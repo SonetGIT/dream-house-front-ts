@@ -210,7 +210,7 @@ export default function PurchaseOrdersPage() {
         }
     }, [deleteState, dispatch, projectIdNum]);
 
-    //RENDER
+    /***************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* HEADER */}

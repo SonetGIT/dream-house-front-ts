@@ -233,9 +233,9 @@ export default function WarehousesPage() {
                         refs={refs}
                         onEdit={handleEdit}
                         // onDeleteWarehouseId={(id) => setDeleteState({ type: 'warehouse', id })}
-                        onDeleteWHouseItemId={(itemId) =>
-                            setDeleteState({ type: 'warehouseItem', id: itemId })
-                        }
+                        // onDeleteWHouseItemId={(itemId) =>
+                        //     setDeleteState({ type: 'warehouseItem', id: itemId })
+                        // }
                     />
                     {pagination && (
                         <TablePagination

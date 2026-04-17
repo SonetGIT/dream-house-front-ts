@@ -26,7 +26,7 @@ interface WarehousesTablePropsType {
     data: Warehouse[];
     refs: Record<string, ReferenceResult>;
     onEdit: (warehouse: Warehouse) => void;
-    onDeleteWHouseItemId: (id: number) => void;
+    // onDeleteWHouseItemId: (id: number) => void;
 }
 
 type TabType = 'materials' | 'movements';
@@ -38,7 +38,7 @@ export default function WarehousesTable({
     data,
     refs,
     onEdit,
-    onDeleteWHouseItemId,
+    // onDeleteWHouseItemId,
 }: WarehousesTablePropsType) {
     const dispatch = useAppDispatch();
 
@@ -360,13 +360,13 @@ export default function WarehousesTable({
                                                                         handleOpenReceive(whs)
                                                                     }
                                                                     sx={{
-                                                                        color: 'violet',
-                                                                        borderColor: 'violet',
+                                                                        color: 'green',
+                                                                        borderColor: 'green',
                                                                         '&:hover': {
                                                                             borderColor:
-                                                                                'darkviolet',
+                                                                                'darkgreen',
                                                                             backgroundColor:
-                                                                                'rgba(141, 15, 141, 0.1)',
+                                                                                'rgba(76, 100, 68, 0.1)',
                                                                         },
                                                                     }}
                                                                 >
@@ -380,7 +380,7 @@ export default function WarehousesTable({
                                                                 items={whs.items}
                                                                 whItemPagination={whItemPagination}
                                                                 refs={refs}
-                                                                onDelete={onDeleteWHouseItemId}
+                                                                // onDelete={onDeleteWHouseItemId}
                                                                 onPageChange={(newPage) => {
                                                                     dispatch(
                                                                         fetchWarehouseItems({
