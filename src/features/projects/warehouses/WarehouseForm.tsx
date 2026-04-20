@@ -188,7 +188,7 @@ export function WarehouseForm({
                             disabled={isLoading}
                         >
                             <option value="">Выберите кладовщик склада</option>
-                            {refs.users.data?.map((user) => (
+                            {refs.users.data?.map((user: any) => (
                                 <option key={user.id} value={user.id}>
                                     {user.name}
                                 </option>

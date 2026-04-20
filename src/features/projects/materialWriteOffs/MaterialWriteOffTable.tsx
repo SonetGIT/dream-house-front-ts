@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Collapse } from '@mui/material';
-import { ChevronDown, ChevronRight, Pencil, Trash2, Package, ListChecks } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Trash2, ListChecks } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { MaterialWriteOff } from './materialWriteOffSlice';
@@ -8,19 +8,29 @@ import { writeOffStatuses } from '@/utils/getStatusColor';
 import { formatDate } from '@/utils/formatData';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { TabBtn } from '../pto/workPerformed/WorkPerformedTable';
+import type { Pagination } from '@/features/users/userSlice';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface MaterialWriteOffTableProps {
     data: MaterialWriteOff[];
     refs: Record<string, ReferenceResult>;
-    onEdit: (item: MaterialWriteOff) => void;
-    onDelete: (id: number) => void;
+    loading?: boolean;
+    pagination?: Pagination | null;
+    onPageChange?: (page: number) => void;
+    onSizeChange?: (size: number) => void;
+    // onEdit: (item: MaterialWriteOff) => void;
+    // onDelete: (id: number) => void;
 }
 
 export default function MaterialWriteOffTable({
     data,
     refs,
-    onEdit,
-    onDelete,
+    loading = false,
+    pagination = null,
+    onPageChange,
+    onSizeChange,
+    // onEdit,
+    // onDelete,
 }: MaterialWriteOffTableProps) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
 
@@ -40,11 +50,13 @@ export default function MaterialWriteOffTable({
         );
     };
 
-    const lookup = (refName: string, id?: number | null, fallback = '—') => {
-        if (!id) return fallback;
-
-        return refs[refName]?.lookup?.(Number(id)) || fallback;
-    };
+    if (loading) {
+        return (
+            <div className="w-full p-4 overflow-hidden text-sm text-gray-500 bg-white border rounded-xl">
+                Загрузка...
+            </div>
+        );
+    }
 
     /************************************************************************************************************************/
     return (
@@ -54,49 +66,59 @@ export default function MaterialWriteOffTable({
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
-                                <th className="px-4 py-3 text-left bg-blue-50"></th>
+                                <th className="px-1 py-1 text-left bg-blue-50"></th>
 
-                                <th className="w-20 px-3 py-3 text-sm font-semibold text-left text-blue-700 bg-blue-50">
+                                <th className="px-1 py-1 text-sm font-semibold text-left text-violet-700 bg-blue-50">
                                     №
                                 </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
                                         Статус
                                     </div>
                                 </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
                                         Блок
                                     </div>
                                 </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
                                         Склад
                                     </div>
                                 </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
                                         АВР
                                     </div>
                                 </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
+                                        Выполненная работа
+                                    </div>
+                                </th>
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
                                         Дата списания
                                     </div>
                                 </th>
+                                <th className="px-1 py-1 text-center border-l bg-violet-50">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
+                                        Примечание
+                                    </div>
+                                </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-blue-50 w-[760px]">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                <th className="px-1 py-1  text-center border-l bg-violet-50 w-[760px]">
+                                    <div className="text-xs font-semibold uppercase text-violet-700">
                                         Этап подписи
                                     </div>
                                 </th>
 
-                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                <th className="px-1 py-1 text-center border-l bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
                             </tr>
@@ -156,7 +178,7 @@ export default function MaterialWriteOffTable({
                                                 </button>
                                             </td>
 
-                                            <td className="px-2 py-2 text-xs font-medium text-left text-gray-700 bg-blue-40/20">
+                                            <td className="px-2 py-2 text-xs font-medium text-left text-gray-700 bg-violet-40/20">
                                                 {writeOff.id}
                                             </td>
 
@@ -175,23 +197,34 @@ export default function MaterialWriteOffTable({
                                             </td>
 
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
-                                                {lookup('prjBlocks', writeOff.block_id)}
+                                                {refs.projectBlocks?.lookup?.(
+                                                    Number(writeOff.block_id),
+                                                ) || statusInfo.label}
                                             </td>
 
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700">
-                                                {writeOff.warehouse?.name ||
-                                                    lookup('warehouses', writeOff.warehouse_id)}
+                                                {refs.warehouses?.lookup?.(
+                                                    Number(writeOff.warehouse_id),
+                                                ) || statusInfo.label}
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {writeOff.work_performed?.performed_person_name ||
-                                                    `АВР №${writeOff.work_performed_id}`}
+                                                {`Акт №${writeOff.work_performed_id}`}
+                                            </td>
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900">
+                                                {refs.services?.lookup?.(
+                                                    Number(
+                                                        writeOff.work_performed_item?.service_id,
+                                                    ),
+                                                ) || statusInfo.label}
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
                                                 {formatDate(writeOff.write_off_date)}
                                             </td>
-
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900">
+                                                {writeOff.note || '---'}
+                                            </td>
                                             <td className="px-2 py-2 pl-2 text-sm text-center text-gray-900">
                                                 <div className="grid grid-cols-4 gap-3 text-xs items-left">
                                                     {signatures.map((signature) => (
@@ -207,8 +240,7 @@ export default function MaterialWriteOffTable({
 
                                                             <div className="text-[0.75rem] text-gray-500 italic truncate pl-1">
                                                                 {signature.userId
-                                                                    ? lookup(
-                                                                          'users',
+                                                                    ? refs.users.lookup(
                                                                           signature.userId,
                                                                       )
                                                                     : '—'}
@@ -241,33 +273,13 @@ export default function MaterialWriteOffTable({
 
                                             <td className="px-3 py-2 border-l bg-gray-50">
                                                 <div className="flex items-center justify-center">
-                                                    <StyledTooltip title="Редактировать">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onEdit(writeOff);
-                                                            }}
-                                                            className="
-                                                                p-1.5
-                                                                text-gray-400
-                                                                hover:text-blue-600
-                                                                hover:bg-blue-50
-                                                                rounded
-                                                                transition-colors
-                                                            "
-                                                        >
-                                                            <Pencil className="w-4 h-4" />
-                                                        </button>
-                                                    </StyledTooltip>
-
                                                     <StyledTooltip title="Удалить">
                                                         <button
                                                             type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onDelete(writeOff.id);
-                                                            }}
+                                                            // onClick={(e) => {
+                                                            //     e.stopPropagation();
+                                                            //     onDelete(writeOff.id);
+                                                            // }}
                                                             className="
                                                                 p-1.5
                                                                 text-gray-400
@@ -334,20 +346,19 @@ export default function MaterialWriteOffTable({
                                                                                     </td>
 
                                                                                     <td className="px-2 py-2 text-sm text-gray-800">
-                                                                                        {item
-                                                                                            .material
-                                                                                            ?.name ||
-                                                                                            lookup(
-                                                                                                'materials',
-                                                                                                item.material_id,
-                                                                                            )}
+                                                                                        {item.material_id
+                                                                                            ? refs.materials.lookup(
+                                                                                                  item.material_id,
+                                                                                              )
+                                                                                            : '—'}
                                                                                     </td>
 
                                                                                     <td className="px-2 py-2 text-sm text-center text-gray-700">
-                                                                                        {lookup(
-                                                                                            'unitsOfMeasure',
-                                                                                            item.unit_of_measure,
-                                                                                        )}
+                                                                                        {item.unit_of_measure
+                                                                                            ? refs.unitsOfMeasure.lookup(
+                                                                                                  item.unit_of_measure,
+                                                                                              )
+                                                                                            : '—'}
                                                                                     </td>
 
                                                                                     <td className="px-2 py-2 font-bold text-right text-green-700">
@@ -355,6 +366,13 @@ export default function MaterialWriteOffTable({
                                                                                             item.quantity
                                                                                         }
                                                                                     </td>
+                                                                                    {/* <td className="px-2 py-2 text-sm text-center text-gray-700">
+                                                                                        {item.movement_id
+                                                                                            ? refs.materialMovementStatuses.lookup(
+                                                                                                  item.movement_id,
+                                                                                              )
+                                                                                            : '—'}
+                                                                                    </td> */}
 
                                                                                     <td className="px-2 py-2 text-sm text-gray-600">
                                                                                         {item.note ||
@@ -387,7 +405,6 @@ export default function MaterialWriteOffTable({
                                     </React.Fragment>
                                 );
                             })}
-
                             {!data?.length && (
                                 <tr>
                                     <td colSpan={9} className="py-20 text-center">
@@ -402,6 +419,20 @@ export default function MaterialWriteOffTable({
                             )}
                         </tbody>
                     </table>
+                    {pagination && (
+                        <TablePagination
+                            pagination={pagination}
+                            onPageChange={(newPage) => {
+                                onPageChange?.(newPage);
+                            }}
+                            onSizeChange={(newSize) => {
+                                onSizeChange?.(newSize);
+                            }}
+                            sizeOptions={[10, 25, 50, 100]}
+                            showFirstButton
+                            showLastButton
+                        />
+                    )}
                 </div>
             </div>
         </div>

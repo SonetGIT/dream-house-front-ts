@@ -114,7 +114,7 @@ export const purchaseOrderItemStatuses: Record<number, { label: string; classNam
     },
 };
 
-//writeOffStatuses/gets
+//materialWriteOffStatuses/gets
 export const writeOffStatuses: Record<number, { label: string; className: string }> = {
     1: { label: 'Создан', className: 'bg-gray-500/15 text-gray-700 border border-gray-400' },
     2: {

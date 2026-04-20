@@ -2,9 +2,10 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 
-const MATERIAL_WRITE_OFF_ENDPOINT = '/materialWriteOff';
+const MATERIAL_WRITE_OFF_ENDPOINT = '/materialWriteOffs';
 
 /* TYPES */
+
 export interface MaterialWriteOffWarehouse {
     id: number;
     name: string;
@@ -18,9 +19,9 @@ export interface MaterialWriteOffWorkPerformed {
 
 export interface MaterialWriteOffWorkPerformedItem {
     id: number;
-    service_id: number;
-    stage_id: number;
-    subsection_id: number;
+    service_id: number | null;
+    stage_id: number | null;
+    subsection_id: number | null;
     quantity: number;
 }
 
@@ -33,14 +34,14 @@ export interface MaterialWriteOffItem {
     id: number;
     material_write_off_id: number;
     material_id: number;
-    unit_of_measure: number;
+    unit_of_measure: number | null;
     quantity: number;
     note: string | null;
     movement_id: number | null;
     created_at: string;
     updated_at: string;
     deleted: boolean;
-    material?: MaterialWriteOffItemMaterial;
+    material?: MaterialWriteOffItemMaterial | null;
 }
 
 export interface MaterialWriteOff {
@@ -76,13 +77,14 @@ export interface MaterialWriteOff {
     updated_at: string;
     deleted: boolean;
 
-    warehouse?: MaterialWriteOffWarehouse;
-    work_performed?: MaterialWriteOffWorkPerformed;
-    work_performed_item?: MaterialWriteOffWorkPerformedItem;
+    warehouse?: MaterialWriteOffWarehouse | null;
+    work_performed?: MaterialWriteOffWorkPerformed | null;
+    work_performed_item?: MaterialWriteOffWorkPerformedItem | null;
     items?: MaterialWriteOffItem[];
 }
 
 /* SEARCH PARAMS */
+
 export interface MaterialWriteOffSearchParams {
     project_id?: number;
     block_id?: number;
@@ -97,9 +99,10 @@ export interface MaterialWriteOffSearchParams {
 }
 
 /* PAYLOADS */
+
 export interface MaterialWriteOffItemPayload {
     material_id: number;
-    unit_of_measure: number;
+    unit_of_measure: number | null;
     quantity: number;
     note?: string | null;
     movement_id?: number | null;
@@ -140,7 +143,6 @@ export type UpdateMaterialWriteOffPayload = Partial<CreateMaterialWriteOffPayloa
     posted_at?: string | null;
 };
 
-/* STATE */
 interface MaterialWriteOffState {
     data: MaterialWriteOff[];
     current: MaterialWriteOff | null;
@@ -161,21 +163,51 @@ const initialState: MaterialWriteOffState = {
 
 /* HELPERS */
 
-const normalizeList = (value: any): MaterialWriteOff[] => {
-    if (Array.isArray(value)) return value;
-    if (Array.isArray(value?.data)) return value.data;
-    if (Array.isArray(value?.items)) return value.items;
-    if (value?.id) return [value];
+const normalizeList = (value: unknown): MaterialWriteOff[] => {
+    const data = value as any;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.rows)) return data.rows;
+    if (data?.id) return [data];
 
     return [];
 };
 
-const normalizeItem = (value: any): MaterialWriteOff | null => {
-    if (!value) return null;
-    if (value?.id) return value;
-    if (value?.data?.id) return value.data;
+const normalizeItem = (value: unknown): MaterialWriteOff | null => {
+    const data = value as any;
+
+    if (!data) return null;
+    if (data?.id) return data;
+    if (data?.data?.id) return data.data;
+    if (data?.item?.id) return data.item;
 
     return null;
+};
+
+const upsertItem = (state: MaterialWriteOffState, item: MaterialWriteOff) => {
+    const index = state.data.findIndex((row) => row.id === item.id);
+
+    if (index !== -1) {
+        state.data[index] = item;
+    } else {
+        state.data.unshift(item);
+    }
+
+    if (state.current?.id === item.id) {
+        state.current = item;
+    }
+};
+
+const decrementPaginationTotal = (pagination: Pagination | null) => {
+    if (!pagination) return;
+
+    pagination.total = Math.max(Number(pagination.total || 0) - 1, 0);
+
+    if ('pages' in pagination) {
+        pagination.pages = Math.max(Math.ceil(pagination.total / pagination.size), 1);
+    }
 };
 
 /* THUNKS */
@@ -185,7 +217,7 @@ export const fetchMaterialWriteOffs = createAsyncThunk<
     { data: MaterialWriteOff[]; pagination: Pagination | null },
     MaterialWriteOffSearchParams,
     { rejectValue: string }
->('materialWriteOff/search', async (params, { rejectWithValue }) => {
+>('materialWriteOffs/search', async (params, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff[]>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/search`,
@@ -207,7 +239,7 @@ export const fetchMaterialWriteOffById = createAsyncThunk<
     MaterialWriteOff,
     number,
     { rejectValue: string }
->('materialWriteOff/getById', async (id, { rejectWithValue }) => {
+>('materialWriteOffs/getById', async (id, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/${id}`,
@@ -231,7 +263,7 @@ export const createMaterialWriteOff = createAsyncThunk<
     MaterialWriteOff,
     CreateMaterialWriteOffPayload,
     { rejectValue: string }
->('materialWriteOff/create', async (payload, { rejectWithValue }) => {
+>('materialWriteOffs/create', async (payload, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/create`,
@@ -256,7 +288,7 @@ export const updateMaterialWriteOff = createAsyncThunk<
     MaterialWriteOff,
     { id: number; data: UpdateMaterialWriteOffPayload },
     { rejectValue: string }
->('materialWriteOff/update', async ({ id, data }, { rejectWithValue }) => {
+>('materialWriteOffs/update', async ({ id, data }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/update/${id}`,
@@ -278,7 +310,7 @@ export const updateMaterialWriteOff = createAsyncThunk<
 
 // DELETE
 export const deleteMaterialWriteOff = createAsyncThunk<number, number, { rejectValue: string }>(
-    'materialWriteOff/delete',
+    'materialWriteOffs/delete',
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`${MATERIAL_WRITE_OFF_ENDPOINT}/delete/${id}`, 'DELETE');
@@ -295,7 +327,7 @@ export const updateMaterialWriteOffStatus = createAsyncThunk<
     MaterialWriteOff,
     { id: number; status: number },
     { rejectValue: string }
->('materialWriteOff/updateStatus', async ({ id, status }, { rejectWithValue }) => {
+>('materialWriteOffs/updateStatus', async ({ id, status }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/update/${id}`,
@@ -318,13 +350,15 @@ export const updateMaterialWriteOffStatus = createAsyncThunk<
 /* SLICE */
 
 const materialWriteOffSlice = createSlice({
-    name: 'materialWriteOff',
+    name: 'materialWriteOffs',
     initialState,
     reducers: {
         clearMaterialWriteOffs: (state) => {
             state.data = [];
             state.current = null;
             state.pagination = null;
+            state.loading = false;
+            state.submitting = false;
             state.error = null;
         },
 
@@ -357,6 +391,7 @@ const materialWriteOffSlice = createSlice({
             .addCase(fetchMaterialWriteOffById.fulfilled, (state, action) => {
                 state.loading = false;
                 state.current = action.payload;
+                upsertItem(state, action.payload);
             })
             .addCase(fetchMaterialWriteOffById.rejected, (state, action) => {
                 state.loading = false;
@@ -370,11 +405,18 @@ const materialWriteOffSlice = createSlice({
             })
             .addCase(createMaterialWriteOff.fulfilled, (state, action) => {
                 state.submitting = false;
-                state.data.unshift(action.payload);
                 state.current = action.payload;
+                state.data.unshift(action.payload);
 
                 if (state.pagination) {
                     state.pagination.total += 1;
+
+                    if ('pages' in state.pagination) {
+                        state.pagination.pages = Math.max(
+                            Math.ceil(state.pagination.total / state.pagination.size),
+                            1,
+                        );
+                    }
                 }
             })
             .addCase(createMaterialWriteOff.rejected, (state, action) => {
@@ -389,16 +431,7 @@ const materialWriteOffSlice = createSlice({
             })
             .addCase(updateMaterialWriteOff.fulfilled, (state, action) => {
                 state.submitting = false;
-
-                const index = state.data.findIndex((item) => item.id === action.payload.id);
-
-                if (index !== -1) {
-                    state.data[index] = action.payload;
-                }
-
-                if (state.current?.id === action.payload.id) {
-                    state.current = action.payload;
-                }
+                upsertItem(state, action.payload);
             })
             .addCase(updateMaterialWriteOff.rejected, (state, action) => {
                 state.submitting = false;
@@ -418,9 +451,7 @@ const materialWriteOffSlice = createSlice({
                     state.current = null;
                 }
 
-                if (state.pagination) {
-                    state.pagination.total = Math.max(state.pagination.total - 1, 0);
-                }
+                decrementPaginationTotal(state.pagination);
             })
             .addCase(deleteMaterialWriteOff.rejected, (state, action) => {
                 state.submitting = false;
@@ -434,16 +465,7 @@ const materialWriteOffSlice = createSlice({
             })
             .addCase(updateMaterialWriteOffStatus.fulfilled, (state, action) => {
                 state.submitting = false;
-
-                const index = state.data.findIndex((item) => item.id === action.payload.id);
-
-                if (index !== -1) {
-                    state.data[index] = action.payload;
-                }
-
-                if (state.current?.id === action.payload.id) {
-                    state.current = action.payload;
-                }
+                upsertItem(state, action.payload);
             })
             .addCase(updateMaterialWriteOffStatus.rejected, (state, action) => {
                 state.submitting = false;

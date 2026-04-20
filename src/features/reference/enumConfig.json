@@ -224,5 +224,12 @@
             "id": "id",
             "name": ["name"]
         }
+    },
+    "materialWriteOffStatuses": {
+        "apiName": "/materialWriteOffStatuses/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }

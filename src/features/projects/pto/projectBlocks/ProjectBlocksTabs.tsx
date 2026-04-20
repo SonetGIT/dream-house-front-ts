@@ -21,7 +21,6 @@ export default function ProjectBlocksTabs() {
                     if (value === 1) navigate('materialRequests');
                     if (value === 2) navigate('purchaseOrders');
                     if (value === 3) navigate('workPerformed');
-                    if (value === 4) navigate('materialWriteOff');
                 }}
                 sx={{ mb: 1 }}
             >
@@ -29,7 +28,6 @@ export default function ProjectBlocksTabs() {
                 <Tab label="Заявка на материалы" />
                 <Tab label="Заявка на закуп" />
                 <Tab label="АВР" />
-                <Tab label="МПБ" />
             </Tabs>
 
             <Divider sx={{ mb: 2 }} />

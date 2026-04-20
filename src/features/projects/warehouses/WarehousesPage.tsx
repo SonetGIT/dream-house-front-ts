@@ -16,11 +16,11 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
 import { CheckCircle2, FolderOpen, TrendingUp, XCircle } from 'lucide-react';
 import { Add } from '@mui/icons-material';
-import WarehousesTable from './WarehousesTable';
 import { TablePagination } from '@/components/ui/TablePagination';
 import toast from 'react-hot-toast';
 import { deleteWarehouseItem } from '../warehouseStocks/warehouseStocksSlice';
 import { WarehouseForm } from './WarehouseForm';
+import WarehousesTable from './WarehousesTable';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {
@@ -39,8 +39,8 @@ export default function WarehousesPage() {
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
 
-    const emptyWarehouses = data.filter((w) => !w.items?.length).length;
-    const filledWarehouses = data.filter((w) => w.items && w.items.length > 0).length;
+    const emptyWarehouses = data.filter((w: Warehouse) => !w.items?.length).length;
+    const filledWarehouses = data.filter((w: Warehouse) => w.items && w.items.length > 0).length;
     const fillPercent = data.length > 0 ? Math.round((filledWarehouses / data.length) * 100) : 0;
 
     // Справочники
@@ -50,6 +50,11 @@ export default function WarehousesPage() {
         materials: useReference('materials'),
         materialTypes: useReference('materialTypes'),
         unitsOfMeasure: useReference('unitsOfMeasure'),
+        materialWriteOffStatuses: useReference('materialWriteOffStatuses'),
+        projectBlocks: useReference('projectBlocks'),
+        services: useReference('services'),
+        serviceTypes: useReference('serviceTypes'),
+        materialMovementStatuses: useReference('materialMovementStatuses'),
     };
 
     //Первичная загрузка =====
@@ -161,7 +166,7 @@ export default function WarehousesPage() {
                 </Button>
             </Box>
 
-            <div className="flex items-center gap-6 mb-6 text-sm">
+            {/* <div className="flex items-center gap-6 mb-6 text-sm">
                 <div className="flex items-center gap-2">
                     <CheckCircle2 style={{ width: '16px', height: '16px', color: '#4caf50' }} />
                     <span style={{ fontSize: '13px', color: '#757575' }}>Заполненных:</span>
@@ -210,7 +215,7 @@ export default function WarehousesPage() {
                         {fillPercent}%
                     </span>
                 </div>
-            </div>
+            </div> */}
             {/* CONTENT */}
             {loading ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>

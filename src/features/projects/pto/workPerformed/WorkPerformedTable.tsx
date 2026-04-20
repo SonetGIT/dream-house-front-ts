@@ -565,9 +565,6 @@ export default function WorkPerformedTable(props: PropsType) {
                                                                 <WorkPerformedFilesSection
                                                                     workPerformedId={workPerf.id}
                                                                 />
-                                                                {/* <DocumentFilesList
-                                                                    documentId={workPerf.id}
-                                                                /> */}
                                                             </div>
                                                         )}
                                                     </div>
