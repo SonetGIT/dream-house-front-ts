@@ -11,7 +11,7 @@ import WorkPerformedTable from './WorkPerformedTable';
 import { useReference } from '@/features/reference/useReference';
 import { TablePagination } from '@/components/ui/TablePagination';
 import Modal from '@/components/ui/Modal';
-import WorkPerformedFlow from './creatAVR/WorkPerformedFlow';
+import WorkPerformedFlow from './creatAvr/WorkPerformedFlow';
 import { calcRowTotal } from '@/utils/calcRowTotal';
 
 /**********************************************************************************************************/

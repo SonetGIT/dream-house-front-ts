@@ -8,10 +8,11 @@ interface WarehouseTabsProps {
 const tabs: { key: WarehouseTabType; label: string }[] = [
     { key: 'materials', label: 'Материалы' },
     { key: 'movements', label: 'Перемещены' },
-    { key: 'writeOffAVR', label: 'Списание по АВР' },
-    { key: 'writeOffMPB', label: 'Списание МПБ' },
+    { key: 'writeOffAvr', label: 'Списание по АВР' },
+    { key: 'writeOffMbp', label: 'Списание МБП' },
 ];
 
+/*******************************************************************************************************/
 export default function WarehouseTabs({ activeTab, onChange }: WarehouseTabsProps) {
     return (
         <div className="flex gap-2">

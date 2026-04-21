@@ -1,76 +1,54 @@
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import MaterialWriteOffTable from '../materialWriteOffs/MaterialWriteOffTable';
-import {
-    fetchMaterialWriteOffs,
-    signMaterialWriteOff,
-    type MaterialWriteOff,
-} from '../materialWriteOffs/materialWriteOffSlice';
 import type { User } from '@/features/users/userSlice';
+import {
+    fetchMbpWriteOffs,
+    signMbpWriteOff,
+    type MbpWriteOff,
+} from '../mbpWriteOffs/mbpWriteOffSlice';
+import MbpWriteOffTable from '../mbpWriteOffs/MbpWriteOffTable';
 
-interface WarehouseWriteOffAvrTabProps {
+interface WarehouseWriteOffMbpTabProps {
     warehouseId: number;
     refs: Record<string, ReferenceResult>;
 }
 
-/**********************************************************************************************************************/
-export default function WarehouseWriteOffAvrTab({
+export default function WarehouseWriteOffMbpTab({
     warehouseId,
     refs,
-}: WarehouseWriteOffAvrTabProps) {
+}: WarehouseWriteOffMbpTabProps) {
     const dispatch = useAppDispatch();
-    const { data, pagination, loading } = useAppSelector((state) => state.materialWriteOff);
+    const { data, pagination, loading } = useAppSelector((state) => state.mbpWriteOff);
     const currentUser = useAppSelector((state) => state.auth.user);
 
-    const canSign = (writeOff: MaterialWriteOff, user?: User | null) => {
+    const canSign = (writeOff: MbpWriteOff, user?: User | null) => {
         if (!user) return false;
 
         const userId = Number(user.id);
         const roleId = Number(user.role_id);
 
-        if (roleId === 1) {
-            return !isFullyApproved(writeOff); // Администратор может подписать все этапы
-        }
+        if (roleId === 1) return !isFullyApproved(writeOff); // Админ может подписать всё
 
         switch (roleId) {
-            // Руководитель
             case 2:
-                return (
-                    !writeOff.signed_by_general_director &&
-                    (!writeOff.general_director_user_id ||
-                        Number(writeOff.general_director_user_id) === userId)
-                );
+                return !writeOff.signed_by_general_director;
 
-            // Прораб
             case 4:
-                return (
-                    !writeOff.signed_by_foreman &&
-                    (!writeOff.foreman_user_id || Number(writeOff.foreman_user_id) === userId)
-                );
+                return !writeOff.signed_by_foreman;
 
-            // Инженер ПТО
             case 10:
-                return (
-                    !writeOff.signed_by_planning_engineer &&
-                    (!writeOff.planning_engineer_user_id ||
-                        Number(writeOff.planning_engineer_user_id) === userId)
-                );
+                return !writeOff.signed_by_planning_engineer;
 
-            // Главный инженер
             case 11:
-                return (
-                    !writeOff.signed_by_main_engineer &&
-                    (!writeOff.main_engineer_user_id ||
-                        Number(writeOff.main_engineer_user_id) === userId)
-                );
+                return !writeOff.signed_by_main_engineer;
 
             default:
                 return false;
         }
     };
 
-    const isFullyApproved = (writeOff: MaterialWriteOff) => {
+    const isFullyApproved = (writeOff: MbpWriteOff) => {
         return (
             !!writeOff.signed_by_foreman &&
             !!writeOff.signed_by_planning_engineer &&
@@ -99,7 +77,7 @@ export default function WarehouseWriteOffAvrTab({
         size = pagination?.size ?? 10,
     ) => {
         await dispatch(
-            fetchMaterialWriteOffs({
+            fetchMbpWriteOffs({
                 warehouse_id: warehouseId,
                 page,
                 size,
@@ -107,7 +85,7 @@ export default function WarehouseWriteOffAvrTab({
         ).unwrap();
     };
 
-    const handleSign = async (writeOff: MaterialWriteOff) => {
+    const handleSign = async (writeOff: MbpWriteOff) => {
         if (!currentUser) {
             toast.error('У вас нет прав на подписание');
             return;
@@ -116,27 +94,15 @@ export default function WarehouseWriteOffAvrTab({
         const roleId = Number(currentUser.role_id);
 
         try {
-            // Администратор подписывает все неподписанные этапы
             if (roleId === 1) {
                 const stages: Array<
                     'foreman' | 'planning_engineer' | 'main_engineer' | 'general_director'
                 > = [];
 
-                if (!writeOff.signed_by_foreman) {
-                    stages.push('foreman');
-                }
-
-                if (!writeOff.signed_by_planning_engineer) {
-                    stages.push('planning_engineer');
-                }
-
-                if (!writeOff.signed_by_main_engineer) {
-                    stages.push('main_engineer');
-                }
-
-                if (!writeOff.signed_by_general_director) {
-                    stages.push('general_director');
-                }
+                if (!writeOff.signed_by_foreman) stages.push('foreman');
+                if (!writeOff.signed_by_planning_engineer) stages.push('planning_engineer');
+                if (!writeOff.signed_by_main_engineer) stages.push('main_engineer');
+                if (!writeOff.signed_by_general_director) stages.push('general_director');
 
                 if (!stages.length) {
                     toast.success('Документ уже полностью подписан');
@@ -145,7 +111,7 @@ export default function WarehouseWriteOffAvrTab({
 
                 for (const stage of stages) {
                     await dispatch(
-                        signMaterialWriteOff({
+                        signMbpWriteOff({
                             id: writeOff.id,
                             stage,
                         }),
@@ -160,23 +126,23 @@ export default function WarehouseWriteOffAvrTab({
                 }
 
                 await dispatch(
-                    signMaterialWriteOff({
+                    signMbpWriteOff({
                         id: writeOff.id,
                         stage,
                     }),
                 ).unwrap();
             }
 
-            toast.success('Списание по АВР подписано');
+            toast.success('Списание МБП подписано');
             await refetchWriteOffs();
         } catch (e: any) {
             console.error(e);
-            toast.error(e?.message || 'Ошибка подписания списания');
+            toast.error(e?.message || 'Ошибка подписания списания МБП');
         }
     };
 
     return (
-        <MaterialWriteOffTable
+        <MbpWriteOffTable
             data={data}
             refs={refs}
             pagination={pagination}

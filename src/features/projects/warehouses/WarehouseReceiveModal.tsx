@@ -7,7 +7,7 @@ import type {
 } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import PurchaseOrderItemsReceiveTable from './PurchaseOrderItemsReceiveTable';
 
-interface Props {
+interface WarehouseReceiveModalProps {
     warehouse: Warehouse | null;
     items: PurchaseOrderItem[];
     refs: Record<string, ReferenceResult>;
@@ -16,6 +16,8 @@ interface Props {
     onSubmit: (items: ReceivePurchaseOrderItemPayload[]) => void;
 }
 
+// Прием товара
+/**********************************************************************************************************************/
 export default function WarehouseReceiveModal({
     warehouse,
     items,
@@ -23,7 +25,7 @@ export default function WarehouseReceiveModal({
     loading,
     onClose,
     onSubmit,
-}: Props) {
+}: WarehouseReceiveModalProps) {
     return (
         <Modal
             size="full"

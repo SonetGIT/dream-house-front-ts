@@ -379,7 +379,6 @@ export default function WorkPerformedTable(props: PropsType) {
 
                                                             {/* USER */}
                                                             <div className="text-[0.75rem] text-gray-500 italic truncate pl-1">
-                                                                {s.userId}
                                                                 {s.userId
                                                                     ? props.refs.users.lookup(
                                                                           s.userId,

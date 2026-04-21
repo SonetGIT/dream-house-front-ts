@@ -1,41 +1,33 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '../../reference/useReference';
 import {
     createWarehouse,
-    deleteWarehouse,
     fetchWarehouses,
     updateWarehouse,
     type Warehouse,
     type WarehouseFormData,
 } from './warehousesSlice';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import type { ProjectOutletContext } from '../pto/PtoPage';
 import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
 import { CheckCircle2, FolderOpen, TrendingUp, XCircle } from 'lucide-react';
 import { Add } from '@mui/icons-material';
 import { TablePagination } from '@/components/ui/TablePagination';
 import toast from 'react-hot-toast';
-import { deleteWarehouseItem } from '../warehouseStocks/warehouseStocksSlice';
-import { WarehouseForm } from './WarehouseForm';
+import { WarehouseCreateForm } from './WarehouseCreateForm';
 import WarehousesTable from './WarehousesTable';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {
     const { projectId } = useOutletContext<ProjectOutletContext>();
-    const projectIdNum = projectId ? Number(projectId) : null;
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.warehouses);
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
     const [formLoading, setFormLoading] = useState(false);
-    const [deleteState, setDeleteState] = useState<{
-        type: 'warehouse' | 'warehouseItem';
-        id: number;
-    } | null>(null);
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
 
@@ -127,35 +119,6 @@ export default function WarehousesPage() {
         }
     };
 
-    /* удаление */
-    const confirmDelete = useCallback(async () => {
-        if (!deleteState) return;
-
-        try {
-            if (deleteState.type === 'warehouse') {
-                await dispatch(deleteWarehouse(deleteState.id)).unwrap();
-                toast.success('Склад удален');
-            } else {
-                await dispatch(deleteWarehouseItem(deleteState.id)).unwrap();
-                toast.success('Позиция из склада удалена');
-
-                if (projectIdNum) {
-                    dispatch(
-                        fetchWarehouses({
-                            project_id: projectIdNum,
-                            page,
-                            size,
-                        }),
-                    );
-                }
-            }
-        } catch {
-            toast.error('Ошибка удаления, проверьте права доступа на удаления');
-        } finally {
-            setDeleteState(null);
-        }
-    }, [deleteState, dispatch, projectIdNum]);
-
     /********************************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
@@ -166,56 +129,6 @@ export default function WarehousesPage() {
                 </Button>
             </Box>
 
-            {/* <div className="flex items-center gap-6 mb-6 text-sm">
-                <div className="flex items-center gap-2">
-                    <CheckCircle2 style={{ width: '16px', height: '16px', color: '#4caf50' }} />
-                    <span style={{ fontSize: '13px', color: '#757575' }}>Заполненных:</span>
-                    <span
-                        className="rounded"
-                        style={{
-                            backgroundColor: '#4caf50',
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            padding: '1px 8px',
-                        }}
-                    >
-                        {filledWarehouses}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <XCircle style={{ width: '16px', height: '16px', color: '#f44336' }} />
-                    <span style={{ fontSize: '13px', color: '#757575' }}>Пустых:</span>
-                    <span
-                        className="rounded"
-                        style={{
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            padding: '1px 8px',
-                        }}
-                    >
-                        {emptyWarehouses}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <TrendingUp style={{ width: '16px', height: '16px', color: '#9c27b0' }} />
-                    <span style={{ fontSize: '13px', color: '#757575' }}>Заполнение:</span>
-                    <span
-                        className="rounded"
-                        style={{
-                            backgroundColor: '#9c27b0',
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            padding: '1px 8px',
-                        }}
-                    >
-                        {fillPercent}%
-                    </span>
-                </div>
-            </div> */}
             {/* CONTENT */}
             {loading ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -234,13 +147,10 @@ export default function WarehousesPage() {
             ) : (
                 <>
                     <WarehousesTable
+                        projectId={projectId}
                         data={data}
                         refs={refs}
                         onEdit={handleEdit}
-                        // onDeleteWarehouseId={(id) => setDeleteState({ type: 'warehouse', id })}
-                        // onDeleteWHouseItemId={(itemId) =>
-                        //     setDeleteState({ type: 'warehouseItem', id: itemId })
-                        // }
                     />
                     {pagination && (
                         <TablePagination
@@ -262,7 +172,7 @@ export default function WarehousesPage() {
                 onClose={() => setModal(null)}
                 title="Создать новый склад"
             >
-                <WarehouseForm
+                <WarehouseCreateForm
                     refs={refs}
                     onSubmit={handleCreateWhouse}
                     onCancel={() => setModal(null)}
@@ -276,7 +186,7 @@ export default function WarehousesPage() {
                 onClose={() => setModal(null)}
                 title="Редактировать данные склада"
             >
-                <WarehouseForm
+                <WarehouseCreateForm
                     warehouse={selectedWarehouse}
                     refs={refs}
                     onSubmit={handleUpdateWhouse}
@@ -284,23 +194,6 @@ export default function WarehousesPage() {
                     isLoading={formLoading}
                 />
             </Modal>
-
-            {/* DELETE CONFIRM */}
-            <ConfirmDialog
-                open={deleteState?.type === 'warehouse'}
-                message="Это действие нельзя отменить."
-                title="Удалить склад?"
-                onConfirm={confirmDelete}
-                onCancel={() => setDeleteState(null)}
-            />
-
-            <ConfirmDialog
-                open={deleteState?.type === 'warehouseItem'}
-                message="Это действие нельзя отменить."
-                title="Удалить позицию из склада?"
-                onConfirm={confirmDelete}
-                onCancel={() => setDeleteState(null)}
-            />
         </Paper>
     );
 }

@@ -24,7 +24,7 @@ function getInitialFormData(warehouse?: WarehouseFormData | null): WarehouseForm
 }
 
 /******************************************************************************************************/
-export function WarehouseForm({
+export function WarehouseCreateForm({
     warehouse,
     refs,
     onSubmit,

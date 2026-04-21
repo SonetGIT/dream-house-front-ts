@@ -2,17 +2,19 @@ import React from 'react';
 import { Box, Button, Collapse } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { ChevronDown, ChevronRight, MinusCircle, Pencil, Phone } from 'lucide-react';
+
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
+
 import type { Warehouse } from './warehousesSlice';
 import WarehouseTabs from './WarehouseTabs';
 import WarehouseMaterialsTab from './tabs/WarehouseMaterialsTab';
 import WarehouseMovementsTab from './tabs/WarehouseMovementsTab';
-import WarehouseWriteOffAvrTab from './tabs/WarehouseWriteOffAvrTab';
-import WarehouseWriteOffMpbTab from './tabs/WarehouseWriteOffMpbTab';
+import WarehouseWriteOffAvrTab from './tabs/WarehouseWriteOffAVRTab';
+import WarehouseWriteOffMbpTab from './tabs/WarehouseWriteOffMBPTab';
 
-export type WarehouseTabType = 'materials' | 'movements' | 'writeOffAVR' | 'writeOffMPB';
+export type WarehouseTabType = 'materials' | 'movements' | 'writeOffAvr' | 'writeOffMbp';
 
 interface WarehouseRowProps {
     warehouse: Warehouse;
@@ -23,8 +25,14 @@ interface WarehouseRowProps {
     onTabChange: (tab: WarehouseTabType) => void;
     onEdit: (warehouse: Warehouse) => void;
     onOpenReceive: (warehouse: Warehouse) => void;
+    onOpenWriteOffAvr: (warehouse: Warehouse) => void;
+    onOpenWriteOffMbp: (warehouse: Warehouse) => void;
 }
 
+{
+    /* ДАННЫЕ СКЛАДА */
+}
+/**********************************************************************************************************************/
 export default function WarehouseRow({
     warehouse,
     refs,
@@ -34,6 +42,8 @@ export default function WarehouseRow({
     onTabChange,
     onEdit,
     onOpenReceive,
+    onOpenWriteOffAvr,
+    onOpenWriteOffMbp,
 }: WarehouseRowProps) {
     return (
         <React.Fragment>
@@ -54,7 +64,7 @@ export default function WarehouseRow({
                         )}
                     </button>
                 </td>
-
+                {/* Данные склада (поля) */}
                 <td className="px-3 py-2">
                     <div className="text-sm font-medium text-gray-700 truncate max-w-[120px]">
                         {warehouse.name}
@@ -95,6 +105,7 @@ export default function WarehouseRow({
                     {warehouse.items?.length || 0} поз.
                 </td>
 
+                {/* Редактировать данные склада */}
                 <td className="px-3 py-2 border-l">
                     <div className="flex items-center justify-center gap-1.5">
                         <StyledTooltip title="Редактировать">
@@ -118,8 +129,10 @@ export default function WarehouseRow({
                     <Collapse in={isOpen} unmountOnExit>
                         <div className="px-3 py-2 ml-8">
                             <div className="flex items-center justify-between gap-2 mb-4 border-b">
+                                {/* ТАБЫ ВНУТРИ СКЛАДА */}
                                 <WarehouseTabs activeTab={activeTab} onChange={onTabChange} />
 
+                                {/* КНОПКИ: Принять товар, Списание по АВР, Списание МБП */}
                                 <Box sx={{ mb: 1 }}>
                                     <Button
                                         variant="outlined"
@@ -140,7 +153,7 @@ export default function WarehouseRow({
                                     <Button
                                         variant="outlined"
                                         startIcon={<MinusCircle />}
-                                        onClick={() => onChangeSafe(onTabChange, 'writeOffAVR')}
+                                        onClick={() => onOpenWriteOffAvr(warehouse)}
                                         sx={{
                                             marginLeft: 1,
                                             color: 'violet',
@@ -157,18 +170,18 @@ export default function WarehouseRow({
                                     <Button
                                         variant="outlined"
                                         startIcon={<MinusCircle />}
-                                        onClick={() => onChangeSafe(onTabChange, 'writeOffMPB')}
+                                        onClick={() => onOpenWriteOffMbp(warehouse)}
                                         sx={{
-                                            marginLeft: 1,
-                                            color: 'orange',
-                                            borderColor: 'orange',
+                                            ml: 1,
+                                            color: '#C54550', // ваш rose
+                                            borderColor: '#C54550',
                                             '&:hover': {
-                                                borderColor: 'darkorange',
-                                                backgroundColor: 'rgba(206, 154, 59, 0.1)',
+                                                borderColor: '#A3323C', // темнее для hover
+                                                backgroundColor: 'rgba(197, 69, 80, 0.1)',
                                             },
                                         }}
                                     >
-                                        Списание МПБ
+                                        Списание МБП
                                     </Button>
                                 </Box>
                             </div>
@@ -181,12 +194,12 @@ export default function WarehouseRow({
                                 <WarehouseMovementsTab warehouseId={warehouse.id} />
                             )}
 
-                            {activeTab === 'writeOffAVR' && (
+                            {activeTab === 'writeOffAvr' && (
                                 <WarehouseWriteOffAvrTab warehouseId={warehouse.id} refs={refs} />
                             )}
 
-                            {activeTab === 'writeOffMPB' && (
-                                <WarehouseWriteOffMpbTab warehouseId={warehouse.id} refs={refs} />
+                            {activeTab === 'writeOffMbp' && (
+                                <WarehouseWriteOffMbpTab warehouseId={warehouse.id} refs={refs} />
                             )}
                         </div>
                     </Collapse>
@@ -194,8 +207,4 @@ export default function WarehouseRow({
             </tr>
         </React.Fragment>
     );
-}
-
-function onChangeSafe(onChange: (tab: WarehouseTabType) => void, tab: WarehouseTabType) {
-    onChange(tab);
 }

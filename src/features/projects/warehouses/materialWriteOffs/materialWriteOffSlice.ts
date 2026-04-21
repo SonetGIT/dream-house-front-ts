@@ -20,6 +20,7 @@ export interface MaterialWriteOffWorkPerformed {
 export interface MaterialWriteOffWorkPerformedItem {
     id: number;
     service_id: number | null;
+    service_type?: number | null;
     stage_id: number | null;
     subsection_id: number | null;
     quantity: number;
@@ -100,34 +101,26 @@ export interface MaterialWriteOffSearchParams {
 
 /* PAYLOADS */
 
-export interface MaterialWriteOffItemPayload {
+export interface CreateMaterialWriteOffItemPayload {
     material_id: number;
     unit_of_measure: number | null;
     quantity: number;
     note?: string | null;
-    movement_id?: number | null;
 }
 
 export interface CreateMaterialWriteOffPayload {
-    project_id: number;
-    block_id: number;
     warehouse_id: number;
-    work_performed_id: number;
     work_performed_item_id: number;
-    write_off_date: string;
-    status?: number;
     note?: string | null;
-    created_user_id: number;
-
-    foreman_user_id?: number | null;
-    planning_engineer_user_id?: number | null;
-    main_engineer_user_id?: number | null;
-    general_director_user_id?: number | null;
-
-    items: MaterialWriteOffItemPayload[];
+    items: CreateMaterialWriteOffItemPayload[];
 }
 
-export type UpdateMaterialWriteOffPayload = Partial<CreateMaterialWriteOffPayload> & {
+export interface UpdateMaterialWriteOffPayload {
+    warehouse_id?: number;
+    work_performed_item_id?: number;
+    note?: string | null;
+    items?: CreateMaterialWriteOffItemPayload[];
+
     signed_by_foreman?: boolean | null;
     signed_by_foreman_time?: string | null;
 
@@ -141,7 +134,7 @@ export type UpdateMaterialWriteOffPayload = Partial<CreateMaterialWriteOffPayloa
     signed_by_general_director_time?: string | null;
 
     posted_at?: string | null;
-};
+}
 
 interface MaterialWriteOffState {
     data: MaterialWriteOff[];
@@ -162,7 +155,6 @@ const initialState: MaterialWriteOffState = {
 };
 
 /* HELPERS */
-
 const normalizeList = (value: unknown): MaterialWriteOff[] => {
     const data = value as any;
 
@@ -217,7 +209,7 @@ export const fetchMaterialWriteOffs = createAsyncThunk<
     { data: MaterialWriteOff[]; pagination: Pagination | null },
     MaterialWriteOffSearchParams,
     { rejectValue: string }
->('materialWriteOffs/search', async (params, { rejectWithValue }) => {
+>('materialWriteOff/search', async (params, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff[]>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/search`,
@@ -239,7 +231,7 @@ export const fetchMaterialWriteOffById = createAsyncThunk<
     MaterialWriteOff,
     number,
     { rejectValue: string }
->('materialWriteOffs/getById', async (id, { rejectWithValue }) => {
+>('materialWriteOff/getById', async (id, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/${id}`,
@@ -263,7 +255,7 @@ export const createMaterialWriteOff = createAsyncThunk<
     MaterialWriteOff,
     CreateMaterialWriteOffPayload,
     { rejectValue: string }
->('materialWriteOffs/create', async (payload, { rejectWithValue }) => {
+>('materialWriteOff/create', async (payload, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/create`,
@@ -288,7 +280,7 @@ export const updateMaterialWriteOff = createAsyncThunk<
     MaterialWriteOff,
     { id: number; data: UpdateMaterialWriteOffPayload },
     { rejectValue: string }
->('materialWriteOffs/update', async ({ id, data }, { rejectWithValue }) => {
+>('materialWriteOff/update', async ({ id, data }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/update/${id}`,
@@ -310,11 +302,10 @@ export const updateMaterialWriteOff = createAsyncThunk<
 
 // DELETE
 export const deleteMaterialWriteOff = createAsyncThunk<number, number, { rejectValue: string }>(
-    'materialWriteOffs/delete',
+    'materialWriteOff/delete',
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`${MATERIAL_WRITE_OFF_ENDPOINT}/delete/${id}`, 'DELETE');
-
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка удаления списания материалов');
@@ -327,7 +318,7 @@ export const updateMaterialWriteOffStatus = createAsyncThunk<
     MaterialWriteOff,
     { id: number; status: number },
     { rejectValue: string }
->('materialWriteOffs/updateStatus', async ({ id, status }, { rejectWithValue }) => {
+>('materialWriteOff/updateStatus', async ({ id, status }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<MaterialWriteOff>(
             `${MATERIAL_WRITE_OFF_ENDPOINT}/update/${id}`,
@@ -347,10 +338,32 @@ export const updateMaterialWriteOffStatus = createAsyncThunk<
     }
 });
 
+export const signMaterialWriteOff = createAsyncThunk<
+    MaterialWriteOff,
+    { id: number; stage: 'foreman' | 'planning_engineer' | 'main_engineer' | 'general_director' },
+    { rejectValue: string }
+>('materialWriteOff/sign', async ({ id, stage }, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<MaterialWriteOff>(`/materialWriteOffs/sign/${id}`, 'POST', {
+            stage,
+        });
+
+        const item = normalizeItem(res.data);
+
+        if (!item) {
+            throw new Error('Сервер не вернул подписанное списание');
+        }
+
+        return item;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка подписания списания');
+    }
+});
+
 /* SLICE */
 
 const materialWriteOffSlice = createSlice({
-    name: 'materialWriteOffs',
+    name: 'materialWriteOff',
     initialState,
     reducers: {
         clearMaterialWriteOffs: (state) => {
@@ -470,6 +483,19 @@ const materialWriteOffSlice = createSlice({
             .addCase(updateMaterialWriteOffStatus.rejected, (state, action) => {
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка изменения статуса списания';
+            })
+
+            .addCase(signMaterialWriteOff.pending, (state) => {
+                state.submitting = true;
+                state.error = null;
+            })
+            .addCase(signMaterialWriteOff.fulfilled, (state, action) => {
+                state.submitting = false;
+                upsertItem(state, action.payload);
+            })
+            .addCase(signMaterialWriteOff.rejected, (state, action) => {
+                state.submitting = false;
+                state.error = action.payload ?? 'Ошибка подписания списания';
             });
     },
 });

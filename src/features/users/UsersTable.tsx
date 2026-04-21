@@ -1,6 +1,5 @@
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import type { User } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
@@ -74,10 +73,10 @@ const ROLE_CONFIG: Record<number, { label: string; className: string }> = {
 
 /************************************************************************************************************/
 export default function UsersTable({ users, refs, onEdit, onDelete, loading }: UsersTableProps) {
-    const navigate = useNavigate();
-    const handleRowClick = (user: User) => {
-        navigate(`/users/${user.id}`, { state: { user } });
-    };
+    // const navigate = useNavigate();
+    // const handleRowClick = (user: User) => {
+    //     navigate(`/users/${user.id}`, { state: { user } });
+    // };
     const getStatusConfig = (statusId: number) => {
         return (
             ROLE_CONFIG[statusId] || {
@@ -143,7 +142,7 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                             <tr
                                 key={user.id}
                                 className="transition-colors hover:bg-sky-50/50 group"
-                                onClick={() => handleRowClick(user)}
+                                // onClick={() => handleRowClick(user)}
                             >
                                 {/* Номер */}
                                 <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">

@@ -26,11 +26,13 @@ export default function MaterialMovementsTable({
     const getOperationLabel = (operation: string) => {
         if (operation === '+') return 'Приход';
         if (operation === '-') return 'Расход';
+        if (operation === '=') return 'Перемещение';
 
         return operation || '—';
     };
 
     const getOperationClassName = (operation: string) => {
+        console.log(operation);
         if (operation === '+') {
             return 'bg-green-100 text-green-700';
         }
@@ -39,7 +41,7 @@ export default function MaterialMovementsTable({
             return 'bg-red-100 text-red-600';
         }
 
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-gray-100 text-rose-800';
     };
 
     if (loading) {

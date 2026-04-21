@@ -28,7 +28,8 @@ import tasksReducer from '@/features/projects/tasks/tasksSlice';
 import workPerformedReducer from '@/features/projects/pto/workPerformed/workPerformedSlice';
 import workPerformedItemsReducer from '@/features/projects/pto/workPerformed/workPerformedItems/workPerformedItemsSlice';
 import documentReducer from '@/features/projects/documents/documentsSlice';
-import materialWriteOffReducer from '@/features/projects/materialWriteOffs/materialWriteOffSlice';
+import materialWriteOffReducer from '@/features/projects/warehouses/materialWriteOffs/materialWriteOffSlice';
+import mbpWriteOffReducer from '@/features/projects/warehouses/mbpWriteOffs/mbpWriteOffSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -61,6 +62,7 @@ export const rootReducer = combineReducers({
     workPerformedItems: workPerformedItemsReducer,
     documents: documentReducer,
     materialWriteOff: materialWriteOffReducer,
+    mbpWriteOff: mbpWriteOffReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;
