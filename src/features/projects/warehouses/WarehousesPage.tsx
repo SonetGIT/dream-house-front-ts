@@ -8,16 +8,17 @@ import {
     type Warehouse,
     type WarehouseFormData,
 } from './warehousesSlice';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import type { ProjectOutletContext } from '../pto/PtoPage';
 import Modal from '@/components/ui/Modal';
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
-import { CheckCircle2, FolderOpen, TrendingUp, XCircle } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import { Add } from '@mui/icons-material';
 import { TablePagination } from '@/components/ui/TablePagination';
 import toast from 'react-hot-toast';
 import { WarehouseCreateForm } from './WarehouseCreateForm';
 import WarehousesTable from './WarehousesTable';
+import { WarehouseStatsPanel } from './WarehouseStatsPanel';
 
 /*******************************************************************************************************************************************************************/
 export default function WarehousesPage() {
@@ -25,15 +26,13 @@ export default function WarehousesPage() {
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.warehouses);
 
+    const currentWarehouse = data.find((w) => w.project_id === projectId)!;
+
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
-
-    const emptyWarehouses = data.filter((w: Warehouse) => !w.items?.length).length;
-    const filledWarehouses = data.filter((w: Warehouse) => w.items && w.items.length > 0).length;
-    const fillPercent = data.length > 0 ? Math.round((filledWarehouses / data.length) * 100) : 0;
 
     // Справочники
     const refs = {
@@ -129,6 +128,7 @@ export default function WarehousesPage() {
                 </Button>
             </Box>
 
+            <WarehouseStatsPanel warehouse={currentWarehouse} />
             {/* CONTENT */}
             {loading ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>

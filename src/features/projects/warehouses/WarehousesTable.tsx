@@ -22,6 +22,12 @@ import {
 } from './materialWriteOffs/materialWriteOffSlice';
 import { fetchWorkPerformed } from '../pto/workPerformed/workPerformedSlice';
 import MbpWriteOffModal from './mbpWriteOffs/MbpWriteOffModal';
+import { createMbpWriteOff, fetchMbpWriteOffs } from './mbpWriteOffs/mbpWriteOffSlice';
+import {
+    createProcessingWriteOff,
+    fetchProcessingWriteOffs,
+} from './materialProcessingWriteOffs/processingWriteOffSlice';
+import ProcessingWriteOffModal from './materialProcessingWriteOffs/ProcessingWriteOffModal';
 
 interface WarehousesTablePropsType {
     projectId: number;
@@ -54,6 +60,7 @@ export default function WarehousesTable({
     const [receiveWarehouse, setReceiveWarehouse] = useState<Warehouse | null>(null);
     const [writeOffAvrWarehouse, setWriteOffAvrWarehouse] = useState<Warehouse | null>(null);
     const [writeOffMbpWarehouse, setWriteOffMbpWarehouse] = useState<Warehouse | null>(null);
+    const [writeOffProcWarehouse, setWriteOffProcWarehouse] = useState<Warehouse | null>(null);
 
     const receivablePurchaseOrderItems = useMemo(() => {
         return purchaseOrderItems.filter((item) => {
@@ -152,6 +159,12 @@ export default function WarehousesTable({
         }
 
         if (tab === 'writeOffAvr') {
+            fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
+        }
+        if (tab === 'writeOffMbp') {
+            fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
+        }
+        if (tab === 'writeOffprocess') {
             fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
         }
     };
@@ -316,7 +329,7 @@ export default function WarehousesTable({
             ).unwrap();
         } catch (e) {
             console.error(e);
-            toast.error('Не удалось загрузить АВР');
+            toast.error('Не удалось загрузить МБП');
         }
     };
     const handleCloseWriteOffMbp = () => {
@@ -327,14 +340,14 @@ export default function WarehousesTable({
         if (!writeOffMbpWarehouse) return;
 
         try {
-            await dispatch(createMaterialWriteOff(payload)).unwrap();
+            await dispatch(createMbpWriteOff(payload)).unwrap();
 
-            toast.success('Списание по АВР создано');
-            handleCloseWriteOffAvr();
+            toast.success('Списание МБП создано');
+            handleCloseWriteOffMbp();
 
             setTabs((prev) => ({
                 ...prev,
-                [writeOffMbpWarehouse.id]: 'writeOffAvr',
+                [writeOffMbpWarehouse.id]: 'writeOffMbp',
             }));
 
             await dispatch(
@@ -354,20 +367,93 @@ export default function WarehousesTable({
             ).unwrap();
 
             await dispatch(
-                fetchMaterialWriteOffs({
-                    project_id: 0,
-                    block_id: 0,
-                    warehouse_id: writeOffMbpWarehouse.id,
-                    work_performed_id: 0,
-                    work_performed_item_id: 0,
-                    status: 0,
+                fetchMbpWriteOffs({
+                    // project_id: 0,
+                    // warehouse_id: writeOffMbpWarehouse.id,
+                    // work_performed_id: 0,
+                    // work_performed_item_id: 0,
+                    // status: 0,
                     page: 1,
                     size: 10,
                 }),
             ).unwrap();
         } catch (e: any) {
             console.error(e);
-            toast.error(e?.message || 'Ошибка создания списания по АВР');
+            toast.error(e?.message || 'Ошибка создания списания по МБП');
+        }
+    };
+
+    // Переработка
+    const handleOpenWriteOffProcessing = async (warehouse: Warehouse) => {
+        setWriteOffProcWarehouse(warehouse);
+        fetchWarehouseStocks(warehouse.id, 1, 100);
+
+        if (!projectId) {
+            toast.error('Не удалось определить projectId');
+            return;
+        }
+
+        // try {
+        //     await dispatch(
+        //         fetchWorkPerformed({
+        //             project_id: projectId,
+        //             page: 1,
+        //             size: 100,
+        //         }),
+        //     ).unwrap();
+        // } catch (e) {
+        //     console.error(e);
+        //     toast.error('Не удалось загрузить');
+        // }
+    };
+    const handleCloseWriteOffProcessing = () => {
+        setWriteOffProcWarehouse(null);
+    };
+
+    const handleCreateWriteOffProcessing = async (payload: any) => {
+        if (!writeOffProcWarehouse) return;
+
+        try {
+            await dispatch(createProcessingWriteOff(payload)).unwrap();
+
+            toast.success('Списание по переработке создано');
+            handleCloseWriteOffProcessing();
+
+            setTabs((prev) => ({
+                ...prev,
+                [writeOffProcWarehouse.id]: 'writeOffprocess',
+            }));
+
+            await dispatch(
+                fetchWarehouseItems({
+                    warehouse_id: writeOffProcWarehouse.id,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+
+            await dispatch(
+                fetchMaterialMovements({
+                    warehouse_id: writeOffProcWarehouse.id,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+
+            await dispatch(
+                fetchProcessingWriteOffs({
+                    // project_id: 0,
+                    // warehouse_id: writeOffMbpWarehouse.id,
+                    // work_performed_id: 0,
+                    // work_performed_item_id: 0,
+                    // status: 0,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e?.message || 'Ошибка создания списания по переработке');
         }
     };
 
@@ -430,6 +516,7 @@ export default function WarehousesTable({
                                     onOpenReceive={handleOpenReceive}
                                     onOpenWriteOffAvr={handleOpenWriteOffAvr}
                                     onOpenWriteOffMbp={handleOpenWriteOffMbp}
+                                    onOpenWriteOffProcessing={handleOpenWriteOffProcessing}
                                 />
                             ))}
                         </tbody>
@@ -466,6 +553,16 @@ export default function WarehousesTable({
                 submitting={writeOffSubmitting}
                 onClose={handleCloseWriteOffMbp}
                 onSubmit={handleCreateWriteOffMbp}
+            />
+            <ProcessingWriteOffModal
+                open={Boolean(writeOffProcWarehouse)}
+                warehouseId={writeOffProcWarehouse?.id ?? 0}
+                warehouseName={writeOffProcWarehouse?.name}
+                refs={refs}
+                warehouseStocks={warehouseStockOptions}
+                submitting={writeOffSubmitting}
+                onClose={handleCloseWriteOffProcessing}
+                onSubmit={handleCreateWriteOffProcessing}
             />
         </div>
     );

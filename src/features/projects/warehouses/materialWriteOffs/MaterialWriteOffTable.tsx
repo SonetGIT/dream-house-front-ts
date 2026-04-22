@@ -247,7 +247,7 @@ export default function MaterialWriteOffTable({
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {formatDate(writeOff.write_off_date)}
+                                                {formatDate(writeOff.posted_at || '')}
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">

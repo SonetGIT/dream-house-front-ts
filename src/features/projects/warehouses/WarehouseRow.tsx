@@ -13,8 +13,14 @@ import WarehouseMaterialsTab from './tabs/WarehouseMaterialsTab';
 import WarehouseMovementsTab from './tabs/WarehouseMovementsTab';
 import WarehouseWriteOffAvrTab from './tabs/WarehouseWriteOffAVRTab';
 import WarehouseWriteOffMbpTab from './tabs/WarehouseWriteOffMBPTab';
+import WarehouseWriteOffProcessTab from './tabs/WarehouseWriteOffProcessTab';
 
-export type WarehouseTabType = 'materials' | 'movements' | 'writeOffAvr' | 'writeOffMbp';
+export type WarehouseTabType =
+    | 'materials'
+    | 'movements'
+    | 'writeOffAvr'
+    | 'writeOffMbp'
+    | 'writeOffprocess';
 
 interface WarehouseRowProps {
     warehouse: Warehouse;
@@ -27,6 +33,7 @@ interface WarehouseRowProps {
     onOpenReceive: (warehouse: Warehouse) => void;
     onOpenWriteOffAvr: (warehouse: Warehouse) => void;
     onOpenWriteOffMbp: (warehouse: Warehouse) => void;
+    onOpenWriteOffProcessing: (warehouse: Warehouse) => void;
 }
 
 {
@@ -44,6 +51,7 @@ export default function WarehouseRow({
     onOpenReceive,
     onOpenWriteOffAvr,
     onOpenWriteOffMbp,
+    onOpenWriteOffProcessing,
 }: WarehouseRowProps) {
     return (
         <React.Fragment>
@@ -147,7 +155,7 @@ export default function WarehouseRow({
                                             },
                                         }}
                                     >
-                                        Принять товар
+                                        товар
                                     </Button>
 
                                     <Button
@@ -164,7 +172,7 @@ export default function WarehouseRow({
                                             },
                                         }}
                                     >
-                                        Списание по АВР
+                                        АВР
                                     </Button>
 
                                     <Button
@@ -181,7 +189,24 @@ export default function WarehouseRow({
                                             },
                                         }}
                                     >
-                                        Списание МБП
+                                        МБП
+                                    </Button>
+
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<MinusCircle />}
+                                        onClick={() => onOpenWriteOffProcessing(warehouse)}
+                                        sx={{
+                                            marginLeft: 1,
+                                            color: 'skyblue',
+                                            borderColor: 'skyblue',
+                                            '&:hover': {
+                                                borderColor: 'skyblue',
+                                                backgroundColor: 'rgba(93, 142, 175, 0.1)',
+                                            },
+                                        }}
+                                    >
+                                        Переработка
                                     </Button>
                                 </Box>
                             </div>
@@ -200,6 +225,12 @@ export default function WarehouseRow({
 
                             {activeTab === 'writeOffMbp' && (
                                 <WarehouseWriteOffMbpTab warehouseId={warehouse.id} refs={refs} />
+                            )}
+                            {activeTab === 'writeOffprocess' && (
+                                <WarehouseWriteOffProcessTab
+                                    warehouseId={warehouse.id}
+                                    refs={refs}
+                                />
                             )}
                         </div>
                     </Collapse>

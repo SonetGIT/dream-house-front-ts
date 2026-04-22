@@ -52,7 +52,6 @@ export interface MaterialWriteOff {
     warehouse_id: number;
     work_performed_id: number;
     work_performed_item_id: number;
-    write_off_date: string;
     status: number;
     note: string | null;
     created_user_id: number;

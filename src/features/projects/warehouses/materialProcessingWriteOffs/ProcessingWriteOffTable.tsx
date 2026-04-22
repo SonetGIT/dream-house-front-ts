@@ -9,24 +9,24 @@ import { TablePagination } from '@/components/ui/TablePagination';
 import { formatDate } from '@/utils/formatData';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { writeOffStatuses } from '@/utils/getStatusColor';
-import type { MbpWriteOff } from './mbpWriteOffSlice';
 import { TabBtn } from '../../pto/workPerformed/WorkPerformedTable';
+import type { ProcessingWriteOff } from './processingWriteOffSlice';
 
-interface MbpWriteOffTableProps {
-    data: MbpWriteOff[];
+interface ProcessingWriteOffTableProps {
+    data: ProcessingWriteOff[];
     refs: Record<string, ReferenceResult>;
     loading?: boolean;
     pagination?: Pagination | null;
     onPageChange?: (page: number) => void;
     onSizeChange?: (size: number) => void;
     currentUser?: User | null;
-    canSign?: (item: MbpWriteOff, user?: User | null) => boolean;
-    isFullyApproved?: (item: MbpWriteOff) => boolean;
-    onSign?: (item: MbpWriteOff) => void;
+    canSign?: (item: ProcessingWriteOff, user?: User | null) => boolean;
+    isFullyApproved?: (item: ProcessingWriteOff) => boolean;
+    onSign?: (item: ProcessingWriteOff) => void;
     onDelete?: (id: number) => void;
 }
 
-export default function MbpWriteOffTable({
+export default function ProcessingWriteOffTable({
     data,
     refs,
     loading = false,
@@ -38,7 +38,7 @@ export default function MbpWriteOffTable({
     isFullyApproved,
     onSign,
     onDelete,
-}: MbpWriteOffTableProps) {
+}: ProcessingWriteOffTableProps) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
 
     const toggleRow = (id: number) => {
@@ -84,32 +84,32 @@ export default function MbpWriteOffTable({
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
-                                <th className="px-1 py-1 text-left bg-rose-50"></th>
-                                <th className="px-1 py-1 text-sm font-semibold text-left text-rose-700 bg-rose-50">
+                                <th className="px-1 py-1 text-left bg-sky-50"></th>
+                                <th className="px-1 py-1 text-sm font-semibold text-left text-sky-700 bg-sky-50">
                                     №
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-rose-50">
-                                    <div className="text-xs font-semibold uppercase text-rose-700">
+                                <th className="px-1 py-1 text-center border-l bg-sky-50">
+                                    <div className="text-xs font-semibold uppercase text-sky-700">
                                         Статус
                                     </div>
                                 </th>
-                                {/* <th className="px-1 py-1 text-center border-l bg-rose-50">
-                                    <div className="text-xs font-semibold uppercase text-rose-700">
+                                {/* <th className="px-1 py-1 text-center border-l bg-sky-50">
+                                    <div className="text-xs font-semibold uppercase text-sky-700">
                                         Склад
                                     </div>
                                 </th> */}
-                                <th className="px-1 py-1 text-center border-l bg-rose-50">
-                                    <div className="text-xs font-semibold uppercase text-rose-700">
+                                <th className="px-1 py-1 text-center border-l bg-sky-50">
+                                    <div className="text-xs font-semibold uppercase text-sky-700">
                                         Дата списания
                                     </div>
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-rose-50">
-                                    <div className="text-xs font-semibold uppercase text-rose-700">
+                                <th className="px-1 py-1 text-center border-l bg-sky-50">
+                                    <div className="text-xs font-semibold uppercase text-sky-700">
                                         Примечание
                                     </div>
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-rose-50 w-[760px]">
-                                    <div className="text-xs font-semibold uppercase text-rose-700">
+                                <th className="px-1 py-1 text-center border-l bg-sky-50 w-[760px]">
+                                    <div className="text-xs font-semibold uppercase text-sky-700">
                                         Этап подписи
                                     </div>
                                 </th>
@@ -293,7 +293,7 @@ export default function MbpWriteOffTable({
                                                                             (item, index) => (
                                                                                 <tr
                                                                                     key={item.id}
-                                                                                    className="border-b bg-rose-50/30 hover:bg-gray-50"
+                                                                                    className="border-b bg-sky-50/30 hover:bg-gray-50"
                                                                                 >
                                                                                     <td className="px-2 py-2 text-xs font-medium text-gray-600">
                                                                                         {index + 1}
@@ -371,7 +371,7 @@ export default function MbpWriteOffTable({
                                             <ListChecks className="w-8 h-8 text-gray-400" />
                                         </div>
                                         <h3 className="mb-1 text-base font-medium text-gray-900">
-                                            Списания МБП отсутствуют
+                                            Списания по переработке отсутствуют
                                         </h3>
                                     </td>
                                 </tr>

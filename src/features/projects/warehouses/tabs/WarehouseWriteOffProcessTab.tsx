@@ -3,26 +3,26 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { User } from '@/features/users/userSlice';
 import {
-    fetchMbpWriteOffs,
-    signMbpWriteOff,
-    type MbpWriteOff,
-} from '../mbpWriteOffs/mbpWriteOffSlice';
-import MbpWriteOffTable from '../mbpWriteOffs/MbpWriteOffTable';
+    fetchProcessingWriteOffs,
+    signProcessingWriteOff,
+    type ProcessingWriteOff,
+} from '../materialProcessingWriteOffs/processingWriteOffSlice';
+import ProcessingWriteOffTable from '../materialProcessingWriteOffs/ProcessingWriteOffTable';
 
-interface WarehouseWriteOffMbpTabProps {
+interface WarehouseWriteOffProcessingTabProps {
     warehouseId: number;
     refs: Record<string, ReferenceResult>;
 }
 
-export default function WarehouseWriteOffMbpTab({
+export default function WarehouseWriteOffProcessTab({
     warehouseId,
     refs,
-}: WarehouseWriteOffMbpTabProps) {
+}: WarehouseWriteOffProcessingTabProps) {
     const dispatch = useAppDispatch();
-    const { data, pagination, loading } = useAppSelector((state) => state.mbpWriteOff);
+    const { data, pagination, loading } = useAppSelector((state) => state.processingWriteOff);
     const currentUser = useAppSelector((state) => state.auth.user);
 
-    const canSign = (writeOff: MbpWriteOff, user?: User | null) => {
+    const canSign = (writeOff: ProcessingWriteOff, user?: User | null) => {
         if (!user) return false;
 
         const userId = Number(user.id);
@@ -69,7 +69,7 @@ export default function WarehouseWriteOffMbpTab({
         }
     };
 
-    const isFullyApproved = (writeOff: MbpWriteOff) => {
+    const isFullyApproved = (writeOff: ProcessingWriteOff) => {
         return (
             !!writeOff.signed_by_foreman &&
             !!writeOff.signed_by_planning_engineer &&
@@ -98,7 +98,7 @@ export default function WarehouseWriteOffMbpTab({
         size = pagination?.size ?? 10,
     ) => {
         await dispatch(
-            fetchMbpWriteOffs({
+            fetchProcessingWriteOffs({
                 warehouse_id: warehouseId,
                 page,
                 size,
@@ -106,7 +106,7 @@ export default function WarehouseWriteOffMbpTab({
         ).unwrap();
     };
 
-    const handleSign = async (writeOff: MbpWriteOff) => {
+    const handleSign = async (writeOff: ProcessingWriteOff) => {
         if (!currentUser) {
             toast.error('У вас нет прав на подписание');
             return;
@@ -132,7 +132,7 @@ export default function WarehouseWriteOffMbpTab({
 
                 for (const stage of stages) {
                     await dispatch(
-                        signMbpWriteOff({
+                        signProcessingWriteOff({
                             id: writeOff.id,
                             stage,
                         }),
@@ -147,23 +147,23 @@ export default function WarehouseWriteOffMbpTab({
                 }
 
                 await dispatch(
-                    signMbpWriteOff({
+                    signProcessingWriteOff({
                         id: writeOff.id,
                         stage,
                     }),
                 ).unwrap();
             }
 
-            toast.success('Списание МБП подписано');
+            toast.success('Списание по переработке подписано');
             await refetchWriteOffs();
         } catch (e: any) {
             console.error(e);
-            toast.error(e?.message || 'Ошибка подписания списания МБП');
+            toast.error(e?.message || 'Ошибка подписания списания по переработке');
         }
     };
 
     return (
-        <MbpWriteOffTable
+        <ProcessingWriteOffTable
             data={data}
             refs={refs}
             pagination={pagination}

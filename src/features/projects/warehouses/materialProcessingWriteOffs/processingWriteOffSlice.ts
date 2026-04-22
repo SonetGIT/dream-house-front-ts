@@ -2,23 +2,23 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 
-const Mbp_WRITE_OFF_ENDPOINT = '/mbpWriteOffs';
+const PROCESSING_WRITE_OFF_ENDPOINT = '/materialProcessingWriteOffs';
 
 /* TYPES */
 
-export interface MbpWriteOffWarehouse {
+export interface ProcessingWriteOffWarehouse {
     id: number;
     name: string;
 }
 
-export interface MbpWriteOffItemMaterial {
+export interface ProcessingWriteOffItemMaterial {
     id: number;
     name: string;
 }
 
-export interface MbpWriteOffItem {
+export interface ProcessingWriteOffItem {
     id: number;
-    mbp_write_off_id: number;
+    processing_write_off_id: number;
     material_id: number;
     unit_of_measure: number | null;
     quantity: number | string;
@@ -27,10 +27,10 @@ export interface MbpWriteOffItem {
     created_at: string;
     updated_at: string;
     deleted: boolean;
-    material?: MbpWriteOffItemMaterial | null;
+    material?: ProcessingWriteOffItemMaterial | null;
 }
 
-export interface MbpWriteOff {
+export interface ProcessingWriteOff {
     id: number;
     project_id: number;
     warehouse_id: number;
@@ -59,13 +59,13 @@ export interface MbpWriteOff {
     updated_at: string;
     deleted: boolean;
 
-    warehouse?: MbpWriteOffWarehouse | null;
-    items?: MbpWriteOffItem[];
+    warehouse?: ProcessingWriteOffWarehouse | null;
+    items?: ProcessingWriteOffItem[];
 }
 
 /* SEARCH PARAMS */
 
-export interface MbpWriteOffSearchParams {
+export interface ProcessingWriteOffSearchParams {
     project_id?: number;
     warehouse_id?: number;
     status?: number;
@@ -77,25 +77,25 @@ export interface MbpWriteOffSearchParams {
 
 /* PAYLOADS */
 
-export interface CreateMbpWriteOffItemPayload {
+export interface CreateProcessingWriteOffItemPayload {
     material_id: number;
     unit_of_measure: number | null;
     quantity: number;
     note?: string | null;
 }
 
-export interface CreateMbpWriteOffPayload {
+export interface CreateProcessingWriteOffPayload {
     warehouse_id: number;
     posted_at: string;
     note?: string | null;
-    items: CreateMbpWriteOffItemPayload[];
+    items: CreateProcessingWriteOffItemPayload[];
 }
 
-export interface UpdateMbpWriteOffPayload {
+export interface UpdateProcessingWriteOffPayload {
     warehouse_id?: number;
     posted_at?: string;
     note?: string | null;
-    items?: CreateMbpWriteOffItemPayload[];
+    items?: CreateProcessingWriteOffItemPayload[];
 
     foreman_user_id: number | null;
     signed_by_foreman: boolean | null;
@@ -114,16 +114,16 @@ export interface UpdateMbpWriteOffPayload {
     signed_by_general_director_time: string | null;
 }
 
-interface MbpWriteOffState {
-    data: MbpWriteOff[];
-    current: MbpWriteOff | null;
+interface ProcessingWriteOffState {
+    data: ProcessingWriteOff[];
+    current: ProcessingWriteOff | null;
     pagination: Pagination | null;
     loading: boolean;
     submitting: boolean;
     error: string | null;
 }
 
-const initialState: MbpWriteOffState = {
+const initialState: ProcessingWriteOffState = {
     data: [],
     current: null,
     pagination: null,
@@ -134,7 +134,7 @@ const initialState: MbpWriteOffState = {
 
 /* HELPERS */
 
-const normalizeList = (value: unknown): MbpWriteOff[] => {
+const normalizeList = (value: unknown): ProcessingWriteOff[] => {
     const data = value as any;
 
     if (Array.isArray(data)) return data;
@@ -146,7 +146,7 @@ const normalizeList = (value: unknown): MbpWriteOff[] => {
     return [];
 };
 
-const normalizeItem = (value: unknown): MbpWriteOff | null => {
+const normalizeItem = (value: unknown): ProcessingWriteOff | null => {
     const data = value as any;
 
     if (!data) return null;
@@ -157,7 +157,7 @@ const normalizeItem = (value: unknown): MbpWriteOff | null => {
     return null;
 };
 
-const upsertItem = (state: MbpWriteOffState, item: MbpWriteOff) => {
+const upsertItem = (state: ProcessingWriteOffState, item: ProcessingWriteOff) => {
     const index = state.data.findIndex((row) => row.id === item.id);
 
     if (index !== -1) {
@@ -184,14 +184,14 @@ const decrementPaginationTotal = (pagination: Pagination | null) => {
 /* THUNKS */
 
 // SEARCH
-export const fetchMbpWriteOffs = createAsyncThunk<
-    { data: MbpWriteOff[]; pagination: Pagination | null },
-    MbpWriteOffSearchParams,
+export const fetchProcessingWriteOffs = createAsyncThunk<
+    { data: ProcessingWriteOff[]; pagination: Pagination | null },
+    ProcessingWriteOffSearchParams,
     { rejectValue: string }
->('mbpWriteOff/search', async (params, { rejectWithValue }) => {
+>('processingWriteOff/search', async (params, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MbpWriteOff[]>(
-            `${Mbp_WRITE_OFF_ENDPOINT}/search`,
+        const res = await apiRequest<ProcessingWriteOff[]>(
+            `${PROCESSING_WRITE_OFF_ENDPOINT}/search`,
             'POST',
             params,
         );
@@ -206,34 +206,38 @@ export const fetchMbpWriteOffs = createAsyncThunk<
 });
 
 // GET BY ID
-export const fetchMbpWriteOffById = createAsyncThunk<MbpWriteOff, number, { rejectValue: string }>(
-    'mbpWriteOff/getById',
-    async (id, { rejectWithValue }) => {
-        try {
-            const res = await apiRequest<MbpWriteOff>(`${Mbp_WRITE_OFF_ENDPOINT}/${id}`, 'GET');
+export const fetchProcessingWriteOffById = createAsyncThunk<
+    ProcessingWriteOff,
+    number,
+    { rejectValue: string }
+>('processingWriteOff/getById', async (id, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<ProcessingWriteOff>(
+            `${PROCESSING_WRITE_OFF_ENDPOINT}/${id}`,
+            'GET',
+        );
 
-            const item = normalizeItem(res.data);
+        const item = normalizeItem(res.data);
 
-            if (!item) {
-                throw new Error('Списание МБП не найдено');
-            }
-
-            return item;
-        } catch (err: any) {
-            return rejectWithValue(err.message || 'Ошибка загрузки списания МБП');
+        if (!item) {
+            throw new Error('Списание МБП не найдено');
         }
-    },
-);
+
+        return item;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка загрузки списания МБП');
+    }
+});
 
 // CREATE
-export const createMbpWriteOff = createAsyncThunk<
-    MbpWriteOff,
-    CreateMbpWriteOffPayload,
+export const createProcessingWriteOff = createAsyncThunk<
+    ProcessingWriteOff,
+    CreateProcessingWriteOffPayload,
     { rejectValue: string }
->('mbpWriteOff/create', async (payload, { rejectWithValue }) => {
+>('processingWriteOff/create', async (payload, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MbpWriteOff>(
-            `${Mbp_WRITE_OFF_ENDPOINT}/create`,
+        const res = await apiRequest<ProcessingWriteOff>(
+            `${PROCESSING_WRITE_OFF_ENDPOINT}/create`,
             'POST',
             payload,
         );
@@ -251,14 +255,14 @@ export const createMbpWriteOff = createAsyncThunk<
 });
 
 // UPDATE
-export const updateMbpWriteOff = createAsyncThunk<
-    MbpWriteOff,
-    { id: number; data: UpdateMbpWriteOffPayload },
+export const updateProcessingWriteOff = createAsyncThunk<
+    ProcessingWriteOff,
+    { id: number; data: UpdateProcessingWriteOffPayload },
     { rejectValue: string }
->('mbpWriteOff/update', async ({ id, data }, { rejectWithValue }) => {
+>('processingWriteOff/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MbpWriteOff>(
-            `${Mbp_WRITE_OFF_ENDPOINT}/update/${id}`,
+        const res = await apiRequest<ProcessingWriteOff>(
+            `${PROCESSING_WRITE_OFF_ENDPOINT}/update/${id}`,
             'PUT',
             data,
         );
@@ -276,11 +280,11 @@ export const updateMbpWriteOff = createAsyncThunk<
 });
 
 // DELETE
-export const deleteMbpWriteOff = createAsyncThunk<number, number, { rejectValue: string }>(
-    'mbpWriteOff/delete',
+export const deleteProcessingWriteOff = createAsyncThunk<number, number, { rejectValue: string }>(
+    'processingWriteOff/delete',
     async (id, { rejectWithValue }) => {
         try {
-            await apiRequest(`${Mbp_WRITE_OFF_ENDPOINT}/delete/${id}`, 'DELETE');
+            await apiRequest(`${PROCESSING_WRITE_OFF_ENDPOINT}/delete/${id}`, 'DELETE');
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка удаления списания МБП');
@@ -289,15 +293,19 @@ export const deleteMbpWriteOff = createAsyncThunk<number, number, { rejectValue:
 );
 
 // SIGN
-export const signMbpWriteOff = createAsyncThunk<
-    MbpWriteOff,
+export const signProcessingWriteOff = createAsyncThunk<
+    ProcessingWriteOff,
     { id: number; stage: 'foreman' | 'planning_engineer' | 'main_engineer' | 'general_director' },
     { rejectValue: string }
->('mbpWriteOff/sign', async ({ id, stage }, { rejectWithValue }) => {
+>('processingWriteOff/sign', async ({ id, stage }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<MbpWriteOff>(`${Mbp_WRITE_OFF_ENDPOINT}/sign/${id}`, 'POST', {
-            stage,
-        });
+        const res = await apiRequest<ProcessingWriteOff>(
+            `${PROCESSING_WRITE_OFF_ENDPOINT}/sign/${id}`,
+            'POST',
+            {
+                stage,
+            },
+        );
 
         const item = normalizeItem(res.data);
 
@@ -313,11 +321,11 @@ export const signMbpWriteOff = createAsyncThunk<
 
 /* SLICE */
 
-const mbpWriteOffSlice = createSlice({
-    name: 'mbpWriteOff',
+const processingWriteOffSlice = createSlice({
+    name: 'processingWriteOff',
     initialState,
     reducers: {
-        clearMbpWriteOffs: (state) => {
+        clearProcessingWriteOffs: (state) => {
             state.data = [];
             state.current = null;
             state.pagination = null;
@@ -325,48 +333,48 @@ const mbpWriteOffSlice = createSlice({
             state.submitting = false;
             state.error = null;
         },
-        clearCurrentMbpWriteOff: (state) => {
+        clearCurrentProcessingWriteOff: (state) => {
             state.current = null;
         },
     },
     extraReducers: (builder) => {
         builder
             // SEARCH
-            .addCase(fetchMbpWriteOffs.pending, (state) => {
+            .addCase(fetchProcessingWriteOffs.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchMbpWriteOffs.fulfilled, (state, action) => {
+            .addCase(fetchProcessingWriteOffs.fulfilled, (state, action) => {
                 state.loading = false;
                 state.data = action.payload.data;
                 state.pagination = action.payload.pagination;
             })
-            .addCase(fetchMbpWriteOffs.rejected, (state, action) => {
+            .addCase(fetchProcessingWriteOffs.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки списаний МБП';
             })
 
             // GET BY ID
-            .addCase(fetchMbpWriteOffById.pending, (state) => {
+            .addCase(fetchProcessingWriteOffById.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchMbpWriteOffById.fulfilled, (state, action) => {
+            .addCase(fetchProcessingWriteOffById.fulfilled, (state, action) => {
                 state.loading = false;
                 state.current = action.payload;
                 upsertItem(state, action.payload);
             })
-            .addCase(fetchMbpWriteOffById.rejected, (state, action) => {
+            .addCase(fetchProcessingWriteOffById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки списания МБП';
             })
 
             // CREATE
-            .addCase(createMbpWriteOff.pending, (state) => {
+            .addCase(createProcessingWriteOff.pending, (state) => {
                 state.submitting = true;
                 state.error = null;
             })
-            .addCase(createMbpWriteOff.fulfilled, (state, action) => {
+            .addCase(createProcessingWriteOff.fulfilled, (state, action) => {
                 state.submitting = false;
                 state.current = action.payload;
                 state.data.unshift(action.payload);
@@ -382,31 +390,31 @@ const mbpWriteOffSlice = createSlice({
                     }
                 }
             })
-            .addCase(createMbpWriteOff.rejected, (state, action) => {
+            .addCase(createProcessingWriteOff.rejected, (state, action) => {
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка создания списания МБП';
             })
 
             // UPDATE
-            .addCase(updateMbpWriteOff.pending, (state) => {
+            .addCase(updateProcessingWriteOff.pending, (state) => {
                 state.submitting = true;
                 state.error = null;
             })
-            .addCase(updateMbpWriteOff.fulfilled, (state, action) => {
+            .addCase(updateProcessingWriteOff.fulfilled, (state, action) => {
                 state.submitting = false;
                 upsertItem(state, action.payload);
             })
-            .addCase(updateMbpWriteOff.rejected, (state, action) => {
+            .addCase(updateProcessingWriteOff.rejected, (state, action) => {
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка обновления списания МБП';
             })
 
             // DELETE
-            .addCase(deleteMbpWriteOff.pending, (state) => {
+            .addCase(deleteProcessingWriteOff.pending, (state) => {
                 state.submitting = true;
                 state.error = null;
             })
-            .addCase(deleteMbpWriteOff.fulfilled, (state, action) => {
+            .addCase(deleteProcessingWriteOff.fulfilled, (state, action) => {
                 state.submitting = false;
                 state.data = state.data.filter((item) => item.id !== action.payload);
 
@@ -416,26 +424,27 @@ const mbpWriteOffSlice = createSlice({
 
                 decrementPaginationTotal(state.pagination);
             })
-            .addCase(deleteMbpWriteOff.rejected, (state, action) => {
+            .addCase(deleteProcessingWriteOff.rejected, (state, action) => {
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка удаления списания МБП';
             })
 
             // SIGN
-            .addCase(signMbpWriteOff.pending, (state) => {
+            .addCase(signProcessingWriteOff.pending, (state) => {
                 state.submitting = true;
                 state.error = null;
             })
-            .addCase(signMbpWriteOff.fulfilled, (state, action) => {
+            .addCase(signProcessingWriteOff.fulfilled, (state, action) => {
                 state.submitting = false;
                 upsertItem(state, action.payload);
             })
-            .addCase(signMbpWriteOff.rejected, (state, action) => {
+            .addCase(signProcessingWriteOff.rejected, (state, action) => {
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка подписания списания МБП';
             });
     },
 });
 
-export const { clearMbpWriteOffs, clearCurrentMbpWriteOff } = mbpWriteOffSlice.actions;
-export default mbpWriteOffSlice.reducer;
+export const { clearProcessingWriteOffs, clearCurrentProcessingWriteOff } =
+    processingWriteOffSlice.actions;
+export default processingWriteOffSlice.reducer;

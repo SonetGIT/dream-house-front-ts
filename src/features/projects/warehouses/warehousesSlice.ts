@@ -16,6 +16,14 @@ export interface WarehouseItem {
     updated_at: string;
     deleted: boolean;
 }
+export interface OperationCounts {
+    incoming: number;
+    outgoing: number;
+    transfer: number;
+    '+': number;
+    '-': number;
+    '=': number;
+}
 export interface Warehouse {
     id: number;
     project_id: number;
@@ -28,6 +36,12 @@ export interface Warehouse {
     updated_at: string;
     deleted: boolean;
     items: WarehouseItem[];
+    material_records_count: number;
+    avr_write_off_count: number;
+    mbp_write_off_count: number;
+    processing_write_off_count: number;
+    transfer_count: number;
+    operation_counts: OperationCounts;
 }
 export interface WarehouseForm {
     name: string;

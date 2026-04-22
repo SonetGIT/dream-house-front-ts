@@ -37,11 +37,20 @@ export default function Dashboard() {
         },
         {
             title: 'Склады',
-            label: 'Этот месяц',
-            value: '34 000 $',
+            label: '',
+            value: '',
             color: '#ab0bf5',
             bgColor: '#e1bee7',
             to: 'warehouses',
+            icon: <MdWarehouse />,
+        },
+        {
+            title: 'Отчеты',
+            label: '',
+            value: '',
+            color: '#0bdaf5',
+            bgColor: '#e1bee7',
+            to: 'reports',
             icon: <MdWarehouse />,
         },
     ];

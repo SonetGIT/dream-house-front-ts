@@ -4,7 +4,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { parseNumber } from '@/utils/parseNumber';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { CreateMbpWriteOffPayload } from './mbpWriteOffSlice';
+import type { CreateProcessingWriteOffPayload } from './processingWriteOffSlice';
 
 interface WarehouseStockItemOption {
     material_id: number;
@@ -12,7 +12,7 @@ interface WarehouseStockItemOption {
     quantity: number;
 }
 
-interface MbpWriteOffModalProps {
+interface ProcessingWriteOffModalProps {
     open: boolean;
     warehouseId: number;
     warehouseName?: string;
@@ -20,7 +20,7 @@ interface MbpWriteOffModalProps {
     warehouseStocks: WarehouseStockItemOption[];
     submitting?: boolean;
     onClose: () => void;
-    onSubmit: (data: CreateMbpWriteOffPayload) => void;
+    onSubmit: (data: CreateProcessingWriteOffPayload) => void;
 }
 
 interface MaterialRowForm {
@@ -37,7 +37,7 @@ const emptyItem: MaterialRowForm = {
     note: '',
 };
 
-export default function MbpWriteOffModal({
+export default function ProcessingWriteOffModal({
     open,
     warehouseId,
     warehouseName,
@@ -46,8 +46,8 @@ export default function MbpWriteOffModal({
     submitting = false,
     onClose,
     onSubmit,
-}: MbpWriteOffModalProps) {
-    const [formData, setFormData] = useState<CreateMbpWriteOffPayload>({
+}: ProcessingWriteOffModalProps) {
+    const [formData, setFormData] = useState<CreateProcessingWriteOffPayload>({
         warehouse_id: warehouseId,
         posted_at: new Date().toISOString().slice(0, 10),
         note: '',
@@ -84,7 +84,7 @@ export default function MbpWriteOffModal({
         return warehouseStocks.find((item) => item.material_id === materialId) ?? null;
     };
 
-    const handleChange = (field: keyof CreateMbpWriteOffPayload, value: any) => {
+    const handleChange = (field: keyof CreateProcessingWriteOffPayload, value: any) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         setErrors((prev) => ({ ...prev, [field]: '' }));
     };
@@ -156,7 +156,7 @@ export default function MbpWriteOffModal({
     const handleSubmit = () => {
         if (!validate()) return;
 
-        const payload: CreateMbpWriteOffPayload = {
+        const payload: CreateProcessingWriteOffPayload = {
             warehouse_id: warehouseId,
             posted_at: formData.posted_at,
             note: formData.note || null,
