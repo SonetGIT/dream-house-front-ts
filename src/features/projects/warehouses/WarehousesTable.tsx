@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
-import type { Warehouse } from './warehousesSlice';
+import { fetchWarehouses, type Warehouse } from './warehousesSlice';
 import WarehouseRow, { type WarehouseTabType } from './WarehouseRow';
 import WarehouseReceiveModal from './WarehouseReceiveModal';
 import MaterialWriteOffAvrModal from './materialWriteOffs/MaterialWriteOffAvrModal';
@@ -28,6 +28,8 @@ import {
     fetchProcessingWriteOffs,
 } from './materialProcessingWriteOffs/processingWriteOffSlice';
 import ProcessingWriteOffModal from './materialProcessingWriteOffs/ProcessingWriteOffModal';
+import WarehouseTransferModal from './warehouseTransfers/WarehouseTransfersModal';
+import { fetchWarehouseTransfers } from './warehouseTransfers/warehouseTransfersSlice';
 
 interface WarehousesTablePropsType {
     projectId: number;
@@ -48,12 +50,27 @@ export default function WarehousesTable({
 }: WarehousesTablePropsType) {
     const dispatch = useAppDispatch();
 
+    // Загрузка всех складов для модалки перемещения
+    useEffect(() => {
+        dispatch(fetchWarehouses({ page: 1, size: 100, global: true }));
+    }, [dispatch]);
+
+    const { data: allWarehouses } = useAppSelector((state) => state.warehouses);
+
+    console.log('Все склады:', allWarehouses); // ✅ Теперь тут полный список
     const { data: purchaseOrderItems, loading: purchaseOrderItemsLoading } = useAppSelector(
         (state) => state.purchaseOrderItems,
     );
     const { list: warehouseStockItems } = useAppSelector((state) => state.warehouseStocks);
     const { data: workPerformedData } = useAppSelector((state) => state.workPerformed);
     const { submitting: writeOffSubmitting } = useAppSelector((state) => state.materialWriteOff);
+    const { submitting: mbpWriteOffSubmitting } = useAppSelector((state) => state.mbpWriteOff);
+    const { submitting: processingWriteOffSubmitting } = useAppSelector(
+        (state) => state.processingWriteOff,
+    );
+    const { submitting: warehouseTransfersSubmitting } = useAppSelector(
+        (state) => state.warehouseTransfers,
+    );
 
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const [tabs, setTabs] = useState<Record<number, WarehouseTabType>>({});
@@ -61,6 +78,7 @@ export default function WarehousesTable({
     const [writeOffAvrWarehouse, setWriteOffAvrWarehouse] = useState<Warehouse | null>(null);
     const [writeOffMbpWarehouse, setWriteOffMbpWarehouse] = useState<Warehouse | null>(null);
     const [writeOffProcWarehouse, setWriteOffProcWarehouse] = useState<Warehouse | null>(null);
+    const [warehouseTransfers, setWarehouseTransfers] = useState<Warehouse | null>(null);
 
     const receivablePurchaseOrderItems = useMemo(() => {
         return purchaseOrderItems.filter((item) => {
@@ -95,6 +113,13 @@ export default function WarehousesTable({
             quantity: Number(item.quantity || 0),
         }));
     }, [warehouseStockItems]);
+
+    const warehouseOptions = useMemo(() => {
+        return (allWarehouses ?? []).map((w) => ({
+            id: w.id,
+            name: w.name,
+        }));
+    }, [allWarehouses]);
 
     const fetchWarehouseStocks = (warehouseId: number, page = 1, size = 10) => {
         dispatch(
@@ -318,19 +343,6 @@ export default function WarehousesTable({
             toast.error('Не удалось определить projectId');
             return;
         }
-
-        try {
-            await dispatch(
-                fetchWorkPerformed({
-                    project_id: projectId,
-                    page: 1,
-                    size: 100,
-                }),
-            ).unwrap();
-        } catch (e) {
-            console.error(e);
-            toast.error('Не удалось загрузить МБП');
-        }
     };
     const handleCloseWriteOffMbp = () => {
         setWriteOffMbpWarehouse(null);
@@ -392,19 +404,6 @@ export default function WarehousesTable({
             toast.error('Не удалось определить projectId');
             return;
         }
-
-        // try {
-        //     await dispatch(
-        //         fetchWorkPerformed({
-        //             project_id: projectId,
-        //             page: 1,
-        //             size: 100,
-        //         }),
-        //     ).unwrap();
-        // } catch (e) {
-        //     console.error(e);
-        //     toast.error('Не удалось загрузить');
-        // }
     };
     const handleCloseWriteOffProcessing = () => {
         setWriteOffProcWarehouse(null);
@@ -443,7 +442,7 @@ export default function WarehousesTable({
             await dispatch(
                 fetchProcessingWriteOffs({
                     // project_id: 0,
-                    // warehouse_id: writeOffMbpWarehouse.id,
+                    warehouse_id: writeOffProcWarehouse.id,
                     // work_performed_id: 0,
                     // work_performed_item_id: 0,
                     // status: 0,
@@ -454,6 +453,67 @@ export default function WarehousesTable({
         } catch (e: any) {
             console.error(e);
             toast.error(e?.message || 'Ошибка создания списания по переработке');
+        }
+    };
+
+    // Перемещение
+    const handleOpenWarehouseTransfers = async (warehouse: Warehouse) => {
+        setWarehouseTransfers(warehouse);
+        fetchWarehouseStocks(warehouse.id, 1, 100);
+
+        if (!projectId) {
+            toast.error('Не удалось определить projectId');
+            return;
+        }
+    };
+    const handleCloseWarehouseTransfers = () => {
+        setWarehouseTransfers(null);
+    };
+
+    const handleCreateWarehouseTransfers = async (payload: any) => {
+        if (!warehouseTransfers) return;
+
+        try {
+            await dispatch(createProcessingWriteOff(payload)).unwrap();
+
+            toast.success('Накладная по перемещении создано');
+            handleCloseWarehouseTransfers();
+
+            setTabs((prev) => ({
+                ...prev,
+                [warehouseTransfers.id]: 'writeOffprocess',
+            }));
+
+            await dispatch(
+                fetchWarehouseItems({
+                    warehouse_id: warehouseTransfers.id,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+
+            await dispatch(
+                fetchMaterialMovements({
+                    warehouse_id: warehouseTransfers.id,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+
+            await dispatch(
+                fetchWarehouseTransfers({
+                    // project_id: 0,
+                    warehouse_id: warehouseTransfers.id,
+                    // work_performed_id: 0,
+                    // work_performed_item_id: 0,
+                    // status: 0,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e?.message || 'Ошибка создания накладной на перемещение');
         }
     };
 
@@ -517,6 +577,7 @@ export default function WarehousesTable({
                                     onOpenWriteOffAvr={handleOpenWriteOffAvr}
                                     onOpenWriteOffMbp={handleOpenWriteOffMbp}
                                     onOpenWriteOffProcessing={handleOpenWriteOffProcessing}
+                                    onOpenTransfer={handleOpenWarehouseTransfers}
                                 />
                             ))}
                         </tbody>
@@ -550,7 +611,7 @@ export default function WarehousesTable({
                 warehouseName={writeOffMbpWarehouse?.name}
                 refs={refs}
                 warehouseStocks={warehouseStockOptions}
-                submitting={writeOffSubmitting}
+                submitting={mbpWriteOffSubmitting}
                 onClose={handleCloseWriteOffMbp}
                 onSubmit={handleCreateWriteOffMbp}
             />
@@ -558,11 +619,22 @@ export default function WarehousesTable({
                 open={Boolean(writeOffProcWarehouse)}
                 warehouseId={writeOffProcWarehouse?.id ?? 0}
                 warehouseName={writeOffProcWarehouse?.name}
-                refs={refs}
                 warehouseStocks={warehouseStockOptions}
-                submitting={writeOffSubmitting}
+                refs={refs}
+                submitting={processingWriteOffSubmitting}
                 onClose={handleCloseWriteOffProcessing}
                 onSubmit={handleCreateWriteOffProcessing}
+            />
+            <WarehouseTransferModal
+                open={Boolean(warehouseTransfers)}
+                fromWarehouseId={warehouseTransfers?.id ?? 0}
+                fromWarehouseName={warehouseTransfers?.name}
+                warehouseStocks={warehouseStockOptions}
+                availableWarehouses={warehouseOptions}
+                refs={refs}
+                submitting={warehouseTransfersSubmitting}
+                onClose={handleCloseWarehouseTransfers}
+                onSubmit={handleCreateWarehouseTransfers}
             />
         </div>
     );

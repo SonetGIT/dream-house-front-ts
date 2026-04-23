@@ -1,7 +1,6 @@
 import React from 'react';
-import { Box, Button, Collapse } from '@mui/material';
-import { Add } from '@mui/icons-material';
-import { ChevronDown, ChevronRight, MinusCircle, Pencil, Phone } from 'lucide-react';
+import { Box, Collapse } from '@mui/material';
+import { ChevronDown, ChevronRight, Pencil, Phone } from 'lucide-react';
 
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
@@ -14,13 +13,16 @@ import WarehouseMovementsTab from './tabs/WarehouseMovementsTab';
 import WarehouseWriteOffAvrTab from './tabs/WarehouseWriteOffAVRTab';
 import WarehouseWriteOffMbpTab from './tabs/WarehouseWriteOffMBPTab';
 import WarehouseWriteOffProcessTab from './tabs/WarehouseWriteOffProcessTab';
+import { ActionButton, ACTIONS } from '@/components/ui/ActionButton';
+import WarehouseTransfersTab from './tabs/WarehouseTransfersTab';
 
 export type WarehouseTabType =
     | 'materials'
     | 'movements'
     | 'writeOffAvr'
     | 'writeOffMbp'
-    | 'writeOffprocess';
+    | 'writeOffprocess'
+    | 'warehouseTransfers';
 
 interface WarehouseRowProps {
     warehouse: Warehouse;
@@ -34,11 +36,10 @@ interface WarehouseRowProps {
     onOpenWriteOffAvr: (warehouse: Warehouse) => void;
     onOpenWriteOffMbp: (warehouse: Warehouse) => void;
     onOpenWriteOffProcessing: (warehouse: Warehouse) => void;
+    onOpenTransfer: (warehouse: Warehouse) => void;
 }
 
-{
-    /* ДАННЫЕ СКЛАДА */
-}
+/* ДАННЫЕ СКЛАДА */
 /**********************************************************************************************************************/
 export default function WarehouseRow({
     warehouse,
@@ -52,7 +53,19 @@ export default function WarehouseRow({
     onOpenWriteOffAvr,
     onOpenWriteOffMbp,
     onOpenWriteOffProcessing,
+    onOpenTransfer,
 }: WarehouseRowProps) {
+    type ActionKey = (typeof ACTIONS)[number]['key'];
+    type ActionHandlers = Record<ActionKey, (warehouse: Warehouse) => void>;
+    const ACTION_HANDLERS: ActionHandlers = {
+        receive: onOpenReceive,
+        writeOffAvr: onOpenWriteOffAvr,
+        writeOffMbp: onOpenWriteOffMbp,
+        processing: onOpenWriteOffProcessing,
+        transfer: onOpenTransfer,
+    };
+
+    /*************************************************************************************************************/
     return (
         <React.Fragment>
             <tr className="transition-colors border-b hover:bg-gray-50" onClick={onToggle}>
@@ -73,21 +86,21 @@ export default function WarehouseRow({
                     </button>
                 </td>
                 {/* Данные склада (поля) */}
-                <td className="px-3 py-2">
+                <td className="px-2 py-2">
                     <div className="text-sm font-medium text-gray-700 truncate max-w-[120px]">
                         {warehouse.name}
                     </div>
                 </td>
 
-                <td className="px-3 py-2 text-center">
+                <td className="px-2 py-2 text-center">
                     <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                         {warehouse.code}
                     </span>
                 </td>
 
-                <td className="px-3 py-2 text-sm text-center">{warehouse.address}</td>
+                <td className="px-2 py-2 text-sm text-center">{warehouse.address}</td>
 
-                <td className="px-3 py-2 text-center">
+                <td className="px-2 py-2 text-center">
                     {warehouse.manager_id ? (
                         <span className="text-sm">{refs.users.lookup(warehouse.manager_id)}</span>
                     ) : (
@@ -95,7 +108,7 @@ export default function WarehouseRow({
                     )}
                 </td>
 
-                <td className="px-3 py-2 text-center">
+                <td className="px-2 py-2 text-center">
                     <div className="space-y-1 text-sm">
                         {warehouse.phone && (
                             <div className="flex items-center gap-1.5 text-gray-700 text-sm">
@@ -107,14 +120,14 @@ export default function WarehouseRow({
                 </td>
 
                 <td
-                    className="px-3 py-2 font-medium text-center border-gray-200 text-violet-800"
+                    className="px-2 py-2 font-medium text-center border-gray-200 text-violet-800"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {warehouse.items?.length || 0} поз.
                 </td>
 
                 {/* Редактировать данные склада */}
-                <td className="px-3 py-2 border-l">
+                <td className="px-2 py-2 border-l">
                     <div className="flex items-center justify-center gap-1.5">
                         <StyledTooltip title="Редактировать">
                             <button
@@ -133,7 +146,7 @@ export default function WarehouseRow({
             </tr>
 
             <tr className="border-b bg-gradient-to-r to-blue-50/50">
-                <td colSpan={8} className="px-3 py-2">
+                <td colSpan={8} className="py-3">
                     <Collapse in={isOpen} unmountOnExit>
                         <div className="px-3 py-2 ml-8">
                             <div className="flex items-center justify-between gap-2 mb-4 border-b">
@@ -141,73 +154,24 @@ export default function WarehouseRow({
                                 <WarehouseTabs activeTab={activeTab} onChange={onTabChange} />
 
                                 {/* КНОПКИ: Принять товар, Списание по АВР, Списание МБП */}
-                                <Box sx={{ mb: 1 }}>
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<Add />}
-                                        onClick={() => onOpenReceive(warehouse)}
-                                        sx={{
-                                            color: 'green',
-                                            borderColor: 'green',
-                                            '&:hover': {
-                                                borderColor: 'darkgreen',
-                                                backgroundColor: 'rgba(76, 100, 68, 0.1)',
-                                            },
-                                        }}
-                                    >
-                                        товар
-                                    </Button>
+                                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                                    {ACTIONS.map((action) => (
+                                        <ActionButton
+                                            key={action.key}
+                                            icon={action.icon}
+                                            tooltip={action.tooltip}
+                                            colors={action.colors}
+                                            onClick={() => {
+                                                // Вызываем нужную функцию, передавая warehouse
+                                                const handler = ACTION_HANDLERS[action.key];
 
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<MinusCircle />}
-                                        onClick={() => onOpenWriteOffAvr(warehouse)}
-                                        sx={{
-                                            marginLeft: 1,
-                                            color: 'violet',
-                                            borderColor: 'violet',
-                                            '&:hover': {
-                                                borderColor: 'darkviolet',
-                                                backgroundColor: 'rgba(208, 124, 247, 0.1)',
-                                            },
-                                        }}
-                                    >
-                                        АВР
-                                    </Button>
-
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<MinusCircle />}
-                                        onClick={() => onOpenWriteOffMbp(warehouse)}
-                                        sx={{
-                                            ml: 1,
-                                            color: '#C54550', // ваш rose
-                                            borderColor: '#C54550',
-                                            '&:hover': {
-                                                borderColor: '#A3323C', // темнее для hover
-                                                backgroundColor: 'rgba(197, 69, 80, 0.1)',
-                                            },
-                                        }}
-                                    >
-                                        МБП
-                                    </Button>
-
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<MinusCircle />}
-                                        onClick={() => onOpenWriteOffProcessing(warehouse)}
-                                        sx={{
-                                            marginLeft: 1,
-                                            color: 'skyblue',
-                                            borderColor: 'skyblue',
-                                            '&:hover': {
-                                                borderColor: 'skyblue',
-                                                backgroundColor: 'rgba(93, 142, 175, 0.1)',
-                                            },
-                                        }}
-                                    >
-                                        Переработка
-                                    </Button>
+                                                // onClick={() => ACTION_HANDLERS[action.key](warehouse)}
+                                                if (handler) {
+                                                    handler(warehouse);
+                                                }
+                                            }}
+                                        />
+                                    ))}
                                 </Box>
                             </div>
 
@@ -231,6 +195,9 @@ export default function WarehouseRow({
                                     warehouseId={warehouse.id}
                                     refs={refs}
                                 />
+                            )}
+                            {activeTab === 'warehouseTransfers' && (
+                                <WarehouseTransfersTab warehouseId={warehouse.id} refs={refs} />
                             )}
                         </div>
                     </Collapse>

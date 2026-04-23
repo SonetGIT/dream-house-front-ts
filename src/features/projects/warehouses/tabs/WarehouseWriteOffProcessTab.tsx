@@ -8,6 +8,7 @@ import {
     type ProcessingWriteOff,
 } from '../materialProcessingWriteOffs/processingWriteOffSlice';
 import ProcessingWriteOffTable from '../materialProcessingWriteOffs/ProcessingWriteOffTable';
+import { useEffect } from 'react';
 
 interface WarehouseWriteOffProcessingTabProps {
     warehouseId: number;
@@ -21,6 +22,16 @@ export default function WarehouseWriteOffProcessTab({
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.processingWriteOff);
     const currentUser = useAppSelector((state) => state.auth.user);
+
+    useEffect(() => {
+        dispatch(
+            fetchProcessingWriteOffs({
+                warehouse_id: warehouseId,
+                page: 1,
+                size: pagination?.size ?? 10,
+            }),
+        );
+    }, [dispatch, warehouseId]);
 
     const canSign = (writeOff: ProcessingWriteOff, user?: User | null) => {
         if (!user) return false;

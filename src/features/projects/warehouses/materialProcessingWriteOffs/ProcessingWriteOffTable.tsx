@@ -156,6 +156,7 @@ export default function ProcessingWriteOffTable({
                                     ? isFullyApproved(writeOff)
                                     : false;
 
+                                // ***********************************************************************************************************/
                                 return (
                                     <React.Fragment key={writeOff.id}>
                                         <tr
@@ -260,7 +261,7 @@ export default function ProcessingWriteOffTable({
                                                                 icon={
                                                                     <ListChecks className="w-3.5 h-3.5" />
                                                                 }
-                                                                label="Списанные MБП"
+                                                                label="Переработка"
                                                                 onClick={(e) => e.stopPropagation()}
                                                             />
                                                         </div>

@@ -2,12 +2,12 @@ import React from 'react';
 
 interface WarehouseStatsProps {
     warehouse: {
-        material_records_count: number;
-        transfer_count: number;
-        avr_write_off_count: number;
-        mbp_write_off_count: number;
-        processing_write_off_count: number;
-        operation_counts: {
+        material_records_count?: number;
+        transfer_count?: number;
+        avr_write_off_count?: number;
+        mbp_write_off_count?: number;
+        processing_write_off_count?: number;
+        operation_counts?: {
             '+': number;
             '-': number;
             '=': number;
@@ -18,8 +18,6 @@ interface WarehouseStatsProps {
 export const WarehouseStatsPanel: React.FC<WarehouseStatsProps> = ({ warehouse }) => {
     if (!warehouse) return null;
 
-    const { operation_counts } = warehouse;
-
     const stats = [
         {
             label: 'Материалы',
@@ -28,17 +26,17 @@ export const WarehouseStatsPanel: React.FC<WarehouseStatsProps> = ({ warehouse }
         },
         {
             label: 'Приход',
-            value: operation_counts['+'],
+            value: warehouse?.operation_counts?.['+'] ?? 0,
             color: 'text-green-600',
         },
         {
             label: 'Расход',
-            value: operation_counts['-'],
+            value: warehouse?.operation_counts?.['-'] ?? 0,
             color: 'text-red-600',
         },
         {
             label: 'Перемещения',
-            value: operation_counts['='],
+            value: warehouse?.operation_counts?.['='] ?? 0,
             color: 'text-sky-600',
         },
         {
@@ -62,8 +60,8 @@ export const WarehouseStatsPanel: React.FC<WarehouseStatsProps> = ({ warehouse }
         <div className="flex flex-wrap items-center gap-4 pb-2">
             {stats.map((item, index) => (
                 <div key={index} className="flex items-center gap-1.5 text-xs">
-                    <span className={item.color}>{item.label}:</span>
-                    <span className="font-medium text-foreground">{item.value}</span>
+                    <span className="text-sm">{item.label}:</span>
+                    <span className={item.color}>{item.value}</span>
                 </div>
             ))}
         </div>

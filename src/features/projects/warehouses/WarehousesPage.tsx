@@ -14,7 +14,6 @@ import Modal from '@/components/ui/Modal';
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
 import { FolderOpen } from 'lucide-react';
 import { Add } from '@mui/icons-material';
-import { TablePagination } from '@/components/ui/TablePagination';
 import toast from 'react-hot-toast';
 import { WarehouseCreateForm } from './WarehouseCreateForm';
 import WarehousesTable from './WarehousesTable';
@@ -26,13 +25,11 @@ export default function WarehousesPage() {
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.warehouses);
 
-    const currentWarehouse = data.find((w) => w.project_id === projectId)!;
+    const currentWarehouse = data?.find((w) => w.project_id === projectId)!;
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
     const [formLoading, setFormLoading] = useState(false);
-    const [page, setPage] = useState(1);
-    const [size, setSize] = useState(10);
 
     // Справочники
     const refs = {
@@ -50,8 +47,8 @@ export default function WarehousesPage() {
 
     //Первичная загрузка =====
     useEffect(() => {
-        dispatch(fetchWarehouses({ page, size, project_id: projectId }));
-    }, [projectId, page, size]);
+        dispatch(fetchWarehouses({ page: 1, size: 10, project_id: projectId }));
+    }, [projectId, 1, 10]);
 
     const handleCreate = () => {
         setSelectedWarehouse(null);
@@ -152,19 +149,6 @@ export default function WarehousesPage() {
                         refs={refs}
                         onEdit={handleEdit}
                     />
-                    {pagination && (
-                        <TablePagination
-                            pagination={pagination}
-                            onPageChange={(newPage) => setPage(newPage)}
-                            onSizeChange={(newSize) => {
-                                setPage(1);
-                                setSize(newSize);
-                            }}
-                            sizeOptions={[10, 25, 50, 100]}
-                            showFirstButton
-                            showLastButton
-                        />
-                    )}
                 </>
             )}
             <Modal

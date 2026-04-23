@@ -1,15 +1,26 @@
-import type { Pagination } from '@/features/users/userSlice';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import type { Pagination } from '@/features/users/userSlice';
 
-// ==================== TYPES ====================
-export interface TransferItem {
+/* TYPES */
+
+export interface WarehouseTransfer {
+    id: number;
+    name: string;
+}
+
+export interface WarehouseTransferItemMaterial {
+    id: number;
+    name: string;
+}
+
+export interface WarehouseTransferItem {
     id: number;
     warehouse_transfer_id: number;
     material_id: number;
     material_type: number;
     unit_of_measure: number;
-    quantity: string; // В API приходит строкой "5.000"
+    quantity: string;
     created_at: string;
     updated_at: string;
     deleted: boolean;
@@ -32,164 +43,303 @@ export interface WarehouseTransfer {
     created_at: string;
     updated_at: string;
     deleted: boolean;
-    items: TransferItem[];
+    items: WarehouseTransferItem[];
+    // Опционально: вложенные данные, если бэкенд их подгружает
+    from_warehouse?: { id: number; name: string } | null;
+    to_warehouse?: { id: number; name: string } | null;
+    created_user?: { id: number; name: string } | null;
 }
 
-export interface WarehouseTransferForm {
+/* SEARCH PARAMS */
+
+export interface WarehouseTransferSearchParams {
+    project_id?: number;
+    warehouse_id?: number;
+    status?: number;
+    page?: number;
+    size?: number;
+}
+
+/* PAYLOADS */
+
+export interface CreateWarehouseTransferItemPayload {
+    material_id: number;
+    material_type: number;
+    unit_of_measure: number;
+    quantity: string;
+}
+
+export interface CreateWarehouseTransferPayload {
     from_warehouse_id: number;
     to_warehouse_id: number;
-    comment: string | null;
-    items: Array<{
-        material_id: number;
-        material_type: number;
-        unit_of_measure: number;
-        quantity: string;
-    }>;
+    posted_at?: string;
+    comment?: string | null;
+    items: CreateWarehouseTransferItemPayload[];
 }
 
-export type WarehouseTransferFormData = Omit<
-    WarehouseTransfer,
-    | 'id'
-    | 'posted_at'
-    | 'created_user_id'
-    | 'sender_signed'
-    | 'sender_signed_user_id'
-    | 'sender_signed_time'
-    | 'receiver_signed'
-    | 'receiver_signed_user_id'
-    | 'receiver_signed_time'
-    | 'created_at'
-    | 'updated_at'
-    | 'deleted'
-    | 'items'
-> & {
-    items: Omit<
-        TransferItem,
-        'id' | 'warehouse_transfer_id' | 'created_at' | 'updated_at' | 'deleted'
-    >[];
-};
+// export interface UpdateWarehouseTransferPayload {
+//     warehouse_id?: number;
+//     posted_at?: string;
+//     note?: string | null;
+//     items?: CreateWarehouseTransferItemPayload[];
 
-interface WarehouseTransfersState {
+//     foreman_user_id: number | null;
+//     signed_by_foreman: boolean | null;
+//     signed_by_foreman_time: string | null;
+
+//     planning_engineer_user_id: number | null;
+//     signed_by_planning_engineer: boolean | null;
+//     signed_by_planning_engineer_time: string | null;
+
+//     main_engineer_user_id: number | null;
+//     signed_by_main_engineer: boolean | null;
+//     signed_by_main_engineer_time: string | null;
+
+//     general_director_user_id: number | null;
+//     signed_by_general_director: boolean | null;
+//     signed_by_general_director_time: string | null;
+// }
+
+interface WarehouseTransferState {
     data: WarehouseTransfer[];
-    map: Record<number, WarehouseTransfer>;
+    current: WarehouseTransfer | null;
     pagination: Pagination | null;
     loading: boolean;
+    submitting: boolean;
     error: string | null;
 }
 
-// ==================== INITIAL STATE ====================
-const initialState: WarehouseTransfersState = {
+const initialState: WarehouseTransferState = {
     data: [],
-    map: {},
+    current: null,
     pagination: null,
     loading: false,
+    submitting: false,
     error: null,
 };
 
-// ==================== THUNKS ====================
-// GET (с пагинацией)
-export const fetchTransfers = createAsyncThunk(
-    'warehouseTransfers/fetch',
-    async (params: { page?: number; size?: number }, { rejectWithValue }) => {
-        try {
-            return await apiRequest<WarehouseTransfer[]>('/warehouse-transfers', 'GET', params);
-        } catch (e: any) {
-            return rejectWithValue(e.message);
+/* HELPERS */
+
+const normalizeList = (value: unknown): WarehouseTransfer[] => {
+    const data = value as any;
+
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.rows)) return data.rows;
+    if (data?.id) return [data];
+
+    return [];
+};
+
+const normalizeItem = (value: unknown): WarehouseTransfer | null => {
+    const data = value as any;
+
+    if (!data) return null;
+    if (data?.id) return data;
+    if (data?.data?.id) return data.data;
+    if (data?.item?.id) return data.item;
+
+    return null;
+};
+
+const upsertItem = (state: WarehouseTransferState, item: WarehouseTransfer) => {
+    const index = state.data.findIndex((row) => row.id === item.id);
+
+    if (index !== -1) {
+        state.data[index] = item;
+    } else {
+        state.data.unshift(item);
+    }
+
+    if (state.current?.id === item.id) {
+        state.current = item;
+    }
+};
+
+/* THUNKS */
+// SEARCH
+export const fetchWarehouseTransfers = createAsyncThunk<
+    { data: WarehouseTransfer[]; pagination: Pagination | null },
+    WarehouseTransferSearchParams,
+    { rejectValue: string }
+>('warehouseTransfers/search', async (params, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<WarehouseTransfer[]>(
+            '/warehouseTransfers/search',
+            'POST',
+            params,
+        );
+
+        return {
+            data: normalizeList(res.data),
+            pagination: res.pagination ?? null,
+        };
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка загрузки списаний МБП');
+    }
+});
+
+// GET BY ID
+export const fetchWarehouseTransferById = createAsyncThunk<
+    WarehouseTransfer,
+    number,
+    { rejectValue: string }
+>('warehouseTransfers/getById', async (id, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<WarehouseTransfer>(`/warehouseTransfers/${id}`, 'GET');
+
+        const item = normalizeItem(res.data);
+
+        if (!item) {
+            throw new Error('Наклданая не найдена');
         }
-    },
-);
+
+        return item;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка загрузки накладной');
+    }
+});
 
 // CREATE
-export const createTransfer = createAsyncThunk(
-    'warehouseTransfers/create',
-    async (data: Partial<WarehouseTransferForm>, { rejectWithValue }) => {
-        try {
-            return await apiRequest<WarehouseTransfer>('/warehouse-transfers/create', 'POST', data);
-        } catch (e: any) {
-            return rejectWithValue(e.message);
-        }
-    },
-);
+export const createWarehouseTransfer = createAsyncThunk<
+    WarehouseTransfer,
+    CreateWarehouseTransferPayload,
+    { rejectValue: string }
+>('warehouseTransfers/create', async (payload, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<WarehouseTransfer>(
+            '/warehouseTransfers/create',
+            'POST',
+            payload,
+        );
 
-// UPDATE
-export const updateTransfer = createAsyncThunk(
-    'warehouseTransfers/update',
-    async ({ id, data }: { id: number; data: Partial<WarehouseTransfer> }, { rejectWithValue }) => {
-        try {
-            return await apiRequest<WarehouseTransfer>(
-                `/warehouse-transfers/update/${id}`,
-                'PUT',
-                data,
-            );
-        } catch (e: any) {
-            return rejectWithValue(e.message);
-        }
-    },
-);
+        const item = normalizeItem(res.data);
 
-// DELETE
-export const deleteTransfer = createAsyncThunk(
-    'warehouseTransfers/delete',
-    async (id: number, { rejectWithValue }) => {
-        try {
-            await apiRequest(`/warehouse-transfers/delete/${id}`, 'DELETE');
-            return id;
-        } catch (e: any) {
-            return rejectWithValue(e.message);
+        if (!item) {
+            throw new Error('Сервер не вернул созданный накладной');
         }
-    },
-);
 
-// ==================== SLICE ====================
-const warehouseTransfersSlice = createSlice({
+        return item;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка создания списания накладной');
+    }
+});
+
+// SIGN
+export const signWarehouseTransfer = createAsyncThunk<
+    WarehouseTransfer,
+    { id: number; stage: 'sender' | 'receiver' },
+    { rejectValue: string }
+>('warehouseTransfers/sign', async ({ id, stage }, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<WarehouseTransfer>(`/warehouseTransfers/sign/${id}`, 'POST', {
+            stage,
+        });
+
+        const item = normalizeItem(res.data);
+
+        if (!item) {
+            throw new Error('Сервер не вернул подписанное накладное');
+        }
+
+        return item;
+    } catch (err: any) {
+        return rejectWithValue(err.message || 'Ошибка в подписании накладной');
+    }
+});
+
+/* SLICE */
+const warehouseTransferSlice = createSlice({
     name: 'warehouseTransfers',
     initialState,
-    reducers: {},
+    reducers: {
+        clearWarehouseTransfers: (state) => {
+            state.data = [];
+            state.current = null;
+            state.pagination = null;
+            state.loading = false;
+            state.submitting = false;
+            state.error = null;
+        },
+        clearCurrentWarehouseTransfer: (state) => {
+            state.current = null;
+        },
+    },
     extraReducers: (builder) => {
         builder
-            // FETCH
-            .addCase(fetchTransfers.pending, (state) => {
+            // SEARCH
+            .addCase(fetchWarehouseTransfers.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchTransfers.fulfilled, (state, action) => {
+            .addCase(fetchWarehouseTransfers.fulfilled, (state, action) => {
                 state.loading = false;
-
-                const data = action.payload.data;
-
-                state.data = data;
-                state.map = Object.fromEntries(data.map((t) => [t.id, t]));
-                state.pagination = action.payload.pagination || null;
+                state.data = action.payload.data;
+                state.pagination = action.payload.pagination;
             })
-            .addCase(fetchTransfers.rejected, (state, action) => {
+            .addCase(fetchWarehouseTransfers.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload as string;
+                state.error = action.payload ?? 'Ошибка загрузки списаний МБП';
+            })
+
+            // GET BY ID
+            .addCase(fetchWarehouseTransferById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchWarehouseTransferById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.current = action.payload;
+                upsertItem(state, action.payload);
+            })
+            .addCase(fetchWarehouseTransferById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка загрузки списания МБП';
             })
 
             // CREATE
-            .addCase(createTransfer.fulfilled, (state, action) => {
-                const item = action.payload.data;
+            .addCase(createWarehouseTransfer.pending, (state) => {
+                state.submitting = true;
+                state.error = null;
+            })
+            .addCase(createWarehouseTransfer.fulfilled, (state, action) => {
+                state.submitting = false;
+                state.current = action.payload;
+                state.data.unshift(action.payload);
 
-                state.data.unshift(item);
-                state.map[item.id] = item;
+                if (state.pagination) {
+                    state.pagination.total += 1;
+
+                    if ('pages' in state.pagination) {
+                        state.pagination.pages = Math.max(
+                            Math.ceil(state.pagination.total / state.pagination.size),
+                            1,
+                        );
+                    }
+                }
+            })
+            .addCase(createWarehouseTransfer.rejected, (state, action) => {
+                state.submitting = false;
+                state.error = action.payload ?? 'Ошибка создания списания МБП';
             })
 
-            // UPDATE
-            .addCase(updateTransfer.fulfilled, (state, action) => {
-                const updated = action.payload.data;
-
-                state.map[updated.id] = updated;
-                state.data = state.data.map((t) => (t.id === updated.id ? updated : t));
+            // SIGN
+            .addCase(signWarehouseTransfer.pending, (state) => {
+                state.submitting = true;
+                state.error = null;
             })
-
-            // DELETE
-            .addCase(deleteTransfer.fulfilled, (state, action) => {
-                const id = action.payload;
-
-                delete state.map[id];
-                state.data = state.data.filter((t) => t.id !== id);
+            .addCase(signWarehouseTransfer.fulfilled, (state, action) => {
+                state.submitting = false;
+                upsertItem(state, action.payload);
+            })
+            .addCase(signWarehouseTransfer.rejected, (state, action) => {
+                state.submitting = false;
+                state.error = action.payload ?? 'Ошибка подписания списания МБП';
             });
     },
 });
 
-export default warehouseTransfersSlice.reducer;
+export const { clearWarehouseTransfers, clearCurrentWarehouseTransfer } =
+    warehouseTransferSlice.actions;
+export default warehouseTransferSlice.reducer;

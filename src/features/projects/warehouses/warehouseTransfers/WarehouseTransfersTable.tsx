@@ -4,29 +4,29 @@ import { ChevronDown, ChevronRight, ListChecks, Trash2 } from 'lucide-react';
 
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { MaterialWriteOff } from './materialWriteOffSlice';
 import type { Pagination, User } from '@/features/users/userSlice';
-import { writeOffStatuses } from '@/utils/getStatusColor';
+import { TablePagination } from '@/components/ui/TablePagination';
 import { formatDate } from '@/utils/formatData';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { TablePagination } from '@/components/ui/TablePagination';
+import { writeOffStatuses } from '@/utils/getStatusColor';
 import { TabBtn } from '../../pto/workPerformed/WorkPerformedTable';
+import type { WarehouseTransfer } from './warehouseTransfersSlice';
 
-interface MaterialWriteOffTableProps {
-    data: MaterialWriteOff[];
+interface WarehouseTransferTableProps {
+    data: WarehouseTransfer[];
     refs: Record<string, ReferenceResult>;
     loading?: boolean;
     pagination?: Pagination | null;
     onPageChange?: (page: number) => void;
     onSizeChange?: (size: number) => void;
-    currentUser: User | null;
-    canSign?: (item: MaterialWriteOff, user?: User | null) => boolean;
-    isFullyApproved?: (item: MaterialWriteOff) => boolean;
-    onSign?: (item: MaterialWriteOff) => void;
+    currentUser?: User | null;
+    canSign?: (item: WarehouseTransfer, user?: User | null) => boolean;
+    isFullyApproved?: (item: WarehouseTransfer) => boolean;
+    onSign?: (item: WarehouseTransfer) => void;
     onDelete?: (id: number) => void;
 }
 
-export default function MaterialWriteOffTable({
+export default function WarehouseTransfersTable({
     data,
     refs,
     loading = false,
@@ -38,7 +38,7 @@ export default function MaterialWriteOffTable({
     isFullyApproved,
     onSign,
     onDelete,
-}: MaterialWriteOffTableProps) {
+}: WarehouseTransferTableProps) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
 
     const toggleRow = (id: number) => {
@@ -57,15 +57,15 @@ export default function MaterialWriteOffTable({
         );
     };
 
-    const getSignatureClassName = (approved: boolean | null) => {
+    const getSignatureClassName = (approved?: boolean | null) => {
         if (approved === true) return 'text-green-600';
         // if (approved === false) return 'text-red-500';
         return 'text-gray-400';
     };
 
-    const getSignatureText = (approved: boolean | null, approvedTime: string | null) => {
+    const getSignatureText = (approved?: boolean | null, approvedTime?: string | null) => {
         if (approved === true) return `✔ ${formatDateTime(approvedTime)}`;
-        // if (approved === false) return `✖ ${formatDateTime(approvedTime)}`; отклонение
+        // if (approved === false) return `✖ ${formatDateTime(approvedTime)}`;
         return '⏳ Ожидает';
     };
 
@@ -84,47 +84,42 @@ export default function MaterialWriteOffTable({
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
-                                <th className="px-1 py-1 text-left bg-violet-50"></th>
-                                <th className="px-1 py-1 text-sm font-semibold text-left text-violet-700 bg-violet-50">
+                                <th className="px-1 py-1 text-left bg-blue-50"></th>
+                                <th className="px-1 py-1 text-sm font-semibold text-left text-blue-800 bg-blue-50">
                                     №
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
+                                <th className="px-1 py-1 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
                                         Статус
                                     </div>
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
-                                        Блок
-                                    </div>
-                                </th>
-                                {/* <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
-                                        Склад
-                                    </div>
-                                </th> */}
-                                <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
-                                        АВР
-                                    </div>
-                                </th>
-                                <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
-                                        Выполненная работа
-                                    </div>
-                                </th>
-                                <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
+                                <th className="px-1 py-1 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
                                         Дата списания
                                     </div>
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-violet-50">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
+                                <th className="px-1 py-1 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
+                                        Откуда
+                                    </div>
+                                </th>
+                                <th className="px-1 py-1 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
+                                        Куда
+                                    </div>
+                                </th>
+                                <th className="px-1 py-1 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
+                                        Позиций
+                                    </div>
+                                </th>
+                                <th className="px-1 py-1 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
                                         Примечание
                                     </div>
                                 </th>
-                                <th className="px-1 py-1 text-center border-l bg-violet-50 w-[760px]">
-                                    <div className="text-xs font-semibold uppercase text-violet-700">
+                                <th className="px-1 py-1 text-center border-l bg-blue-50 w-[760px]">
+                                    <div className="text-xs font-semibold text-blue-800 uppercase">
                                         Этап подписи
                                     </div>
                                 </th>
@@ -135,33 +130,19 @@ export default function MaterialWriteOffTable({
                         </thead>
 
                         <tbody>
-                            {data?.map((writeOff) => {
-                                const statusInfo = getStatusConfig(writeOff.status);
+                            {data?.map((whTr) => {
+                                const statusInfo = getStatusConfig(whTr.status);
 
                                 const signatures = [
                                     {
-                                        label: 'Прораб',
-                                        userId: writeOff.foreman_user_id,
-                                        approved: writeOff.signed_by_foreman,
-                                        approvedTime: writeOff.signed_by_foreman_time,
+                                        label: 'Отправитель',
+                                        approved: whTr.sender_signed,
+                                        approvedTime: whTr.sender_signed_time,
                                     },
                                     {
-                                        label: 'Инженер ПТО',
-                                        userId: writeOff.planning_engineer_user_id,
-                                        approved: writeOff.signed_by_planning_engineer,
-                                        approvedTime: writeOff.signed_by_planning_engineer_time,
-                                    },
-                                    {
-                                        label: 'Гл. инженер',
-                                        userId: writeOff.main_engineer_user_id,
-                                        approved: writeOff.signed_by_main_engineer,
-                                        approvedTime: writeOff.signed_by_main_engineer_time,
-                                    },
-                                    {
-                                        label: 'Ген. директор',
-                                        userId: writeOff.general_director_user_id,
-                                        approved: writeOff.signed_by_general_director,
-                                        approvedTime: writeOff.signed_by_general_director_time,
+                                        label: 'Получатель',
+                                        approved: whTr.receiver_signed,
+                                        approvedTime: whTr.receiver_signed_time,
                                     },
                                 ];
 
@@ -169,28 +150,29 @@ export default function MaterialWriteOffTable({
                                     !!currentUser &&
                                     !!canSign &&
                                     !!onSign &&
-                                    canSign(writeOff, currentUser);
+                                    canSign(whTr, currentUser);
 
                                 const signDisabled = isFullyApproved
-                                    ? isFullyApproved(writeOff)
+                                    ? isFullyApproved(whTr)
                                     : false;
 
+                                // ***********************************************************************************************************/
                                 return (
-                                    <React.Fragment key={writeOff.id}>
+                                    <React.Fragment key={whTr.id}>
                                         <tr
                                             className="transition-colors border-b hover:bg-gray-50"
-                                            onClick={() => toggleRow(writeOff.id)}
+                                            onClick={() => toggleRow(whTr.id)}
                                         >
                                             <td className="px-2 py-2">
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toggleRow(writeOff.id);
+                                                        toggleRow(whTr.id);
                                                     }}
                                                     className="text-gray-400 transition-colors hover:text-gray-600"
                                                 >
-                                                    {openRows[writeOff.id] ? (
+                                                    {openRows[whTr.id] ? (
                                                         <ChevronDown className="w-4 h-4" />
                                                     ) : (
                                                         <ChevronRight className="w-4 h-4" />
@@ -199,71 +181,58 @@ export default function MaterialWriteOffTable({
                                             </td>
 
                                             <td className="px-2 py-2 text-xs font-medium text-left text-gray-700">
-                                                {writeOff.id}
+                                                {whTr.id}
                                             </td>
 
                                             <td className="px-2 py-2 text-center text-gray-900">
                                                 <span
-                                                    className={`inline-flex text-center px-2 py-0.5 text-xs font-semibold border rounded-full ${statusInfo.className}`}
+                                                    className={`inline-flex px-2 py-0.5 text-xs font-semibold border rounded-full ${statusInfo.className}`}
                                                 >
                                                     {refs.materialWriteOffStatuses?.lookup?.(
-                                                        Number(writeOff.status),
+                                                        Number(whTr.status),
                                                     ) || statusInfo.label}
                                                 </span>
                                             </td>
-
-                                            <td className="px-2 py-2 text-xs font-medium text-center text-gray-700">
-                                                {refs.projectBlocks?.lookup?.(
-                                                    Number(writeOff.block_id),
-                                                )}
-                                            </td>
-
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {`Акт №${writeOff.work_performed_id}`}
+                                                {formatDate(whTr.posted_at)}
                                             </td>
-
-                                            <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {refs.services?.lookup?.(
-                                                    Number(
-                                                        writeOff.work_performed_item?.service_id,
-                                                    ),
-                                                )}
-                                                {/* {lookupRef(
-                                                    ['services'],
-                                                    writeOff.work_performed_item?.service_id,
-                                                    '—',
-                                                )} */}
+                                            <td className="px-2 py-2 text-center text-gray-900">
+                                                <span
+                                                    className={`inline-flex px-2 py-0.5 text-xs text-yellow-700 rounded-full`}
+                                                >
+                                                    {refs.warehouses?.lookup?.(
+                                                        Number(whTr.from_warehouse_id),
+                                                    ) || '-'}
+                                                </span>
                                             </td>
-
-                                            <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {formatDate(writeOff.posted_at || '')}
+                                            <td className="px-2 py-2 text-center text-gray-900">
+                                                <span
+                                                    className={`inline-flex px-2 py-0.5 text-xs text-violet-700 rounded-full`}
+                                                >
+                                                    {refs.warehouses?.lookup?.(
+                                                        Number(whTr.to_warehouse_id),
+                                                    ) || '-'}
+                                                </span>
                                             </td>
-
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {writeOff.note || '—'}
+                                                <span className="inline-flex items-center justify-center text-xs rounded-full w-7 h-7 bg-accent text-foreground">
+                                                    {whTr.items.length}
+                                                </span>
+                                            </td>
+                                            <td className="px-2 py-2 text-xs text-center text-gray-900">
+                                                {whTr.comment || '—'}
                                             </td>
 
                                             <td className="px-2 py-2 pl-2 text-sm text-center text-gray-900">
-                                                <div className="grid grid-cols-4 gap-3 text-xs items-left">
+                                                <div className="grid grid-cols-4 gap-3 text-xs">
                                                     {signatures.map((signature) => (
                                                         <div
                                                             key={signature.label}
                                                             className="space-y-0.5 text-left"
                                                         >
-                                                            <div className="flex items-center gap-1 pl-1 font-medium text-gray-700">
-                                                                <span className="min-w-0 text-xs">
-                                                                    {signature.label}
-                                                                </span>
+                                                            <div className="pl-1 text-xs font-medium text-gray-700">
+                                                                {signature.label}
                                                             </div>
-
-                                                            <div className="text-[0.75rem] text-gray-500 italic truncate pl-1">
-                                                                {signature.userId
-                                                                    ? refs.users.lookup(
-                                                                          signature.userId,
-                                                                      )
-                                                                    : '—'}
-                                                            </div>
-
                                                             <div
                                                                 className={`text-[0.75rem] pl-1 whitespace-nowrap ${getSignatureClassName(
                                                                     signature.approved,
@@ -292,7 +261,7 @@ export default function MaterialWriteOffTable({
                                                             type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                onDelete?.(writeOff.id);
+                                                                onDelete?.(whTr.id);
                                                             }}
                                                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                                         >
@@ -304,8 +273,8 @@ export default function MaterialWriteOffTable({
                                         </tr>
 
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
-                                            <td colSpan={11} className="px-3 py-2">
-                                                <Collapse in={openRows[writeOff.id]} unmountOnExit>
+                                            <td colSpan={10} className="px-3 py-2">
+                                                <Collapse in={openRows[whTr.id]} unmountOnExit>
                                                     <div className="px-3 py-2">
                                                         <div className="flex items-center gap-0 mb-3 border-b border-gray-200">
                                                             <TabBtn
@@ -313,7 +282,7 @@ export default function MaterialWriteOffTable({
                                                                 icon={
                                                                     <ListChecks className="w-3.5 h-3.5" />
                                                                 }
-                                                                label="Списанные материалы"
+                                                                label="Материалы"
                                                                 onClick={(e) => e.stopPropagation()}
                                                             />
                                                         </div>
@@ -327,6 +296,9 @@ export default function MaterialWriteOffTable({
                                                                                 №
                                                                             </th>
                                                                             <th className="px-3 py-2 text-sm text-left">
+                                                                                Склад
+                                                                            </th>
+                                                                            <th className="px-3 py-2 text-sm text-left">
                                                                                 Материал
                                                                             </th>
                                                                             <th className="w-32 px-3 py-2 text-sm text-center">
@@ -335,23 +307,27 @@ export default function MaterialWriteOffTable({
                                                                             <th className="w-32 px-3 py-2 text-sm text-right">
                                                                                 Кол-во
                                                                             </th>
-                                                                            <th className="px-3 py-2 text-sm text-left">
-                                                                                Примечание
-                                                                            </th>
                                                                         </tr>
                                                                     </thead>
 
                                                                     <tbody>
-                                                                        {writeOff.items?.map(
+                                                                        {whTr.items?.map(
                                                                             (item, index) => (
                                                                                 <tr
                                                                                     key={item.id}
-                                                                                    className="border-b bg-blue-50/40 hover:bg-gray-50"
+                                                                                    className="border-b bg-blue-50/30 hover:bg-gray-50"
                                                                                 >
                                                                                     <td className="px-2 py-2 text-xs font-medium text-gray-600">
                                                                                         {index + 1}
                                                                                     </td>
-
+                                                                                    <td className="px-2 py-2 text-sm text-gray-600">
+                                                                                        {refs.warehouses?.lookup?.(
+                                                                                            Number(
+                                                                                                item.warehouse_transfer_id,
+                                                                                            ),
+                                                                                        ) ||
+                                                                                            statusInfo.label}
+                                                                                    </td>
                                                                                     <td className="px-2 py-2 text-sm text-gray-800">
                                                                                         {item.material_id
                                                                                             ? refs.materials.lookup(
@@ -359,7 +335,6 @@ export default function MaterialWriteOffTable({
                                                                                               )
                                                                                             : '—'}
                                                                                     </td>
-
                                                                                     <td className="px-2 py-2 text-sm text-center text-gray-700">
                                                                                         {item.unit_of_measure
                                                                                             ? refs.unitsOfMeasure.lookup(
@@ -367,23 +342,16 @@ export default function MaterialWriteOffTable({
                                                                                               )
                                                                                             : '—'}
                                                                                     </td>
-
                                                                                     <td className="px-2 py-2 font-bold text-right text-green-700">
                                                                                         {
                                                                                             item.quantity
                                                                                         }
                                                                                     </td>
-
-                                                                                    <td className="px-2 py-2 text-sm text-gray-600">
-                                                                                        {item.note ||
-                                                                                            '—'}
-                                                                                    </td>
                                                                                 </tr>
                                                                             ),
                                                                         )}
 
-                                                                        {!writeOff.items
-                                                                            ?.length && (
+                                                                        {!whTr.items?.length && (
                                                                             <tr>
                                                                                 <td
                                                                                     colSpan={5}
@@ -398,22 +366,22 @@ export default function MaterialWriteOffTable({
                                                                 </table>
                                                             </div>
                                                         </div>
-                                                        {showSignButton && (
-                                                            <div className="flex justify-center p-3">
-                                                                <Button
-                                                                    size="small"
-                                                                    variant="contained"
-                                                                    disabled={signDisabled}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        onSign(writeOff);
-                                                                    }}
-                                                                >
-                                                                    Подписать
-                                                                </Button>
-                                                            </div>
-                                                        )}
                                                     </div>
+                                                    {showSignButton && (
+                                                        <div className="flex justify-center p-3">
+                                                            <Button
+                                                                size="small"
+                                                                variant="contained"
+                                                                disabled={signDisabled}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onSign(whTr);
+                                                                }}
+                                                            >
+                                                                Подписать
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                 </Collapse>
                                             </td>
                                         </tr>
@@ -423,12 +391,12 @@ export default function MaterialWriteOffTable({
 
                             {!data?.length && (
                                 <tr>
-                                    <td colSpan={11} className="py-20 text-center">
+                                    <td colSpan={8} className="py-20 text-center">
                                         <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
                                             <ListChecks className="w-8 h-8 text-gray-400" />
                                         </div>
                                         <h3 className="mb-1 text-base font-medium text-gray-900">
-                                            Списания материалов отсутствуют
+                                            Наклданые по перемещении отсутствуют
                                         </h3>
                                     </td>
                                 </tr>

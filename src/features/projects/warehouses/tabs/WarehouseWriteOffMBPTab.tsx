@@ -8,6 +8,7 @@ import {
     type MbpWriteOff,
 } from '../mbpWriteOffs/mbpWriteOffSlice';
 import MbpWriteOffTable from '../mbpWriteOffs/MbpWriteOffTable';
+import { useEffect } from 'react';
 
 interface WarehouseWriteOffMbpTabProps {
     warehouseId: number;
@@ -21,6 +22,16 @@ export default function WarehouseWriteOffMbpTab({
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.mbpWriteOff);
     const currentUser = useAppSelector((state) => state.auth.user);
+
+    useEffect(() => {
+        dispatch(
+            fetchMbpWriteOffs({
+                warehouse_id: warehouseId,
+                page: 1,
+                size: pagination?.size ?? 10,
+            }),
+        );
+    }, [dispatch, warehouseId]);
 
     const canSign = (writeOff: MbpWriteOff, user?: User | null) => {
         if (!user) return false;

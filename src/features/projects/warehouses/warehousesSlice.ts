@@ -36,12 +36,12 @@ export interface Warehouse {
     updated_at: string;
     deleted: boolean;
     items: WarehouseItem[];
-    material_records_count: number;
-    avr_write_off_count: number;
-    mbp_write_off_count: number;
-    processing_write_off_count: number;
-    transfer_count: number;
-    operation_counts: OperationCounts;
+    material_records_count?: number;
+    avr_write_off_count?: number;
+    mbp_write_off_count?: number;
+    processing_write_off_count?: number;
+    transfer_count?: number;
+    operation_counts?: OperationCounts;
 }
 export interface WarehouseForm {
     name: string;
@@ -74,11 +74,25 @@ const initialState: WarehousesState = {
 
 //THUNKS
 //GET
+export const getWarehouses = createAsyncThunk<Warehouse[], void, { rejectValue: string }>(
+    'warehouses/gets',
+    async (_, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<any>('/warehouses/gets', 'GET');
+
+            const items = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+            return items;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Ошибка загрузки списка');
+        }
+    },
+);
 export const fetchWarehouses = createAsyncThunk(
     'warehouses/fetch',
-    async (params: { project_id: number; page?: number; size?: number }, { rejectWithValue }) => {
+    async (params: { project_id?: number; page?: number; size?: number }, { rejectWithValue }) => {
         try {
-            return await apiRequest<Warehouse[]>('/warehouses/search', 'POST', params);
+            const res = await apiRequest<Warehouse[]>('/warehouses/search', 'POST', params);
+            return res;
         } catch (e: any) {
             return rejectWithValue(e.message);
         }
