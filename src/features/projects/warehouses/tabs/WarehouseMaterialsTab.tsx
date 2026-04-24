@@ -5,17 +5,23 @@ import type { Warehouse } from '../warehousesSlice';
 import WarehouseStocksTable from '../../warehouseStocks/WarehouseStocksTable';
 import { fetchWarehouseItems } from '../../warehouseStocks/warehouseStocksSlice';
 
-interface Props {
+interface WarehouseMaterialsProps {
     warehouse: Warehouse;
     refs: Record<string, ReferenceResult>;
 }
 
-export default function WarehouseMaterialsTab({ warehouse, refs }: Props) {
+export default function WarehouseMaterialsTab({ warehouse, refs }: WarehouseMaterialsProps) {
     const dispatch = useAppDispatch();
     const { pagination } = useAppSelector((state) => state.warehouseStocks);
 
     useEffect(() => {
-        dispatch(fetchWarehouseItems({ warehouse_id: warehouse.id, page: 1, size: 10 }));
+        dispatch(
+            fetchWarehouseItems({
+                warehouse_id: warehouse.id,
+                page: 1,
+                size: 10,
+            }),
+        );
     }, [dispatch, warehouse.id]);
 
     return (
@@ -25,12 +31,20 @@ export default function WarehouseMaterialsTab({ warehouse, refs }: Props) {
             refs={refs}
             onPageChange={(newPage) => {
                 dispatch(
-                    fetchWarehouseItems({ warehouse_id: warehouse.id, page: newPage, size: 10 }),
+                    fetchWarehouseItems({
+                        warehouse_id: warehouse.id,
+                        page: newPage,
+                        size: 10,
+                    }),
                 );
             }}
             onSizeChange={(newSize) => {
                 dispatch(
-                    fetchWarehouseItems({ warehouse_id: warehouse.id, page: 1, size: newSize }),
+                    fetchWarehouseItems({
+                        warehouse_id: warehouse.id,
+                        page: 1,
+                        size: newSize,
+                    }),
                 );
             }}
         />

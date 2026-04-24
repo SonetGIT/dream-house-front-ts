@@ -32,12 +32,12 @@ export const WarehouseStatsPanel: React.FC<WarehouseStatsProps> = ({ warehouse }
         {
             label: 'Расход',
             value: warehouse?.operation_counts?.['-'] ?? 0,
-            color: 'text-red-600',
+            color: 'text-red-500',
         },
         {
             label: 'Перемещения',
             value: warehouse?.operation_counts?.['='] ?? 0,
-            color: 'text-sky-600',
+            color: 'text-rose-700',
         },
         {
             label: 'АВР',
@@ -52,7 +52,7 @@ export const WarehouseStatsPanel: React.FC<WarehouseStatsProps> = ({ warehouse }
         {
             label: 'Трансферы',
             value: warehouse.transfer_count,
-            color: 'text-lime-500',
+            color: 'text-orange-800',
         },
     ];
 

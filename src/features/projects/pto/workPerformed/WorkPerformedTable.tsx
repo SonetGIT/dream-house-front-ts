@@ -155,8 +155,6 @@ export default function WorkPerformedTable(props: PropsType) {
         if (!currentUser || !canSign(workPerf, currentUser)) return;
 
         const items = itemsMap[workPerf.id] ?? workPerf.items ?? [];
-        // const items = (itemsMap[workPerf.id]?.length ? itemsMap[workPerf.id] : workPerf.items) ?? [];
-        // console.log('   items для отправки', items);
 
         if (!items.length) {
             toast.error('Нет материалов');

@@ -111,7 +111,6 @@ export default function MatReqItemsCreateEditForm({
 
             //достаём id
             const newId = res?.id;
-            console.log(newId);
             if (newId) {
                 await dispatch(
                     fetchMaterialRequestItems({

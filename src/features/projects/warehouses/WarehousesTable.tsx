@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 
-import { fetchWarehouses, type Warehouse } from './warehousesSlice';
+import { getWarehouses, type Warehouse } from './warehousesSlice';
 import WarehouseRow, { type WarehouseTabType } from './WarehouseRow';
 import WarehouseReceiveModal from './WarehouseReceiveModal';
 import MaterialWriteOffAvrModal from './materialWriteOffs/MaterialWriteOffAvrModal';
@@ -15,7 +15,7 @@ import {
     type ReceivePurchaseOrderItemPayload,
 } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 import { fetchWarehouseItems } from '../warehouseStocks/warehouseStocksSlice';
-import { fetchMaterialMovements } from '../materialMovements/materialMovementsSlice';
+import { fetchMaterialMovements } from './materialMovements/materialMovementsSlice';
 import {
     createMaterialWriteOff,
     fetchMaterialWriteOffs,
@@ -29,7 +29,10 @@ import {
 } from './materialProcessingWriteOffs/processingWriteOffSlice';
 import ProcessingWriteOffModal from './materialProcessingWriteOffs/ProcessingWriteOffModal';
 import WarehouseTransferModal from './warehouseTransfers/WarehouseTransfersModal';
-import { fetchWarehouseTransfers } from './warehouseTransfers/warehouseTransfersSlice';
+import {
+    createWarehouseTransfer,
+    fetchWarehouseTransfers,
+} from './warehouseTransfers/warehouseTransfersSlice';
 
 interface WarehousesTablePropsType {
     projectId: number;
@@ -50,17 +53,17 @@ export default function WarehousesTable({
 }: WarehousesTablePropsType) {
     const dispatch = useAppDispatch();
 
-    // Загрузка всех складов для модалки перемещения
-    useEffect(() => {
-        dispatch(fetchWarehouses({ page: 1, size: 100, global: true }));
-    }, [dispatch]);
-
-    const { data: allWarehouses } = useAppSelector((state) => state.warehouses);
-
-    console.log('Все склады:', allWarehouses); // ✅ Теперь тут полный список
     const { data: purchaseOrderItems, loading: purchaseOrderItemsLoading } = useAppSelector(
         (state) => state.purchaseOrderItems,
     );
+
+    const { allWarehouses, loading } = useAppSelector((state) => state.warehouses);
+    useEffect(() => {
+        if (allWarehouses.length === 0 && !loading) {
+            dispatch(getWarehouses());
+        }
+    }, [dispatch, allWarehouses.length, loading]);
+
     const { list: warehouseStockItems } = useAppSelector((state) => state.warehouseStocks);
     const { data: workPerformedData } = useAppSelector((state) => state.workPerformed);
     const { submitting: writeOffSubmitting } = useAppSelector((state) => state.materialWriteOff);
@@ -89,6 +92,16 @@ export default function WarehousesTable({
         });
     }, [purchaseOrderItems]);
 
+    //select наименование материалов
+    const warehouseStockOptions = useMemo(() => {
+        return (warehouseStockItems ?? []).map((item: any) => ({
+            material_id: item.material_id,
+            unit_of_measure: item.unit_of_measure ?? null,
+            quantity: Number(item.quantity || 0),
+        }));
+    }, [warehouseStockItems]);
+
+    // select - наименование актов выполненных работ
     const workPerformedOptions = useMemo(() => {
         return (workPerformedData ?? []).map((item) => ({
             id: item.id,
@@ -106,56 +119,6 @@ export default function WarehousesTable({
         }));
     }, [workPerformedData]);
 
-    const warehouseStockOptions = useMemo(() => {
-        return (warehouseStockItems ?? []).map((item: any) => ({
-            material_id: item.material_id,
-            unit_of_measure: item.unit_of_measure ?? null,
-            quantity: Number(item.quantity || 0),
-        }));
-    }, [warehouseStockItems]);
-
-    const warehouseOptions = useMemo(() => {
-        return (allWarehouses ?? []).map((w) => ({
-            id: w.id,
-            name: w.name,
-        }));
-    }, [allWarehouses]);
-
-    const fetchWarehouseStocks = (warehouseId: number, page = 1, size = 10) => {
-        dispatch(
-            fetchWarehouseItems({
-                warehouse_id: warehouseId,
-                page,
-                size,
-            }),
-        );
-    };
-
-    const fetchWarehouseMovements = (warehouseId: number, page = 1, size = 10) => {
-        dispatch(
-            fetchMaterialMovements({
-                warehouse_id: warehouseId,
-                page,
-                size,
-            }),
-        );
-    };
-
-    const fetchWarehouseWriteOffAvr = (warehouseId: number, page = 1, size = 10) => {
-        dispatch(
-            fetchMaterialWriteOffs({
-                project_id: 0,
-                block_id: 0,
-                warehouse_id: warehouseId,
-                work_performed_id: 0,
-                work_performed_item_id: 0,
-                status: 0,
-                page,
-                size,
-            }),
-        );
-    };
-
     const toggleRow = (warehouseId: number) => {
         const isOpening = !openRows[warehouseId];
 
@@ -169,31 +132,96 @@ export default function WarehousesTable({
         }
     };
 
-    const setWarehouseTab = (warehouseId: number, tab: WarehouseTabType) => {
-        setTabs((prev) => ({
-            ...prev,
-            [warehouseId]: tab,
-        }));
-
-        if (tab === 'materials') {
-            fetchWarehouseStocks(warehouseId, 1, 10);
-        }
-
-        if (tab === 'movements') {
-            fetchWarehouseMovements(warehouseId, 1, 10);
-        }
-
-        if (tab === 'writeOffAvr') {
-            fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
-        }
-        if (tab === 'writeOffMbp') {
-            fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
-        }
-        if (tab === 'writeOffprocess') {
-            fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
-        }
+    //fetch - Материалы на складе
+    const fetchWarehouseStocks = (warehouseId: number, page = 1, size = 10) => {
+        dispatch(
+            fetchWarehouseItems({
+                warehouse_id: warehouseId,
+                page,
+                size,
+            }),
+        );
+    };
+    //fetch - Движение материалов
+    const fetchWarehouseMovements = (warehouseId: number, page = 1, size = 10) => {
+        dispatch(
+            fetchMaterialMovements({
+                warehouse_id: warehouseId,
+                page,
+                size,
+            }),
+        );
     };
 
+    //fetch - Списание по АВР
+    const fetchWarehouseWriteOffAvr = (warehouseId: number, page = 1, size = 10) => {
+        dispatch(
+            fetchMaterialWriteOffs({
+                warehouse_id: warehouseId,
+                page,
+                size,
+            }),
+        );
+    };
+
+    //fetch - Списание МБП
+    const fetchWarehouseWriteOffMbp = (warehouseId: number, page = 1, size = 10) => {
+        dispatch(
+            fetchMbpWriteOffs({
+                warehouse_id: warehouseId,
+                page,
+                size,
+            }),
+        );
+    };
+
+    //fetch - Переработка
+    const fetchWarehouseWriteOffprocess = (warehouseId: number, page = 1, size = 10) => {
+        dispatch(
+            fetchProcessingWriteOffs({
+                warehouse_id: warehouseId,
+                page,
+                size,
+            }),
+        );
+    };
+
+    //fetch - Накладные
+    const fetchWarehouseWarehouseTransfers = (warehouseId: number, page = 1, size = 10) => {
+        dispatch(
+            fetchWarehouseTransfers({
+                warehouse_id: warehouseId,
+                page,
+                size,
+            }),
+        );
+    };
+
+    const setWarehouseTab = (warehouseId: number, tab: WarehouseTabType) => {
+        setTabs((prev) => ({ ...prev, [warehouseId]: tab }));
+
+        // Загружаем данные ТОЛЬКО для выбранного таба (ленивая загрузка)
+        switch (tab) {
+            case 'materials':
+                fetchWarehouseStocks(warehouseId, 1, 10);
+                break;
+            case 'movements':
+                fetchWarehouseMovements(warehouseId, 1, 10);
+                break;
+            case 'writeOffAvr':
+                fetchWarehouseWriteOffAvr(warehouseId, 1, 10);
+                break;
+            case 'writeOffMbp':
+                fetchWarehouseWriteOffMbp(warehouseId, 1, 10);
+                break;
+            case 'writeOffprocess':
+                fetchWarehouseWriteOffprocess(warehouseId, 1, 10);
+                break;
+            case 'warehouseTransfers':
+                fetchWarehouseWarehouseTransfers(warehouseId, 1, 10);
+                break;
+        }
+    };
     //Прием
     const handleOpenReceive = (warehouse: Warehouse) => {
         setReceiveWarehouse(warehouse);
@@ -206,11 +234,9 @@ export default function WarehousesTable({
             }),
         );
     };
-
     const handleCloseReceive = () => {
         setReceiveWarehouse(null);
     };
-
     const handleReceiveItems = async (items: ReceivePurchaseOrderItemPayload[]) => {
         if (!receiveWarehouse) return;
 
@@ -229,14 +255,16 @@ export default function WarehousesTable({
                 }),
             ).unwrap();
 
-            toast.success('Товар принят на склад');
+            toast.success('Товары успешно приняты на склад');
             handleCloseReceive();
 
             setTabs((prev) => ({
                 ...prev,
-                [warehouseId]: 'movements',
+                [warehouseId]: 'materials',
+                // [warehouseId]: 'movements',
             }));
 
+            // Обновление материалов на складе
             await dispatch(
                 fetchWarehouseItems({
                     warehouse_id: warehouseId,
@@ -245,6 +273,7 @@ export default function WarehousesTable({
                 }),
             ).unwrap();
 
+            // Обновление - движение материалов
             await dispatch(
                 fetchMaterialMovements({
                     warehouse_id: warehouseId,
@@ -258,7 +287,7 @@ export default function WarehousesTable({
         }
     };
 
-    //АВР
+    //Списание по АВР
     const handleOpenWriteOffAvr = async (warehouse: Warehouse) => {
         setWriteOffAvrWarehouse(warehouse);
         fetchWarehouseStocks(warehouse.id, 1, 100);
@@ -281,11 +310,9 @@ export default function WarehousesTable({
             toast.error('Не удалось загрузить АВР');
         }
     };
-
     const handleCloseWriteOffAvr = () => {
         setWriteOffAvrWarehouse(null);
     };
-
     const handleCreateWriteOffAvr = async (payload: any) => {
         if (!writeOffAvrWarehouse) return;
 
@@ -301,40 +328,19 @@ export default function WarehousesTable({
             }));
 
             await dispatch(
-                fetchWarehouseItems({
-                    warehouse_id: writeOffAvrWarehouse.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
-                fetchMaterialMovements({
-                    warehouse_id: writeOffAvrWarehouse.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
                 fetchMaterialWriteOffs({
-                    project_id: 0,
-                    block_id: 0,
                     warehouse_id: writeOffAvrWarehouse.id,
-                    work_performed_id: 0,
-                    work_performed_item_id: 0,
-                    status: 0,
                     page: 1,
                     size: 10,
                 }),
             ).unwrap();
         } catch (e: any) {
             console.error(e);
-            toast.error(e?.message || 'Ошибка создания списания по АВР');
+            toast.error(e?.message || 'Ошибка при создании списания по АВР');
         }
     };
 
-    // МБП
+    //Списание МБП
     const handleOpenWriteOffMbp = async (warehouse: Warehouse) => {
         setWriteOffMbpWarehouse(warehouse);
         fetchWarehouseStocks(warehouse.id, 1, 100);
@@ -347,7 +353,6 @@ export default function WarehousesTable({
     const handleCloseWriteOffMbp = () => {
         setWriteOffMbpWarehouse(null);
     };
-
     const handleCreateWriteOffMbp = async (payload: any) => {
         if (!writeOffMbpWarehouse) return;
 
@@ -363,28 +368,8 @@ export default function WarehousesTable({
             }));
 
             await dispatch(
-                fetchWarehouseItems({
-                    warehouse_id: writeOffMbpWarehouse.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
-                fetchMaterialMovements({
-                    warehouse_id: writeOffMbpWarehouse.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
                 fetchMbpWriteOffs({
-                    // project_id: 0,
-                    // warehouse_id: writeOffMbpWarehouse.id,
-                    // work_performed_id: 0,
-                    // work_performed_item_id: 0,
-                    // status: 0,
+                    warehouse_id: writeOffMbpWarehouse.id,
                     page: 1,
                     size: 10,
                 }),
@@ -408,7 +393,6 @@ export default function WarehousesTable({
     const handleCloseWriteOffProcessing = () => {
         setWriteOffProcWarehouse(null);
     };
-
     const handleCreateWriteOffProcessing = async (payload: any) => {
         if (!writeOffProcWarehouse) return;
 
@@ -424,28 +408,8 @@ export default function WarehousesTable({
             }));
 
             await dispatch(
-                fetchWarehouseItems({
-                    warehouse_id: writeOffProcWarehouse.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
-                fetchMaterialMovements({
-                    warehouse_id: writeOffProcWarehouse.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
                 fetchProcessingWriteOffs({
-                    // project_id: 0,
                     warehouse_id: writeOffProcWarehouse.id,
-                    // work_performed_id: 0,
-                    // work_performed_item_id: 0,
-                    // status: 0,
                     page: 1,
                     size: 10,
                 }),
@@ -469,55 +433,34 @@ export default function WarehousesTable({
     const handleCloseWarehouseTransfers = () => {
         setWarehouseTransfers(null);
     };
-
     const handleCreateWarehouseTransfers = async (payload: any) => {
         if (!warehouseTransfers) return;
 
         try {
-            await dispatch(createProcessingWriteOff(payload)).unwrap();
+            await dispatch(createWarehouseTransfer(payload)).unwrap();
 
             toast.success('Накладная по перемещении создано');
             handleCloseWarehouseTransfers();
 
             setTabs((prev) => ({
                 ...prev,
-                [warehouseTransfers.id]: 'writeOffprocess',
+                [warehouseTransfers.id]: 'warehouseTransfers',
             }));
 
             await dispatch(
-                fetchWarehouseItems({
-                    warehouse_id: warehouseTransfers.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
-                fetchMaterialMovements({
-                    warehouse_id: warehouseTransfers.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-
-            await dispatch(
                 fetchWarehouseTransfers({
-                    // project_id: 0,
                     warehouse_id: warehouseTransfers.id,
-                    // work_performed_id: 0,
-                    // work_performed_item_id: 0,
-                    // status: 0,
                     page: 1,
                     size: 10,
                 }),
             ).unwrap();
         } catch (e: any) {
             console.error(e);
-            toast.error(e?.message || 'Ошибка создания накладной на перемещение');
+            toast.error(e?.message || 'Ошибка при создании накладной на перемещение');
         }
     };
 
-    /********************************************************************************************************/
+    /**************************************************************************************************************************************/
     return (
         <div className="space-y-4">
             <div className="overflow-hidden bg-white border rounded-lg">
@@ -630,7 +573,7 @@ export default function WarehousesTable({
                 fromWarehouseId={warehouseTransfers?.id ?? 0}
                 fromWarehouseName={warehouseTransfers?.name}
                 warehouseStocks={warehouseStockOptions}
-                availableWarehouses={warehouseOptions}
+                availableWarehouses={allWarehouses}
                 refs={refs}
                 submitting={warehouseTransfersSubmitting}
                 onClose={handleCloseWarehouseTransfers}

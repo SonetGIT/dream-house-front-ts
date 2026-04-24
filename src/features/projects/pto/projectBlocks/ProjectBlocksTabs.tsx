@@ -17,10 +17,11 @@ export default function ProjectBlocksTabs() {
             <Tabs
                 value={getTab()}
                 onChange={(_, value) => {
-                    if (value === 0) navigate('');
-                    if (value === 1) navigate('materialRequests');
-                    if (value === 2) navigate('purchaseOrders');
-                    if (value === 3) navigate('workPerformed');
+                    // 👇 Добавляем { replace: true } — табы не засоряют историю
+                    if (value === 0) navigate('', { replace: true });
+                    if (value === 1) navigate('materialRequests', { replace: true });
+                    if (value === 2) navigate('purchaseOrders', { replace: true });
+                    if (value === 3) navigate('workPerformed', { replace: true });
                 }}
                 sx={{ mb: 1 }}
             >

@@ -32,7 +32,6 @@ export default function MaterialEstimateItemsCreate({
     refs,
     onClose,
 }: MaterialFormProps) {
-    console.log('blockId', blockId);
     //HOOKS
     const dispatch = useAppDispatch();
     const rates = useCurrencyRates();

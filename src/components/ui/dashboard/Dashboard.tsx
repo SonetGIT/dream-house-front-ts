@@ -5,6 +5,7 @@ import { StatusOverview } from './StatusOverview';
 import { IoDocumentsSharp } from 'react-icons/io5';
 import WidgetsIcon from '@mui/icons-material/Widgets';
 import { FaTasks } from 'react-icons/fa';
+import { BiSolidReport } from 'react-icons/bi';
 
 export default function Dashboard() {
     const dashboardCards = [
@@ -48,10 +49,10 @@ export default function Dashboard() {
             title: 'Отчеты',
             label: '',
             value: '',
-            color: '#0bdaf5',
-            bgColor: '#e1bee7',
+            color: '#007a8a',
+            bgColor: '#84ecf3',
             to: 'reports',
-            icon: <MdWarehouse />,
+            icon: <BiSolidReport />,
         },
     ];
 

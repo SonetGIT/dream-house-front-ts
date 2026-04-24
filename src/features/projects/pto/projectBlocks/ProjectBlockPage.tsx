@@ -13,7 +13,6 @@ interface Props {
 
 /*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
 export default function ProjectBlockPage({ blockId, blockName, currentBlock }: Props) {
-    console.log();
     const [tabIndex, setTabIndex] = useState(0);
     if (!blockId) {
         return (

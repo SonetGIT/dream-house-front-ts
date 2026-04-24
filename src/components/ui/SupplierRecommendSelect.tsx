@@ -21,12 +21,10 @@ export default function SupplierRecommendSelect({
     disabled,
     onChange,
 }: SupplierSelectProps) {
-    console.log('disabled', disabled);
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
     const selected = suppliers.find((s) => s.id === value);
-    console.log('selected', selected);
 
     // закрытие при клике вне
     useEffect(() => {

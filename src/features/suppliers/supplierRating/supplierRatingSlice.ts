@@ -32,8 +32,6 @@ export const createSupplierRating = createAsyncThunk(
     'supplierRating/create',
     async (payload: SupplierRatingPayload) => {
         const res = await apiRequest('/supplierRating/create', 'POST', payload);
-        console.log('DATAR', res);
-
         return res.data;
     },
 );

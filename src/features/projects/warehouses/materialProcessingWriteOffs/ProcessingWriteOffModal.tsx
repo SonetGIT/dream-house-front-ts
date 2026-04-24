@@ -177,7 +177,7 @@ export default function ProcessingWriteOffModal({
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
             <div className="p-6 pb-4 border-b border-gray-200 bg-gradient-to-br from-blue-50/40 to-amber-50/20">
                 <h2 className="mb-1 text-lg font-bold tracking-wide text-blue-900 uppercase">
-                    Создать списание МБП
+                    Создать списание по переработке
                 </h2>
                 <p className="text-sm text-gray-600">
                     Выберите материалы из общего списка склада и укажите количество

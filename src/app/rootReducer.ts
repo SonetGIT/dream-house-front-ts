@@ -9,7 +9,7 @@ import purchaseOrdersReducer from '@/features/projects/purchaseOrders/purchaseOr
 import warehousesReducer from '@/features/projects/warehouses/warehousesSlice';
 import warehouseStocksReducer from '@/features/projects/warehouseStocks/warehouseStocksSlice';
 import purchaseOrderItemsReducer from '@/features/projects/purchaseOrderItems/purchaseOrderItemsSlice';
-import materialMovementsReducer from '@/features/projects/materialMovements/materialMovementsSlice';
+import materialMovementsReducer from '@/features/projects/warehouses/materialMovements/materialMovementsSlice';
 import suppliersReducer from '@/features/suppliers/suppliersSlice';
 import supplierRatingReducer from '@/features/suppliers/supplierRating/supplierRatingSlice';
 import contractorsReducer from '@/features/contractors/contractorsSlice';

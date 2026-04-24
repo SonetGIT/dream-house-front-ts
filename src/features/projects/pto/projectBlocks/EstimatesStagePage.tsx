@@ -38,8 +38,6 @@ export default function EstimatesStagePage() {
             </Paper>
         );
     }
-    console.log(prjBlockId);
-    console.log(blockId);
 
     const [tabIndex, setTabIndex] = useState(0);
 

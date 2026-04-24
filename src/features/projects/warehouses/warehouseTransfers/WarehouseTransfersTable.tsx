@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Collapse } from '@mui/material';
 import { ChevronDown, ChevronRight, ListChecks, Trash2 } from 'lucide-react';
+import Box from '@mui/material/Box';
 
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
@@ -21,8 +22,10 @@ interface WarehouseTransferTableProps {
     onSizeChange?: (size: number) => void;
     currentUser?: User | null;
     canSign?: (item: WarehouseTransfer, user?: User | null) => boolean;
+    canReject?: (item: WarehouseTransfer, user?: User | null) => boolean;
     isFullyApproved?: (item: WarehouseTransfer) => boolean;
     onSign?: (item: WarehouseTransfer) => void;
+    onReject?: (item: WarehouseTransfer) => void;
     onDelete?: (id: number) => void;
 }
 
@@ -35,8 +38,10 @@ export default function WarehouseTransfersTable({
     onSizeChange,
     currentUser,
     canSign,
+    canReject,
     isFullyApproved,
     onSign,
+    onReject,
     onDelete,
 }: WarehouseTransferTableProps) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
@@ -59,13 +64,13 @@ export default function WarehouseTransfersTable({
 
     const getSignatureClassName = (approved?: boolean | null) => {
         if (approved === true) return 'text-green-600';
-        // if (approved === false) return 'text-red-500';
+        if (approved === false) return 'text-red-500';
         return 'text-gray-400';
     };
 
     const getSignatureText = (approved?: boolean | null, approvedTime?: string | null) => {
         if (approved === true) return `✔ ${formatDateTime(approvedTime)}`;
-        // if (approved === false) return `✖ ${formatDateTime(approvedTime)}`;
+        if (approved === false) return `✖ ${formatDateTime(approvedTime)}`;
         return '⏳ Ожидает';
     };
 
@@ -76,7 +81,15 @@ export default function WarehouseTransfersTable({
             </div>
         );
     }
+    if (!data.length) {
+        return (
+            <div className="w-full p-4 overflow-hidden text-sm text-center text-gray-400 bg-white border rounded-xl">
+                Данных по перемещению пока отсутствуют
+            </div>
+        );
+    }
 
+    /***************************************************************************************************************/
     return (
         <div className="space-y-4">
             <div className="overflow-hidden bg-white border rounded-lg">
@@ -136,11 +149,13 @@ export default function WarehouseTransfersTable({
                                 const signatures = [
                                     {
                                         label: 'Отправитель',
+                                        userId: whTr.sender_signed_user_id,
                                         approved: whTr.sender_signed,
                                         approvedTime: whTr.sender_signed_time,
                                     },
                                     {
                                         label: 'Получатель',
+                                        userId: whTr.receiver_signed_user_id,
                                         approved: whTr.receiver_signed,
                                         approvedTime: whTr.receiver_signed_time,
                                     },
@@ -156,6 +171,15 @@ export default function WarehouseTransfersTable({
                                     ? isFullyApproved(whTr)
                                     : false;
 
+                                const showRejectButton =
+                                    !!currentUser &&
+                                    !!canReject &&
+                                    !!onReject &&
+                                    canReject(whTr, currentUser);
+
+                                const rejectDisabled = isFullyApproved
+                                    ? isFullyApproved(whTr)
+                                    : false;
                                 // ***********************************************************************************************************/
                                 return (
                                     <React.Fragment key={whTr.id}>
@@ -188,7 +212,7 @@ export default function WarehouseTransfersTable({
                                                 <span
                                                     className={`inline-flex px-2 py-0.5 text-xs font-semibold border rounded-full ${statusInfo.className}`}
                                                 >
-                                                    {refs.materialWriteOffStatuses?.lookup?.(
+                                                    {refs.warehouseTransferStatuses?.lookup?.(
                                                         Number(whTr.status),
                                                     ) || statusInfo.label}
                                                 </span>
@@ -216,7 +240,7 @@ export default function WarehouseTransfersTable({
                                             </td>
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
                                                 <span className="inline-flex items-center justify-center text-xs rounded-full w-7 h-7 bg-accent text-foreground">
-                                                    {whTr.items.length}
+                                                    {whTr.items?.length}
                                                 </span>
                                             </td>
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
@@ -230,9 +254,20 @@ export default function WarehouseTransfersTable({
                                                             key={signature.label}
                                                             className="space-y-0.5 text-left"
                                                         >
-                                                            <div className="pl-1 text-xs font-medium text-gray-700">
-                                                                {signature.label}
+                                                            <div className="flex items-center gap-1 pl-1 font-medium text-gray-700">
+                                                                <span className="min-w-0 text-xs">
+                                                                    {signature.label}
+                                                                </span>
                                                             </div>
+
+                                                            <div className="text-[0.75rem] text-gray-500 italic truncate pl-1">
+                                                                {signature.userId
+                                                                    ? refs.users.lookup(
+                                                                          signature.userId,
+                                                                      )
+                                                                    : '—'}
+                                                            </div>
+
                                                             <div
                                                                 className={`text-[0.75rem] pl-1 whitespace-nowrap ${getSignatureClassName(
                                                                     signature.approved,
@@ -367,40 +402,54 @@ export default function WarehouseTransfersTable({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    {showSignButton && (
-                                                        <div className="flex justify-center p-3">
-                                                            <Button
-                                                                size="small"
-                                                                variant="contained"
-                                                                disabled={signDisabled}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    onSign(whTr);
-                                                                }}
-                                                            >
-                                                                Подписать
-                                                            </Button>
-                                                        </div>
-                                                    )}
+                                                    <Box
+                                                        sx={{
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            gap: 0.5,
+                                                        }}
+                                                    >
+                                                        {showSignButton && (
+                                                            <div className="flex justify-center p-2">
+                                                                <Button
+                                                                    size="small"
+                                                                    variant="contained"
+                                                                    disabled={signDisabled}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onSign(whTr);
+                                                                    }}
+                                                                >
+                                                                    Подписать
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                        {showRejectButton && (
+                                                            <div className="flex justify-center p-2">
+                                                                <Button
+                                                                    size="small"
+                                                                    sx={{
+                                                                        color: 'red',
+                                                                        borderColor: 'red',
+                                                                    }}
+                                                                    variant="outlined"
+                                                                    disabled={rejectDisabled}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onReject(whTr);
+                                                                    }}
+                                                                >
+                                                                    Отклонить
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </Box>
                                                 </Collapse>
                                             </td>
                                         </tr>
                                     </React.Fragment>
                                 );
                             })}
-
-                            {!data?.length && (
-                                <tr>
-                                    <td colSpan={8} className="py-20 text-center">
-                                        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
-                                            <ListChecks className="w-8 h-8 text-gray-400" />
-                                        </div>
-                                        <h3 className="mb-1 text-base font-medium text-gray-900">
-                                            Наклданые по перемещении отсутствуют
-                                        </h3>
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
 

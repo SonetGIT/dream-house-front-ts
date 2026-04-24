@@ -144,8 +144,6 @@ export default function MaterialRequestsTable(props: PropsType) {
         if (!currentUser || !canSign(req, currentUser)) return;
 
         const items = itemsMap[req.id] ?? req.items ?? [];
-        // const items = (itemsMap[req.id]?.length ? itemsMap[req.id] : req.items) ?? [];
-        // console.log('   items для отправки', items);
 
         if (!items.length) {
             toast.error('Нет материалов');

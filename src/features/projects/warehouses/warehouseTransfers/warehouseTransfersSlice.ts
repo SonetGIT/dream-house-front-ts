@@ -229,23 +229,23 @@ export const createWarehouseTransfer = createAsyncThunk<
 // SIGN
 export const signWarehouseTransfer = createAsyncThunk<
     WarehouseTransfer,
-    { id: number; stage: 'sender' | 'receiver' },
+    { id: number; side: 'sender' | 'receiver' },
     { rejectValue: string }
->('warehouseTransfers/sign', async ({ id, stage }, { rejectWithValue }) => {
+>('warehouseTransfers/sign', async ({ id, side }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<WarehouseTransfer>(`/warehouseTransfers/sign/${id}`, 'POST', {
-            stage,
+            side,
         });
 
         const item = normalizeItem(res.data);
 
         if (!item) {
-            throw new Error('Сервер не вернул подписанное накладное');
+            throw new Error('Сервер не вернул подписанное перемещение');
         }
 
         return item;
     } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка в подписании накладной');
+        return rejectWithValue(err.message || 'Ошибка в подписании в перемещении');
     }
 });
 

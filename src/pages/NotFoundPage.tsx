@@ -5,7 +5,7 @@ export default function NotFoundPage() {
         <div style={{ textAlign: 'center' }}>
             <h1>404</h1>
             <h3>Page Not Found</h3>
-            <Link href="/">Back to home</Link>
+            <Link href="/projects">Back to home</Link>
         </div>
     );
 }

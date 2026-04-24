@@ -32,7 +32,6 @@ export default function MaterialMovementsTable({
     };
 
     const getOperationClassName = (operation: string) => {
-        console.log(operation);
         if (operation === '+') {
             return 'bg-green-100 text-green-700';
         }
@@ -54,12 +53,13 @@ export default function MaterialMovementsTable({
 
     if (!items.length) {
         return (
-            <div className="w-full p-4 overflow-hidden text-sm text-gray-400 bg-white border rounded-xl">
-                Нет данных
+            <div className="w-full p-4 overflow-hidden text-sm text-center text-gray-400 bg-white border rounded-xl">
+                Движение материалов отсутствуют
             </div>
         );
     }
 
+    /***************************************************************************************************************/
     return (
         <div className="w-full overflow-hidden bg-white border rounded-xl">
             <table className="min-w-full text-sm">

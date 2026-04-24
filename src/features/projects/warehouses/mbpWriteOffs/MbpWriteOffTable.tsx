@@ -77,6 +77,15 @@ export default function MbpWriteOffTable({
         );
     }
 
+    if (!data.length) {
+        return (
+            <div className="w-full p-4 overflow-hidden text-sm text-center text-gray-400 bg-white border rounded-xl">
+                Данных по списанию МБП пока отсутствуют
+            </div>
+        );
+    }
+
+    /***************************************************************************************************************/
     return (
         <div className="space-y-4">
             <div className="overflow-hidden bg-white border rounded-lg">
@@ -363,19 +372,6 @@ export default function MbpWriteOffTable({
                                     </React.Fragment>
                                 );
                             })}
-
-                            {!data?.length && (
-                                <tr>
-                                    <td colSpan={8} className="py-20 text-center">
-                                        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
-                                            <ListChecks className="w-8 h-8 text-gray-400" />
-                                        </div>
-                                        <h3 className="mb-1 text-base font-medium text-gray-900">
-                                            Списания МБП отсутствуют
-                                        </h3>
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
 

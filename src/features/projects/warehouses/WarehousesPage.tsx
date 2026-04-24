@@ -43,6 +43,7 @@ export default function WarehousesPage() {
         services: useReference('services'),
         serviceTypes: useReference('serviceTypes'),
         materialMovementStatuses: useReference('materialMovementStatuses'),
+        warehouseTransferStatuses: useReference('warehouseTransferStatuses'),
     };
 
     //Первичная загрузка =====
@@ -117,9 +118,9 @@ export default function WarehousesPage() {
 
     /********************************************************************************************************************************************/
     return (
-        <Paper sx={{ p: 2, borderRadius: 3 }}>
+        <Paper sx={{ p: 1, borderRadius: 3 }}>
             {/* HEADER */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button variant="outlined" startIcon={<Add />} onClick={handleCreate}>
                     Добавить склад
                 </Button>

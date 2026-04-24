@@ -175,6 +175,7 @@ export default function WarehouseWriteOffAvrTab({
         }
     };
 
+    /***********************************************************************************************************/
     return (
         <MaterialWriteOffTable
             data={data}

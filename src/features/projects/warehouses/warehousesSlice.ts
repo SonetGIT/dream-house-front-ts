@@ -57,6 +57,7 @@ export type WarehouseFormData = Omit<
 
 interface WarehousesState {
     data: Warehouse[];
+    allWarehouses: Warehouse[];
     map: Record<number, Warehouse>;
     pagination: Pagination | null;
     loading: boolean;
@@ -66,6 +67,7 @@ interface WarehousesState {
 //INITIAL
 const initialState: WarehousesState = {
     data: [],
+    allWarehouses: [],
     map: {},
     pagination: null,
     loading: false,
@@ -78,9 +80,8 @@ export const getWarehouses = createAsyncThunk<Warehouse[], void, { rejectValue: 
     'warehouses/gets',
     async (_, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<any>('/warehouses/gets', 'GET');
-
-            const items = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+            const res = await apiRequest<Warehouse>('/warehouses/gets', 'GET');
+            const items = Array.isArray(res.data) ? res.data : [];
             return items;
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка загрузки списка');
@@ -150,7 +151,21 @@ const warehousesSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
-
+            // GET ALL (для селектов/модалок)
+            .addCase(getWarehouses.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getWarehouses.fulfilled, (state, action) => {
+                state.loading = false;
+                state.allWarehouses = action.payload;
+                // Обновляем карту для быстрого доступа по ID
+                state.map = Object.fromEntries(action.payload.map((w) => [w.id, w]));
+            })
+            .addCase(getWarehouses.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка загрузки списка складов';
+            })
             //FETCH
             .addCase(fetchWarehouses.pending, (state) => {
                 state.loading = true;

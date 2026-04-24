@@ -101,7 +101,6 @@ export const deleteEstimate = createAsyncThunk<number, number, { rejectValue: st
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`/materialEstimates/delete/${id}`, 'DELETE');
-            console.log('id', id);
             return id;
         } catch (err: any) {
             return rejectWithValue(err.message || 'Ошибка удаления сметы');

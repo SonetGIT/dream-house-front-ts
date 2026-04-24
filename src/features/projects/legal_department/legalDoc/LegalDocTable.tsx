@@ -201,7 +201,6 @@ export default function LegalDocTable({
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         onDeleteSubStageId(doc.id, entityId);
-                                                        console.log(doc.id, entityId);
                                                     }}
                                                     className="inline-flex items-center justify-center text-red-600 transition-colors rounded-md h-7 w-7 hover:bg-red-50"
                                                 >

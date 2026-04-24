@@ -42,12 +42,18 @@ export default function ProjectDashboardPage() {
 
     return (
         <div className="min-h-screen bg-white bg-gradient-to-br">
-            <div className="mx-auto max-w-[1800px] px-6 py-8">
+            <div className="mx-auto max-w-[1800px] py-2">
                 {/* <Box component="main" className="project-details-container"> */}
                 {/* BACK BUTTON */}
                 <div>
                     <StyledTooltip title="Назад">
-                        <CgPlayBackwards className="icon" onClick={() => navigate(-1)} />
+                        <CgPlayBackwards
+                            className="icon"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(-1);
+                            }}
+                        />
                     </StyledTooltip>
                 </div>
 

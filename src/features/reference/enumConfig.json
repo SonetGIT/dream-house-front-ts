@@ -231,5 +231,12 @@
             "id": "id",
             "name": ["name"]
         }
+    },
+    "warehouseTransferStatuses": {
+        "apiName": "/warehouseTransferStatuses/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }

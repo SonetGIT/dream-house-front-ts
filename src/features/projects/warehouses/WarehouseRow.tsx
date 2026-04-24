@@ -162,10 +162,7 @@ export default function WarehouseRow({
                                             tooltip={action.tooltip}
                                             colors={action.colors}
                                             onClick={() => {
-                                                // Вызываем нужную функцию, передавая warehouse
                                                 const handler = ACTION_HANDLERS[action.key];
-
-                                                // onClick={() => ACTION_HANDLERS[action.key](warehouse)}
                                                 if (handler) {
                                                     handler(warehouse);
                                                 }

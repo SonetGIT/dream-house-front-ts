@@ -32,7 +32,6 @@ export default function PurchaseOrdersPage() {
     const { projectId, prjBlockId } = useParams();
     const projectIdNum = projectId ? Number(projectId) : null;
     const blockId = prjBlockId ? Number(prjBlockId) : null;
-    console.log(projectIdNum, blockId);
     const {
         data: purchaseOrders,
         loading: purchaseOrdersLoading,
@@ -125,7 +124,6 @@ export default function PurchaseOrdersPage() {
                     supplier_id: item.supplier_id ?? item.supplier_id,
                 })),
             };
-            console.log('payload', payload);
             await dispatch(createPurchaseOrder(payload)).unwrap();
 
             toast.success('Заявка на закупку создана');

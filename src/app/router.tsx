@@ -50,7 +50,6 @@ export const router = createBrowserRouter([
                                     { path: 'materialRequests', element: <MaterialRequestsPage /> },
                                     { path: 'purchaseOrders', element: <PurchaseOrdersPage /> },
                                     { path: 'workPerformed', element: <WorkPerformedPage /> },
-                                    // { path: 'materialWriteOff', element: <MaterialWriteOffPage /> },
                                 ],
                             },
                             { path: 'tasks', element: <TasksPage /> },
@@ -63,32 +62,3 @@ export const router = createBrowserRouter([
     },
     { path: '*', element: <NotFoundPage /> },
 ]);
-
-// export const router = createBrowserRouter([
-//     { path: '/login', element: <AuthPage /> },
-//     {
-//         path: '/',
-//         element: <App />,
-//         children: [
-//             { path: 'users', element: <UsersPage /> },
-//             { path: 'projects', element: <ProjectsPage /> },
-//             { path: 'suppliers', element: <SuppliersPage /> },
-//             { path: 'contractors', element: <ContractorsPage /> },
-//             { path: 'materials', element: <MaterialsPage /> },
-//             {
-//                 path: 'projects/:projectId',
-//                 element: <ProjectDashboardPage />,
-//                 children: [
-//                     { index: true, element: <Dashboard /> }, //дашборд
-//                     { path: 'documentStages', element: <LegalDocStagesPage /> },
-//                     { path: 'pto', element: <BlocksManager /> },
-//                     { path: 'materialRequests', element: <MaterialRequestsPage /> },
-//                     // { path: 'purchaseRequestCard', element: <PurchaseRequestTabs /> },
-//                     // { path: 'warehouses', element: <WarehousesPage /> },
-//                     // { path: 'warehouses/:warehouseId', element: <WarehouseTabs /> },
-//                 ],
-//             },
-//         ],
-//     },
-//     { path: '*', element: <NotFoundPage /> },
-// ]);

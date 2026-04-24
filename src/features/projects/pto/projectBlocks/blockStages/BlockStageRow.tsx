@@ -181,7 +181,6 @@ export default function BlockStageRow({
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onDeleteStageId(stage.id);
-                                    console.log('Deleting stage:', stage.id);
                                 }}
                                 className="
                                 p-1.5

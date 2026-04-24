@@ -17,6 +17,5 @@ export const fetchRecommendSuppliers = async (
         `/suppliers/recommend/${material_id}/${currency}`,
         'GET',
     );
-    console.log('res', res);
     return res.data;
 };

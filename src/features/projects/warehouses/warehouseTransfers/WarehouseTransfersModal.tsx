@@ -4,8 +4,6 @@ import { Plus, Trash2, ArrowRight } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { parseNumber } from '@/utils/parseNumber';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
-import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchWarehouses } from '../warehousesSlice';
 
 interface WarehouseStockItemOption {
     material_id: number;
@@ -197,6 +195,7 @@ export default function WarehouseTransferModal({
         onSubmit(payload);
     };
 
+    /*******************************************************************************************************************************/
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
             <div className="p-6 pb-4 border-b border-gray-200 bg-gradient-to-br from-blue-50/30 to-indigo-50/20">
@@ -242,7 +241,7 @@ export default function WarehouseTransferModal({
                             <option value="">Выберите склад</option>
                             {targetWarehouseOptions.map((w) => (
                                 <option key={w.id} value={w.id}>
-                                    {w.code ? `[${w.code}] ` : ''}
+                                    {/* {w.code ? `[${w.code}] ` : ''} */}
                                     {w.name}
                                 </option>
                             ))}

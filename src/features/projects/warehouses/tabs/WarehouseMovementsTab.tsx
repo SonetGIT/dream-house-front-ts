@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import MaterialMovementsTable from '../../materialMovements/MaterialMovementsTable';
-import { fetchMaterialMovements } from '../../materialMovements/materialMovementsSlice';
+import MaterialMovementsTable from '../materialMovements/MaterialMovementsTable';
+import { fetchMaterialMovements } from '../materialMovements/materialMovementsSlice';
 
 interface Props {
     warehouseId: number;

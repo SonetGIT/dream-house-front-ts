@@ -88,7 +88,7 @@ export default function WarehouseStocksTable({
     };
     if (!items?.length) {
         return (
-            <div className="px-4 py-6 text-sm text-center text-gray-500">
+            <div className="w-full p-4 overflow-hidden text-sm text-center text-gray-400 bg-white border rounded-xl">
                 Позиции в складе отсутствуют
             </div>
         );
