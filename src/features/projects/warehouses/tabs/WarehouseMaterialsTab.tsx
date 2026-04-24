@@ -12,7 +12,10 @@ interface WarehouseMaterialsProps {
 
 export default function WarehouseMaterialsTab({ warehouse, refs }: WarehouseMaterialsProps) {
     const dispatch = useAppDispatch();
-    const { pagination } = useAppSelector((state) => state.warehouseStocks);
+
+    const { list: warehouseStockItems, pagination } = useAppSelector(
+        (state) => state.warehouseStocks,
+    );
 
     useEffect(() => {
         dispatch(
@@ -26,7 +29,8 @@ export default function WarehouseMaterialsTab({ warehouse, refs }: WarehouseMate
 
     return (
         <WarehouseStocksTable
-            items={warehouse.items}
+            // ✅ ИСПРАВЛЕНО: таблица теперь подписана на Redux
+            items={warehouseStockItems}
             whItemPagination={pagination}
             refs={refs}
             onPageChange={(newPage) => {

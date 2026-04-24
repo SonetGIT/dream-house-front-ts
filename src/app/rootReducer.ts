@@ -32,6 +32,7 @@ import materialWriteOffReducer from '@/features/projects/warehouses/materialWrit
 import mbpWriteOffReducer from '@/features/projects/warehouses/mbpWriteOffs/mbpWriteOffSlice';
 import processingWriteOffReducer from '@/features/projects/warehouses/materialProcessingWriteOffs/processingWriteOffSlice';
 import warehouseTransfersReducer from '@/features/projects/warehouses/warehouseTransfers/warehouseTransfersSlice';
+import reportDefinitionsReducer from '@/features/projects/reports/reportDefinitionsSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -67,6 +68,7 @@ export const rootReducer = combineReducers({
     mbpWriteOff: mbpWriteOffReducer,
     processingWriteOff: processingWriteOffReducer,
     warehouseTransfers: warehouseTransfersReducer,
+    reportDefinitions: reportDefinitionsReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;
