@@ -1,9 +1,9 @@
 import { useAppSelector } from '@/app/store';
-import type { Users } from '@/features/users/userSlice';
+import type { User } from '@/features/users/userSlice';
 import Avatar from '@mui/material/Avatar';
 import { StyledTooltip } from '../ui/StyledTooltip';
 
-const getInitials = (user: Users | null): string => {
+const getInitials = (user: User | null): string => {
     if (!user) return 'esc';
     const { first_name = '', last_name = '', username = '' } = user;
     const firstNm = first_name.trim();

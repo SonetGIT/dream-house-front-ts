@@ -20,7 +20,7 @@ const formatDate = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-// month=2026-04 -> dateFrom=2026-03-31, dateTo=2026-04-29
+// month=2026-04 -> dateFrom=2026-04-01, dateTo=2026-04-30
 export const getReportMonthRange = (monthValue: string) => {
     const [yearRaw, monthRaw] = monthValue.split('-');
     const year = Number(yearRaw);
@@ -33,12 +33,11 @@ export const getReportMonthRange = (monthValue: string) => {
         };
     }
 
-    const lastDayPrevMonth = new Date(year, month - 1, 0);
-    const dayBeforeLastDayOfMonth = new Date(year, month, -1);
-
+    const firstDayOfMonth = new Date(year, month - 1, 1);
+    const lastDayOfMonth = new Date(year, month, 0);
     return {
-        dateFrom: formatDate(lastDayPrevMonth),
-        dateTo: formatDate(dayBeforeLastDayOfMonth),
+        dateFrom: formatDate(firstDayOfMonth),
+        dateTo: formatDate(lastDayOfMonth),
     };
 };
 
@@ -70,7 +69,10 @@ export const buildReportParams = ({
     for (const field of definition.params_schema?.fields ?? []) {
         const value = resolveFieldValue(field, values, contextValues);
 
-        if (field.name === 'month' && ['form2', 'form29'].includes(definition.code)) {
+        if (
+            field.name === 'month' &&
+            ['form2', 'form19', 'form29', 'mbp-write-off'].includes(definition.code)
+        ) {
             if (typeof value === 'string' && value) {
                 const { dateFrom, dateTo } = getReportMonthRange(value);
 

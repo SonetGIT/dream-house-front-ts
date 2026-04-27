@@ -2,7 +2,7 @@ import { getToken } from '@/features/auth/getToken';
 
 type WorkPerformedReportFormat = 'pdf' | 'xlsx' | 'docx' | 'html';
 
-const REPORT_BASE_URL = 'http://77.235.27.71:8080';
+export const REPORT_BASE_URL = 'http://77.235.27.71:8080';
 
 const getFileNameFromContentDisposition = (contentDisposition: string | null) => {
     if (!contentDisposition) return null;
