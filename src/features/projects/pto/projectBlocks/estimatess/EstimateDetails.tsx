@@ -102,7 +102,7 @@ export default function EstimateDetails({
                                 Услуги
                             </button>
 
-                            <button
+                            {/* <button
                                 onClick={() => setTab('history')}
                                 className={`px-4 py-2 text-sm font-medium transition-colors ${
                                     tab === 'history'
@@ -111,7 +111,7 @@ export default function EstimateDetails({
                                 }`}
                             >
                                 История изменений
-                            </button>
+                            </button> */}
                         </div>
 
                         {/* MATERIALS */}

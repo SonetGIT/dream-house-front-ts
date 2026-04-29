@@ -21,7 +21,8 @@ export default function MaterialRequestCreateModal({
     onClose,
 }: MatReqCreateProps) {
     const [error, setError] = useState<string | null>(null);
-
+    console.log('blockId', blockId);
+    console.log('prjBlocks', refs.prjBlocks);
     //CHECK ESTIMATE
     const hasEstimateItems = useMemo(() => {
         if (!blockId) return false;
@@ -60,7 +61,11 @@ export default function MaterialRequestCreateModal({
 
                         <input
                             type="text"
-                            value={blockId ? refs.prjBlocks.lookup(blockId) : '—'}
+                            value={
+                                blockId
+                                    ? refs.prjBlocks.lookup(blockId) || `Блок ID ${blockId}`
+                                    : '—'
+                            }
                             readOnly
                             className={`
                                 w-full px-3 py-2 text-sm text-gray-900 bg-green-50

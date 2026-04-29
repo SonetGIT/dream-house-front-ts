@@ -27,15 +27,7 @@ export default function Dashboard() {
             to: 'pto',
             icon: <WidgetsIcon />,
         },
-        {
-            title: 'Задачи',
-            label: '',
-            value: '',
-            color: '#0b78f5',
-            bgColor: '#e3f2fd',
-            to: 'tasks',
-            icon: <FaTasks />,
-        },
+
         {
             title: 'Склады',
             label: '',
@@ -53,6 +45,15 @@ export default function Dashboard() {
             bgColor: '#84ecf3',
             to: 'reports',
             icon: <BiSolidReport />,
+        },
+        {
+            title: 'Задачи',
+            label: '',
+            value: '',
+            color: '#0b78f5',
+            bgColor: '#e3f2fd',
+            to: 'tasks',
+            icon: <FaTasks />,
         },
     ];
 
