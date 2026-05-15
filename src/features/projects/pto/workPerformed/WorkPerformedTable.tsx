@@ -157,7 +157,7 @@ export default function WorkPerformedTable(props: PropsType) {
         const items = itemsMap[workPerf.id] ?? workPerf.items ?? [];
 
         if (!items.length) {
-            toast.error('Нет материалов');
+            toast.error('Нет АВР для подписи');
             return;
         }
 

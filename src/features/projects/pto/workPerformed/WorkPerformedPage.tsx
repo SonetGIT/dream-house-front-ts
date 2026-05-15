@@ -11,8 +11,8 @@ import WorkPerformedTable from './WorkPerformedTable';
 import { useReference } from '@/features/reference/useReference';
 import { TablePagination } from '@/components/ui/TablePagination';
 import Modal from '@/components/ui/Modal';
-import WorkPerformedFlow from './creatAvr/WorkPerformedFlow';
 import { calcRowTotal } from '@/utils/calcRowTotal';
+import WorkPerformedFlow from './creatAVR/WorkPerformedFlow';
 
 /**********************************************************************************************************/
 export default function WorkPerformedPage() {
@@ -166,6 +166,7 @@ export default function WorkPerformedPage() {
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog
+                /*!!существует ли deleteState*/
                 open={!!deleteState && deleteState.type === 'avr'}
                 title="Удалить текущий АВР?"
                 message="Это действие нельзя отменить."

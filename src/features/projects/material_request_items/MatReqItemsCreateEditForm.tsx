@@ -94,6 +94,7 @@ export default function MatReqItemsCreateEditForm({
                     status: 1,
                     items: rows.map((r) => ({
                         item_type: r.isFromEstimate ? 1 : 2,
+                        material_estimate_item_id: r.id,
                         stage_id: r.stage_id,
                         subsection_id: r.subsection_id,
                         material_type: r.material_type,

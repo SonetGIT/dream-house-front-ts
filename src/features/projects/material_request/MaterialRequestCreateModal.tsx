@@ -21,8 +21,7 @@ export default function MaterialRequestCreateModal({
     onClose,
 }: MatReqCreateProps) {
     const [error, setError] = useState<string | null>(null);
-    console.log('blockId', blockId);
-    console.log('prjBlocks', refs.prjBlocks);
+
     //CHECK ESTIMATE
     const hasEstimateItems = useMemo(() => {
         if (!blockId) return false;

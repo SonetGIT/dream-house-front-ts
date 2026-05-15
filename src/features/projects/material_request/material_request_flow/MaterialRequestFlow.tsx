@@ -33,7 +33,6 @@ export default function MaterialRequestFlow({
 }: MaterialRequestFlowProps) {
     const dispatch = useAppDispatch();
     const { data: estimates, loading } = useAppSelector((state) => state.estimates);
-
     // STATE
     // const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
     const [selectedItems, setSelectedItems] = useState<EstimateItem[]>([]);

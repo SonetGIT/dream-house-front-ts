@@ -90,7 +90,6 @@ export default function MaterialsItemSelectTable({
                 <tbody>
                     {materialItems.map((sub) => {
                         const isSelected = selectedIds.includes(sub.id);
-
                         return (
                             <tr
                                 key={sub.id}

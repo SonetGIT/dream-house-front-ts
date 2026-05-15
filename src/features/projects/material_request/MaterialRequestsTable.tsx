@@ -1,7 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { Collapse, Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchSearchMaterialReq, type MaterialRequest } from './materialRequestsSlice';
+import {
+    fetchSearchMaterialReq,
+    signMaterialRequest,
+    type MaterialRequest,
+} from './materialRequestsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { User } from '@/features/users/userSlice';
@@ -9,8 +13,8 @@ import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import toast from 'react-hot-toast';
 import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
-import { submitMaterialRequestFlow } from './submitMaterialRequestFlow';
 import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
+import { useParams } from 'react-router-dom';
 
 interface PropsType {
     data: MaterialRequest[];
@@ -44,6 +48,7 @@ const matReqStatuses: Record<number, { label: string; className: string }> = {
 /*************************************************************************************************************************/
 export default function MaterialRequestsTable(props: PropsType) {
     const dispatch = useAppDispatch();
+    const { projectId, prjBlockId } = useParams();
     const { pagination } = useAppSelector((state) => state.materialRequestItems);
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
@@ -137,65 +142,6 @@ export default function MaterialRequestsTable(props: PropsType) {
         }
     };
 
-    /*SIGN*/
-    const handleSign = (req: MaterialRequest) => {
-        const openedId = req.id;
-
-        if (!currentUser || !canSign(req, currentUser)) return;
-
-        const items = itemsMap[req.id] ?? req.items ?? [];
-
-        if (!items.length) {
-            toast.error('Нет материалов');
-            return;
-        }
-
-        dispatch(
-            submitMaterialRequestFlow({
-                req,
-                items,
-                currentUser,
-            }),
-        )
-            .unwrap()
-            .then(() => {
-                // очистка локальных изменений
-                setItemsMap((prev) => {
-                    const copy = { ...prev };
-                    delete copy[req.id];
-                    return copy;
-                });
-
-                // обновляем список заявок
-                return dispatch(
-                    fetchSearchMaterialReq({
-                        project_id: req.project_id,
-                        page: 1,
-                        size: 10,
-                    }),
-                ).unwrap();
-            })
-            .then(() => {
-                // открываем строку
-                setOpenRows((prev) => ({
-                    ...prev,
-                    [openedId]: true,
-                }));
-
-                //  ВАЖНО: заново загружаем items
-                dispatch(
-                    fetchMaterialRequestItems({
-                        material_request_id: openedId,
-                        page: 1,
-                        size: 10,
-                    }),
-                );
-            })
-            .catch((e) => {
-                toast.error(e || 'Ошибка');
-            });
-    };
-
     const isFullyApproved = (req: MaterialRequest): boolean => {
         return (
             !!req.approved_by_foreman &&
@@ -205,6 +151,135 @@ export default function MaterialRequestsTable(props: PropsType) {
             !!req.approved_by_main_engineer
         );
     };
+
+    const getSignStage = (
+        user?: User | null,
+    ):
+        | 'foreman'
+        | 'planning_engineer'
+        | 'main_engineer'
+        | 'site_manager'
+        | 'purchasing_agent'
+        | null => {
+        if (!user) return null;
+
+        const roleId = Number(user.role_id);
+
+        if (roleId === 4) return 'foreman';
+        if (roleId === 7) return 'purchasing_agent';
+        if (roleId === 9) return 'site_manager';
+        if (roleId === 10) return 'planning_engineer';
+        if (roleId === 11) return 'main_engineer';
+
+        return null;
+    };
+
+    const refetchWriteOffs = async (
+        page = pagination?.page ?? 1,
+        size = pagination?.size ?? 10,
+    ) => {
+        await dispatch(
+            fetchSearchMaterialReq({
+                project_id: Number(projectId),
+                block_id: Number(prjBlockId),
+                page,
+                size,
+            }),
+        ).unwrap();
+    };
+
+    /*SIGN*/
+    const handleSign = async (req: MaterialRequest) => {
+        if (!currentUser || !canSign(req, currentUser)) {
+            toast.error('У вас нет прав на подписание');
+            return;
+        }
+
+        const roleId = Number(currentUser.role_id);
+        const items = itemsMap[req.id] ?? req.items ?? [];
+
+        try {
+            if (roleId === 1) {
+                const stages: Array<
+                    | 'foreman'
+                    | 'planning_engineer'
+                    | 'main_engineer'
+                    | 'purchasing_agent'
+                    | 'site_manager'
+                > = [];
+
+                if (!req.approved_by_foreman) {
+                    stages.push('foreman');
+                }
+
+                if (!req.approved_by_planning_engineer) {
+                    stages.push('planning_engineer');
+                }
+
+                if (!req.approved_by_main_engineer) {
+                    stages.push('main_engineer');
+                }
+
+                if (!req.approved_by_purchasing_agent) {
+                    stages.push('purchasing_agent');
+                }
+
+                if (!req.approved_by_site_manager) {
+                    stages.push('site_manager');
+                }
+
+                if (!stages.length) {
+                    toast.success('Документ уже полностью подписан');
+                    return;
+                }
+
+                for (const stage of stages) {
+                    await dispatch(
+                        signMaterialRequest({
+                            id: req.id,
+                            stage,
+                            ...(stage === 'planning_engineer' ? { items } : {}),
+                        }),
+                    ).unwrap();
+                }
+            } else {
+                const stage = getSignStage(currentUser);
+
+                if (!stage) {
+                    toast.error('У вас нет прав на подписание');
+                    return;
+                }
+
+                await dispatch(
+                    signMaterialRequest({
+                        id: req.id,
+                        stage,
+                        ...(stage === 'planning_engineer' ? { items } : {}),
+                    }),
+                ).unwrap();
+            }
+
+            toast.success('Заявка на материалы подписана');
+            await refetchWriteOffs();
+
+            setOpenRows((prev) => ({
+                ...prev,
+                [req.id]: true,
+            }));
+
+            await dispatch(
+                fetchMaterialRequestItems({
+                    material_request_id: req.id,
+                    page: 1,
+                    size: 10,
+                }),
+            ).unwrap();
+        } catch (e: any) {
+            console.error(e);
+            toast.error(e?.message || 'Ошибка подписания заявки');
+        }
+    };
+
     /********************************************************************************************************************************/
     return (
         <div className="space-y-4">

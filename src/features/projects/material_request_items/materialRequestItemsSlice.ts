@@ -55,7 +55,6 @@ export const fetchMaterialRequestItems = createAsyncThunk(
                 'POST',
                 payload,
             );
-
             return {
                 items: res.data,
                 pagination: res.pagination,

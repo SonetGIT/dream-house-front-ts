@@ -18,7 +18,7 @@ export default function ReferencesSelect({
     return (
         <select
             disabled={disabled}
-            value={value ?? ''}
+            value={value ?? ''} //?? оператор нулевого слияние - Если value пустой (null или undefined) → подставь пустую строку ''
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
             className={
                 className ??

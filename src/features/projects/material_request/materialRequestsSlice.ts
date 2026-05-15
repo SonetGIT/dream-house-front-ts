@@ -71,7 +71,9 @@ interface MaterialRequestsState {
     data: MaterialRequest[];
     pagination: Pagination | null;
     loading: boolean;
+    current: MaterialRequest | null;
     error: string | null;
+    submitting: boolean;
     projectId: number | null;
 }
 
@@ -79,7 +81,9 @@ const initialState: MaterialRequestsState = {
     data: [],
     pagination: null,
     loading: false,
+    current: null,
     error: null,
+    submitting: false,
     projectId: null,
 };
 
@@ -96,7 +100,30 @@ interface FetchSearchMaterialReqParams {
     project_id: number;
     block_id?: number;
 }
+const normalizeItem = (value: unknown): MaterialRequest | null => {
+    const data = value as any;
 
+    if (!data) return null;
+    if (data?.id) return data;
+    if (data?.data?.id) return data.data;
+    if (data?.item?.id) return data.item;
+
+    return null;
+};
+
+const upsertItem = (state: MaterialRequestsState, item: MaterialRequest) => {
+    const index = state.data.findIndex((row) => row.id === item.id);
+
+    if (index !== -1) {
+        state.data[index] = item;
+    } else {
+        state.data.unshift(item);
+    }
+
+    if (state.current?.id === item.id) {
+        state.current = item;
+    }
+};
 export const fetchSearchMaterialReq = createAsyncThunk<
     ApiResponse<MaterialRequest[]>,
     FetchSearchMaterialReqParams,
@@ -173,81 +200,44 @@ export const signMaterialRequest = createAsyncThunk<
     MaterialRequest,
     {
         id: number;
-        role_id: number;
-        userId: number;
+        stage:
+            | 'foreman'
+            | 'planning_engineer'
+            | 'main_engineer'
+            | 'purchasing_agent'
+            | 'site_manager';
+        items?: Array<{
+            id: number;
+            material_estimate_item_id: number;
+            quantity: number;
+            price: string | number | null;
+            coefficient: string | number | null;
+            currency: number | null;
+            currency_rate: number | null;
+        }>;
     },
     { rejectValue: string }
->('materialRequests/sign', async ({ id, role_id, userId }, { rejectWithValue }) => {
+>('materialRequests/sign', async ({ id, stage, items }, { rejectWithValue }) => {
     try {
-        const update: any = {};
-        const now = new Date().toISOString();
+        const body =
+            stage === 'planning_engineer'
+                ? {
+                      stage,
+                      items: items ?? [],
+                  }
+                : { stage };
 
-        switch (role_id) {
-            case 1:
-                update.foreman_user_id = userId;
-                update.approved_by_foreman = true;
-                update.approved_by_foreman_time = now;
+        const res = await apiRequest<MaterialRequest>(`/materialRequests/sign/${id}`, 'POST', body);
 
-                update.purchasing_agent_user_id = userId;
-                update.approved_by_purchasing_agent = true;
-                update.approved_by_purchasing_agent_time = now;
+        const item = normalizeItem(res.data);
 
-                update.site_manager_user_id = userId;
-                update.approved_by_site_manager = true;
-                update.approved_by_site_manager_time = now;
-
-                update.planning_engineer_user_id = userId;
-                update.approved_by_planning_engineer = true;
-                update.approved_by_planning_engineer_time = now;
-
-                update.main_engineer_user_id = userId;
-                update.approved_by_main_engineer = true;
-                update.approved_by_main_engineer_time = now;
-                break;
-
-            case 4:
-                update.foreman_user_id = userId;
-                update.approved_by_foreman = true;
-                update.approved_by_foreman_time = now;
-                break;
-
-            case 7:
-                update.purchasing_agent_user_id = userId;
-                update.approved_by_purchasing_agent = true;
-                update.approved_by_purchasing_agent_time = now;
-                break;
-
-            case 9:
-                update.site_manager_user_id = userId;
-                update.approved_by_site_manager = true;
-                update.approved_by_site_manager_time = now;
-                break;
-
-            case 10:
-                update.planning_engineer_user_id = userId;
-                update.approved_by_planning_engineer = true;
-                update.approved_by_planning_engineer_time = now;
-                break;
-
-            case 11:
-                update.main_engineer_user_id = userId;
-                update.approved_by_main_engineer = true;
-                update.approved_by_main_engineer_time = now;
-                break;
-
-            default:
-                return rejectWithValue('Неизвестная роль');
+        if (!item) {
+            throw new Error('Сервер не вернул подписанное заявление на материалы');
         }
 
-        const res = await apiRequest<MaterialRequest>(
-            `/materialRequests/update/${id}`,
-            'PUT',
-            update,
-        );
-
-        return res.data;
+        return item;
     } catch (err: any) {
-        return rejectWithValue(err.message);
+        return rejectWithValue(err.message || 'Ошибка подписания заявления на материалы');
     }
 });
 
@@ -262,6 +252,7 @@ export const materialRequestsSlice = createSlice({
             state.pagination = null;
             state.error = null;
             state.loading = false;
+            state.submitting = false;
             state.projectId = null;
         },
     },
@@ -306,15 +297,17 @@ export const materialRequestsSlice = createSlice({
                 }
             })
 
+            .addCase(signMaterialRequest.pending, (state) => {
+                state.submitting = true;
+                state.error = null;
+            })
             .addCase(signMaterialRequest.fulfilled, (state, action) => {
-                const index = state.data.findIndex((req) => req.id === action.payload.id);
-
-                if (index !== -1) {
-                    state.data[index] = {
-                        ...state.data[index],
-                        ...action.payload,
-                    };
-                }
+                state.submitting = false;
+                upsertItem(state, action.payload);
+            })
+            .addCase(signMaterialRequest.rejected, (state, action) => {
+                state.submitting = false;
+                state.error = action.payload ?? 'Ошибка подписания заявления на материалы';
             });
     },
 });
