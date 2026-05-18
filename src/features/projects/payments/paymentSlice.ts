@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
 
@@ -120,7 +120,6 @@ export interface Payment {
     updated_at: string;
     posted_at: string | null;
     deleted: boolean;
-
     payment_type_ref?: PaymentTypeRef | null;
     status_ref?: PaymentStatusRef | null;
     article?: PaymentArticle | null;
@@ -174,17 +173,40 @@ export interface PaymentUpdatePayload extends Partial<PaymentCreatePayload> {
     status?: number;
 }
 
-// ================= HELPERS =================
+export interface PaymentsState {
+    data: Payment[];
+    pagination: Pagination | null;
+    current: Payment | null;
+    types: PaymentTypeRef[];
+    statuses: PaymentStatusRef[];
+    articles: PaymentArticle[];
+    methods: PaymentMethodRef[];
+    loading: boolean;
+    refsLoading: boolean;
+    submitting: boolean;
+    error: string | null;
+}
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
+const isPayment = (value: unknown): value is Payment =>
+    isRecord(value) && typeof value.id === 'number';
 const normalizePayment = (value: unknown): Payment | null => {
-    const data = value as any;
-
-    if (!data) return null;
-    if (data?.id) return data as Payment;
-    if (data?.data?.id) return data.data as Payment;
-    if (data?.item?.id) return data.item as Payment;
+    if (isPayment(value)) return value;
+    if (!isRecord(value)) return null;
+    if (isPayment(value.data)) return value.data;
+    if (isPayment(value.item)) return value.item;
 
     return null;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
 };
 
 const upsertPayment = (state: PaymentsState, item: Payment) => {
@@ -194,14 +216,13 @@ const upsertPayment = (state: PaymentsState, item: Payment) => {
         state.data[index] = item;
     } else {
         state.data.unshift(item);
+        if (state.pagination) {
+            state.pagination.total += 1;
+        }
     }
 
-    if (state.current?.id === item.id) {
-        state.current = item;
-    }
+    state.current = item;
 };
-
-// ================= THUNKS =================
 
 export const fetchPaymentTypes = createAsyncThunk<PaymentTypeRef[], void, { rejectValue: string }>(
     'payments/fetchTypes',
@@ -209,8 +230,8 @@ export const fetchPaymentTypes = createAsyncThunk<PaymentTypeRef[], void, { reje
         try {
             const res = await apiRequest<PaymentTypeRef[]>('/payments/types', 'GET');
             return res.data;
-        } catch (error: any) {
-            return rejectWithValue(error.message || 'Ошибка загрузки типов платежей');
+        } catch (error) {
+            return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки типов платежей'));
         }
     },
 );
@@ -223,8 +244,8 @@ export const fetchPaymentStatuses = createAsyncThunk<
     try {
         const res = await apiRequest<PaymentStatusRef[]>('/payments/statuses', 'GET');
         return res.data;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки статусов платежей');
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки статусов платежей'));
     }
 });
 
@@ -236,8 +257,8 @@ export const fetchPaymentArticles = createAsyncThunk<
     try {
         const res = await apiRequest<PaymentArticle[]>('/payments/articles', 'GET');
         return res.data;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки статей ДДС');
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки статей платежей'));
     }
 });
 
@@ -249,8 +270,8 @@ export const fetchPaymentMethods = createAsyncThunk<
     try {
         const res = await apiRequest<PaymentMethodRef[]>('/payments/methods', 'GET');
         return res.data;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки способов оплаты');
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки способов оплаты'));
     }
 });
 
@@ -261,8 +282,8 @@ export const fetchPayments = createAsyncThunk<
 >('payments/search', async (params, { rejectWithValue }) => {
     try {
         return await apiRequest<Payment[]>('/payments/search', 'POST', params);
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки платежей');
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки платежей'));
     }
 });
 
@@ -280,8 +301,8 @@ export const createPayment = createAsyncThunk<
         }
 
         return item;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка создания платежа');
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка создания платежа'));
     }
 });
 
@@ -299,46 +320,36 @@ export const updatePayment = createAsyncThunk<
         }
 
         return item;
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка обновления платежа');
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка обновления платежа'));
     }
 });
 
-// ================= STATE =================
-
-interface PaymentsState {
-    data: Payment[];
-    pagination: Pagination | null;
-    current: Payment | null;
-
-    types: PaymentTypeRef[];
-    statuses: PaymentStatusRef[];
-    articles: PaymentArticle[];
-    methods: PaymentMethodRef[];
-
-    loading: boolean;
-    refsLoading: boolean;
-    submitting: boolean;
-    error: string | null;
-}
+// export const deletePayment = createAsyncThunk<number, number, { rejectValue: string }>(
+//     'payments/delete',
+//     async (id, { rejectWithValue }) => {
+//         try {
+//             await apiRequest(`/payments/delete/${id}`, 'DELETE');
+//             return id;
+//         } catch (error) {
+//             return rejectWithValue(getErrorMessage(error, 'Ошибка удаления платежа'));
+//         }
+//     },
+// );
 
 const initialState: PaymentsState = {
     data: [],
     pagination: null,
     current: null,
-
     types: [],
     statuses: [],
     articles: [],
     methods: [],
-
     loading: false,
     refsLoading: false,
     submitting: false,
     error: null,
 };
-
-// ================= SLICE =================
 
 export const paymentsSlice = createSlice({
     name: 'payments',
@@ -352,10 +363,12 @@ export const paymentsSlice = createSlice({
             state.submitting = false;
             state.error = null;
         },
+        setCurrentPayment(state, action: PayloadAction<Payment | null>) {
+            state.current = action.payload;
+        },
     },
     extraReducers: (builder) => {
         builder
-            // refs
             .addCase(fetchPaymentTypes.pending, (state) => {
                 state.refsLoading = true;
                 state.error = null;
@@ -368,7 +381,6 @@ export const paymentsSlice = createSlice({
                 state.refsLoading = false;
                 state.error = action.payload ?? 'Ошибка загрузки типов платежей';
             })
-
             .addCase(fetchPaymentStatuses.pending, (state) => {
                 state.refsLoading = true;
                 state.error = null;
@@ -381,7 +393,6 @@ export const paymentsSlice = createSlice({
                 state.refsLoading = false;
                 state.error = action.payload ?? 'Ошибка загрузки статусов платежей';
             })
-
             .addCase(fetchPaymentArticles.pending, (state) => {
                 state.refsLoading = true;
                 state.error = null;
@@ -392,9 +403,8 @@ export const paymentsSlice = createSlice({
             })
             .addCase(fetchPaymentArticles.rejected, (state, action) => {
                 state.refsLoading = false;
-                state.error = action.payload ?? 'Ошибка загрузки статей ДДС';
+                state.error = action.payload ?? 'Ошибка загрузки статей платежей';
             })
-
             .addCase(fetchPaymentMethods.pending, (state) => {
                 state.refsLoading = true;
                 state.error = null;
@@ -407,23 +417,25 @@ export const paymentsSlice = createSlice({
                 state.refsLoading = false;
                 state.error = action.payload ?? 'Ошибка загрузки способов оплаты';
             })
-
-            // search
             .addCase(fetchPayments.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchPayments.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data = action.payload.data;
+                state.data = action.payload.data ?? [];
                 state.pagination = action.payload.pagination ?? null;
+
+                if (state.current) {
+                    state.current =
+                        state.data.find((payment) => payment.id === state.current?.id) ??
+                        state.current;
+                }
             })
             .addCase(fetchPayments.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки платежей';
             })
-
-            // create
             .addCase(createPayment.pending, (state) => {
                 state.submitting = true;
                 state.error = null;
@@ -436,8 +448,6 @@ export const paymentsSlice = createSlice({
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка создания платежа';
             })
-
-            // update
             .addCase(updatePayment.pending, (state) => {
                 state.submitting = true;
                 state.error = null;
@@ -450,8 +460,28 @@ export const paymentsSlice = createSlice({
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка обновления платежа';
             });
+        // .addCase(deletePayment.pending, (state) => {
+        //     state.submitting = true;
+        //     state.error = null;
+        // })
+        // .addCase(deletePayment.fulfilled, (state, action) => {
+        //     state.submitting = false;
+        //     state.data = state.data.filter((payment) => payment.id !== action.payload);
+
+        //     if (state.current?.id === action.payload) {
+        //         state.current = null;
+        //     }
+
+        //     if (state.pagination) {
+        //         state.pagination.total = Math.max(0, state.pagination.total - 1);
+        //     }
+        // })
+        // .addCase(deletePayment.rejected, (state, action) => {
+        //     state.submitting = false;
+        //     state.error = action.payload ?? 'Ошибка удаления платежа';
+        // });
     },
 });
 
-export const { clearPayments } = paymentsSlice.actions;
+export const { clearPayments, setCurrentPayment } = paymentsSlice.actions;
 export default paymentsSlice.reducer;

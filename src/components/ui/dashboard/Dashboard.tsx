@@ -48,6 +48,15 @@ export default function Dashboard() {
             icon: <MdWarehouse />,
         },
         {
+            title: 'Платежи',
+            label: '',
+            value: '',
+            color: '#f7af44',
+            bgColor: '#f3f189',
+            to: 'payments',
+            icon: <Payments />,
+        },
+        {
             title: 'Отчеты',
             label: '',
             value: '',
@@ -55,15 +64,6 @@ export default function Dashboard() {
             bgColor: '#84ecf3',
             to: 'reports',
             icon: <BiSolidReport />,
-        },
-        {
-            title: 'Платежи',
-            label: '',
-            value: '',
-            color: '#4f44f7',
-            bgColor: '#9089f3',
-            to: 'payments',
-            icon: <Payments />,
         },
     ];
 

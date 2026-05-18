@@ -19,6 +19,7 @@ import TasksPage from '@/features/projects/tasks/TasksPage';
 import WorkPerformedPage from '@/features/projects/pto/workPerformed/WorkPerformedPage';
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import ReportsPage from '@/features/projects/reports/ReportsPage';
+import PaymentsPage from '@/features/projects/payments/PaymentsPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
                             { path: 'tasks', element: <TasksPage /> },
                             { path: 'warehouses', element: <WarehousesPage /> },
                             { path: 'reports', element: <ReportsPage /> },
+                            { path: 'payments', element: <PaymentsPage /> },
                         ],
                     },
                 ],
