@@ -64,6 +64,7 @@ export interface MaterialRequestCreatePayload {
         comment?: string;
 
         item_type: number;
+        material_estimate_item_id?: number | string | null;
     }[];
 }
 
@@ -100,6 +101,7 @@ interface FetchSearchMaterialReqParams {
     project_id: number;
     block_id?: number;
 }
+
 const normalizeItem = (value: unknown): MaterialRequest | null => {
     const data = value as any;
 
@@ -124,6 +126,31 @@ const upsertItem = (state: MaterialRequestsState, item: MaterialRequest) => {
         state.current = item;
     }
 };
+
+const toNullableInteger = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : null;
+};
+
+const normalizeCreateMaterialRequestPayload = (
+    payload: MaterialRequestCreatePayload,
+): MaterialRequestCreatePayload => {
+    return {
+        ...payload,
+        items: payload.items.map((item) => ({
+            ...item,
+            material_estimate_item_id:
+                Number(item.item_type) === 2
+                    ? null
+                    : toNullableInteger(item.material_estimate_item_id),
+        })),
+    };
+};
+
 export const fetchSearchMaterialReq = createAsyncThunk<
     ApiResponse<MaterialRequest[]>,
     FetchSearchMaterialReqParams,
@@ -143,18 +170,21 @@ export const createMaterialReq = createAsyncThunk<
     { rejectValue: string }
 >('materialRequests/create', async (materialRequest, { rejectWithValue }) => {
     try {
+        const normalizedPayload = normalizeCreateMaterialRequestPayload(materialRequest);
+
         const res = await apiRequest<MaterialRequest>(
             '/materialRequests/create',
             'POST',
-            materialRequest,
+            normalizedPayload,
         );
+
         return res.data;
     } catch (err: any) {
         return rejectWithValue(err.message);
     }
 });
 
-//ОБНОВЛЁННЫЙ UPDATE
+// UPDATE
 export const updateMaterialRequest = createAsyncThunk<
     MaterialRequest,
     {
@@ -208,7 +238,8 @@ export const signMaterialRequest = createAsyncThunk<
             | 'site_manager';
         items?: Array<{
             id: number;
-            material_estimate_item_id: number;
+            item_type?: number;
+            material_estimate_item_id?: number | string | null;
             quantity: number;
             price: string | number | null;
             coefficient: string | number | null;
@@ -219,11 +250,20 @@ export const signMaterialRequest = createAsyncThunk<
     { rejectValue: string }
 >('materialRequests/sign', async ({ id, stage, items }, { rejectWithValue }) => {
     try {
+        const normalizedItems =
+            items?.map((item) => ({
+                ...item,
+                material_estimate_item_id:
+                    Number(item.item_type) === 2
+                        ? null
+                        : toNullableInteger(item.material_estimate_item_id),
+            })) ?? [];
+
         const body =
             stage === 'planning_engineer'
                 ? {
                       stage,
-                      items: items ?? [],
+                      items: normalizedItems,
                   }
                 : { stage };
 

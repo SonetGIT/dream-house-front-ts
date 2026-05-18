@@ -6,15 +6,25 @@ import { IoDocumentsSharp } from 'react-icons/io5';
 import WidgetsIcon from '@mui/icons-material/Widgets';
 import { FaTasks } from 'react-icons/fa';
 import { BiSolidReport } from 'react-icons/bi';
+import { Payments } from '@mui/icons-material';
 
 export default function Dashboard() {
     const dashboardCards = [
+        {
+            title: 'Задачи',
+            label: '',
+            value: '',
+            color: '#0b78f5',
+            bgColor: '#94c0df',
+            to: 'tasks',
+            icon: <FaTasks />,
+        },
         {
             title: 'Документы (юр.)',
             label: 'Инфо',
             value: '',
             color: '#189e06',
-            bgColor: '#cae7cc',
+            bgColor: '#a3d6a6',
             to: 'documentStages',
             icon: <IoDocumentsSharp />,
         },
@@ -47,13 +57,13 @@ export default function Dashboard() {
             icon: <BiSolidReport />,
         },
         {
-            title: 'Задачи',
+            title: 'Платежи',
             label: '',
             value: '',
-            color: '#0b78f5',
-            bgColor: '#e3f2fd',
-            to: 'tasks',
-            icon: <FaTasks />,
+            color: '#4f44f7',
+            bgColor: '#9089f3',
+            to: 'payments',
+            icon: <Payments />,
         },
     ];
 
