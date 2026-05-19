@@ -1,6 +1,7 @@
-import { FolderOpen, Loader2, Pencil, ReceiptText, Trash2 } from 'lucide-react';
+import { FolderOpen, Loader2, Pencil } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Payment, PaymentStatusRef } from './paymentSlice';
+import { formatDate } from '@/utils/formatData';
 
 interface PaymentsTableProps {
     payments: Payment[];
@@ -39,18 +40,9 @@ const formatMoney = (amount: number, currencyCode?: string | null) => {
     return currencyCode ? `${value} ${currencyCode}` : value;
 };
 
-const formatDate = (value?: string | null) =>
-    value
-        ? new Date(value).toLocaleDateString('ru-RU', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-          })
-        : '—';
-
 const isIncome = (payment: Payment) => {
     const code = payment.payment_type_ref?.code?.toLowerCase() ?? '';
-    return code.includes('income') || code.includes('in') || payment.payment_type === 2;
+    return code.includes('income') || code.includes('in') || payment.payment_type === 1;
 };
 
 export default function PaymentsTable({
@@ -60,6 +52,8 @@ export default function PaymentsTable({
     onEdit,
     onDelete,
 }: PaymentsTableProps) {
+    void onDelete;
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -103,14 +97,15 @@ export default function PaymentsTable({
                                 Блок
                             </div>
                         </th>
+
                         <th className="px-4 py-3 text-left border-l bg-blue-50">
                             <div className="text-xs font-semibold text-blue-700 uppercase">
-                                Тип / Статья
+                                Контрагент
                             </div>
                         </th>
                         <th className="px-4 py-3 text-left border-l bg-blue-50">
                             <div className="text-xs font-semibold text-blue-700 uppercase">
-                                Контрагент
+                                Тип платежа / Тип дохода-расхода
                             </div>
                         </th>
                         <th className="px-4 py-3 text-right border-l bg-blue-50">
@@ -162,21 +157,24 @@ export default function PaymentsTable({
                                 <td className="px-3 py-3">
                                     <div className="space-y-1 text-sm">
                                         <p className="font-medium text-gray-900">
-                                            {payment.payment_type_ref?.name ?? '—'}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {payment.article?.name ?? '—'}
-                                        </p>
-                                    </div>
-                                </td>
-
-                                <td className="px-3 py-3">
-                                    <div className="space-y-1 text-sm">
-                                        <p className="font-medium text-gray-900">
                                             {payment.counterparty_name || '—'}
                                         </p>
                                         <p className="text-xs text-gray-500">
                                             {payment.counterparty_inn || 'ИНН не указан'}
+                                        </p>
+                                    </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                    <div className="space-y-1 text-sm">
+                                        <p
+                                            className={`text-sm font-semibold ${
+                                                income ? 'text-emerald-600' : 'text-rose-600'
+                                            }`}
+                                        >
+                                            {payment.payment_type_ref?.name ?? '—'}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {payment.article?.name ?? '—'}
                                         </p>
                                     </div>
                                 </td>
@@ -201,9 +199,22 @@ export default function PaymentsTable({
                                 </td>
 
                                 <td className="px-3 py-3">
-                                    <div className="space-y-1 text-xs text-gray-600">
-                                        <p>План: {formatDate(payment.planned_date)}</p>
-                                        <p>Оплата: {formatDate(payment.paid_date)}</p>
+                                    <div className="space-y-1 text-xs">
+                                        <p
+                                            className={
+                                                payment.planned_date &&
+                                                !payment.paid_date &&
+                                                new Date(payment.planned_date) < new Date()
+                                                    ? 'text-rose-600 font-medium'
+                                                    : 'text-gray-600'
+                                            }
+                                        >
+                                            План: {formatDate(payment.planned_date)}
+                                        </p>
+
+                                        <p className="text-gray-600">
+                                            Оплата: {formatDate(payment.paid_date)}
+                                        </p>
                                     </div>
                                 </td>
 
@@ -231,7 +242,7 @@ export default function PaymentsTable({
                                             </button>
                                         </StyledTooltip>
 
-                                        <StyledTooltip title="Удалить">
+                                        {/* <StyledTooltip title="Удалить нет в бэкенде">
                                             <button
                                                 type="button"
                                                 onClick={() => onDelete(payment)}
@@ -239,7 +250,7 @@ export default function PaymentsTable({
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
-                                        </StyledTooltip>
+                                        </StyledTooltip> */}
                                     </div>
                                 </td>
                             </tr>

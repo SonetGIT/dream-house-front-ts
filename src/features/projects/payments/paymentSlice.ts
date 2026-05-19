@@ -181,6 +181,7 @@ export interface PaymentsState {
     statuses: PaymentStatusRef[];
     articles: PaymentArticle[];
     methods: PaymentMethodRef[];
+    counterpartyTypes: PaymentTypeRef[];
     loading: boolean;
     refsLoading: boolean;
     submitting: boolean;
@@ -325,6 +326,19 @@ export const updatePayment = createAsyncThunk<
     }
 });
 
+export const paymentCounterpartyTypes = createAsyncThunk<
+    PaymentTypeRef[],
+    void,
+    { rejectValue: string }
+>('payments/fetchCounterpartyTypes', async (_, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<PaymentTypeRef[]>('/paymentCounterpartyTypes/gets', 'GET');
+        return res.data;
+    } catch (error) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки типов контрагентов'));
+    }
+});
+
 // export const deletePayment = createAsyncThunk<number, number, { rejectValue: string }>(
 //     'payments/delete',
 //     async (id, { rejectWithValue }) => {
@@ -345,6 +359,7 @@ const initialState: PaymentsState = {
     statuses: [],
     articles: [],
     methods: [],
+    counterpartyTypes: [],
     loading: false,
     refsLoading: false,
     submitting: false,
@@ -459,6 +474,18 @@ export const paymentsSlice = createSlice({
             .addCase(updatePayment.rejected, (state, action) => {
                 state.submitting = false;
                 state.error = action.payload ?? 'Ошибка обновления платежа';
+            })
+            .addCase(paymentCounterpartyTypes.pending, (state) => {
+                state.refsLoading = true;
+                state.error = null;
+            })
+            .addCase(paymentCounterpartyTypes.fulfilled, (state, action) => {
+                state.refsLoading = false;
+                state.counterpartyTypes = action.payload;
+            })
+            .addCase(paymentCounterpartyTypes.rejected, (state, action) => {
+                state.refsLoading = false;
+                state.error = action.payload ?? 'Ошибка загрузки типов контрагентов';
             });
         // .addCase(deletePayment.pending, (state) => {
         //     state.submitting = true;

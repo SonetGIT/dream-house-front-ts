@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RotateCcw, Search, X } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import { Box, Button } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -19,6 +19,7 @@ import {
     fetchPayments,
     fetchPaymentStatuses,
     fetchPaymentTypes,
+    paymentCounterpartyTypes,
     setCurrentPayment,
     updatePayment,
     type Payment,
@@ -57,8 +58,18 @@ export default function PaymentsPage() {
     const blockIdNum = prjBlockId ? Number(prjBlockId) : null;
 
     const { currentProject } = useAppSelector((state) => state.projects);
-    const { data, pagination, loading, submitting, types, statuses, articles, methods, current } =
-        useAppSelector((state) => state.payments);
+    const {
+        data,
+        pagination,
+        loading,
+        submitting,
+        types,
+        statuses,
+        articles,
+        methods,
+        current,
+        counterpartyTypes,
+    } = useAppSelector((state) => state.payments);
 
     const currencies = useReference('currencies');
     const projectBlocks = useReference('projectBlocks');
@@ -92,7 +103,15 @@ export default function PaymentsPage() {
         if (!statuses.length) dispatch(fetchPaymentStatuses());
         if (!articles.length) dispatch(fetchPaymentArticles());
         if (!methods.length) dispatch(fetchPaymentMethods());
-    }, [dispatch, types.length, statuses.length, articles.length, methods.length]);
+        if (!counterpartyTypes.length) dispatch(paymentCounterpartyTypes());
+    }, [
+        dispatch,
+        types.length,
+        statuses.length,
+        articles.length,
+        methods.length,
+        counterpartyTypes.length,
+    ]);
 
     useEffect(() => {
         return () => {
@@ -334,7 +353,7 @@ export default function PaymentsPage() {
 
                         <div className="w-[180px] shrink-0">
                             <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                                Статья
+                                Тип дохода-расхода
                             </label>
                             <select
                                 value={filters.article_id ?? ''}
@@ -346,7 +365,7 @@ export default function PaymentsPage() {
                                 }
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                             >
-                                <option value="">Все статьи</option>
+                                <option value="">Все типы</option>
                                 {filteredArticles.map((item) => (
                                     <option key={item.id} value={item.id}>
                                         {item.name}
