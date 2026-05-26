@@ -34,6 +34,8 @@ import processingWriteOffReducer from '@/features/projects/warehouses/materialPr
 import warehouseTransfersReducer from '@/features/projects/warehouses/warehouseTransfers/warehouseTransfersSlice';
 import reportDefinitionsReducer from '@/features/projects/reports/reportDefinitionsSlice';
 import paymentsReducer from '@/features/projects/payments/paymentSlice';
+import salesObjOverviewReducer from '@/features/sales/salesObjOverviewSlice';
+import salesBlockOverviewReducer from '@/features/sales/salesBlockOverviewSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -71,6 +73,8 @@ export const rootReducer = combineReducers({
     warehouseTransfers: warehouseTransfersReducer,
     reportDefinitions: reportDefinitionsReducer,
     payments: paymentsReducer,
+    salesObjOverview: salesObjOverviewReducer,
+    salesBlockOverview: salesBlockOverviewReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

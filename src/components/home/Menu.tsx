@@ -13,6 +13,7 @@ import SwitchAccountSharpIcon from '@mui/icons-material/SwitchAccountSharp';
 import SupervisedUserCircleSharpIcon from '@mui/icons-material/SupervisedUserCircleSharp';
 import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import { VscReferences } from 'react-icons/vsc';
+import { Handshake } from 'lucide-react';
 
 interface SubItem {
     label: string;
@@ -42,6 +43,7 @@ const drawerItems: DrawerItem[] = [
         path: '/projects',
         icon: <AssessmentOutlinedIcon />,
     },
+    { label: 'Отдел продаж', path: '/sales', icon: <Handshake /> },
     { label: 'Поставщики', path: '/suppliers', icon: <SupervisedUserCircleSharpIcon /> },
     { label: 'Подрядчики', path: '/contractors', icon: <SupervisedUserCircleSharpIcon /> },
     {

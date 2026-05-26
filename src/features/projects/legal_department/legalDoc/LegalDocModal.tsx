@@ -105,6 +105,7 @@ export function LegalDocModal({
         if (!e.target.files) return;
 
         const files = Array.from(e.target.files);
+        console.log('Array.from', e.target.files);
         setPendingFiles((prev) => [...prev, ...files]);
     };
 
