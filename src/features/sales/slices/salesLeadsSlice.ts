@@ -78,7 +78,10 @@ export interface SalesLeadCreatePayload {
     lost_reason?: string | null;
 }
 
-export interface SalesLeadUpdatePayload extends Partial<SalesLeadCreatePayload> {}
+// export interface SalesLeadUpdatePayload extends Partial<SalesLeadCreatePayload> {}
+export interface SalesLeadUpdatePayload extends Partial<SalesLeadCreatePayload> {
+    manager_user_id?: number | null;
+}
 
 interface SalesLeadsState {
     items: SalesLead[];

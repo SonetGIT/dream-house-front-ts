@@ -34,8 +34,14 @@ import processingWriteOffReducer from '@/features/projects/warehouses/materialPr
 import warehouseTransfersReducer from '@/features/projects/warehouses/warehouseTransfers/warehouseTransfersSlice';
 import reportDefinitionsReducer from '@/features/projects/reports/reportDefinitionsSlice';
 import paymentsReducer from '@/features/projects/payments/paymentSlice';
-import salesObjOverviewReducer from '@/features/sales/salesObjOverviewSlice';
-import salesBlockOverviewReducer from '@/features/sales/salesBlockOverviewSlice';
+import salesObjOverviewReducer from '@/features/sales/slices/salesObjOverviewSlice';
+import salesBlockOverviewReducer from '@/features/sales/slices/salesBlockOverviewSlice';
+import salesUnitsReducer from '@/features/sales/slices/salesUnitsSlice';
+import salesLeadsReducer from '@/features/sales/slices/salesLeadsSlice';
+import salesClientsReducer from '@/features/sales/slices/salesClientsSlice';
+import salesFloorsReducer from '@/features/sales/slices/salesFloorsSlice';
+import salesPaymentSchedulesReducer from '@/features/sales/slices/salesPaymentSchedulesSlice';
+import salesDictionariesReducer from '@/features/sales/slices/salesDictionariesSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -75,6 +81,12 @@ export const rootReducer = combineReducers({
     payments: paymentsReducer,
     salesObjOverview: salesObjOverviewReducer,
     salesBlockOverview: salesBlockOverviewReducer,
+    salesUnits: salesUnitsReducer,
+    salesLeads: salesLeadsReducer,
+    salesClients: salesClientsReducer,
+    salesFloors: salesFloorsReducer,
+    salesPaymentSchedules: salesPaymentSchedulesReducer,
+    salesDictionaries: salesDictionariesReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;

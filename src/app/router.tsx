@@ -20,8 +20,10 @@ import WorkPerformedPage from '@/features/projects/pto/workPerformed/WorkPerform
 import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import ReportsPage from '@/features/projects/reports/ReportsPage';
 import PaymentsPage from '@/features/projects/payments/PaymentsPage';
-import SalesOverviewPage from '@/features/sales/SalesOverviewPage';
-import SalesBlockPage from '@/features/sales/SalesBlockPage';
+import SalesPageTabs from '@/features/sales/salesTabs/SalesPageTabs';
+import ObjectsTab from '@/features/sales/salesTabs/ObjectsTab';
+import LeadsPage from '@/features/sales/leads/LeadsPage';
+// import SalesBlockPage from '@/features/sales/SalesBlockPage';
 
 export const router = createBrowserRouter([
     { path: '/login', element: <AuthPage /> },
@@ -34,8 +36,18 @@ export const router = createBrowserRouter([
             { path: 'suppliers', element: <SuppliersPage /> },
             { path: 'contractors', element: <ContractorsPage /> },
             { path: 'materials', element: <MaterialsPage /> },
-            { path: 'sales', element: <SalesOverviewPage /> },
-            { path: 'sales/blocks/:blockId', element: <SalesBlockPage /> },
+            {
+                path: 'sales',
+                element: <SalesPageTabs />,
+                children: [
+                    { index: true, element: <ObjectsTab /> }, // default
+                    { path: 'units', element: <MaterialRequestsPage /> },
+                    { path: 'leads', element: <LeadsPage /> },
+                    { path: 'clients', element: <WorkPerformedPage /> },
+                    { path: 'paymentSchedules', element: <WorkPerformedPage /> },
+                ],
+            },
+            // { path: 'sales/blocks/:blockId', element: <SalesBlockPage /> },
 
             {
                 path: 'projects',

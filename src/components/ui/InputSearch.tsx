@@ -7,8 +7,8 @@ import { StyledTooltip } from './StyledTooltip';
 const Search = styled('div')({
     position: 'relative',
     borderRadius: 5,
-    border: '1px solid #afafaf',
-    backgroundColor: '#f8f8f8',
+    border: '1px solid #BFDBFE',
+    backgroundColor: '#FFFFFF',
     '&:hover': {
         backgroundColor: '#f5fbff',
         borderColor: '#8eb9ed',

@@ -25,7 +25,7 @@ export default function WarehousesPage() {
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.warehouses);
 
-    const currentWarehouse = data?.find((w) => w.project_id === projectId)!;
+    const currentWarehouse = data?.find((w: any) => w.project_id === projectId)!;
 
     const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
     const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
