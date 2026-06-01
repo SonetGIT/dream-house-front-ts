@@ -13,7 +13,6 @@ const getInitials = (user: User | null): string => {
     }
     return username.slice(0, 2).toUpperCase();
 };
-
 /***********************************************************************************************************************/
 export default function UserAvatar() {
     const user = useAppSelector((state) => state.auth.user);

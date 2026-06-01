@@ -7,10 +7,8 @@ import type {
     SalesLeadStatus,
 } from '@/features/sales/slices/salesDictionariesSlice';
 import type { SalesOverviewProject } from '@/features/sales/slices/salesObjOverviewSlice';
-import type {
-    SalesLead,
-    SalesLeadCreatePayload,
-} from '@/features/sales/slices/salesLeadsSlice';
+import type { SalesLead, SalesLeadCreatePayload } from '@/features/sales/slices/salesLeadsSlice';
+import { formatPhoneInput, toStoragePhone } from '@/utils/formatPhoneNumber';
 
 interface Props {
     open: boolean;
@@ -40,11 +38,14 @@ interface FormValues {
     interest_budget_to: string;
 }
 
-const fieldClassName =
-    'mt-1 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:bg-white';
+const getFieldClassName = (hasError = false) => `
+    w-full px-3 py-2 text-sm text-gray-900 bg-white
+    border ${hasError ? 'border-red-300' : 'border-gray-300'}
+    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+    transition-all placeholder:text-gray-400
+`;
 
-const textareaClassName =
-    'mt-1 min-h-24 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:bg-white';
+const labelClassName = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 export default function LeadDialog({
     open,
@@ -58,7 +59,15 @@ export default function LeadDialog({
     sources,
     defaultStatusId,
 }: Props) {
-    const { register, handleSubmit, control, watch, reset, setValue } = useForm<FormValues>({
+    const {
+        register,
+        handleSubmit,
+        control,
+        watch,
+        reset,
+        setValue,
+        formState: { errors },
+    } = useForm<FormValues>({
         defaultValues: {
             project_id: '',
             block_id: '',
@@ -76,7 +85,13 @@ export default function LeadDialog({
     });
 
     const projectId = watch('project_id');
-    const filteredBlocks = useMemo(() => blocks, [blocks]);
+    const filteredBlocks = useMemo(() => {
+        if (!projectId) {
+            return blocks;
+        }
+
+        return blocks.filter((block) => Number(block.project_id) === Number(projectId));
+    }, [blocks, projectId]);
 
     useEffect(() => {
         if (!open) return;
@@ -147,10 +162,10 @@ export default function LeadDialog({
                 className="max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
                 onClick={(event) => event.stopPropagation()}
             >
-                <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+                <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
                     <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                            <UserPlus className="h-5 w-5" />
+                        <div className="flex items-center justify-center h-11 w-11 rounded-2xl bg-sky-100 text-sky-700">
+                            <UserPlus className="w-5 h-5" />
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-slate-900">
@@ -164,16 +179,16 @@ export default function LeadDialog({
 
                     <button
                         onClick={onClose}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        className="flex items-center justify-center transition h-9 w-9 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="w-4 h-4" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-6 py-5">
+                <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-5">
                     <div className="grid gap-4 md:grid-cols-2">
-                        <label className="text-xs font-medium text-slate-500">
-                            Объект
+                        <label>
+                            <span className={labelClassName}>Объект</span>
                             <Controller
                                 name="project_id"
                                 control={control}
@@ -184,7 +199,7 @@ export default function LeadDialog({
                                             field.onChange(e.target.value);
                                             setValue('block_id', '');
                                         }}
-                                        className={fieldClassName}
+                                        className={getFieldClassName()}
                                     >
                                         <option value="">Выберите объект</option>
                                         {projects.map((project) => (
@@ -197,8 +212,8 @@ export default function LeadDialog({
                             />
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Блок
+                        <label>
+                            <span className={labelClassName}>Блок</span>
                             <Controller
                                 name="block_id"
                                 control={control}
@@ -206,7 +221,7 @@ export default function LeadDialog({
                                     <select
                                         value={field.value}
                                         onChange={(e) => field.onChange(e.target.value)}
-                                        className={fieldClassName}
+                                        className={getFieldClassName()}
                                     >
                                         <option value="">Выберите блок</option>
                                         {filteredBlocks.map((block) => (
@@ -219,8 +234,10 @@ export default function LeadDialog({
                             />
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Статус
+                        <label>
+                            <span className={labelClassName}>
+                                Статус <span className="text-red-500">*</span>
+                            </span>
                             <Controller
                                 name="status_id"
                                 control={control}
@@ -228,7 +245,7 @@ export default function LeadDialog({
                                     <select
                                         value={field.value}
                                         onChange={(e) => field.onChange(e.target.value)}
-                                        className={fieldClassName}
+                                        className={getFieldClassName()}
                                     >
                                         <option value="">Выберите статус</option>
                                         {statuses.map((status) => (
@@ -241,8 +258,8 @@ export default function LeadDialog({
                             />
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Источник
+                        <label>
+                            <span className={labelClassName}>Источник</span>
                             <Controller
                                 name="source_id"
                                 control={control}
@@ -250,7 +267,7 @@ export default function LeadDialog({
                                     <select
                                         value={field.value}
                                         onChange={(e) => field.onChange(e.target.value)}
-                                        className={fieldClassName}
+                                        className={getFieldClassName()}
                                     >
                                         <option value="">Не выбран</option>
                                         {sources.map((source) => (
@@ -263,93 +280,148 @@ export default function LeadDialog({
                             />
                         </label>
 
-                        <label className="md:col-span-2 text-xs font-medium text-slate-500">
-                            ФИО клиента
+                        <label className="md:col-span-2">
+                            <span className={labelClassName}>
+                                ФИО клиента <span className="text-red-500">*</span>
+                            </span>
                             <input
-                                {...register('full_name')}
-                                placeholder="Например: Айбек Осмонов"
-                                className={fieldClassName}
+                                {...register('full_name', {
+                                    required: 'ФИО обязательно',
+                                })}
+                                // placeholder="Например: Айбек Осмонов"
+                                className={getFieldClassName(!!errors.full_name)}
                             />
+                            {errors.full_name && (
+                                <p className="mt-1 text-xs text-red-600">
+                                    {errors.full_name.message}
+                                </p>
+                            )}
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Телефон
-                            <input
-                                {...register('phone')}
-                                placeholder="+996 555 00-00-00"
-                                className={fieldClassName}
+                        <label>
+                            <span className={labelClassName}>Телефон</span>
+                            <Controller
+                                name="phone"
+                                control={control}
+                                render={({ field }) => (
+                                    <input
+                                        type="tel"
+                                        value={formatPhoneInput(field.value)}
+                                        onChange={(e) =>
+                                            field.onChange(toStoragePhone(e.target.value) ?? '')
+                                        }
+                                        maxLength={16}
+                                        inputMode="tel"
+                                        placeholder="+996 555 00-00-00"
+                                        className={getFieldClassName(!!errors.phone)}
+                                    />
+                                )}
                             />
+                            {errors.phone && (
+                                <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>
+                            )}
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Email
+                        <label>
+                            <span className={labelClassName}>Email</span>
                             <input
-                                {...register('email')}
+                                {...register('email', {
+                                    pattern: {
+                                        value: /\S+@\S+\.\S+/,
+                                        message: 'Некорректный email',
+                                    },
+                                })}
                                 placeholder="client@mail.com"
-                                className={fieldClassName}
+                                className={getFieldClassName(!!errors.email)}
                             />
+                            {errors.email && (
+                                <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+                            )}
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            ИНН
-                            <input
-                                {...register('inn')}
-                                maxLength={14}
-                                placeholder="Введите ИНН"
-                                className={fieldClassName}
+                        <label>
+                            <span className={labelClassName}>ИНН</span>
+                            <Controller
+                                name="inn"
+                                control={control}
+                                rules={{
+                                    validate: (value) =>
+                                        !value ||
+                                        (/^\d+$/.test(value) && value.length === 14) ||
+                                        'ИНН должен содержать 14 цифр',
+                                }}
+                                render={({ field }) => (
+                                    <input
+                                        type="text"
+                                        value={field.value}
+                                        onChange={(e) =>
+                                            field.onChange(e.target.value.replace(/\D/g, ''))
+                                        }
+                                        maxLength={14}
+                                        inputMode="numeric"
+                                        placeholder="Введите ИНН"
+                                        className={getFieldClassName(!!errors.inn)}
+                                    />
+                                )}
                             />
+                            {errors.inn && (
+                                <p className="mt-1 text-xs text-red-600">{errors.inn.message}</p>
+                            )}
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Комнат
+                        <label>
+                            <span className={labelClassName}>Комнат</span>
                             <input
                                 {...register('interest_rooms')}
                                 placeholder="Например: 2"
-                                className={fieldClassName}
+                                className={getFieldClassName()}
                             />
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Бюджет от
+                        <label>
+                            <span className={labelClassName}>Бюджет от</span>
                             <input
                                 {...register('interest_budget_from')}
                                 placeholder="Например: 4 500 000"
-                                className={fieldClassName}
+                                className={getFieldClassName()}
                             />
                         </label>
 
-                        <label className="text-xs font-medium text-slate-500">
-                            Бюджет до
+                        <label>
+                            <span className={labelClassName}>Бюджет до</span>
                             <input
                                 {...register('interest_budget_to')}
                                 placeholder="Например: 7 000 000"
-                                className={fieldClassName}
+                                className={getFieldClassName()}
                             />
                         </label>
 
-                        <label className="md:col-span-2 text-xs font-medium text-slate-500">
-                            Комментарий
+                        <label className="md:col-span-2">
+                            <span className={labelClassName}>Комментарий</span>
                             <textarea
                                 {...register('comment')}
                                 rows={4}
                                 placeholder="Что интересует клиента, пожелания, договоренности"
-                                className={textareaClassName}
+                                className={getFieldClassName(false).replace(
+                                    'py-2',
+                                    'py-2 resize-none',
+                                )}
                             />
                         </label>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-4">
+                    <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-slate-100">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                            className="inline-flex items-center h-10 px-4 text-sm font-medium transition bg-white border rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
                         >
                             Отмена
                         </button>
                         <button
                             type="submit"
                             disabled={saving || !projectId}
-                            className="inline-flex h-10 items-center rounded-xl bg-sky-600 px-5 text-sm font-medium text-white transition hover:bg-sky-500 disabled:opacity-60"
+                            className="inline-flex items-center h-10 px-5 text-sm font-medium text-white transition rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-60"
                         >
                             {saving
                                 ? 'Сохраняем...'

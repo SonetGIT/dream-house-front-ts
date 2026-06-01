@@ -194,7 +194,8 @@
         "apiName": "/projectBlocks/gets",
         "data": {
             "id": "id",
-            "name": ["name"]
+            "name": ["name"],
+            "project_id": "project_id"
         }
     },
     "supplierRating": {

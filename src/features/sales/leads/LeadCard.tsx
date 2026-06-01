@@ -1,29 +1,34 @@
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { Phone, MessageCircle, UserPlus, UserCheck, Lock, Pencil } from 'lucide-react';
+import { Phone, MessageCircle, Lock, Pencil, ArrowRightLeft, UserRoundCheck } from 'lucide-react';
+import type { EnumItem } from '@/features/reference/referenceService';
+import type { SalesOverviewProject } from '../slices/salesObjOverviewSlice';
+import type { SalesLead } from '../slices/salesLeadsSlice';
+import type { SalesLeadSource, SalesLeadStatus } from '../slices/salesDictionariesSlice';
 
 interface Props {
-    lead: Lead;
-    statuses: LeadStatus[];
-    sources: LeadSource[];
-    managers: Manager[];
-    projects: Project[];
-    blocks: Block[];
+    lead: SalesLead;
+    statuses: SalesLeadStatus[];
+    sources: SalesLeadSource[];
+    managers: EnumItem[];
+    projects: SalesOverviewProject[];
+    blocks: EnumItem[];
     disabled?: boolean;
     canAssignManager?: boolean;
-    onStatusChange: (lead: Lead, statusId: number) => void;
-    onManagerChange: (lead: Lead, managerId: number | null) => void;
-    onEdit: (lead: Lead) => void;
-    onConvert: (lead: Lead) => void;
-    onClaim: (lead: Lead) => void;
+    onStatusChange: (lead: SalesLead, statusId: number) => void;
+    onManagerChange: (lead: SalesLead, managerId: number | null) => void;
+    onEdit: (lead: SalesLead) => void;
+    onConvert: (lead: SalesLead) => void;
+    onClaim: (lead: SalesLead) => void;
 }
 
-function StatusBadge({ color, name }: { color?: string; name: string }) {
+function StatusBadge({ color, name }: { color?: string | null; name: string }) {
     const c = color ?? '#3287fd';
+
     return (
         <span
-            className="inline-flex items-center rounded-full border text-[10px] font-medium px-2 py-0.5 whitespace-nowrap"
+            className="inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-medium"
             style={{ backgroundColor: c + '18', color: c, borderColor: c + '40' }}
         >
             {name}
@@ -31,7 +36,15 @@ function StatusBadge({ color, name }: { color?: string; name: string }) {
     );
 }
 
-/******************************************************************************************************************/
+function getManagerLabel(manager?: EnumItem) {
+    if (!manager) return '';
+
+    const name = typeof manager.name === 'string' ? manager.name.trim() : '';
+    const username = typeof manager.username === 'string' ? manager.username.trim() : '';
+
+    return name || username || `ID: ${manager.id}`;
+}
+
 export default function LeadCard({
     lead,
     statuses,
@@ -47,80 +60,87 @@ export default function LeadCard({
     onConvert,
     onClaim,
 }: Props) {
-    const source = sources.find((s) => s.id === lead.source_id);
-    const currentStatus = statuses.find((s) => s.id === lead.status_id);
+    const source = sources.find((s) => Number(s.id) === Number(lead.source_id));
+    const currentStatus = statuses.find((s) => Number(s.id) === Number(lead.status_id));
+    const currentManager = managers.find((m) => Number(m.id) === Number(lead.manager_user_id));
     const phoneDigits = String(lead.phone ?? '').replace(/\D/g, '');
     const title = lead.full_name || lead.phone || `Лид #${lead.id}`;
-    const project = projects.find((p) => p.id === lead.project_id);
-    const block = blocks.find((b) => b.id === lead.block_id);
+    const project = projects.find((p) => Number(p.id) === Number(lead.project_id));
+    const block = blocks.find((b) => Number(b.id) === Number(lead.block_id));
 
     return (
-        <div className="text-sm transition-shadow border shadow-sm rounded-xl border-border bg-card hover:shadow-md">
-            {/* Header */}
+        <div className="rounded-xl border border-border bg-card text-sm shadow-sm transition-shadow hover:shadow-md">
             <div className="p-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            {lead.is_locked && (
-                                <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
-                            )}
-                            <span className="text-xs font-medium truncate">{title}</span>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            {lead.is_locked ? (
+                                <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                            ) : null}
+                            <span className="truncate text-xs font-medium">{title}</span>
                         </div>
-                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                        <div className="mt-0.5 text-[11px] text-muted-foreground">
                             {formatDateTime(lead.created_at)}
                         </div>
                     </div>
+
                     {lead.client_id ? (
-                        <span className="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 px-2 py-0.5 text-[10px] font-semibold">
+                        <span className="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
                             Клиент
                         </span>
                     ) : (
-                        <span className="shrink-0 rounded-full border border-blue-500/40 bg-blue-500/10 text-blue-600 px-2 py-0.5 text-[10px] font-semibold">
+                        <span className="shrink-0 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
                             Лид
                         </span>
                     )}
                 </div>
 
-                {/* Meta */}
                 <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
-                    {lead.phone && (
-                        <div className="flex items-center gap-1.5 ">
-                            <Phone className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                            <span className="text-sm truncate">{lead.phone}</span>
+                    {lead.phone ? (
+                        <div className="flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                            <span className="truncate text-sm">{lead.phone}</span>
                         </div>
-                    )}
-                    <div className="truncate ">
-                        {project?.name ?? 'Нужно проверить'}
+                    ) : null}
+
+                    <div className="truncate">
+                        {project?.name ?? 'Без проекта'}
                         {block ? ` · ${block.name}` : ''}
                     </div>
-                    {source && (
+
+                    {source ? (
                         <div>
                             <StatusBadge color={source.color} name={source.name} />
                         </div>
-                    )}
-                    {(lead.interest_budget_from || lead.interest_budget_to) && (
+                    ) : null}
+
+                    {lead.interest_budget_from || lead.interest_budget_to ? (
                         <div className="text-[10px]">
-                            Бюджет: {formatCurrency(lead.interest_budget_from)} —{' '}
-                            {formatCurrency(lead.interest_budget_to)}
+                            Бюджет:
+                            {lead.interest_budget_from && lead.interest_budget_to
+                                ? ` ${formatCurrency(lead.interest_budget_from)} - ${formatCurrency(lead.interest_budget_to)}`
+                                : lead.interest_budget_from
+                                  ? ` от ${formatCurrency(lead.interest_budget_from)}`
+                                  : ` до ${formatCurrency(lead.interest_budget_to)}`}
                         </div>
-                    )}
-                    {lead.interest_rooms != null && (
+                    ) : null}
+
+                    {lead.interest_rooms != null ? (
                         <div className="text-[10px]">{lead.interest_rooms} комн.</div>
-                    )}
+                    ) : null}
                 </div>
 
-                {lead.comment && (
+                {lead.comment ? (
                     <div className="mt-2 line-clamp-2 rounded-lg bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground">
                         {lead.comment}
                     </div>
-                )}
+                ) : null}
             </div>
 
-            {/* Manager assignment */}
-            <div className="px-3 py-2 border-t border-border/60">
+            <div className="border-t border-border/60 px-3 py-2">
                 {canAssignManager ? (
                     <select
-                        value={lead.manager_user_id ?? ''}
+                        value={lead.manager_user_id ? String(lead.manager_user_id) : ''}
                         disabled={disabled}
                         onChange={(e) =>
                             onManagerChange(lead, e.target.value ? Number(e.target.value) : null)
@@ -128,69 +148,80 @@ export default function LeadCard({
                         className="h-8 w-full rounded-md border border-border bg-background px-2.5 text-[11px] focus:outline-none disabled:opacity-50"
                     >
                         <option value="">Назначить ответственного</option>
-                        {managers.map((m) => (
-                            <option key={m.id} value={m.id}>
-                                {m.label}
+                        {managers.map((manager) => (
+                            <option key={String(manager.id)} value={String(manager.id)}>
+                                {getManagerLabel(manager)}
                             </option>
                         ))}
                     </select>
                 ) : (
-                    <div className="text-[11px] text-muted-foreground px-0.5">
+                    <div className="px-0.5 text-[11px] text-muted-foreground">
                         Ответственный:{' '}
                         {lead.manager_user_id
-                            ? (managers.find((m) => m.id === lead.manager_user_id)?.label ??
-                              `ID: ${lead.manager_user_id}`)
+                            ? getManagerLabel(currentManager) || `ID: ${lead.manager_user_id}`
                             : 'не назначен'}
                     </div>
                 )}
             </div>
 
-            {/* Actions */}
-            <div className="p-2 space-y-2 border-t border-border/60">
-                <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2 border-t border-border/60 p-2">
+                <div className="grid grid-cols-4 gap-3">
                     <StyledTooltip title="WhatsApp">
                         <a
                             href={phoneDigits ? `https://wa.me/${phoneDigits}` : undefined}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => !phoneDigits && e.preventDefault()}
-                            className="flex items-center justify-center h-8 text-white transition-colors rounded-lg bg-emerald-600/90 hover:bg-emerald-500"
+                            className="flex h-8 items-center justify-center rounded-lg bg-emerald-600/90 text-white transition-colors hover:bg-emerald-700"
                         >
-                            <MessageCircle className="h-3.5 w-3.5" />
+                            <MessageCircle className="h-4 w-4" />
                         </a>
                     </StyledTooltip>
-                    <StyledTooltip title="WhatsApp">
-                        <button
-                            disabled={disabled}
-                            onClick={() => onEdit(lead)}
-                            className="flex items-center justify-center h-8 text-blue-500 transition-colors border border-blue-600 rounded-lg border-border text-muted-foreground hover:bg-muted disabled:opacity-50"
-                            // className="flex items-center justify-center h-8 transition-colors text-blue"
-                            title="Редактировать"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                    </StyledTooltip>
-                    <StyledTooltip title="Создать клиента">
+
+                    <StyledTooltip title="Перевести в клиенты">
                         <button
                             disabled={disabled || Boolean(lead.client_id)}
                             onClick={() => onConvert(lead)}
-                            className="flex items-center justify-center h-8 text-white transition-colors rounded-lg bg-green-600/90 hover:bg-green-500 disabled:opacity-40"
+                            className="flex h-8 items-center justify-center rounded-lg bg-orange-500/90 text-white transition-colors hover:bg-orange-600 disabled:opacity-40"
                         >
-                            <UserPlus className="h-3.5 w-3.5" />
+                            <ArrowRightLeft className="h-4 w-4" />
+                        </button>
+                    </StyledTooltip>
+
+                    <StyledTooltip
+                        title={lead.is_locked ? 'Лид уже закреплен' : 'Закрепить за собой'}
+                    >
+                        <button
+                            disabled={disabled || lead.is_locked}
+                            onClick={() => onClaim(lead)}
+                            className="flex h-8 items-center justify-center rounded-lg bg-violet-500/90 text-white transition-colors hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <UserRoundCheck className="h-4 w-4" />
+                        </button>
+                    </StyledTooltip>
+
+                    <StyledTooltip title="Редактировать">
+                        <button
+                            disabled={disabled}
+                            onClick={() => onEdit(lead)}
+                            className="flex h-8 items-center justify-center rounded-lg border border-border bg-sky-600/90 text-muted-foreground transition-colors hover:bg-sky-700 disabled:opacity-50"
+                        >
+                            <Pencil className="h-4 w-4" />
                         </button>
                     </StyledTooltip>
                 </div>
 
-                {/* Status selector + claim */}
                 <div className="flex gap-1.5">
                     <select
                         value={lead.status_id ?? ''}
                         disabled={disabled}
                         onChange={(e) => {
                             const next = Number(e.target.value);
-                            if (next && next !== lead.status_id) onStatusChange(lead, next);
+                            if (next && next !== lead.status_id) {
+                                onStatusChange(lead, next);
+                            }
                         }}
-                        className="flex-1 h-8 rounded-lg border px-2.5 text-[11px] font-medium focus:outline-none disabled:opacity-50"
+                        className="h-8 flex-1 rounded-lg border px-2.5 text-[11px] font-medium focus:outline-none disabled:opacity-50"
                         style={{
                             borderColor: currentStatus?.color ?? undefined,
                             boxShadow: currentStatus?.color
@@ -198,22 +229,15 @@ export default function LeadCard({
                                 : undefined,
                         }}
                     >
-                        {statuses.map((s) => (
-                            <option key={s.id} value={s.id}>
-                                {s.name}
+                        <option value="" disabled>
+                            Выберите статус
+                        </option>
+                        {statuses.map((status) => (
+                            <option key={status.id} value={status.id}>
+                                {status.name}
                             </option>
                         ))}
                     </select>
-                    {!lead.is_locked && (
-                        <button
-                            disabled={disabled}
-                            onClick={() => onClaim(lead)}
-                            className="flex items-center justify-center w-8 h-8 transition-colors border rounded-lg border-border text-muted-foreground hover:bg-muted disabled:opacity-50"
-                            title="Закрепить за собой"
-                        >
-                            <UserCheck className="h-3.5 w-3.5" />
-                        </button>
-                    )}
                 </div>
             </div>
         </div>

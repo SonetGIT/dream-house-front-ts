@@ -51,7 +51,8 @@ export const fetchSalesOverview = createAsyncThunk<
     { rejectValue: string }
 >('salesOverview/fetch', async (_, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<SalesOverviewResponse>('/sales/objects/overview', 'GET');
+        const res = await apiRequest<SalesOverviewResponse>('/sales/objects/overview', 'POST');
+
         return res.data.projects ?? [];
     } catch (err: unknown) {
         return rejectWithValue(

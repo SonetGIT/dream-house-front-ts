@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Add } from '@mui/icons-material';
 import { Button } from '@mui/material';
-import { Filter, Pencil, Plus, RefreshCw, Trash2, UserPlus } from 'lucide-react';
+import { Filter, Pencil, RefreshCw, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import InputSearch from '@/components/ui/InputSearch';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { EnumItem } from '@/features/reference/referenceService';
 import { useReference } from '@/features/reference/useReference';
-import type { SalesOverviewProject } from '@/features/sales/slices/salesObjOverviewSlice';
-import { fetchSalesOverview } from '@/features/sales/slices/salesObjOverviewSlice';
+import { createSalesClient } from '@/features/sales/slices/salesClientsSlice';
 import {
     fetchSalesLeadSources,
     fetchSalesLeadStatuses,
     type SalesLeadSource,
     type SalesLeadStatus,
 } from '@/features/sales/slices/salesDictionariesSlice';
-import { createSalesClient } from '@/features/sales/slices/salesClientsSlice';
+import type { SalesOverviewProject } from '@/features/sales/slices/salesObjOverviewSlice';
+import { fetchSalesOverview } from '@/features/sales/slices/salesObjOverviewSlice';
 import {
     claimSalesLead,
     createSalesLead,
@@ -26,9 +28,6 @@ import {
 import ConvertDialog, { type ConvertSubmitPayload } from './ConvertDialog';
 import LeadCard from './LeadCard';
 import LeadDialog from './LeadDialog';
-import { Add } from '@mui/icons-material';
-import StatusDialog from './StatusDialog';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
 
 interface LeadColumns {
     [statusId: number]: SalesLead[];
@@ -82,7 +81,7 @@ function StatusColumn({
     return (
         <div
             className="flex w-[320px] shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-            style={{ borderColor: color + '50' }}
+            style={{ borderColor: `${color}50` }}
         >
             <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
 
@@ -94,9 +93,7 @@ function StatusColumn({
                                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                                 style={{ backgroundColor: color }}
                             />
-
                             <span className="text-sm font-semibold truncate">{status.name}</span>
-
                             <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sky-100 px-2 text-xs font-medium text-sky-700">
                                 {total}
                             </span>
@@ -113,7 +110,7 @@ function StatusColumn({
                             </button>
                         </StyledTooltip>
 
-                        <StyledTooltip title="Редактировать статус">
+                        <StyledTooltip title="Статусы">
                             <button
                                 onClick={onManageStatuses}
                                 className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -125,7 +122,7 @@ function StatusColumn({
                 </div>
             </div>
 
-            <div className="min-h-48 max-h-[calc(100vh-290px)] flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-3">
+            <div className="flex-1 p-3 space-y-3 overflow-y-auto bg-white min-h-48">
                 {loading ? (
                     <div className="px-4 py-6 text-xs text-center bg-white border border-dashed rounded-2xl border-slate-200 text-slate-500">
                         Загружаем лиды...
@@ -136,7 +133,7 @@ function StatusColumn({
                         className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed bg-white px-4 py-8 text-center text-xs text-slate-500 transition hover:-translate-y-0.5 hover:border-sky-300 hover:text-slate-700"
                         style={{ borderColor: `${color}55` }}
                     >
-                        <span>Лидов пока нет </span>
+                        <span>Лидов пока нет</span>
                         <span style={{ color }}>+ Добавить</span>
                     </button>
                 ) : (
@@ -174,13 +171,11 @@ const parseFullName = (fullName: string) => {
     };
 };
 
-/*****************************************************************************************************************************/
 export default function LeadsPage() {
     const dispatch = useAppDispatch();
     const { projects } = useAppSelector((state) => state.salesObjOverview);
     const { items, pagination, loading, error } = useAppSelector((state) => state.salesLeads);
     const { leadStatuses, leadSources } = useAppSelector((state) => state.salesDictionaries);
-    console.log('PRJ', projects);
     const blocksRef = useReference('projectBlocks');
     const usersRef = useReference('users');
 
@@ -203,11 +198,18 @@ export default function LeadsPage() {
     });
     const [convertSaving, setConvertSaving] = useState(false);
 
-    const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-
     const blocks = useMemo(() => blocksRef.data ?? [], [blocksRef.data]);
-    const managers = useMemo(() => usersRef.data ?? [], [usersRef.data]);
-    const filteredBlocks = useMemo(() => blocks, [blocks]);
+    const filteredBlocks = useMemo(() => {
+        if (!filterProject) {
+            return blocks;
+        }
+
+        return blocks.filter((block) => Number(block.project_id) === Number(filterProject));
+    }, [blocks, filterProject]);
+    const managers = useMemo(
+        () => (usersRef.data ?? []).filter((user) => String(user.role_id) === '16'),
+        [usersRef.data],
+    );
 
     const loadLeads = useCallback(
         () =>
@@ -247,9 +249,11 @@ export default function LeadsPage() {
 
     const columns = useMemo<LeadColumns>(() => {
         const next: LeadColumns = {};
+
         leadStatuses.forEach((status) => {
             next[Number(status.id)] = [];
         });
+
         items.forEach((lead) => {
             const statusId = Number(lead.status_id);
             if (!next[statusId]) {
@@ -257,37 +261,25 @@ export default function LeadsPage() {
             }
             next[statusId].push(lead);
         });
+
         return next;
     }, [items, leadStatuses]);
 
     const totals = useMemo<ColumnTotals>(() => {
         const next: ColumnTotals = {};
+
         leadStatuses.forEach((status) => {
             next[Number(status.id)] = columns[Number(status.id)]?.length ?? 0;
         });
+
         return next;
     }, [columns, leadStatuses]);
 
-    const nonEmptyStatusesCount = useMemo(
-        () =>
-            leadStatuses.filter((status: SalesLeadStatus) => (totals[Number(status.id)] ?? 0) > 0)
-                .length,
-        [leadStatuses, totals],
-    );
-
     const grandTotal = pagination?.total ?? items.length;
-
-    const handleRefresh = async () => {
-        await Promise.all([
-            dispatch(fetchSalesLeadStatuses()),
-            dispatch(fetchSalesLeadSources()),
-            dispatch(fetchSalesOverview()),
-            loadLeads(),
-        ]);
-    };
 
     const handleSaveLead = async (payload: SalesLeadCreatePayload) => {
         setLeadSaving(true);
+
         try {
             if (leadDialog.lead) {
                 await dispatch(
@@ -301,6 +293,7 @@ export default function LeadsPage() {
                 await dispatch(createSalesLead(payload)).unwrap();
                 toast.success('Лид создан');
             }
+
             setLeadDialog({ open: false, lead: null });
             await loadLeads();
         } catch (err: unknown) {
@@ -312,6 +305,7 @@ export default function LeadsPage() {
 
     const handleStatusChange = async (lead: SalesLead, statusId: number) => {
         setSavingLeadId(lead.id);
+
         try {
             await dispatch(
                 updateSalesLead({
@@ -320,7 +314,6 @@ export default function LeadsPage() {
                 }),
             ).unwrap();
             toast.success('Статус обновлен');
-            await loadLeads();
         } catch (err: unknown) {
             toast.error(err instanceof Error ? err.message : 'Ошибка изменения статуса');
         } finally {
@@ -330,6 +323,7 @@ export default function LeadsPage() {
 
     const handleManagerChange = async (lead: SalesLead, managerId: number | null) => {
         setSavingLeadId(lead.id);
+
         try {
             await dispatch(
                 updateSalesLead({
@@ -338,7 +332,6 @@ export default function LeadsPage() {
                 }),
             ).unwrap();
             toast.success(managerId ? 'Ответственный назначен' : 'Ответственный снят');
-            await loadLeads();
         } catch (err: unknown) {
             toast.error(err instanceof Error ? err.message : 'Ошибка назначения менеджера');
         } finally {
@@ -348,10 +341,10 @@ export default function LeadsPage() {
 
     const handleClaim = async (lead: SalesLead) => {
         setSavingLeadId(lead.id);
+
         try {
             await dispatch(claimSalesLead(lead.id)).unwrap();
             toast.success('Лид закреплен за вами');
-            await loadLeads();
         } catch (err: unknown) {
             toast.error(err instanceof Error ? err.message : 'Ошибка закрепления лида');
         } finally {
@@ -363,6 +356,7 @@ export default function LeadsPage() {
         if (!convertDialog.lead) return;
 
         setConvertSaving(true);
+
         try {
             const names = parseFullName(convertDialog.lead.full_name || '');
             const client = await dispatch(
@@ -399,7 +393,6 @@ export default function LeadsPage() {
         }
     };
 
-    /**************************************************************************************************************************************/
     return (
         <div className="min-h-screen bg-background">
             <div className="sticky top-0 z-10 border-b border-border bg-card/90 backdrop-blur-sm">
@@ -407,22 +400,25 @@ export default function LeadsPage() {
                     <div className="flex items-center gap-3 px-5 h-14">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Filter className="w-4 h-4 text-blue-700" />
-                            <span className="text-blue-600 ">
+                            <span className="text-blue-600">
                                 Всего лидов:{' '}
                                 <strong className="text-blue-700 text-foreground">
                                     {grandTotal}
                                 </strong>
                             </span>
-                            {leadStatuses.map((s) => {
-                                const cnt = totals[s.id] ?? 0;
-                                if (!cnt) return null;
+                            {leadStatuses.map((status) => {
+                                const count = totals[Number(status.id)] ?? 0;
+                                if (!count) return null;
+
                                 return (
-                                    <span key={s.id} className="flex items-center gap-1">
+                                    <span key={status.id} className="flex items-center gap-1">
                                         <span
-                                            className="w-2 h-2 rounded-full bg"
-                                            style={{ backgroundColor: s.color || '#eb1616' }}
+                                            className="w-2 h-2 rounded-full"
+                                            style={{
+                                                backgroundColor: status.color || '#eb1616',
+                                            }}
                                         />
-                                        {cnt}
+                                        {count}
                                     </span>
                                 );
                             })}
@@ -430,8 +426,7 @@ export default function LeadsPage() {
 
                         <div className="flex-1" />
 
-                        {/* Search */}
-                        <div className="flex flex-wrap items-center gap-2 m-4 ">
+                        <div className="flex flex-wrap items-center gap-2 m-4">
                             <InputSearch
                                 value={searchInput}
                                 onChange={(value) => {
@@ -450,7 +445,7 @@ export default function LeadsPage() {
                                     setFilterProject(value);
                                     setFilterBlock('');
                                 }}
-                                className="h-[37px] min-w-48 rounded-md border  border-blue-200 bg-white px-3 text-sm text-slate-700 transition hover:border-[#8eb9ed] hover:bg-[#f5fbff]"
+                                className="h-[37px] min-w-48 rounded-md border border-blue-200 bg-white px-3 text-sm text-slate-700 transition hover:border-[#8eb9ed] hover:bg-[#f5fbff]"
                             >
                                 <option value="all">Все объекты</option>
                                 {projects.map((project) => (
@@ -466,17 +461,21 @@ export default function LeadsPage() {
                                     setFilterBlock(e.target.value === 'all' ? '' : e.target.value)
                                 }
                                 className="h-[37px] min-w-44 rounded-md border border-blue-200 bg-white px-3 text-sm text-slate-700 transition hover:border-[#8eb9ed] hover:bg-[#f5fbff]"
+                                disabled={!filteredBlocks.length}
                             >
-                                <option value="all">Все блоки</option>
+                                <option value="all">
+                                    {filterProject ? 'Все блоки объекта' : 'Все блоки'}
+                                </option>
                                 {filteredBlocks.map((block) => (
                                     <option key={String(block.id)} value={String(block.id)}>
                                         {block.name ?? `Блок #${block.id}`}
                                     </option>
                                 ))}
                             </select>
+
                             <Button
                                 variant="outlined"
-                                className="gap-2 !text-rose-600 !border-rose-300 hover:!bg-rose-600 hover:!text-white"
+                                className="gap-2 !border-rose-300 !text-rose-600 hover:!bg-rose-600 hover:!text-white"
                                 onClick={() => {
                                     setSearchInput('');
                                     setFilterSearch('');
@@ -488,6 +487,7 @@ export default function LeadsPage() {
                                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                                 Сбросить
                             </Button>
+
                             <Button
                                 variant="outlined"
                                 className="inline-flex items-center text-sm font-medium text-white transition bg-blue-600 rounded-lg h-9 hover:bg-blue-600 hover:text-white"
@@ -500,15 +500,14 @@ export default function LeadsPage() {
                     </div>
                 </header>
             </div>
-            {/* ОСНОВНОЙ КОНТЕНТ*/}
-            {/* Столбцы лидов по статусам */}
-            <div className="px-4 py-5">
+
+            <div className="px-4 pt-5 pb-4 mt-4">
                 {leadStatuses.length === 0 && loading ? (
                     <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm text-slate-500">
                         Загружаем воронку лидов...
                     </div>
                 ) : (
-                    <div className="flex min-h-[420px] gap-4 overflow-x-auto pb-4">
+                    <div className="flex h-[calc(100vh-120px)] gap-4 overflow-x-auto pb-4">
                         {leadStatuses.map((status) => (
                             <StatusColumn
                                 key={status.id}
@@ -529,7 +528,11 @@ export default function LeadsPage() {
                                         defaultStatusId: statusId,
                                     })
                                 }
-                                onManageStatuses={() => setStatusDialogOpen(true)}
+                                onManageStatuses={() =>
+                                    toast('Управление статусами пока не подключено', {
+                                        icon: 'ℹ️',
+                                    })
+                                }
                                 onStatusChange={handleStatusChange}
                                 onManagerChange={handleManagerChange}
                                 onEdit={(lead) => setLeadDialog({ open: true, lead })}
@@ -541,7 +544,6 @@ export default function LeadsPage() {
                 )}
             </div>
 
-            {/* Создание лида */}
             <LeadDialog
                 open={leadDialog.open}
                 onClose={() => setLeadDialog({ open: false, lead: null })}
@@ -555,7 +557,6 @@ export default function LeadsPage() {
                 defaultStatusId={leadDialog.defaultStatusId}
             />
 
-            {/* Конвертация лидов в клиентов */}
             <ConvertDialog
                 open={convertDialog.open}
                 onClose={() => setConvertDialog({ open: false, lead: null })}
@@ -565,12 +566,6 @@ export default function LeadsPage() {
                 projects={projects}
                 blocks={blocks}
             />
-
-            {/* <StatusDialog
-                open={statusDialogOpen}
-                onClose={() => setStatusDialogOpen(false)}
-                status={leadStatuses}
-            /> */}
         </div>
     );
 }
