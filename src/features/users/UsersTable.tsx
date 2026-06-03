@@ -164,8 +164,8 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                                 {/* <Person /> */}
                                                 <span className="truncate max-w-[200px]">
                                                     {[
-                                                        user.last_name,
                                                         user.first_name,
+                                                        user.last_name,
                                                         user.middle_name,
                                                     ]
                                                         .filter(Boolean)

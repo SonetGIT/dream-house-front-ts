@@ -69,15 +69,15 @@ export default function LeadCard({
     const block = blocks.find((b) => Number(b.id) === Number(lead.block_id));
 
     return (
-        <div className="rounded-xl border border-border bg-card text-sm shadow-sm transition-shadow hover:shadow-md">
+        <div className="text-sm transition-shadow border shadow-sm rounded-xl border-border bg-card hover:shadow-md">
             <div className="p-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                         <div className="flex min-w-0 items-center gap-1.5">
                             {lead.is_locked ? (
-                                <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />
                             ) : null}
-                            <span className="truncate text-xs font-medium">{title}</span>
+                            <span className="text-xs font-medium truncate">{title}</span>
                         </div>
                         <div className="mt-0.5 text-[11px] text-muted-foreground">
                             {formatDateTime(lead.created_at)}
@@ -99,7 +99,7 @@ export default function LeadCard({
                     {lead.phone ? (
                         <div className="flex items-center gap-1.5">
                             <Phone className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                            <span className="truncate text-sm">{lead.phone}</span>
+                            <span className="text-sm truncate">{lead.phone}</span>
                         </div>
                     ) : null}
 
@@ -137,7 +137,7 @@ export default function LeadCard({
                 ) : null}
             </div>
 
-            <div className="border-t border-border/60 px-3 py-2">
+            <div className="px-3 py-2 border-t border-border/60">
                 {canAssignManager ? (
                     <select
                         value={lead.manager_user_id ? String(lead.manager_user_id) : ''}
@@ -164,7 +164,7 @@ export default function LeadCard({
                 )}
             </div>
 
-            <div className="space-y-2 border-t border-border/60 p-2">
+            <div className="p-2 space-y-2 border-t border-border/60">
                 <div className="grid grid-cols-4 gap-3">
                     <StyledTooltip title="WhatsApp">
                         <a
@@ -172,9 +172,9 @@ export default function LeadCard({
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => !phoneDigits && e.preventDefault()}
-                            className="flex h-8 items-center justify-center rounded-lg bg-emerald-600/90 text-white transition-colors hover:bg-emerald-700"
+                            className="flex items-center justify-center h-8 text-white transition-colors rounded-lg bg-emerald-600/90 hover:bg-emerald-700"
                         >
-                            <MessageCircle className="h-4 w-4" />
+                            <MessageCircle className="w-4 h-4" />
                         </a>
                     </StyledTooltip>
 
@@ -182,9 +182,9 @@ export default function LeadCard({
                         <button
                             disabled={disabled || Boolean(lead.client_id)}
                             onClick={() => onConvert(lead)}
-                            className="flex h-8 items-center justify-center rounded-lg bg-orange-500/90 text-white transition-colors hover:bg-orange-600 disabled:opacity-40"
+                            className="flex items-center justify-center h-8 text-white transition-colors rounded-lg bg-orange-500/90 hover:bg-orange-600 disabled:opacity-40"
                         >
-                            <ArrowRightLeft className="h-4 w-4" />
+                            <ArrowRightLeft className="w-4 h-4" />
                         </button>
                     </StyledTooltip>
 
@@ -194,9 +194,9 @@ export default function LeadCard({
                         <button
                             disabled={disabled || lead.is_locked}
                             onClick={() => onClaim(lead)}
-                            className="flex h-8 items-center justify-center rounded-lg bg-violet-500/90 text-white transition-colors hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex items-center justify-center h-8 text-white transition-colors rounded-lg bg-violet-500/90 hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <UserRoundCheck className="h-4 w-4" />
+                            <UserRoundCheck className="w-4 h-4" />
                         </button>
                     </StyledTooltip>
 
@@ -204,9 +204,9 @@ export default function LeadCard({
                         <button
                             disabled={disabled}
                             onClick={() => onEdit(lead)}
-                            className="flex h-8 items-center justify-center rounded-lg border border-border bg-sky-600/90 text-muted-foreground transition-colors hover:bg-sky-700 disabled:opacity-50"
+                            className="flex items-center justify-center h-8 text-white transition-colors rounded-lg bg-sky-600/90 hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="w-4 h-4" />
                         </button>
                     </StyledTooltip>
                 </div>

@@ -47,7 +47,7 @@
     "users": {
         "data": {
             "id": "id",
-            "name": ["last_name", " ", "first_name"],
+            "name": ["first_name", " ", "last_name"],
             "username": ["username"],
             "role_id": "role_id"
         },

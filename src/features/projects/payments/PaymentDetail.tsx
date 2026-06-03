@@ -2,21 +2,13 @@ import type { ReactNode } from 'react';
 import { Calendar, CreditCard, FileText, Landmark, ReceiptText, Wallet } from 'lucide-react';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { Payment } from './paymentSlice';
+import { formatNumber } from '@/utils/formatNumber';
 
 interface PaymentDetailProps {
     payment: Payment;
     onEdit: () => void;
     onClose: () => void;
 }
-
-const formatMoney = (amount: number, currencyCode?: string | null) => {
-    const value = new Intl.NumberFormat('ru-RU', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
-
-    return currencyCode ? `${value} ${currencyCode}` : value;
-};
 
 const formatDate = (value?: string | null) => (value ? formatDateTime(value, false) : '—');
 
@@ -47,9 +39,7 @@ export default function PaymentDetail({ payment, onEdit, onClose }: PaymentDetai
 
                     <div className="px-4 py-3 border rounded-xl border-white/20 bg-white/10 backdrop-blur-sm">
                         <p className="text-xs tracking-wide uppercase text-white/70">Сумма</p>
-                        <p className="mt-1 text-2xl font-bold">
-                            {formatMoney(payment.amount, payment.currency_ref?.code)}
-                        </p>
+                        <p className="mt-1 text-2xl font-bold">{formatNumber(payment.amount, 2)}</p>
                         <p className="mt-1 text-xs text-white/70">
                             Курс валюты: {payment.currency_rate || 1}
                         </p>

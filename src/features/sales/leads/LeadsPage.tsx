@@ -176,9 +176,10 @@ export default function LeadsPage() {
     const { projects } = useAppSelector((state) => state.salesObjOverview);
     const { items, pagination, loading, error } = useAppSelector((state) => state.salesLeads);
     const { leadStatuses, leadSources } = useAppSelector((state) => state.salesDictionaries);
+    console.log('leadStatuses', leadStatuses);
     const blocksRef = useReference('projectBlocks');
     const usersRef = useReference('users');
-
+    console.log('items', items);
     const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
     const [searchInput, setSearchInput] = useState('');
     const [filterSearch, setFilterSearch] = useState('');
@@ -264,7 +265,7 @@ export default function LeadsPage() {
 
         return next;
     }, [items, leadStatuses]);
-
+    console.log('columns', columns);
     const totals = useMemo<ColumnTotals>(() => {
         const next: ColumnTotals = {};
 
@@ -455,7 +456,7 @@ export default function LeadsPage() {
                                 ))}
                             </select>
 
-                            <select
+                            {/* <select
                                 value={filterBlock || 'all'}
                                 onChange={(e) =>
                                     setFilterBlock(e.target.value === 'all' ? '' : e.target.value)
@@ -471,7 +472,7 @@ export default function LeadsPage() {
                                         {block.name ?? `Блок #${block.id}`}
                                     </option>
                                 ))}
-                            </select>
+                            </select> */}
 
                             <Button
                                 variant="outlined"
