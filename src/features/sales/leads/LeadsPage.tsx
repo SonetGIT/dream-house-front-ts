@@ -176,10 +176,8 @@ export default function LeadsPage() {
     const { projects } = useAppSelector((state) => state.salesObjOverview);
     const { items, pagination, loading, error } = useAppSelector((state) => state.salesLeads);
     const { leadStatuses, leadSources } = useAppSelector((state) => state.salesDictionaries);
-    console.log('leadStatuses', leadStatuses);
     const blocksRef = useReference('projectBlocks');
     const usersRef = useReference('users');
-    console.log('items', items);
     const [savingLeadId, setSavingLeadId] = useState<number | null>(null);
     const [searchInput, setSearchInput] = useState('');
     const [filterSearch, setFilterSearch] = useState('');
@@ -191,6 +189,7 @@ export default function LeadsPage() {
         lead: SalesLead | null;
         defaultStatusId?: number;
     }>({ open: false, lead: null });
+
     const [leadSaving, setLeadSaving] = useState(false);
 
     const [convertDialog, setConvertDialog] = useState<{ open: boolean; lead: SalesLead | null }>({
@@ -200,13 +199,13 @@ export default function LeadsPage() {
     const [convertSaving, setConvertSaving] = useState(false);
 
     const blocks = useMemo(() => blocksRef.data ?? [], [blocksRef.data]);
-    const filteredBlocks = useMemo(() => {
-        if (!filterProject) {
-            return blocks;
-        }
+    // const filteredBlocks = useMemo(() => {
+    //     if (!filterProject) {
+    //         return blocks;
+    //     }
 
-        return blocks.filter((block) => Number(block.project_id) === Number(filterProject));
-    }, [blocks, filterProject]);
+    //     return blocks.filter((block) => Number(block.project_id) === Number(filterProject));
+    // }, [blocks, filterProject]);
     const managers = useMemo(
         () => (usersRef.data ?? []).filter((user) => String(user.role_id) === '16'),
         [usersRef.data],
@@ -265,7 +264,7 @@ export default function LeadsPage() {
 
         return next;
     }, [items, leadStatuses]);
-    console.log('columns', columns);
+
     const totals = useMemo<ColumnTotals>(() => {
         const next: ColumnTotals = {};
 
@@ -437,6 +436,7 @@ export default function LeadsPage() {
                                     }
                                 }}
                                 onEnter={() => setFilterSearch(searchInput.trim())}
+                                placeholder="Поиск по ФИО, тел., email или ПИН"
                             />
 
                             <select
@@ -455,24 +455,6 @@ export default function LeadsPage() {
                                     </option>
                                 ))}
                             </select>
-
-                            {/* <select
-                                value={filterBlock || 'all'}
-                                onChange={(e) =>
-                                    setFilterBlock(e.target.value === 'all' ? '' : e.target.value)
-                                }
-                                className="h-[37px] min-w-44 rounded-md border border-blue-200 bg-white px-3 text-sm text-slate-700 transition hover:border-[#8eb9ed] hover:bg-[#f5fbff]"
-                                disabled={!filteredBlocks.length}
-                            >
-                                <option value="all">
-                                    {filterProject ? 'Все блоки объекта' : 'Все блоки'}
-                                </option>
-                                {filteredBlocks.map((block) => (
-                                    <option key={String(block.id)} value={String(block.id)}>
-                                        {block.name ?? `Блок #${block.id}`}
-                                    </option>
-                                ))}
-                            </select> */}
 
                             <Button
                                 variant="outlined"

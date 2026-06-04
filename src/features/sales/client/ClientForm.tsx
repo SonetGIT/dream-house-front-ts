@@ -5,6 +5,7 @@ import type {
     SalesClientCreatePayload,
     SalesClientUpdatePayload,
 } from '../slices/salesClientsSlice';
+
 interface Project {
     id: number;
     name: string;

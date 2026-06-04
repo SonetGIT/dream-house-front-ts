@@ -31,7 +31,7 @@ interface FormValues {
     full_name: string;
     phone: string;
     email: string;
-    inn: string;
+    pin: string;
     comment: string;
     interest_rooms: string;
     interest_budget_from: string;
@@ -76,7 +76,7 @@ export default function LeadDialog({
             full_name: '',
             phone: '',
             email: '',
-            inn: '',
+            pin: '',
             comment: '',
             interest_rooms: '',
             interest_budget_from: '',
@@ -105,7 +105,7 @@ export default function LeadDialog({
                 full_name: lead.full_name ?? '',
                 phone: lead.phone ?? '',
                 email: lead.email ?? '',
-                inn: lead.inn ?? '',
+                pin: lead.pin ?? '',
                 comment: lead.comment ?? '',
                 interest_rooms: lead.interest_rooms != null ? String(lead.interest_rooms) : '',
                 interest_budget_from: lead.interest_budget_from ?? '',
@@ -126,7 +126,7 @@ export default function LeadDialog({
             full_name: '',
             phone: '',
             email: '',
-            inn: '',
+            pin: '',
             comment: '',
             interest_rooms: '',
             interest_budget_from: '',
@@ -143,7 +143,7 @@ export default function LeadDialog({
             full_name: data.full_name.trim() || '',
             phone: data.phone.trim() || null,
             email: data.email.trim() || null,
-            inn: data.inn.trim() || null,
+            pin: data.pin.trim() || null,
             comment: data.comment.trim() || null,
             interest_rooms: data.interest_rooms ? Number(data.interest_rooms) : null,
             interest_budget_from: data.interest_budget_from || null,
@@ -342,13 +342,13 @@ export default function LeadDialog({
                         <label>
                             <span className={labelClassName}>ИНН</span>
                             <Controller
-                                name="inn"
+                                name="pin"
                                 control={control}
                                 rules={{
                                     validate: (value) =>
                                         !value ||
                                         (/^\d+$/.test(value) && value.length === 14) ||
-                                        'ИНН должен содержать 14 цифр',
+                                        'ПИН должен содержать 14 цифр',
                                 }}
                                 render={({ field }) => (
                                     <input
@@ -359,13 +359,13 @@ export default function LeadDialog({
                                         }
                                         maxLength={14}
                                         inputMode="numeric"
-                                        placeholder="Введите ИНН"
-                                        className={getFieldClassName(!!errors.inn)}
+                                        placeholder="Введите ПИН"
+                                        className={getFieldClassName(!!errors.pin)}
                                     />
                                 )}
                             />
-                            {errors.inn && (
-                                <p className="mt-1 text-xs text-red-600">{errors.inn.message}</p>
+                            {errors.pin && (
+                                <p className="mt-1 text-xs text-red-600">{errors.pin.message}</p>
                             )}
                         </label>
 

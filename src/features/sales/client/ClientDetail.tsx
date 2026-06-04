@@ -17,9 +17,9 @@ import type { SalesClient } from '../slices/salesClientsSlice';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 import { formatArea } from '@/utils/formatNumber';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { lotTypeMap } from './ClientPage';
 import { formatDate } from '@/utils/formatData';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { lotTypeMap } from './ClientPage';
 
 interface ClientDetailProps {
     client: SalesClient;
@@ -39,16 +39,14 @@ const DetailCard = ({ icon, label, value }: { icon: ReactNode; label: string; va
 export function getLotTypeLabel(type: string): string {
     return lotTypeMap[type] ?? type;
 }
-
 export default function ClientDetail({ client, onEdit, onClose }: ClientDetailProps) {
     const phoneDigits = formatPhoneDisplay(client.phone);
     const unit = client.sales_unit;
 
-    // const lotLabel = unit ? `${getLotTypeLabel(unit.lot_type)} №${unit.unit_number}` : '—';
     const lotLabel = unit ? `${getLotTypeLabel(unit.lot_type)} №${unit.unit_number}` : '—';
     const unitStatusLabel = unit?.status?.name ?? '—';
     const areaLabel = unit ? formatArea(unit.area_total) : '—';
-    const priceLabel = unit ? formatCurrency(unit.price_total /*, unit.currency_info?.code*/) : '—';
+    const priceLabel = unit ? formatCurrency(unit.price_total) : '—';
 
     return (
         <div className="space-y-6">

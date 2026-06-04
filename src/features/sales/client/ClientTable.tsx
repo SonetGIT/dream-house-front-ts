@@ -12,9 +12,11 @@ interface ClientTableProps {
     clients: SalesClient[];
     refs: Record<string, ReferenceResult>;
     loading?: boolean;
-    onView: (client: SalesClient) => void;
-    onEdit: (client: SalesClient) => void;
-    onDelete: (client: SalesClient) => void;
+    selectedId?: number | null;
+    setModal: (modal: { type: 'detail'; client: SalesClient } | null) => void;
+    // onView: (client: SalesClient) => void;
+    // onEdit: (client: SalesClient) => void;
+    // onDelete: (client: SalesClient) => void;
 }
 
 function UnitStatusBadge({ status }: { status: { name: string; color: string } }) {
@@ -37,11 +39,13 @@ export default function ClientTable({
     clients,
     refs,
     loading = false,
-    onView,
-    onEdit,
-    onDelete,
+    selectedId = null,
+    // onView,
+    // onEdit,
+    // onDelete,
+    setModal,
 }: ClientTableProps) {
-    void onDelete;
+    // void onDelete;
 
     if (loading) {
         return (
@@ -113,8 +117,8 @@ export default function ClientTable({
                         return (
                             <tr
                                 key={client.id}
-                                className="transition-colors cursor-pointer hover:bg-sky-50/50 group"
-                                onClick={() => onView(client)}
+                                onClick={() => setModal({ type: 'detail', client })}
+                                className={`border-b border-border/60 cursor-pointer transition-colors hover:bg-muted/40 ${selectedId === client.id ? 'bg-muted/60' : ''}`}
                             >
                                 <td className="px-3 py-3 text-xs font-medium text-center text-gray-600">
                                     {client.id}
@@ -255,7 +259,7 @@ export default function ClientTable({
                                         <StyledTooltip title="Редактировать">
                                             <button
                                                 type="button"
-                                                onClick={() => onEdit(client)}
+                                                onClick={() => setModal({ type: 'detail', client })}
                                                 className="rounded p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />

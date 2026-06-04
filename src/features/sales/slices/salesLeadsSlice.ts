@@ -15,7 +15,7 @@ export interface SalesLead {
     full_name: string;
     phone: string | null;
     email: string | null;
-    inn: string | null;
+    pin: string | null;
 
     interest_lot_type: string | null;
     interest_rooms: number | null;
@@ -65,7 +65,7 @@ export interface SalesLeadCreatePayload {
     full_name: string;
     phone?: string | null;
     email?: string | null;
-    inn?: string | null;
+    pin?: string | null;
     interest_lot_type?: string | null;
     interest_rooms?: number | null;
     interest_budget_from?: string | null;

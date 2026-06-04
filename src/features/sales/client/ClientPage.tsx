@@ -1,15 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Filter, RotateCcw, Search } from 'lucide-react';
-import { Box, Button } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { RefreshCw, Users, X } from 'lucide-react';
+import { Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { TablePagination } from '@/components/ui/TablePagination';
 import Modal from '@/components/ui/Modal';
 import { useReference } from '@/features/reference/useReference';
-import ClientsTable from './ClientTable';
 import { Add } from '@mui/icons-material';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import ClientTable from './ClientTable';
 import {
     createSalesClient,
@@ -17,14 +14,11 @@ import {
     updateSalesClient,
     type SalesClient,
     type SalesClientCreatePayload,
-    type SalesClientSearchPayload,
-    type SalesClientUnitStatus,
     type SalesClientUpdatePayload,
 } from '../slices/salesClientsSlice';
 import ClientForm from './ClientForm';
 import InputSearch from '@/components/ui/InputSearch';
-
-type ModalMode = 'create' | 'edit' | 'view' | 'delete' | null;
+import ClientDetail from './ClientDetail';
 
 interface FiltersState {
     search: string;
@@ -35,244 +29,111 @@ interface FiltersState {
     dateTo: string;
 }
 
-const initialFilters: FiltersState = {
-    search: '',
-    payment_type: null,
-    status: null,
-    article_id: null,
-    dateFrom: '',
-    dateTo: '',
-};
 export const lotTypeMap: Record<string, string> = {
     apartment: 'Квартира',
     parking: 'Паркинг',
     storage: 'Кладовая',
     commercial: 'Коммерция',
 };
+type Modal =
+    | { type: 'detail'; client: SalesClient }
+    | { type: 'create' }
+    | { type: 'edit'; client: SalesClient };
+
+/**************************************************************************************************************************************/
 export default function ClientPage() {
     const dispatch = useAppDispatch();
-    const { projectId, prjBlockId } = useParams();
+    const { items: clients, pagination, loading, error } = useAppSelector((s) => s.salesClients);
+    const { items: projects } = useAppSelector((s) => s.projects);
+    const { data: blocks } = useAppSelector((s) => s.projectBlocks);
 
-    const projectIdNum = projectId ? Number(projectId) : null;
-    const blockIdNum = prjBlockId ? Number(prjBlockId) : null;
-
-    // const { salesClients } = useAppSelector((state) => state.salesClients);
-    const {
-        items,
-        pagination,
-        loading,
-        // submitting,
-        // types,
-        // statuses,
-        // articles,
-        // methods,
-        // current,
-        // counterpartyTypes,
-    } = useAppSelector((state) => state.salesClients);
-    const users = useReference('users');
-    const currencies = useReference('currencies');
-    const projectBlocks = useReference('projectBlocks');
-    const suppliers = useReference('suppliers');
-    const contractors = useReference('contractors');
-
-    const refs = {
-        users,
-        currencies,
-        projectBlocks,
-        suppliers,
-        contractors,
-    };
-
-    const [filters, setFilters] = useState<FiltersState>(initialFilters);
-    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
-    const [modal, setModal] = useState<ModalMode>(null);
-    const [selectedClient, setSelectedClient] = useState<SalesClient | null>(null);
+    const [searchInput, setSearchInput] = useState('');
+    const [filterSearch, setFilterSearch] = useState('');
+    const [filterProject, setFilterProject] = useState('');
+    const [filterBlock, setFilterBlock] = useState('');
+    const [modal, setModal] = useState<Modal | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+    const users = useReference('users');
+    const refs = {
+        users,
+    };
 
-    useEffect(() => {
-        const timeoutId = window.setTimeout(() => {
-            setDebouncedSearch(filters.search.trim());
-        }, 350);
+    const filteredBlocks = useMemo(
+        () => blocks?.filter((b) => !filterProject || b.project_id === Number(filterProject)) ?? [],
+        [filterProject, blocks],
+    );
 
-        return () => window.clearTimeout(timeoutId);
-    }, [filters.search]);
-
-    // useEffect(() => {
-    //     if (!types.length) dispatch(fetchClientTypes());
-    //     if (!statuses.length) dispatch(fetchClientStatuses());
-    //     if (!articles.length) dispatch(fetchClientArticles());
-    //     if (!methods.length) dispatch(fetchClientMethods());
-    //     if (!counterpartyTypes.length) dispatch(paymentCounterpartyTypes());
-    // }, [
-    //     dispatch,
-    //     types.length,
-    //     statuses.length,
-    //     articles.length,
-    //     methods.length,
-    //     counterpartyTypes.length,
-    // ]);
-
-    // useEffect(() => {
-    //     return () => {
-    //         dispatch(clearClients());
-    //     };
-    // }, [dispatch]);
-
-    // useEffect(() => {
-    //     setPage(1);
-    // }, [
-    //     debouncedSearch,
-    //     filters.payment_type,
-    //     filters.status,
-    //     filters.article_id,
-    //     filters.dateFrom,
-    //     filters.dateTo,
-    //     // projectIdNum,
-    //     // salesClients?.id,
-    //     // blockIdNum,
-    // ]);
-
-    const requestParams = useMemo<SalesClientSearchPayload>(
-        () => ({
-            page,
-            size,
-            search: debouncedSearch || undefined,
-            // project_id: projectIdNum ?? salesClients?.id ?? undefined,
-            // block_id: blockIdNum ?? undefined,
-            payment_type: filters.payment_type ?? undefined,
-            status: filters.status ?? undefined,
-            article_id: filters.article_id ?? undefined,
-            dateFrom: filters.dateFrom || undefined,
-            dateTo: filters.dateTo || undefined,
-        }),
-        [
-            page,
-            size,
-            debouncedSearch,
-            // projectIdNum,
-            // salesClients?.id,
-            // blockIdNum,
-            filters.payment_type,
-            filters.status,
-            filters.article_id,
-            filters.dateFrom,
-            filters.dateTo,
-        ],
+    const load = useCallback(
+        (p: number, search: string, projectId: string, blockId: string) => {
+            dispatch(
+                fetchSalesClients({
+                    search: search || undefined,
+                    project_id: projectId ? Number(projectId) : undefined,
+                    block_id: blockId ? Number(blockId) : undefined,
+                    page: p,
+                    size: size,
+                }),
+            );
+        },
+        [dispatch, size],
     );
 
     useEffect(() => {
-        dispatch(fetchSalesClients(requestParams));
-    }, [dispatch, requestParams]);
+        load(page, filterSearch, filterProject, filterBlock);
+    }, [page, filterSearch, filterProject, filterBlock, load]);
 
-    const refetchClients = (nextPage = page, nextSize = size) => {
-        dispatch(
-            fetchSalesClients({
-                ...requestParams,
-                page: nextPage,
-                size: nextSize,
-            }),
-        );
+    useEffect(() => {
+        if (error) toast.error(error);
+    }, [error]);
+
+    const applySearch = () => {
+        setPage(1);
+        setFilterSearch(searchInput.trim());
     };
 
-    const handleFilterChange = <K extends keyof FiltersState>(field: K, value: FiltersState[K]) => {
-        setFilters((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
+    const handleProjectChange = (v: string) => {
+        setFilterProject(v);
+        setFilterBlock('');
+        setPage(1);
     };
 
-    const handleResetFilters = () => {
-        setFilters(initialFilters);
-    };
-
-    const handleCreate = () => {
-        setSelectedClient(null);
-        // dispatch(setCurrentClient(null));
-        setModal('create');
-    };
-
-    const handleView = (payment: SalesClient) => {
-        setSelectedClient(payment);
-        // dispatch(setCurrentClient(payment));
-        setModal('view');
-    };
-
-    const handleEdit = (payment: SalesClient) => {
-        setSelectedClient(payment);
-        // dispatch(setCurrentClient(payment));
-        setModal('edit');
-    };
-
-    const handleDelete = (payment: SalesClient) => {
-        setSelectedClient(payment);
-        // dispatch(setCurrentClient(payment));
-        setModal('delete');
-    };
-
-    const closeModal = () => {
-        setModal(null);
-    };
-
-    const closeAndResetSelection = () => {
-        setSelectedClient(null);
-        // dispatch(setCurrentClient(null));
-        closeModal();
-    };
-
-    const handleCreateClient = async (payload: SalesClientCreatePayload) => {
+    const handleCreate = async (data: SalesClientCreatePayload | SalesClientUpdatePayload) => {
+        setSubmitting(true);
         try {
-            await dispatch(createSalesClient(payload as SalesClientCreatePayload)).unwrap();
-            toast.success('Клиент успешно создан');
-            closeAndResetSelection();
-            setPage(1);
-            refetchClients(1, size);
-        } catch (error) {
-            toast.error(typeof error === 'string' ? error : 'Не удалось создать клиента');
+            await dispatch(createSalesClient(data as SalesClientCreatePayload)).unwrap();
+            toast.success('Клиент создан');
+            setModal(null);
+            load(page, filterSearch, filterProject, filterBlock);
+        } catch (e) {
+            toast.error(e as string);
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const handleUpdateClient = async (payload: SalesClientUpdatePayload) => {
-        if (!selectedClient) return;
-
+    const handleUpdate = async (
+        id: number,
+        data: SalesClientCreatePayload | SalesClientUpdatePayload,
+    ) => {
+        setSubmitting(true);
         try {
-            await dispatch(
-                updateSalesClient({
-                    id: selectedClient.id,
-                    payload: payload as SalesClientUpdatePayload,
-                }),
+            const updated = await dispatch(
+                updateSalesClient({ id, payload: data as SalesClientUpdatePayload }),
             ).unwrap();
-            toast.success('Клиент обновлен');
-            closeAndResetSelection();
-            refetchClients();
-        } catch (error) {
-            toast.error(typeof error === 'string' ? error : 'Не удалось обновить клиента');
+            toast.success('Клиент обновлён');
+            setModal({ type: 'detail', client: updated });
+        } catch (e) {
+            toast.error(e as string);
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    // const handleDeleteClient = async () => {
-    //     if (!selectedClient) return;
+    const selectedId = modal?.type === 'detail' ? modal.client.id : null;
 
-    //     try {
-    //         await dispatch(deleteClient(selectedClient.id)).unwrap();
-    //         toast.success('Платеж удален');
-
-    //         const isLastItemOnPage = data.length === 1 && page > 1;
-    //         const nextPage = isLastItemOnPage ? page - 1 : page;
-
-    //         closeAndResetSelection();
-    //         setPage(nextPage);
-    //         refetchClients(nextPage, size);
-    //     } catch (error) {
-    //         toast.error(typeof error === 'string' ? error : 'Не удалось удалить платеж');
-    //     }
-    // };
-
-    // const filteredArticles = useMemo(() => {
-    //     if (!filters.payment_type) return articles;
-    //     return articles.filter((article) => article.payment_type === filters.payment_type);
-    // }, [articles, filters.payment_type]);
-
+    /*********************************************************************************************************************/
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
             <div className="mx-auto max-w-[1800px] px-6 py-3">
@@ -289,34 +150,17 @@ export default function ClientPage() {
                     <header className="z-10 border-b shrink-0 border-border bg-card/80 backdrop-blur-sm">
                         <div className="flex items-center gap-3 px-5 h-14">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <Filter className="w-4 h-4 text-blue-700" />
+                                <Users className="w-4 h-4 text-blue-700" />
                                 <span className="text-blue-600">
                                     Всего клиентов:{' '}
                                     <strong className="text-blue-700 text-foreground">
                                         {clients.length}
                                     </strong>
                                 </span>
-                                {leadStatuses.map((status) => {
-                                    const count = totals[Number(status.id)] ?? 0;
-                                    if (!count) return null;
-
-                                    return (
-                                        <span key={status.id} className="flex items-center gap-1">
-                                            <span
-                                                className="w-2 h-2 rounded-full"
-                                                style={{
-                                                    backgroundColor: status.color || '#eb1616',
-                                                }}
-                                            />
-                                            {count}
-                                        </span>
-                                    );
-                                })}
                             </div>
-
                             <div className="flex-1" />
 
-                            <div className="flex flex-wrap items-center gap-2 m-4">
+                            <div className="flex flex-wrap items-center gap-2 ml-auto">
                                 <InputSearch
                                     value={searchInput}
                                     onChange={(value) => {
@@ -326,6 +170,7 @@ export default function ClientPage() {
                                         }
                                     }}
                                     onEnter={() => setFilterSearch(searchInput.trim())}
+                                    placeholder="Поиск по ФИО, тел., email или ПИН"
                                 />
 
                                 <select
@@ -334,7 +179,6 @@ export default function ClientPage() {
                                         const value =
                                             e.target.value === 'all' ? '' : e.target.value;
                                         setFilterProject(value);
-                                        setFilterBlock('');
                                     }}
                                     className="h-[37px] min-w-48 rounded-md border border-blue-200 bg-white px-3 text-sm text-slate-700 transition hover:border-[#8eb9ed] hover:bg-[#f5fbff]"
                                 >
@@ -366,28 +210,21 @@ export default function ClientPage() {
                                     variant="outlined"
                                     className="inline-flex items-center text-sm font-medium text-white transition bg-blue-600 rounded-lg h-9 hover:bg-blue-600 hover:text-white"
                                     startIcon={<Add />}
-                                    onClick={() => setLeadDialog({ open: true, lead: null })}
+                                    onClick={() => setModal({ type: 'create' })}
                                 >
-                                    Новый лид
+                                    Создать клиента
                                 </Button>
                             </div>
                         </div>
                     </header>
                 </div>
-
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                    <Button variant="outlined" startIcon={<Add />} onClick={handleCreate}>
-                        Создать клиента
-                    </Button>
-                </Box>
-                <div className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-2xl">
+                <div className="overflow-hidden bg-white border shadow-sm">
                     <ClientTable
-                        clients={items}
+                        clients={clients}
                         refs={refs}
                         loading={loading}
-                        onView={handleView}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
+                        selectedId={selectedId}
+                        setModal={setModal}
                     />
 
                     {pagination && (
@@ -408,66 +245,75 @@ export default function ClientPage() {
                 </div>
             </div>
 
-            {/* <Modal
-                isOpen={modal === 'create'}
-                onClose={closeAndResetSelection}
-                title="Создать платеж"
-            >
-                <ClientForm
-                    mode="create"
-                    projectId={projectIdNum ?? currentProject?.id ?? null}
-                    blockId={blockIdNum}
-                    refs={refs}
-                    loading={submitting}
-                    onSubmit={handleCreateClient}
-                    onCancel={closeAndResetSelection}
-                />
-            </Modal>
-            
-            <Modal
-                isOpen={modal === 'edit' && Boolean(selectedClient)}
-                onClose={closeAndResetSelection}
-                title="Редактировать платеж"
-            >
-                {selectedClient && (
-                    <ClientForm
-                        mode="edit"
-                        payment={selectedClient}
-                        projectId={selectedClient.project_id}
-                        blockId={selectedClient.block_id}
-                        refs={refs}
-                        loading={submitting}
-                        onSubmit={handleUpdateClient}
-                        onCancel={closeAndResetSelection}
+            {modal?.type === 'detail' && (
+                <>
+                    <div
+                        className="fixed inset-0 z-40 bg-black/30"
+                        onClick={() => setModal(null)}
                     />
-                )}
-            </Modal>
-
-            <Modal
-                isOpen={modal === 'view' && Boolean(current ?? selectedClient)}
-                onClose={closeAndResetSelection}
-                title="Карточка платежа"
-            >
-                {(current ?? selectedClient) && (
-                    <ClientDetail
-                        payment={(current ?? selectedClient)!}
-                        onEdit={() => setModal('edit')}
-                        onClose={closeAndResetSelection}
+                    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl overflow-y-auto bg-white shadow-2xl">
+                        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
+                            <span className="text-sm font-semibold text-gray-900">
+                                Карточка клиента
+                            </span>
+                            <button
+                                onClick={() => setModal(null)}
+                                className="flex items-center justify-center w-8 h-8 text-gray-400 transition-colors border border-gray-200 rounded-lg hover:bg-gray-50"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <ClientDetail
+                                client={modal.client}
+                                onEdit={() => setModal({ type: 'edit', client: modal.client })}
+                                onClose={() => setModal(null)}
+                            />
+                        </div>
+                    </div>
+                </>
+            )}
+            {/* Create / Edit modal */}
+            {(modal?.type === 'create' || modal?.type === 'edit') && (
+                <>
+                    <div
+                        className="fixed inset-0 z-40 bg-black/40"
+                        onClick={() => !submitting && setModal(null)}
                     />
-                )}
-            </Modal> */}
-
-            {/* <ConfirmDialogNew
-                isOpen={modal === 'delete' && Boolean(selectedClient)}
-                onClose={closeAndResetSelection}
-                onConfirm={handleDeleteClient}
-                title="Удалить платеж?"
-                message={`Вы уверены, что хотите удалить платеж "${selectedClient?.title}"?`}
-                confirmText="Удалить"
-                cancelText="Отмена"
-                variant="danger"
-                loading={submitting}
-            /> */}
+                    <div className="fixed inset-0 z-50 flex items-start justify-center py-10 overflow-y-auto">
+                        <div className="w-full max-w-2xl bg-white shadow-2xl rounded-2xl">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                                <h2 className="text-sm font-semibold text-gray-900">
+                                    {modal.type === 'create'
+                                        ? 'Новый клиент'
+                                        : 'Редактировать клиента'}
+                                </h2>
+                                <button
+                                    onClick={() => !submitting && setModal(null)}
+                                    className="flex items-center justify-center w-8 h-8 text-gray-400 transition-colors border border-gray-200 rounded-lg hover:bg-gray-50"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <ClientForm
+                                    mode={modal.type}
+                                    client={modal.type === 'edit' ? modal.client : null}
+                                    projects={projects}
+                                    blocks={blocks}
+                                    loading={submitting}
+                                    onSubmit={
+                                        modal.type === 'create'
+                                            ? handleCreate
+                                            : (data) => handleUpdate(modal.client.id, data)
+                                    }
+                                    onCancel={() => setModal(null)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

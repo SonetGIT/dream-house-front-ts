@@ -40,11 +40,16 @@ const ClearIconWrapper = styled('div')(({ theme }) => ({
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
     flex: 1,
+
     '& .MuiInputBase-input': {
         padding: '4px 0',
-        // paddingLeft: `calc(1em + ${theme.spacing(2)})`,
         paddingRight: theme.spacing(2),
-        // fontSize: 12,
+
+        '&::placeholder': {
+            fontSize: '12px',
+            color: '#94a3b8',
+            opacity: 1,
+        },
     },
 }));
 
@@ -52,10 +57,11 @@ interface PropsType {
     value: string;
     onChange: (value: string) => void;
     onEnter?: () => void;
+    placeholder?: string;
 }
 
 export default function InputSearch(props: PropsType) {
-    const { value, onChange, onEnter } = props;
+    const { value, onChange, onEnter, placeholder = 'Поиск…' } = props;
 
     return (
         <Search>
@@ -64,7 +70,7 @@ export default function InputSearch(props: PropsType) {
             </SearchIconWrapper>
 
             <StyledInputBase
-                placeholder="Поиск…"
+                placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 onKeyDown={(e) => {

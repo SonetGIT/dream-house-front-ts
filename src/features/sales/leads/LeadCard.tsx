@@ -1,7 +1,15 @@
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { Phone, MessageCircle, Lock, Pencil, ArrowRightLeft, UserRoundCheck } from 'lucide-react';
+import {
+    Phone,
+    MessageCircle,
+    Lock,
+    Pencil,
+    ArrowRightLeft,
+    UserRoundCheck,
+    Mail,
+} from 'lucide-react';
 import type { EnumItem } from '@/features/reference/referenceService';
 import type { SalesOverviewProject } from '../slices/salesObjOverviewSlice';
 import type { SalesLead } from '../slices/salesLeadsSlice';
@@ -64,7 +72,7 @@ export default function LeadCard({
     const currentStatus = statuses.find((s) => Number(s.id) === Number(lead.status_id));
     const currentManager = managers.find((m) => Number(m.id) === Number(lead.manager_user_id));
     const phoneDigits = String(lead.phone ?? '').replace(/\D/g, '');
-    const title = lead.full_name || lead.phone || `Лид #${lead.id}`;
+    const fio = lead.full_name || lead.phone || `Лид #${lead.id}`;
     const project = projects.find((p) => Number(p.id) === Number(lead.project_id));
     const block = blocks.find((b) => Number(b.id) === Number(lead.block_id));
 
@@ -74,10 +82,15 @@ export default function LeadCard({
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                         <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="mb-1 text-xs font-medium text-orange-500 truncate">
+                                ПИН: {lead.pin || '—'}
+                            </span>
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1.5">
                             {lead.is_locked ? (
                                 <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />
                             ) : null}
-                            <span className="text-xs font-medium truncate">{title}</span>
+                            <span className="text-xs font-medium truncate">{fio}</span>
                         </div>
                         <div className="mt-0.5 text-[11px] text-muted-foreground">
                             {formatDateTime(lead.created_at)}
@@ -100,6 +113,12 @@ export default function LeadCard({
                         <div className="flex items-center gap-1.5">
                             <Phone className="h-3.5 w-3.5 shrink-0 text-blue-500" />
                             <span className="text-sm truncate">{lead.phone}</span>
+                        </div>
+                    ) : null}
+                    {lead.email ? (
+                        <div className="flex items-center gap-1.5">
+                            <Mail className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                            <span className="text-sm truncate">{lead.email}</span>
                         </div>
                     ) : null}
 
