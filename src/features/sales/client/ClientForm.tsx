@@ -5,22 +5,25 @@ import type {
     SalesClientCreatePayload,
     SalesClientUpdatePayload,
 } from '../slices/salesClientsSlice';
+import { formatPhoneInput } from '@/utils/formatPhoneNumber';
+import type { SalesFloor } from '../slices/salesFloorsSlice';
+import type { SalesUnit } from '../slices/salesUnitsSlice';
+import type { ProjectBlock } from '@/features/projects/pto/projectBlocks/projectBlocksSlice';
+import type { EnumItem } from '@/features/reference/referenceService';
+import { getManagerLabel } from '../leads/LeadCard';
 
 interface Project {
     id: number;
     name: string;
 }
-interface Block {
-    id: number;
-    name: string;
-    project_id: number;
-}
-
 interface ClientFormProps {
     mode: 'create' | 'edit';
-    client?: SalesClient | null;
+    client: SalesClient | null;
     projects?: Project[];
-    blocks?: Block[];
+    blocks?: ProjectBlock[];
+    floors?: SalesFloor[];
+    units?: SalesUnit[];
+    managers: EnumItem[];
     loading?: boolean;
     onSubmit: (data: SalesClientCreatePayload | SalesClientUpdatePayload) => void | Promise<void>;
     onCancel: () => void;
@@ -39,10 +42,12 @@ interface FormState {
     address: string;
     project_id: string;
     block_id: string;
+    floor_id: string;
     unit_id: string;
+    manager_user_id: string | null;
     comment: string;
 }
-
+const canAssignManager = true; // TODO: replace with real permission check
 const toDateInput = (value?: string | null) => (value ? value.slice(0, 10) : '');
 
 const normalize = (value: string): string | null => {
@@ -63,7 +68,9 @@ const getInitialState = (client: SalesClient | null | undefined): FormState => (
     address: client?.address ?? '',
     project_id: client?.project_id != null ? String(client.project_id) : '',
     block_id: client?.block_id != null ? String(client.block_id) : '',
+    floor_id: client?.floor_id != null ? String(client.floor_id) : '',
     unit_id: client?.unit_id != null ? String(client.unit_id) : '',
+    manager_user_id: client?.manager_user_id != null ? String(client.manager_user_id) : null,
     comment: client?.comment ?? '',
 });
 
@@ -72,26 +79,48 @@ export default function ClientForm({
     client,
     projects = [],
     blocks = [],
+    floors = [],
+    units = [],
+    managers = [],
     loading = false,
     onSubmit,
     onCancel,
 }: ClientFormProps) {
     const [form, setForm] = useState<FormState>(() => getInitialState(client));
     const [error, setError] = useState<string | null>(null);
-
+    const currentManager = managers.find((m) => Number(m.id) === Number(client?.manager_user_id));
     const filteredBlocks = useMemo(
-        () => blocks.filter((b) => !form.project_id || b.project_id === Number(form.project_id)),
+        () =>
+            blocks.filter(
+                (b) => !form.project_id || Number(b.project_id) === Number(form.project_id),
+            ),
         [blocks, form.project_id],
+    );
+    const filteredFloors = useMemo(
+        () => floors.filter((f) => !form.block_id || Number(f.block_id) === Number(form.block_id)),
+        [floors, form.block_id],
+    );
+
+    const filteredUnits = useMemo(
+        () =>
+            units.filter((u) => {
+                if (form.block_id && Number(u.block_id) !== Number(form.block_id)) {
+                    return false;
+                }
+
+                if (form.floor_id && Number(u.floor_id) !== Number(form.floor_id)) {
+                    return false;
+                }
+
+                return true;
+            }),
+        [units, form.block_id, form.floor_id],
     );
 
     const set =
         <K extends keyof FormState>(field: K) =>
         (value: FormState[K]) =>
             setForm((prev) => ({ ...prev, [field]: value }));
-
-    const handleProjectChange = (value: string) => {
-        setForm((prev) => ({ ...prev, project_id: value, block_id: '' }));
-    };
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -104,8 +133,48 @@ export default function ClientForm({
             setError('Укажите имя');
             return;
         }
+        if (!form.phone.trim()) {
+            setError('Укажите телефон');
+            return;
+        }
+        if (!form.birth_date) {
+            setError('Укажите дату рождения');
+            return;
+        }
 
-        setError(null);
+        if (!form.passport_number) {
+            setError('№ паспорта обязателен');
+            return;
+        }
+
+        if (!form.passport_number.trim()) {
+            setError('Укажите серию и номер паспорта');
+            return;
+        }
+
+        if (form.passport_number.length !== 9) {
+            setError('Серия и номер паспорта должны содержать 9 символов');
+            return;
+        }
+        if (!/^[A-Za-z]{2}\d{7}$/.test(form.passport_number)) {
+            setError('Формат паспорта: AN1234567');
+            return;
+        }
+
+        if (!form.pin) {
+            setError('ПИН обязателен');
+            return;
+        }
+
+        if (!/^\d+$/.test(form.pin)) {
+            setError('ПИН должен содержать только цифры');
+            return;
+        }
+
+        if (form.pin.length !== 14) {
+            setError('ПИН должен содержать 14 цифр');
+            return;
+        }
 
         const payload: SalesClientCreatePayload = {
             last_name: form.last_name.trim(),
@@ -127,6 +196,7 @@ export default function ClientForm({
         await onSubmit(mode === 'edit' ? (payload as SalesClientUpdatePayload) : payload);
     };
 
+    /********************************************************************************************************************************/
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Section: Личные данные */}
@@ -145,7 +215,7 @@ export default function ClientForm({
                                 value={form.last_name}
                                 onChange={(e) => set('last_name')(e.target.value)}
                                 disabled={loading}
-                                placeholder="Иванов"
+                                // placeholder="Иванов"
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             />
                         </div>
@@ -158,7 +228,7 @@ export default function ClientForm({
                                 value={form.first_name}
                                 onChange={(e) => set('first_name')(e.target.value)}
                                 disabled={loading}
-                                placeholder="Иван"
+                                // placeholder="Иван"
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             />
                         </div>
@@ -171,7 +241,7 @@ export default function ClientForm({
                                 value={form.middle_name}
                                 onChange={(e) => set('middle_name')(e.target.value)}
                                 disabled={loading}
-                                placeholder="Иванович"
+                                // placeholder="Иванович"
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             />
                         </div>
@@ -192,9 +262,10 @@ export default function ClientForm({
                             </label>
                             <input
                                 type="tel"
-                                value={form.phone}
+                                value={formatPhoneInput(form.phone)}
                                 onChange={(e) => set('phone')(e.target.value)}
                                 disabled={loading}
+                                inputMode="tel"
                                 placeholder="+996 555 000-00-00"
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             />
@@ -205,9 +276,10 @@ export default function ClientForm({
                             </label>
                             <input
                                 type="tel"
-                                value={form.phone_extra}
+                                value={formatPhoneInput(form.phone_extra)}
                                 onChange={(e) => set('phone_extra')(e.target.value)}
                                 disabled={loading}
+                                inputMode="tel"
                                 placeholder="+996 700 000-00-00"
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             />
@@ -272,6 +344,7 @@ export default function ClientForm({
                             onChange={(e) => set('passport_number')(e.target.value)}
                             disabled={loading}
                             placeholder="AN1234567"
+                            maxLength={9}
                             className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                         />
                     </div>
@@ -306,7 +379,16 @@ export default function ClientForm({
                             </label>
                             <select
                                 value={form.project_id}
-                                onChange={(e) => handleProjectChange(e.target.value)}
+                                // nChange={(e) => handleProjectChange(e.target.value)}
+                                onChange={(e) => {
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        project_id: e.target.value,
+                                        block_id: '',
+                                        floor_id: '',
+                                        unit_id: '',
+                                    }));
+                                }}
                                 disabled={loading}
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             >
@@ -324,7 +406,14 @@ export default function ClientForm({
                             </label>
                             <select
                                 value={form.block_id}
-                                onChange={(e) => set('block_id')(e.target.value)}
+                                onChange={(e) => {
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        block_id: e.target.value,
+                                        floor_id: '',
+                                        unit_id: '',
+                                    }));
+                                }}
                                 disabled={loading || !form.project_id}
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             >
@@ -338,17 +427,75 @@ export default function ClientForm({
                         </div>
                         <div>
                             <label className="block mb-1.5 text-sm font-medium text-gray-700">
-                                ID лота
+                                Этаж
                             </label>
-                            <input
-                                type="number"
-                                min="1"
+                            <select
+                                value={form.floor_id}
+                                onChange={(e) => {
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        floor_id: e.target.value,
+                                        unit_id: '',
+                                    }));
+                                }}
+                                disabled={loading || !form.block_id}
+                                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
+                            >
+                                <option value="">Не выбран</option>
+
+                                {filteredFloors.map((floor) => (
+                                    <option key={floor.id} value={floor.id}>
+                                        {floor.name || `Этаж ${floor.floor_number}`}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                                Квартира
+                            </label>
+                            <select
                                 value={form.unit_id}
                                 onChange={(e) => set('unit_id')(e.target.value)}
-                                disabled={loading}
-                                placeholder="—"
+                                disabled={loading || !form.floor_id}
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
-                            />
+                            >
+                                <option value="">Не выбрана</option>
+
+                                {filteredUnits.map((unit) => (
+                                    <option key={unit.id} value={unit.id}>
+                                        {unit.unit_number}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                                Ответственный
+                            </label>
+                            {canAssignManager ? (
+                                <select
+                                    value={String(form.manager_user_id)}
+                                    onChange={(e) => set('manager_user_id')(e.target.value)}
+                                    disabled={loading}
+                                    className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
+                                >
+                                    <option value="">Не выбран</option>
+                                    {managers.map((manager) => (
+                                        <option key={String(manager.id)} value={String(manager.id)}>
+                                            {getManagerLabel(manager)}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <div className="px-0.5 text-[11px] text-muted-foreground">
+                                    Ответственный:{' '}
+                                    {form.manager_user_id
+                                        ? getManagerLabel(currentManager) ||
+                                          `ID: ${form.manager_user_id}`
+                                        : 'не назначен'}
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -44,7 +44,7 @@ function StatusBadge({ color, name }: { color?: string | null; name: string }) {
     );
 }
 
-function getManagerLabel(manager?: EnumItem) {
+export function getManagerLabel(manager?: EnumItem) {
     if (!manager) return '';
 
     const name = typeof manager.name === 'string' ? manager.name.trim() : '';

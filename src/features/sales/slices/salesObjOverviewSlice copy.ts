@@ -29,87 +29,31 @@ export interface SalesOverviewProject {
     clients_count: number;
 }
 
-export interface SalesOverviewBlock {
-    id: number;
-    project_id: number;
-    name: string;
-    created_at: string;
-
-    total_units: number;
-    free_units: number;
-    reserved_units: number;
-    sold_units: number;
-    offmarket_units: number;
-
-    apartments: number;
-    commercial_units: number;
-    parking_units: number;
-    storage_units: number;
-
-    total_area: string;
-    total_price: string;
-    free_price: string;
-    reserved_price: string;
-    sold_price: string;
-}
-
-export interface SalesOverviewSummary {
-    total_projects: number;
-    total_units: number;
-
-    free_units: number;
-    reserved_units: number;
-    sold_units: number;
-    offmarket_units: number;
-
-    apartments: number;
-    commercial_units: number;
-    parking_units: number;
-    storage_units: number;
-
-    total_area: string;
-    total_price: string;
-    free_price: string;
-    reserved_price: string;
-    sold_price: string;
-
-    leads_count: number;
-    clients_count: number;
-}
-
 interface SalesOverviewResponse {
     projects: SalesOverviewProject[];
-    blocks: SalesOverviewBlock[];
-    summary: SalesOverviewSummary;
 }
 
 interface SalesOverviewState {
     projects: SalesOverviewProject[];
-    blocks: SalesOverviewBlock[];
-    summary: SalesOverviewSummary | null;
-
     loading: boolean;
     error: string | null;
 }
 
 const initialState: SalesOverviewState = {
     projects: [],
-    blocks: [],
-    summary: null,
-
     loading: false,
     error: null,
 };
 
 export const fetchSalesOverview = createAsyncThunk<
-    SalesOverviewResponse,
+    SalesOverviewProject[],
     void,
     { rejectValue: string }
 >('salesOverview/fetch', async (_, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesOverviewResponse>('/sales/objects/overview', 'POST');
 
-        return res.data;
+        return res.data.projects ?? [];
     } catch (err: unknown) {
         return rejectWithValue(
             err instanceof Error ? err.message : 'Не удалось загрузить сводку объектов',
@@ -129,10 +73,7 @@ const salesObjOverviewSlice = createSlice({
             })
             .addCase(fetchSalesOverview.fulfilled, (state, action) => {
                 state.loading = false;
-
-                state.projects = action.payload.projects ?? [];
-                state.blocks = action.payload.blocks ?? [];
-                state.summary = action.payload.summary ?? null;
+                state.projects = action.payload;
             })
             .addCase(fetchSalesOverview.rejected, (state, action) => {
                 state.loading = false;
@@ -141,4 +82,4 @@ const salesObjOverviewSlice = createSlice({
     },
 });
 
-export default salesObjOverviewSlice.reducer;
+export default salesObjOverviewSlicexxx.reducer;

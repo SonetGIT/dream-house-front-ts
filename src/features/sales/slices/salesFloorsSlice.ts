@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
+import type { Pagination } from '@/features/users/userSlice';
 
 export interface SalesFloor {
     id: number;
@@ -11,6 +12,12 @@ export interface SalesFloor {
     created_at: string;
     updated_at: string;
     deleted: boolean;
+}
+export interface SalesFloorSearchPayload {
+    project_id?: number;
+    block_id?: number;
+    page?: number;
+    size?: number;
 }
 
 export interface SalesFloorCreatePayload {
@@ -30,6 +37,8 @@ export interface SalesFloorUpdatePayload {
 }
 
 interface SalesFloorsState {
+    items: SalesFloor[];
+    pagination: Pagination | null;
     loading: boolean;
     error: string | null;
     lastCreated: SalesFloor | null;
@@ -38,13 +47,29 @@ interface SalesFloorsState {
 }
 
 const initialState: SalesFloorsState = {
+    items: [],
+    pagination: null,
     loading: false,
     error: null,
     lastCreated: null,
     lastUpdated: null,
     lastDeletedId: null,
 };
-
+export const fetchSalesFloor = createAsyncThunk<
+    { data: SalesFloor[]; pagination: Pagination | null },
+    SalesFloorSearchPayload | undefined,
+    { rejectValue: string }
+>('salesFloors/search', async (params = {}, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<SalesFloor[]>('/sales/floors/search', 'POST', params);
+        return {
+            data: res.data ?? [],
+            pagination: res.pagination ?? null,
+        };
+    } catch (err: unknown) {
+        return rejectWithValue(err instanceof Error ? err.message : 'Не удалось загрузить этажи');
+    }
+});
 export const createSalesFloor = createAsyncThunk<
     SalesFloor,
     SalesFloorCreatePayload,
@@ -99,6 +124,19 @@ const salesFloorsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            .addCase(fetchSalesFloor.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchSalesFloor.fulfilled, (state, action) => {
+                state.loading = false;
+                state.items = action.payload.data;
+                state.pagination = action.payload.pagination;
+            })
+            .addCase(fetchSalesFloor.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка загрузки этажей';
+            })
             .addCase(createSalesFloor.pending, (state) => {
                 state.loading = true;
                 state.error = null;

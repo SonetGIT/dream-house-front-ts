@@ -68,6 +68,7 @@ export interface SalesClient {
 
     project_id: number | null;
     block_id: number | null;
+    floor_id: number | null;
     unit_id: number | null;
 
     manager_user_id: number | null;
@@ -115,8 +116,9 @@ export interface SalesClientCreatePayload {
 
     project_id?: number | null;
     block_id?: number | null;
+    floor_id?: number | null;
     unit_id?: number | null;
-
+    manager_user_id?: number | null;
     comment?: string | null;
 }
 

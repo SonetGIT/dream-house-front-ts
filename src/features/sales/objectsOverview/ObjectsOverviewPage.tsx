@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { fetchSalesOverview } from '../slices/salesObjOverviewSlice';
 import { AlertCircle, Building2, Loader, RefreshCw } from 'lucide-react';
 
-export default function ObjectsTab() {
+export default function ObjectsOverviewPage() {
     const dispatch = useAppDispatch();
     const { projects, loading, error } = useAppSelector((s) => s.salesObjOverview);
     const [refreshing, setRefreshing] = useState(false);

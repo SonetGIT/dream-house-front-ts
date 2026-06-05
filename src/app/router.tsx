@@ -21,9 +21,9 @@ import WarehousesPage from '@/features/projects/warehouses/WarehousesPage';
 import ReportsPage from '@/features/projects/reports/ReportsPage';
 import PaymentsPage from '@/features/projects/payments/PaymentsPage';
 import SalesPageTabs from '@/features/sales/salesTabs/SalesPageTabs';
-import ObjectsTab from '@/features/sales/salesTabs/ObjectsTab';
 import LeadsPage from '@/features/sales/leads/LeadsPage';
 import ClientPage from '@/features/sales/client/ClientPage';
+import ObjectsOverviewPage from '@/features/sales/objectsOverview/ObjectsOverviewPage';
 // import SalesBlockPage from '@/features/sales/SalesBlockPage';
 
 export const router = createBrowserRouter([
@@ -41,8 +41,7 @@ export const router = createBrowserRouter([
                 path: 'sales',
                 element: <SalesPageTabs />,
                 children: [
-                    { index: true, element: <ObjectsTab /> }, // default
-                    { path: 'units', element: <MaterialRequestsPage /> },
+                    { index: true, element: <ObjectsOverviewPage /> }, // default
                     { path: 'leads', element: <LeadsPage /> },
                     { path: 'clients', element: <ClientPage /> },
                     { path: 'paymentSchedules', element: <WorkPerformedPage /> },

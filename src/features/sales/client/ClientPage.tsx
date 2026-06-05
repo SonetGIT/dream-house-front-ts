@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { RefreshCw, Users, X } from 'lucide-react';
 import { Button } from '@mui/material';
@@ -19,15 +19,10 @@ import {
 import ClientForm from './ClientForm';
 import InputSearch from '@/components/ui/InputSearch';
 import ClientDetail from './ClientDetail';
-
-interface FiltersState {
-    search: string;
-    payment_type: number | null;
-    status: number | null;
-    article_id: number | null;
-    dateFrom: string;
-    dateTo: string;
-}
+import { fetchSalesOverview } from '../slices/salesObjOverviewSlice';
+import { fetchSalesUnits } from '../slices/salesUnitsSlice';
+import { fetchSalesFloor } from '../slices/salesFloorsSlice';
+import { fetchProjectBlocks } from '@/features/projects/pto/projectBlocks/projectBlocksSlice';
 
 export const lotTypeMap: Record<string, string> = {
     apartment: 'Квартира',
@@ -43,61 +38,72 @@ type Modal =
 /**************************************************************************************************************************************/
 export default function ClientPage() {
     const dispatch = useAppDispatch();
+    const { projects } = useAppSelector((state) => state.salesObjOverview);
     const { items: clients, pagination, loading, error } = useAppSelector((s) => s.salesClients);
-    const { items: projects } = useAppSelector((s) => s.projects);
     const { data: blocks } = useAppSelector((s) => s.projectBlocks);
+    const { items: floors } = useAppSelector((s) => s.salesFloors);
+    const { items: units } = useAppSelector((s) => s.salesUnits);
 
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
     const [searchInput, setSearchInput] = useState('');
     const [filterSearch, setFilterSearch] = useState('');
     const [filterProject, setFilterProject] = useState('');
-    const [filterBlock, setFilterBlock] = useState('');
+    // const [filterBlock, setFilterBlock] = useState('');
     const [modal, setModal] = useState<Modal | null>(null);
     const [submitting, setSubmitting] = useState(false);
+
     const users = useReference('users');
+    // const blocksRef = useReference('projectBlocks');
     const refs = {
         users,
     };
-
-    const filteredBlocks = useMemo(
-        () => blocks?.filter((b) => !filterProject || b.project_id === Number(filterProject)) ?? [],
-        [filterProject, blocks],
+    const managers = useMemo(
+        () => (refs.users.data ?? []).filter((user) => String(user.role_id) === '16'),
+        [refs.users.data],
     );
 
-    const load = useCallback(
-        (p: number, search: string, projectId: string, blockId: string) => {
+    const loadClients = useCallback(
+        () =>
             dispatch(
                 fetchSalesClients({
-                    search: search || undefined,
-                    project_id: projectId ? Number(projectId) : undefined,
-                    block_id: blockId ? Number(blockId) : undefined,
-                    page: p,
+                    search: filterSearch || undefined,
+                    project_id: filterProject ? Number(filterProject) : undefined,
+                    page: page,
                     size: size,
                 }),
-            );
-        },
-        [dispatch, size],
+            ),
+        [dispatch, filterProject, filterSearch],
     );
 
     useEffect(() => {
-        load(page, filterSearch, filterProject, filterBlock);
-    }, [page, filterSearch, filterProject, filterBlock, load]);
+        if (projects.length === 0) {
+            dispatch(fetchSalesOverview());
+        }
+        if (blocks.length === 0) {
+            dispatch(
+                fetchProjectBlocks({
+                    project_id: filterProject ? Number(filterProject) : 0,
+                    page: 1,
+                    size: 100,
+                }),
+            );
+        }
+        if (floors.length === 0) {
+            dispatch(fetchSalesFloor());
+        }
+        if (units.length === 0) {
+            dispatch(fetchSalesUnits());
+        }
+    }, [dispatch, floors.length, units.length, projects.length]);
+
+    useEffect(() => {
+        loadClients();
+    }, [loadClients]);
 
     useEffect(() => {
         if (error) toast.error(error);
     }, [error]);
-
-    const applySearch = () => {
-        setPage(1);
-        setFilterSearch(searchInput.trim());
-    };
-
-    const handleProjectChange = (v: string) => {
-        setFilterProject(v);
-        setFilterBlock('');
-        setPage(1);
-    };
 
     const handleCreate = async (data: SalesClientCreatePayload | SalesClientUpdatePayload) => {
         setSubmitting(true);
@@ -105,7 +111,7 @@ export default function ClientPage() {
             await dispatch(createSalesClient(data as SalesClientCreatePayload)).unwrap();
             toast.success('Клиент создан');
             setModal(null);
-            load(page, filterSearch, filterProject, filterBlock);
+            loadClients();
         } catch (e) {
             toast.error(e as string);
         } finally {
@@ -301,6 +307,9 @@ export default function ClientPage() {
                                     client={modal.type === 'edit' ? modal.client : null}
                                     projects={projects}
                                     blocks={blocks}
+                                    floors={floors}
+                                    units={units}
+                                    managers={managers}
                                     loading={submitting}
                                     onSubmit={
                                         modal.type === 'create'

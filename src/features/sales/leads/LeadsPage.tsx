@@ -171,6 +171,7 @@ const parseFullName = (fullName: string) => {
     };
 };
 
+/*********************************************************************************************************************************/
 export default function LeadsPage() {
     const dispatch = useAppDispatch();
     const { projects } = useAppSelector((state) => state.salesObjOverview);
@@ -199,13 +200,7 @@ export default function LeadsPage() {
     const [convertSaving, setConvertSaving] = useState(false);
 
     const blocks = useMemo(() => blocksRef.data ?? [], [blocksRef.data]);
-    // const filteredBlocks = useMemo(() => {
-    //     if (!filterProject) {
-    //         return blocks;
-    //     }
 
-    //     return blocks.filter((block) => Number(block.project_id) === Number(filterProject));
-    // }, [blocks, filterProject]);
     const managers = useMemo(
         () => (usersRef.data ?? []).filter((user) => String(user.role_id) === '16'),
         [usersRef.data],
@@ -393,6 +388,7 @@ export default function LeadsPage() {
         }
     };
 
+    /*******************************************************************************************************************************/
     return (
         <div className="min-h-screen bg-background">
             <div className="sticky top-0 z-10 border-b border-border bg-card/90 backdrop-blur-sm">
