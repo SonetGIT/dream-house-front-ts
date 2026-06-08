@@ -8,6 +8,7 @@ export interface ApiResponse<T> {
     data: T;
     stats?: TasksStats;
     pagination?: Pagination;
+    units_pagination?: Pagination;
     success?: boolean;
     message?: string;
 }

@@ -2,6 +2,7 @@ import { FolderOpen, Loader2, Pencil } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Payment, PaymentStatusRef } from './paymentSlice';
 import { formatDate } from '@/utils/formatData';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface PaymentsTableProps {
     payments: Payment[];
@@ -187,9 +188,9 @@ export default function PaymentsTable({
                                             }`}
                                         >
                                             {income ? '+' : '−'}
-                                            {formatMoney(
+                                            {formatCurrency(
                                                 payment.amount,
-                                                payment.currency_ref?.code,
+                                                // payment.currency_ref?.code,
                                             )}
                                         </p>
                                         <p className="text-xs text-gray-500">

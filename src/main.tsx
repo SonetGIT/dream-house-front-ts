@@ -17,5 +17,5 @@ createRoot(document.getElementById('root')!).render(
             <CustomToaster />
             <RouterProvider router={router} />
         </Provider>
-    </StrictMode>
+    </StrictMode>,
 );

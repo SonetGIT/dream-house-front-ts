@@ -24,6 +24,7 @@ import SalesPageTabs from '@/features/sales/salesTabs/SalesPageTabs';
 import LeadsPage from '@/features/sales/leads/LeadsPage';
 import ClientPage from '@/features/sales/client/ClientPage';
 import ObjectsOverviewPage from '@/features/sales/objectsOverview/ObjectsOverviewPage';
+import ObjectsOverviewUnitsPage from '@/features/sales/objectsOverviewUnits/ObjectsOverviewUnitsPage';
 // import SalesBlockPage from '@/features/sales/SalesBlockPage';
 
 export const router = createBrowserRouter([
@@ -42,6 +43,8 @@ export const router = createBrowserRouter([
                 element: <SalesPageTabs />,
                 children: [
                     { index: true, element: <ObjectsOverviewPage /> }, // default
+                    { path: 'units', element: <ObjectsOverviewUnitsPage /> },
+                    { path: 'matrix', element: <ObjectsOverviewUnitsPage /> },
                     { path: 'leads', element: <LeadsPage /> },
                     { path: 'clients', element: <ClientPage /> },
                     { path: 'paymentSchedules', element: <WorkPerformedPage /> },
