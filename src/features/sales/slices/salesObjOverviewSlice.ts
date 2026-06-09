@@ -58,6 +58,7 @@ export interface SalesOverviewBlock {
 
 export interface SalesOverviewUnit {
     id: number;
+
     project_id: number;
     block_id: number;
     floor_id: number;
@@ -65,29 +66,53 @@ export interface SalesOverviewUnit {
     unit_number: string;
     lot_type: string;
 
+    plan_code: string;
+    external_code: string;
+    cadastral_number: string | null;
+
     rooms: number;
 
     area_total: number;
-    area_living: number;
-    area_kitchen: number;
-    area_balcony: number;
+    area_living: number | null;
+    area_kitchen: number | null;
+    area_balcony: number | null;
 
     price_total: number;
-    price_per_m2: number;
+    price_per_m2: number | null;
 
     currency: number;
+    currency_code: string;
+    currency_name: string;
+
     status_id: number;
-
-    project_name: string;
-    block_name: string;
-    floor_number: number;
-
     status_name: string;
     status_code: string;
     status_color: string;
 
-    currency_code: string;
-    currency_name: string;
+    finish_type: string | null;
+    ceiling_height: number | null;
+    orientation: string | null;
+
+    is_active_for_sale: boolean;
+
+    description: string | null;
+    comment: string | null;
+
+    manager_user_id: number | null;
+
+    project_name: string;
+    block_name: string;
+
+    floor_number: number;
+    floor_name: string | null;
+
+    created_by: number;
+    updated_by: number;
+
+    created_at: string;
+    updated_at: string;
+
+    deleted: boolean;
 }
 
 export interface SalesOverviewSummary {

@@ -1,83 +1,39 @@
-import React, { useState } from 'react';
-import { Collapse } from '@mui/material';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import type {
-    SalesOverviewBlock,
-    SalesOverviewProject,
-    SalesOverviewUnit,
-} from '../slices/salesObjOverviewSlice';
+import type { SalesOverviewUnit } from '../slices/salesObjOverviewSlice';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatArea } from '@/utils/formatNumber';
-import ObjectsOverviewBlockTable from '../objectsOverview/ObjectsOverviewBlockTable';
-import TypeChips from '@/components/ui/TypeChips';
-import UnitStat from '@/components/ui/UnitStat';
-import UnitBar from '@/components/ui/UnitBar';
+import { Car, Home, Package, Store } from 'lucide-react';
 
 interface PropsType {
     units: SalesOverviewUnit[];
     refs: Record<string, ReferenceResult>;
 }
-const prjStatuses: Record<number, { label: string; className: string }> = {
-    1: {
-        label: 'На одобрении',
-        className: 'bg-violet text-violet-800 border-violet-200',
-    },
-    2: {
-        label: 'Одобрена',
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-    },
-    3: {
-        label: 'На исполнении',
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    },
-    4: {
-        label: 'Исполнена',
-        className: 'bg-green-100 text-green-800 border-green-200',
-    },
-    5: {
-        label: 'Отменена',
-        className: 'bg-red-100 text-red-800 border-red-200',
-    },
-};
 
 /*************************************************************************************************************************/
+
+const lotTypeConfig = {
+    apartment: {
+        label: 'Кв',
+        icon: Home,
+        className: 'bg-sky-50 text-sky-700 border-sky-200',
+    },
+    commercial: {
+        label: 'Комм',
+        icon: Store,
+        className: 'bg-purple-50 text-purple-700 border-purple-200',
+    },
+    parking: {
+        label: 'Парк',
+        icon: Car,
+        className: 'bg-slate-50 text-slate-600 border-slate-200',
+    },
+    storage: {
+        label: 'Клад',
+        icon: Package,
+        className: 'bg-orange-50 text-orange-600 border-orange-200',
+    },
+} as const;
 export default function ObjectsOverviewUnitsTable(props: PropsType) {
-    const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    /*TOGGLE*/
-    const toggleRow = (id: number) => {
-        const isOpening = !openRows[id];
-
-        // 1. сначала обновляем state
-        setOpenRows((prev) => ({
-            ...prev,
-            [id]: isOpening,
-        }));
-
-        // 2. потом dispatch
-        // if (isOpening) {
-        //     dispatch(
-        //         fetchMaterialprjuestItems({
-        //             material_prjuest_id: id,
-        //             page: 1,
-        //             size: 10,
-        //         }),
-        //     );
-        // }
-    };
-
-    /*STATUS************************************************************************************************************/
-    const getStatusConfig = (statusId: number) => {
-        return (
-            prjStatuses[statusId] || {
-                label: 'Неизвестно',
-                className: 'bg-gray-100 text-gray-800 border-gray-200',
-            }
-        );
-    };
-
-    /********************************************************************************************************************************/
     return (
         <div className="space-y-4">
             {/* Table - ObjectsOverviewTable*/}
@@ -87,43 +43,129 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                         {/* ObjectsOverviewTable- HEADER */}
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
-                                <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
-                                <th className="w-12 px-3 py-3 text-sm font-semibold text-left text-blue-700 bg-blue-50">
+                                <th className="w-12 px-4 py-3 text-xs font-semibold text-left text-blue-700 border-r bg-blue-50">
                                     №
                                 </th>
+
+                                {/* Расположение */}
+                                <th className="px-4 py-3 text-center border-l bg-sky-50 whitespace-nowrap">
+                                    <div className="text-xs font-semibold uppercase text-sky-600 ">
+                                        Объект/Блок
+                                    </div>
+                                </th>
+
+                                {/* Лот */}
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase whitespace-nowrap">
+                                        № лота
+                                    </div>
+                                </th>
+
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Объект
+                                        Тип
+                                    </div>
+                                </th>
+
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
+                                        Код
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-600 uppercase">
+                                        Этаж
                                     </div>
                                 </th>
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Адрес
+                                        Комнаты
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Блоки
+
+                                {/* Площади */}
+                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
+                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
+                                        Общая площадь
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Лоты
+
+                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
+                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
+                                        Жилая площадь
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Типы лотов
+
+                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
+                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
+                                        Площадь кухни
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Финансы
+
+                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
+                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
+                                        Площадь балкона
                                     </div>
                                 </th>
-                                <th className="px-4 py-3 text-center border-l bg-blue-50">
-                                    <div className="text-xs font-semibold text-blue-700 uppercase">
-                                        Лиды / Клиенты
+
+                                {/* Стоимость */}
+                                <th className="px-4 py-3 text-center border-l bg-green-50">
+                                    <div className="text-xs font-semibold text-green-700 uppercase">
+                                        Общая стоимость
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-center border-l bg-green-50">
+                                    <div className="text-xs font-semibold text-green-700 uppercase">
+                                        Валюта
+                                    </div>
+                                </th>
+                                <th className="px-4 py-3 text-center border-l bg-green-50">
+                                    <div className="text-xs font-semibold text-green-700 uppercase whitespace-nowrap">
+                                        Цена за м²
+                                    </div>
+                                </th>
+                                {/* Статус */}
+                                <th className="px-4 py-3 text-center border-l bg-purple-50">
+                                    <div className="text-xs font-semibold text-purple-700 uppercase">
+                                        Статус
+                                    </div>
+                                </th>
+
+                                {/* Характеристики */}
+                                <th className="px-4 py-3 text-center border-l bg-orange-50">
+                                    <div className="text-xs font-semibold text-orange-700 uppercase">
+                                        Тип отделки
+                                    </div>
+                                </th>
+
+                                <th className="px-4 py-3 text-center border-l bg-orange-50">
+                                    <div className="text-xs font-semibold text-orange-700 uppercase">
+                                        Высота потолков
+                                    </div>
+                                </th>
+
+                                <th className="px-4 py-3 text-center border-l bg-orange-50">
+                                    <div className="text-xs font-semibold text-orange-700 uppercase">
+                                        Ориентация
+                                    </div>
+                                </th>
+
+                                <th className="px-4 py-3 text-center border-l bg-orange-50">
+                                    <div className="text-xs font-semibold text-orange-700 uppercase whitespace-nowrap ">
+                                        Кадастровый №
+                                    </div>
+                                </th>
+
+                                {/* Дополнительно */}
+                                <th className="px-4 py-3 text-center border-l bg-yellow-50">
+                                    <div className="text-xs font-semibold text-yellow-700 uppercase">
+                                        Описание
+                                    </div>
+                                </th>
+
+                                <th className="px-4 py-3 text-center border-l bg-yellow-50">
+                                    <div className="text-xs font-semibold text-yellow-700 uppercase">
+                                        Комментарий
                                     </div>
                                 </th>
 
@@ -134,80 +176,132 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                         </thead>
                         <tbody>
                             {props.units.map((unt) => (
-                                <tr key={unt.id}>
+                                <tr key={unt.id} className="text-xs">
                                     <td className="px-2 py-2 text-xs font-medium text-gray-700">
                                         {unt.id}
                                     </td>
 
-                                    <td className="px-2 py-2 border-l">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-gray-800">
-                                                    {unt.lot_type === 'apartment'
-                                                        ? 'Квартира'
-                                                        : unt.lot_type === 'commercial'
-                                                          ? 'Коммерция'
-                                                          : unt.lot_type === 'parking'
-                                                            ? 'Паркинг'
-                                                            : unt.lot_type === 'storage'
-                                                              ? 'Кладовая'
-                                                              : unt.lot_type}{' '}
-                                                    №{unt.unit_number}
-                                                </span>
+                                    {/* Расположение */}
+                                    <td className="px-2 py-2 text-sm text-left whitespace-nowrap">
+                                        <div className="text-sm leading-none text-gray-800">
+                                            {unt.project_name}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-0.5">
+                                            {unt.block_name}
+                                        </div>
+                                    </td>
 
+                                    {/* Лот */}
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.unit_number}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center">
+                                        {(() => {
+                                            const config =
+                                                lotTypeConfig[
+                                                    unt.lot_type as keyof typeof lotTypeConfig
+                                                ];
+
+                                            if (!config) return unt.lot_type;
+
+                                            const Icon = config.icon;
+
+                                            return (
                                                 <span
-                                                    className="px-2 py-0.5 rounded-full text-[10px] font-medium text-white"
-                                                    style={{ backgroundColor: unt.status_color }}
+                                                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium ${config.className}`}
                                                 >
-                                                    {unt.status_name}
+                                                    <Icon className="w-3 h-3" />
+                                                    {config.label}
                                                 </span>
-                                            </div>
-
-                                            <div className="text-xs text-gray-500">
-                                                {unt.project_name} · {unt.block_name}
-                                            </div>
-
-                                            <div className="text-xs text-gray-500">
-                                                Этаж: {unt.floor_number}
-                                            </div>
-                                        </div>
+                                            );
+                                        })()}
                                     </td>
 
-                                    <td className="px-2 py-2 text-center">
-                                        <div className="text-sm font-medium text-gray-700">
-                                            {unt.rooms === 0 ? 'Студия' : `${unt.rooms} комн.`}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-2 py-2 text-center">
-                                        <div className="text-sm font-medium text-sky-600">
-                                            {formatArea(unt.area_total)}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-2 py-2 text-center">
-                                        <div className="text-sm text-gray-700">
-                                            {unt.currency_code}
-                                        </div>
-                                    </td>
-
-                                    <td className="px-2 py-2">
-                                        <div className="space-y-1">
-                                            <div className="text-xs text-gray-500">
-                                                Общая стоимость
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.plan_code && (
+                                            <div className="font-mono text-xs text-gray-500">
+                                                {unt.plan_code}
                                             </div>
-
-                                            <div className="text-sm font-semibold text-emerald-700">
-                                                {formatCurrency(unt.price_total)}
-                                            </div>
-
-                                            {unt.price_per_m2 && (
-                                                <div className="text-xs text-gray-500">
-                                                    {formatCurrency(unt.price_per_m2)} / м²
-                                                </div>
-                                            )}
-                                        </div>
+                                        )}
                                     </td>
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.floor_number}
+                                    </td>
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.rooms === 0 ? 'Студия' : `${unt.rooms} комн.`}
+                                    </td>
+
+                                    {/* Площади */}
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {formatArea(unt.area_total)}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.area_living ?? '-'}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.area_kitchen ?? '-'}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.area_balcony ?? '-'}
+                                    </td>
+
+                                    {/* Стоимость */}
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.price_total}
+                                    </td>
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.currency_code}
+                                    </td>
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.price_per_m2 ? formatCurrency(unt.price_per_m2) : '-'}
+                                    </td>
+
+                                    {/* Статус */}
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        <span
+                                            className="px-2 py-1 text-xs font-medium border rounded-full"
+                                            style={{
+                                                color: unt.status_color,
+                                                borderColor: `${unt.status_color}80`,
+                                                backgroundColor: `${unt.status_color}20`,
+                                            }}
+                                        >
+                                            {unt.status_name}
+                                        </span>
+                                    </td>
+
+                                    {/* Характеристики */}
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.finish_type ?? '-'}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.ceiling_height ?? '-'}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.orientation ?? '-'}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.cadastral_number ?? '-'}
+                                    </td>
+
+                                    {/* Дополнительно */}
+                                    <td className="px-2 py-2 text-sm text-center">
+                                        {unt.description ?? '-'}
+                                    </td>
+
+                                    <td className="px-2 py-2 text-sm text-center">
+                                        {unt.comment ?? '-'}
+                                    </td>
+
+                                    {/* Действия */}
+                                    <td className="px-2 py-2 text-sm text-center">...</td>
                                 </tr>
                             ))}
                         </tbody>

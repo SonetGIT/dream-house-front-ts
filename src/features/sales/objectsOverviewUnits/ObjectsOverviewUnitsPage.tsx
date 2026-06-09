@@ -1,6 +1,5 @@
 import { Box, CircularProgress, Paper, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
@@ -13,7 +12,7 @@ export default function ObjectsOverviewUnitsPage() {
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
 
-    const { units, loading, pagination } = useAppSelector((state) => state.salesObjOverview);
+    const { units, loading, unitsPagination } = useAppSelector((state) => state.salesObjOverview);
     //Первичная загрузка =====
     useEffect(() => {
         dispatch(
@@ -53,11 +52,18 @@ export default function ObjectsOverviewUnitsPage() {
                 <Typography color="text.secondary">Лоты отсутствуют</Typography>
             ) : (
                 <>
+                    {/* <ObjectsOverviewUnitsFilters
+                        filters={units}
+                        projects={units}
+                        managers={units}
+                        onChange={() => {}}
+                        onClose={() => {}}
+                    /> */}
                     <ObjectsOverviewUnitsTable units={units} refs={refs} />
 
-                    {pagination && (
+                    {unitsPagination && (
                         <TablePagination
-                            pagination={pagination}
+                            pagination={unitsPagination}
                             onPageChange={(newPage) => setPage(newPage)}
                             onSizeChange={(newSize) => {
                                 setPage(1);
