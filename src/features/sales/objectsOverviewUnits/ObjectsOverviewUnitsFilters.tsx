@@ -66,25 +66,25 @@ const SORT_OPTIONS = [
 const LOT_TYPE_OPTIONS = [
     {
         value: 'apartment',
-        label: 'Кв',
+        label: 'Квартира',
         icon: Home,
         className: 'bg-sky-50 text-sky-700 border-sky-200',
     },
     {
         value: 'commercial',
-        label: 'Комм',
+        label: 'Комм. помещение',
         icon: Store,
         className: 'bg-purple-50 text-purple-700 border-purple-200',
     },
     {
         value: 'parking',
-        label: 'Парк',
+        label: 'Паркинг',
         icon: Car,
         className: 'bg-slate-50 text-slate-600 border-slate-200',
     },
     {
         value: 'storage',
-        label: 'Клад',
+        label: 'Кладовая',
         icon: Package,
         className: 'bg-orange-50 text-orange-600 border-orange-200',
     },
@@ -92,10 +92,11 @@ const LOT_TYPE_OPTIONS = [
 
 const ROOMS_OPTS = [
     { value: 0, label: 'Все комн.' },
-    { value: 1, label: '1' },
-    { value: 2, label: '2' },
-    { value: 3, label: '3' },
-    { value: 4, label: '4+' },
+    { value: 1, label: 'Студия' },
+    { value: 2, label: '1' },
+    { value: 3, label: '2' },
+    { value: 4, label: '3' },
+    { value: 5, label: '4+' },
 ];
 
 interface Props {
@@ -108,8 +109,8 @@ interface Props {
 }
 
 const inputCls =
-    'w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white text-gray-800 placeholder-gray-400';
-const labelCls = 'text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block';
+    'w-full px-2.5 py-1.5 text-xs border border-blue-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white text-gray-800 placeholder-gray-400';
+const labelCls = 'text-[10px] font-semibold text-blue-500 uppercase tracking-wide mb-1.5 block';
 
 export default function ObjectsOverviewUnitsFilters({
     filters,
@@ -187,23 +188,9 @@ export default function ObjectsOverviewUnitsFilters({
         filters.client_passport;
 
     return (
-        <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-2 mb-3 border-b border-gray-100">
-                <span className="text-xs font-semibold text-gray-700">Фильтры</span>
-                {hasFilters && (
-                    <button
-                        onClick={onReset}
-                        className="flex items-center gap-1 text-[10px] text-rose-500 hover:text-rose-600 font-medium"
-                    >
-                        <RotateCcw size={10} />
-                        Сбросить
-                    </button>
-                )}
-            </div>
-
+        <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm mb-7">
             {/* Filters Grid */}
-            <div className="grid grid-cols-6 gap-3">
+            <div className="grid grid-cols-4 gap-3">
                 {/* Сортировка */}
                 <div>
                     <label className={labelCls}>Сортировка</label>
@@ -288,6 +275,36 @@ export default function ObjectsOverviewUnitsFilters({
                     )}
                 </div>
 
+                {/* Комнат */}
+                <div>
+                    <label className={labelCls}>Комнат</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                        <select
+                            value={filters.rooms}
+                            onChange={(e) => set('rooms', +e.target.value)}
+                            className={inputCls}
+                        >
+                            {ROOMS_OPTS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                    {o.label}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            value={filters.rooms_from}
+                            onChange={(e) => set('rooms_from', e.target.value)}
+                            placeholder="От"
+                            className={inputCls}
+                        />
+                        <input
+                            value={filters.rooms_to}
+                            onChange={(e) => set('rooms_to', e.target.value)}
+                            placeholder="До"
+                            className={inputCls}
+                        />
+                    </div>
+                </div>
+
                 {/* Этаж */}
                 <div>
                     <label className={labelCls}>Этаж</label>
@@ -312,92 +329,9 @@ export default function ObjectsOverviewUnitsFilters({
                         />
                     </div>
                 </div>
-
-                {/* Статусы лота */}
-                <div className="col-span-2">
-                    <label className={labelCls}>Статусы</label>
-                    <div className="flex flex-wrap gap-1">
-                        {unitStatuses.map((st) => {
-                            const active = filters.status_code.includes(st.code);
-                            return (
-                                <button
-                                    key={st.id}
-                                    type="button"
-                                    onClick={() => toggleStatusCode(st.code)}
-                                    className="flex items-center gap-1 px-1.5 py-1 text-xs font-medium transition-colors border rounded-md"
-                                    style={
-                                        active
-                                            ? {
-                                                  backgroundColor: `${st.color}20`,
-                                                  borderColor: st.color,
-                                                  color: st.color,
-                                              }
-                                            : {
-                                                  backgroundColor: `${st.color}08`,
-                                                  borderColor: `${st.color}30`,
-                                                  color: `${st.color}90`,
-                                              }
-                                    }
-                                >
-                                    <span
-                                        className="w-1.5 h-1.5 rounded-full"
-                                        style={{
-                                            backgroundColor: active ? st.color : `${st.color}50`,
-                                        }}
-                                    />
-                                    {st.name}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Типы лотов */}
-                <div>
-                    <label className={labelCls}>Типы</label>
-                    <div className="flex flex-wrap gap-1">
-                        {LOT_TYPE_OPTIONS.map((lt) => {
-                            const active = filters.lot_types.includes(lt.value);
-                            const Icon = lt.icon;
-                            return (
-                                <button
-                                    key={lt.value}
-                                    type="button"
-                                    onClick={() => toggleLotType(lt.value)}
-                                    className={`
-                                        inline-flex items-center gap-1 rounded-md border px-2 py-1
-                                        text-xs font-medium transition-colors
-                                        ${
-                                            active
-                                                ? 'bg-sky-500 border-sky-500 text-white'
-                                                : `bg-white border-gray-200 text-gray-600 hover:border-sky-300 ${lt.className}`
-                                        }
-                                    `}
-                                >
-                                    <Icon className="w-3 h-3" />
-                                    {lt.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Комнат */}
-                <div>
-                    <label className={labelCls}>Комнат</label>
-                    <select
-                        value={filters.rooms}
-                        onChange={(e) => set('rooms', +e.target.value)}
-                        className={inputCls}
-                    >
-                        {ROOMS_OPTS.map((o) => (
-                            <option key={o.value} value={o.value}>
-                                {o.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
+            </div>
+            {/* Площадь / Цена () / Цена за м² */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
                 {/* Площадь */}
                 <div>
                     <label className={labelCls}>Площадь (м²)</label>
@@ -438,7 +372,7 @@ export default function ObjectsOverviewUnitsFilters({
 
                 {/* Цена за м² */}
                 <div>
-                    <label className={labelCls}>Цена/м² (₸)</label>
+                    <label className={labelCls}>Цена за м²</label>
                     <div className="grid grid-cols-2 gap-1.5">
                         <input
                             value={filters.price_m2_from}
@@ -454,21 +388,81 @@ export default function ObjectsOverviewUnitsFilters({
                         />
                     </div>
                 </div>
+            </div>
 
-                {/* Менеджер */}
-                <div>
-                    <label className={labelCls}>Менеджер</label>
-                    <select
-                        value={filters.manager_user_id}
-                        onChange={(e) => set('manager_user_id', +e.target.value)}
-                        className={inputCls}
-                    >
-                        <option value={0}>Все менеджеры</option>
-                    </select>
+            {/* Типы лотов /статус / клиент */}
+            <div className="flex items-start gap-3 mt-4">
+                {/* Типы лотов */}
+                <div className="flex-shrink-0">
+                    <label className={labelCls}>Типы</label>
+                    <div className="flex flex-wrap gap-1">
+                        {LOT_TYPE_OPTIONS.map((lt) => {
+                            const active = filters.lot_types.includes(lt.value);
+                            const Icon = lt.icon;
+                            return (
+                                <button
+                                    key={lt.value}
+                                    type="button"
+                                    onClick={() => toggleLotType(lt.value)}
+                                    className={`
+                                        inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 
+                                        text-xs font-medium transition-colors
+                                        ${
+                                            active
+                                                ? 'bg-sky-500 border-sky-500 text-white'
+                                                : `bg-white border-gray-200 text-gray-600 hover:border-sky-300 ${lt.className}`
+                                        }
+                                    `}
+                                >
+                                    <Icon className="w-3 h-3" />
+                                    {lt.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Статусы лота */}
+                <div className="flex-shrink-0">
+                    <label className={labelCls}>Статусы</label>
+                    <div className="flex flex-wrap gap-1">
+                        {unitStatuses.map((st) => {
+                            const active = filters.status_code.includes(st.code);
+                            return (
+                                <button
+                                    key={st.id}
+                                    type="button"
+                                    onClick={() => toggleStatusCode(st.code)}
+                                    className="flex items-center gap-1 px-2.5 py-1.5  text-xs font-medium transition-colors border rounded-md"
+                                    style={
+                                        active
+                                            ? {
+                                                  backgroundColor: `${st.color}20`,
+                                                  borderColor: st.color,
+                                                  color: st.color,
+                                              }
+                                            : {
+                                                  backgroundColor: `${st.color}10`,
+                                                  borderColor: `${st.color}30`,
+                                                  color: `${st.color}90`,
+                                              }
+                                    }
+                                >
+                                    <span
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        style={{
+                                            backgroundColor: active ? st.color : `${st.color}50`,
+                                        }}
+                                    />
+                                    {st.name}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Клиент */}
-                <div className="col-span-2">
+                <div className="flex-1 min-w-0">
                     <label className={labelCls}>Клиент</label>
                     <div className="grid grid-cols-3 gap-1.5">
                         <input
@@ -492,18 +486,32 @@ export default function ObjectsOverviewUnitsFilters({
                     </div>
                 </div>
             </div>
+            {/* Менеджер */}
+            <div className="flex-shrink-0 w-48 mt-4">
+                <label className={labelCls}>Менеджер</label>
+                <select
+                    value={filters.manager_user_id}
+                    onChange={(e) => set('manager_user_id', +e.target.value)}
+                    className={inputCls}
+                >
+                    <option value={0}>Все менеджеры</option>
+                </select>
+            </div>
 
             {/* Footer */}
-            <div className="flex gap-2 pt-3 mt-3 border-t border-gray-200">
-                <button
-                    onClick={onReset}
-                    className="flex-1 px-3 py-2 text-xs font-medium transition-colors border rounded-md border-rose-300 text-rose-500 hover:bg-rose-50"
-                >
-                    Сбросить
-                </button>
+            <div className="flex items-center justify-end gap-2 pt-2 mt-2 border-t border-gray-200">
+                {hasFilters && (
+                    <button
+                        onClick={onReset}
+                        className="flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium text-rose-500 border border-rose-300 rounded-md hover:bg-rose-50 transition-colors min-w-[100px]"
+                    >
+                        <RotateCcw size={12} />
+                        Сбросить
+                    </button>
+                )}
                 <button
                     onClick={onApply}
-                    className="flex-1 px-3 py-2 text-xs font-medium text-white transition-colors rounded-md bg-sky-600 hover:bg-sky-700"
+                    className="px-3 py-2 text-xs font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-md transition-colors min-w-[100px]"
                 >
                     Применить
                 </button>

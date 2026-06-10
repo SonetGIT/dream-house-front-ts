@@ -138,7 +138,7 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                     </div>
                                 </th>
 
-                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                <th className="px-4 py-3 text-center border-l bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
                             </tr>
@@ -152,11 +152,11 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
 
                                     {/* Расположение */}
                                     <td className="px-2 py-2 text-sm text-left whitespace-nowrap">
-                                        <div className="text-sm leading-none text-gray-800">
+                                        <div className="text-sm leading-none text-gray-800 whitespace-nowrap">
                                             {unt.project_name}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mt-0.5">
-                                            {unt.block_name}
+                                            <span className="ml-1 text-xs text-gray-500">
+                                                / {unt.block_name}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
