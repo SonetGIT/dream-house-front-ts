@@ -54,6 +54,11 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                     </div>
                                 </th>
 
+                                <th className="px-4 py-3 text-center border-l bg-sky-50 whitespace-nowrap">
+                                    <div className="text-xs font-semibold uppercase text-sky-600 ">
+                                        Кадастровый №
+                                    </div>
+                                </th>
                                 {/* Лот */}
                                 <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase whitespace-nowrap">
@@ -90,24 +95,6 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                     </div>
                                 </th>
 
-                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
-                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
-                                        Жилая площадь
-                                    </div>
-                                </th>
-
-                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
-                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
-                                        Площадь кухни
-                                    </div>
-                                </th>
-
-                                <th className="px-4 py-3 text-center border-l bg-indigo-50">
-                                    <div className="text-xs font-semibold text-indigo-700 uppercase">
-                                        Площадь балкона
-                                    </div>
-                                </th>
-
                                 {/* Стоимость */}
                                 <th className="px-4 py-3 text-center border-l bg-green-50">
                                     <div className="text-xs font-semibold text-green-700 uppercase">
@@ -135,24 +122,6 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                 <th className="px-4 py-3 text-center border-l bg-orange-50">
                                     <div className="text-xs font-semibold text-orange-700 uppercase">
                                         Тип отделки
-                                    </div>
-                                </th>
-
-                                <th className="px-4 py-3 text-center border-l bg-orange-50">
-                                    <div className="text-xs font-semibold text-orange-700 uppercase">
-                                        Высота потолков
-                                    </div>
-                                </th>
-
-                                <th className="px-4 py-3 text-center border-l bg-orange-50">
-                                    <div className="text-xs font-semibold text-orange-700 uppercase">
-                                        Ориентация
-                                    </div>
-                                </th>
-
-                                <th className="px-4 py-3 text-center border-l bg-orange-50">
-                                    <div className="text-xs font-semibold text-orange-700 uppercase whitespace-nowrap ">
-                                        Кадастровый №
                                     </div>
                                 </th>
 
@@ -190,7 +159,9 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                             {unt.block_name}
                                         </div>
                                     </td>
-
+                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                        {unt.cadastral_number ?? '-'}
+                                    </td>
                                     {/* Лот */}
                                     <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                                         {unt.unit_number}
@@ -237,18 +208,6 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                         {formatArea(unt.area_total)}
                                     </td>
 
-                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                        {unt.area_living ?? '-'}
-                                    </td>
-
-                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                        {unt.area_kitchen ?? '-'}
-                                    </td>
-
-                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                        {unt.area_balcony ?? '-'}
-                                    </td>
-
                                     {/* Стоимость */}
                                     <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                                         {unt.price_total}
@@ -277,18 +236,6 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                     {/* Характеристики */}
                                     <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                                         {unt.finish_type ?? '-'}
-                                    </td>
-
-                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                        {unt.ceiling_height ?? '-'}
-                                    </td>
-
-                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                        {unt.orientation ?? '-'}
-                                    </td>
-
-                                    <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                        {unt.cadastral_number ?? '-'}
                                     </td>
 
                                     {/* Дополнительно */}

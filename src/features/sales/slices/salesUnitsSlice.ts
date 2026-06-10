@@ -34,9 +34,6 @@ export interface SalesUnit {
 
     rooms: number | null;
     area_total: string | null;
-    area_living: string | null;
-    area_kitchen: string | null;
-    area_balcony: string | null;
 
     price_total: string | null;
     price_per_m2: string | null;
@@ -44,8 +41,6 @@ export interface SalesUnit {
     status_id: number | null;
 
     finish_type: string | null;
-    ceiling_height: string | null;
-    orientation: string | null;
     cadastral_number: string | null;
 
     is_active_for_sale: boolean;
@@ -92,9 +87,6 @@ export interface SalesUnitCreatePayload {
 
     rooms?: number | null;
     area_total?: string | null;
-    area_living?: string | null;
-    area_kitchen?: string | null;
-    area_balcony?: string | null;
 
     price_total?: string | null;
     price_per_m2?: string | null;
@@ -102,8 +94,6 @@ export interface SalesUnitCreatePayload {
     status_id?: number | null;
 
     finish_type?: string | null;
-    ceiling_height?: string | null;
-    orientation?: string | null;
     cadastral_number?: string | null;
 
     is_active_for_sale?: boolean;

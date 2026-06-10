@@ -1,3 +1,5 @@
+import { Car, Home, Package, Store } from 'lucide-react';
+
 export const getStatusColor = (statusId: number | null, lookup: (id: number) => string) => {
     if (statusId === null) {
         return 'bg-gray-100 text-gray-700 border  text-xs border-gray-200 rounded-lg';
@@ -127,4 +129,50 @@ export const writeOffStatuses: Record<number, { label: string; className: string
         className: 'bg-emerald-500/15 text-emerald-700 border border-emerald-400',
     },
     5: { label: 'Отменен', className: 'bg-red-500/15 text-red-700 border border-red-400' },
+};
+
+export const lotTypeConfig = {
+    apartment: {
+        label: 'Кв',
+        icon: Home,
+        className: 'bg-sky-50 text-sky-700 border-sky-200',
+    },
+    commercial: {
+        label: 'Комм',
+        icon: Store,
+        className: 'bg-purple-50 text-purple-700 border-purple-200',
+    },
+    parking: {
+        label: 'Парк',
+        icon: Car,
+        className: 'bg-slate-50 text-slate-600 border-slate-200',
+    },
+    storage: {
+        label: 'Клад',
+        icon: Package,
+        className: 'bg-orange-50 text-orange-600 border-orange-200',
+    },
+} as const;
+
+export const prjStatuses: Record<number, { label: string; className: string }> = {
+    1: {
+        label: 'На одобрении',
+        className: 'bg-violet text-violet-800 border-violet-200',
+    },
+    2: {
+        label: 'Одобрена',
+        className: 'bg-blue-100 text-blue-800 border-blue-200',
+    },
+    3: {
+        label: 'На исполнении',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    },
+    4: {
+        label: 'Исполнена',
+        className: 'bg-green-100 text-green-800 border-green-200',
+    },
+    5: {
+        label: 'Отменена',
+        className: 'bg-red-100 text-red-800 border-red-200',
+    },
 };

@@ -73,9 +73,6 @@ export interface SalesOverviewUnit {
     rooms: number;
 
     area_total: number;
-    area_living: number | null;
-    area_kitchen: number | null;
-    area_balcony: number | null;
 
     price_total: number;
     price_per_m2: number | null;
@@ -90,8 +87,6 @@ export interface SalesOverviewUnit {
     status_color: string;
 
     finish_type: string | null;
-    ceiling_height: number | null;
-    orientation: string | null;
 
     is_active_for_sale: boolean;
 
@@ -170,15 +165,6 @@ export interface SalesOverviewFilters {
 
     area_from?: number;
     area_to?: number;
-
-    area_living_from?: number;
-    area_living_to?: number;
-
-    area_kitchen_from?: number;
-    area_kitchen_to?: number;
-
-    area_balcony_from?: number;
-    area_balcony_to?: number;
 
     price_from?: number;
     price_to?: number;

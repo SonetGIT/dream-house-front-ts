@@ -10,34 +10,13 @@ import ObjectsOverviewBlockTable from './ObjectsOverviewBlockTable';
 import TypeChips from '@/components/ui/TypeChips';
 import UnitStat from '@/components/ui/UnitStat';
 import UnitBar from '@/components/ui/UnitBar';
+import { prjStatuses } from '@/utils/getStatusColor';
 
 interface PropsType {
     projects: SalesOverviewProject[];
     blocks: SalesOverviewBlock[];
     refs: Record<string, ReferenceResult>;
 }
-const prjStatuses: Record<number, { label: string; className: string }> = {
-    1: {
-        label: 'На одобрении',
-        className: 'bg-violet text-violet-800 border-violet-200',
-    },
-    2: {
-        label: 'Одобрена',
-        className: 'bg-blue-100 text-blue-800 border-blue-200',
-    },
-    3: {
-        label: 'На исполнении',
-        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    },
-    4: {
-        label: 'Исполнена',
-        className: 'bg-green-100 text-green-800 border-green-200',
-    },
-    5: {
-        label: 'Отменена',
-        className: 'bg-red-100 text-red-800 border-red-200',
-    },
-};
 
 /*************************************************************************************************************************/
 export default function ObjectsOverviewTable(props: PropsType) {
@@ -51,17 +30,6 @@ export default function ObjectsOverviewTable(props: PropsType) {
             ...prev,
             [id]: isOpening,
         }));
-
-        // 2. потом dispatch
-        // if (isOpening) {
-        //     dispatch(
-        //         fetchMaterialprjuestItems({
-        //             material_prjuest_id: id,
-        //             page: 1,
-        //             size: 10,
-        //         }),
-        //     );
-        // }
     };
 
     /*STATUS************************************************************************************************************/

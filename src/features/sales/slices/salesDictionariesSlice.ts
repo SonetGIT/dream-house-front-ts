@@ -80,6 +80,7 @@ export const fetchSalesUnitStatuses = createAsyncThunk<
 >('salesDictionaries/fetchUnitStatuses', async (_, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesUnitStatus[]>('/sales/unit-statuses', 'GET');
+
         return res.data ?? [];
     } catch (err: unknown) {
         return rejectWithValue(

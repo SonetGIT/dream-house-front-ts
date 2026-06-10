@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
+import type { SalesUnitStatus } from './salesDictionariesSlice';
 
 export interface SalesOverviewProjectInfo {
     id: number;
@@ -34,16 +35,16 @@ export interface SalesOverviewBlockInfo {
     deleted: boolean;
 }
 
-export interface SalesUnitStatus {
-    id: number;
-    name: string;
-    code: string;
-    color: string;
-    sort_order: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
-}
+// export interface SalesUnitStatus {
+//     id: number;
+//     name: string;
+//     code: string;
+//     color: string;
+//     sort_order: number;
+//     created_at: string;
+//     updated_at: string;
+//     deleted: boolean;
+// }
 
 export interface SalesCurrencyInfo {
     id: number;
@@ -64,9 +65,6 @@ export interface SalesBlockUnit {
 
     rooms: number | null;
     area_total: string | null;
-    area_living: string | null;
-    area_kitchen: string | null;
-    area_balcony: string | null;
 
     price_total: string | null;
     price_per_m2: string | null;
@@ -74,8 +72,6 @@ export interface SalesBlockUnit {
     status_id: number | null;
 
     finish_type: string | null;
-    ceiling_height: string | null;
-    orientation: string | null;
     cadastral_number: string | null;
 
     is_active_for_sale: boolean;
