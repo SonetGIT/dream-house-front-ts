@@ -49,9 +49,9 @@ export default function App() {
             <Menu open={drawerOpen} onClose={handleDrawerClose} />
 
             <main>
+                {/* Упс... */}
                 <Outlet />
             </main>
-
             <Footer />
         </div>
     );

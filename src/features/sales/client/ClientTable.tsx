@@ -1,7 +1,6 @@
 import { FolderOpen, Loader2, Mail, Pencil, Phone } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { SalesClient } from '../slices/salesClientsSlice';
-import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatArea } from '@/utils/formatNumber';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
@@ -146,7 +145,7 @@ export default function ClientTable({
                                         {client.phone && (
                                             <div className="flex items-center gap-1.5 text-gray-700 text-xs">
                                                 <Phone className="w-3.5 h-3.5 text-blue-500" />
-                                                {formatPhoneDisplay(client.phone)}
+                                                {client.phone}
                                             </div>
                                         )}
                                         <div className="flex items-center gap-1.5 text-gray-700">

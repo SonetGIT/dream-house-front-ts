@@ -54,7 +54,6 @@ export default function ClientPage() {
     const [submitting, setSubmitting] = useState(false);
 
     const users = useReference('users');
-    // const blocksRef = useReference('projectBlocks');
     const refs = {
         users,
     };

@@ -179,6 +179,12 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                 {/* Контакты */}
                                 <td className="px-3 py-2.5">
                                     <div className="space-y-1 text-sm">
+                                        {user.phone && (
+                                            <div className="flex items-center gap-1.5 text-gray-700 text-sm">
+                                                <Phone className="w-3.5 h-3.5 text-gray-400" />
+                                                {formatPhoneDisplay(user.phone)}
+                                            </div>
+                                        )}
                                         <div className="flex items-center gap-1.5 text-gray-700">
                                             <Mail className="w-3.5 h-3.5 text-gray-400" />
                                             <span className="truncate max-w-[200px]">
@@ -194,12 +200,6 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                                 )}
                                             </span>
                                         </div>
-                                        {user.phone && (
-                                            <div className="flex items-center gap-1.5 text-gray-700 text-sm">
-                                                <Phone className="w-3.5 h-3.5 text-gray-400" />
-                                                {formatPhoneDisplay(user.phone)}
-                                            </div>
-                                        )}
                                     </div>
                                 </td>
                                 {/* userRole */}

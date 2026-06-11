@@ -35,17 +35,6 @@ export interface SalesOverviewBlockInfo {
     deleted: boolean;
 }
 
-// export interface SalesUnitStatus {
-//     id: number;
-//     name: string;
-//     code: string;
-//     color: string;
-//     sort_order: number;
-//     created_at: string;
-//     updated_at: string;
-//     deleted: boolean;
-// }
-
 export interface SalesCurrencyInfo {
     id: number;
     name: string;

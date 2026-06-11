@@ -58,7 +58,6 @@ export function formatPhoneInput(value?: string | null): string {
     return result;
 }
 
-/* Красивое отображение в таблице: +996 (555) 123-456 */
 export function formatPhoneDisplay(value?: string | null): string {
     const digits = normalizePhone(value);
 

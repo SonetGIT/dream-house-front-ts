@@ -1,5 +1,5 @@
-import { Box, CircularProgress, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
@@ -9,109 +9,130 @@ import ObjectsOverviewUnitsFilters, {
     DEFAULT_UNIT_FILTERS,
     type UnitFilters,
 } from './ObjectsOverviewUnitsFilters';
-import { fetchSalesUnits } from '../slices/salesUnitsSlice';
+import { updateSalesUnit, type SalesUnit } from '../slices/salesUnitsSlice';
 import { fetchSalesUnitStatuses } from '../slices/salesDictionariesSlice';
+import toast from 'react-hot-toast';
+import { Add } from '@mui/icons-material';
+import { ObjectsOverviewUnitCreatForm } from './ObjectsOverviewUnitCreatForm';
+import { ObjectsOverviewUnitForm } from './ObjectsOverviewUnitForm';
 
 // ---- Build search payload ----
-interface SalesUnitsSearchPayload {
-    // search?: string;
-    // project_id?: number | null;
-    // block_id?: number | null;
-    // floor_id?: number | null;
-    // status_id?: number | null;
-    // lot_type?: string | null;
-    // rooms?: number | null;
-    // manager_user_id?: number | null;
-    // is_active_for_sale?: boolean | null;
-    // page?: number;
-    // size?: number;
 
-    sort_by?: string;
-    sort_desc?: boolean;
-    project_ids?: number[];
-    floor_exact?: string;
-    floor_from?: number | string;
-    floor_to?: number | string;
-    status_code?: string[];
-    lot_types?: string[];
-    rooms?: number;
-    rooms_from?: number | string;
-    rooms_to?: number | string;
-    area_from?: number | string;
-    area_to?: number | string;
-    price_from?: number | string;
-    price_to?: number | string;
-    price_m2_from?: number | string;
-    price_m2_to?: number | string;
-    manager_user_id?: number;
-    client_search?: string;
-    client_pin?: string;
-    client_passport?: string;
-    page?: number;
-    size?: number;
-}
-function buildPayload(filters: UnitFilters, search: string, page: number): SalesUnitsSearchPayload {
-    const payload: SalesUnitsSearchPayload = {
+export function buildPayload(filters: UnitFilters, page: number) {
+    const payload: Record<string, unknown> = {
         page,
-        size: 25,
-        sort_by: filters.sort_by,
-        sort_desc: filters.sort_desc,
+        size: 10,
+        include_units: true,
     };
-    if (search.trim()) payload.client_search = search.trim();
-    if (filters.project_ids.length > 0) payload.project_ids = filters.project_ids;
-    if (filters.status_code.length > 0) payload.status_code = filters.status_code;
-    if (filters.lot_types.length > 0) payload.lot_types = filters.lot_types;
-    if (filters.rooms > 0) payload.rooms = filters.rooms;
-    if (filters.manager_user_id > 0) payload.manager_user_id = filters.manager_user_id;
+
+    if (filters.sort_by) {
+        payload.unit_sort = filters.sort_by;
+    }
+
+    if (filters.project_ids.length) {
+        payload.project_ids = filters.project_ids;
+    }
+
+    if (filters.status_code.length) {
+        payload.status_codes = filters.status_code;
+    }
+
+    if (filters.lot_types.length) {
+        payload.lot_types = filters.lot_types;
+    }
+
+    if (filters.rooms > 0) {
+        payload.rooms = filters.rooms;
+    }
+
+    if (filters.deal_manager_user_id > 0) {
+        payload.deal_manager_user_id = filters.deal_manager_user_id;
+    }
+
+    if (filters.client_search.trim()) {
+        payload.client_search = filters.client_search.trim();
+    }
+    if (filters.client_pin.trim()) {
+        payload.client_pin = filters.client_pin.trim();
+    }
+
+    if (filters.client_passport.trim()) {
+        payload.client_passport = filters.client_passport.trim();
+    }
+
+    // этажи
 
     if (filters.floor_exact) {
-        const n = parseInt(filters.floor_exact);
-        if (!isNaN(n)) {
-            payload.floor_from = n;
-            payload.floor_to = n;
+        const floor = Number(filters.floor_exact);
+
+        if (!Number.isNaN(floor)) {
+            payload.floor_number = floor;
         }
     } else {
-        if (filters.floor_from) {
-            const n = parseInt(filters.floor_from);
-            if (!isNaN(n)) payload.floor_from = n;
+        const from = Number(filters.floor_from);
+        const to = Number(filters.floor_to);
+
+        if (!Number.isNaN(from) && filters.floor_from) {
+            payload.floor_from = from;
         }
-        if (filters.floor_to) {
-            const n = parseInt(filters.floor_to);
-            if (!isNaN(n)) payload.floor_to = n;
+
+        if (!Number.isNaN(to) && filters.floor_to) {
+            payload.floor_to = to;
         }
     }
-    if (filters.rooms_from) {
-        const n = parseInt(filters.rooms_from);
-        if (!isNaN(n)) payload.rooms_from = n;
+
+    // комнаты
+
+    const roomsFrom = Number(filters.rooms_from);
+    const roomsTo = Number(filters.rooms_to);
+
+    if (!Number.isNaN(roomsFrom) && filters.rooms_from) {
+        payload.rooms_from = roomsFrom;
     }
-    if (filters.rooms_to) {
-        const n = parseInt(filters.rooms_to);
-        if (!isNaN(n)) payload.rooms_to = n;
+
+    if (!Number.isNaN(roomsTo) && filters.rooms_to) {
+        payload.rooms_to = roomsTo;
     }
-    if (filters.area_from) {
-        const n = parseFloat(filters.area_from);
-        if (!isNaN(n)) payload.area_from = n;
+
+    // площадь
+
+    const areaFrom = Number(filters.area_from);
+    const areaTo = Number(filters.area_to);
+
+    if (!Number.isNaN(areaFrom) && filters.area_from) {
+        payload.area_from = areaFrom;
     }
-    if (filters.area_to) {
-        const n = parseFloat(filters.area_to);
-        if (!isNaN(n)) payload.area_to = n;
+
+    if (!Number.isNaN(areaTo) && filters.area_to) {
+        payload.area_to = areaTo;
     }
-    if (filters.price_from) {
-        const n = parseFloat(filters.price_from);
-        if (!isNaN(n)) payload.price_from = n;
+
+    // цена
+
+    const priceFrom = Number(filters.price_from);
+    const priceTo = Number(filters.price_to);
+
+    if (!Number.isNaN(priceFrom) && filters.price_from) {
+        payload.price_from = priceFrom;
     }
-    if (filters.price_to) {
-        const n = parseFloat(filters.price_to);
-        if (!isNaN(n)) payload.price_to = n;
+
+    if (!Number.isNaN(priceTo) && filters.price_to) {
+        payload.price_to = priceTo;
     }
-    if (filters.price_m2_from) {
-        const n = parseFloat(filters.price_m2_from);
-        if (!isNaN(n)) payload.price_m2_from = n;
+
+    // цена за м²
+
+    const priceM2From = Number(filters.price_m2_from);
+    const priceM2To = Number(filters.price_m2_to);
+
+    if (!Number.isNaN(priceM2From) && filters.price_m2_from) {
+        payload.price_per_m2_from = priceM2From;
     }
-    if (filters.price_m2_to) {
-        const n = parseFloat(filters.price_m2_to);
-        if (!isNaN(n)) payload.price_m2_to = n;
+
+    if (!Number.isNaN(priceM2To) && filters.price_m2_to) {
+        payload.price_per_m2_to = priceM2To;
     }
+
     return payload;
 }
 /*************************************************************************************************************************/
@@ -120,65 +141,80 @@ export default function ObjectsOverviewUnitsPage() {
     const { units, loading, unitsPagination } = useAppSelector((state) => state.salesObjOverview);
     const { projects } = useAppSelector((s) => s.salesObjOverview);
     const { unitStatuses } = useAppSelector((s) => s.salesDictionaries);
+
     const [showFilters, setShowFilters] = useState(true);
     const [filters, setFilters] = useState<UnitFilters>(DEFAULT_UNIT_FILTERS);
-    const [search, setSearch] = useState('');
+    const [appliedFilters, setAppliedFilters] = useState<UnitFilters>(DEFAULT_UNIT_FILTERS);
+    const [modal, setModal] = useState<{ mode: 'create' | 'edit'; unit?: SalesUnit } | null>(null);
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
 
-    //Первичная загрузка =====
-    // useEffect(() => {
-    //     dispatch(
-    //         fetchSalesOverview({
-    //             page,
-    //             size,
-
-    //             include_units: true,
-
-    //             unit_page: page,
-    //             unit_size: size,
-    //             unit_sort: 'created_desc',
-    //         }
-
-    //     );
-    //     dispatch(fetchSalesUnitStatuses());
-    // }, [dispatch, page, size]);
+    //ОДИН useEffect для первичной загрузки
     useEffect(() => {
-        dispatch(fetchSalesOverview({ page, size, include_units: true }));
         dispatch(fetchSalesUnitStatuses());
-        load(DEFAULT_UNIT_FILTERS, '', 1);
-    }, [dispatch, page, size]);
-
+    }, [dispatch]);
+    // Функция загрузки
     const load = useCallback(
-        (f: UnitFilters, s: string, p: number) => {
-            dispatch(fetchSalesUnits(buildPayload(f, s, p)));
+        async (f: UnitFilters, p: number) => {
+            await dispatch(fetchSalesOverview(buildPayload(f, p)));
         },
         [dispatch],
     );
-
+    //Автоматическая загрузка при изменении фильтров/поиска/страницы
     useEffect(() => {
-        dispatch(fetchSalesOverview({}));
-        dispatch(fetchSalesUnitStatuses());
-        load(DEFAULT_UNIT_FILTERS, '', 1);
-    }, []);
+        load(appliedFilters, page);
+    }, [appliedFilters, page, load]);
+
+    // Применение фильтров
     function handleApply() {
         setPage(1);
-        load(filters, search, 1);
+        setAppliedFilters(filters);
     }
 
+    // Сброс фильтров
     function handleReset() {
         setFilters(DEFAULT_UNIT_FILTERS);
-        setSearch('');
+        setAppliedFilters(DEFAULT_UNIT_FILTERS);
         setPage(1);
-        load(DEFAULT_UNIT_FILTERS, '', 1);
+    }
+
+    // Обработчик изменения фильтров
+    function handleFiltersChange(newFilters: UnitFilters) {
+        setFilters(newFilters);
+        // load вызовется автоматически через useEffect выше
+    }
+
+    async function handleStatusChange(unitId: number, statusId: number) {
+        const st = unitStatuses.find((s) => s.id === statusId);
+        if (!st) return;
+
+        try {
+            //Отправка на сервер
+            await dispatch(
+                updateSalesUnit({ id: unitId, payload: { status_id: statusId } }),
+            ).unwrap();
+
+            toast.success(`Статус изменён на «${st.name}»`);
+
+            //Перезагрузка данных (для синхронизации с бэком)
+            await load(filters, page);
+        } catch (e) {
+            toast.error(`Ошибка: ${e}`);
+            //4. Откат изменений при ошибке
+            load(filters, page);
+        }
     }
     // hooks всегда вызываются одинаково
     const projectStatuses = useReference('projectStatuses');
-
+    const users = useReference('users');
     const refs = {
         projectStatuses,
+        users,
     };
-
+    const managers = useMemo(
+        () => (refs.users.data ?? []).filter((user) => String(user.role_id) === '16'),
+        [refs.users.data],
+    );
     if (loading) {
         return <div>Загрузка проекта...</div>;
     }
@@ -191,8 +227,6 @@ export default function ObjectsOverviewUnitsPage() {
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                     <CircularProgress />
                 </Box>
-            ) : units.length === 0 ? (
-                <Typography color="text.secondary">Лоты отсутствуют</Typography>
             ) : (
                 <>
                     {showFilters && (
@@ -203,9 +237,25 @@ export default function ObjectsOverviewUnitsPage() {
                             onFiltersChange={setFilters}
                             onApply={handleApply}
                             onReset={handleReset}
+                            managers={managers}
                         />
                     )}
-                    <ObjectsOverviewUnitsTable units={units} refs={refs} />
+                    <div className="flex items-center justify-end mb-3">
+                        <Button
+                            variant="outlined"
+                            className="inline-flex items-center text-sm font-medium text-white transition bg-blue-600 rounded-lg h-9 hover:bg-blue-600 hover:text-white"
+                            startIcon={<Add />}
+                            onClick={() => setModal({ mode: 'create' })}
+                        >
+                            Создать лот
+                        </Button>
+                    </div>
+                    <ObjectsOverviewUnitsTable
+                        units={units}
+                        refs={refs}
+                        unitStatuses={unitStatuses}
+                        onStatusChange={handleStatusChange}
+                    />
 
                     {unitsPagination && (
                         <TablePagination
@@ -222,6 +272,24 @@ export default function ObjectsOverviewUnitsPage() {
                     )}
                 </>
             )}
+            {/* MODALS */}
+            {
+               modal?.mode === 'create' && (
+                <ObjectsOverviewUnitForm
+                    mode="create"
+                    onClose={() => setModal(null)}
+                />
+                );
+            }
+            {
+                modal?.mode === 'edit' && modal.unit && (
+                    <ObjectsOverviewUnitFor
+                        mode="edit"
+                        unit={modal.unit}
+                        onClose={() => setModal(null)}
+                    />
+                );
+            }
         </Paper>
     );
 }

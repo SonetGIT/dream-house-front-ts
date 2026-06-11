@@ -2,26 +2,37 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, RotateCcw, Check, Package, Car, Store, Home } from 'lucide-react';
 import type { SalesOverviewProject } from '../slices/salesObjOverviewSlice';
 import type { SalesUnitStatus } from '../slices/salesDictionariesSlice';
+import type { EnumItem } from '@/features/reference/referenceService';
+import { getManagerLabel } from '../leads/LeadCard';
 
 export interface UnitFilters {
     sort_by: string;
     sort_desc: boolean;
+
     project_ids: number[];
+
     floor_exact: string;
     floor_from: string;
     floor_to: string;
+
     status_code: string[];
     lot_types: string[];
+
     rooms: number;
     rooms_from: string;
     rooms_to: string;
+
     area_from: string;
     area_to: string;
+
     price_from: string;
     price_to: string;
+
     price_m2_from: string;
     price_m2_to: string;
-    manager_user_id: number;
+
+    deal_manager_user_id: number;
+
     client_search: string;
     client_pin: string;
     client_passport: string;
@@ -45,22 +56,20 @@ export const DEFAULT_UNIT_FILTERS: UnitFilters = {
     price_to: '',
     price_m2_from: '',
     price_m2_to: '',
-    manager_user_id: 0,
+    deal_manager_user_id: 0,
     client_search: '',
     client_pin: '',
     client_passport: '',
 };
 
 const SORT_OPTIONS = [
-    { value: 'id|desc', label: 'Новые' },
-    { value: 'id|asc', label: 'Старые' },
-    { value: 'unit_number|asc', label: 'По номеру' },
-    { value: 'price_total|asc', label: 'Цена ↑' },
-    { value: 'price_total|desc', label: 'Цена ↓' },
-    { value: 'area_total|asc', label: 'Площадь ↑' },
-    { value: 'area_total|desc', label: 'Площадь ↓' },
-    { value: 'floor_number|asc', label: 'Этаж ↑' },
-    { value: 'floor_number|desc', label: 'Этаж ↓' },
+    { value: 'created_desc', label: 'Новые' },
+    { value: 'price_asc', label: 'Цена ↑' },
+    { value: 'price_desc', label: 'Цена ↓' },
+    { value: 'area_asc', label: 'Площадь ↑' },
+    { value: 'area_desc', label: 'Площадь ↓' },
+    { value: 'floor_asc', label: 'Этаж ↑' },
+    { value: 'floor_desc', label: 'Этаж ↓' },
 ];
 
 const LOT_TYPE_OPTIONS = [
@@ -106,6 +115,7 @@ interface Props {
     onFiltersChange: (f: UnitFilters) => void;
     onApply: () => void;
     onReset: () => void;
+    managers: EnumItem[];
 }
 
 const inputCls =
@@ -119,6 +129,7 @@ export default function ObjectsOverviewUnitsFilters({
     onFiltersChange,
     onApply,
     onReset,
+    managers = [],
 }: Props) {
     const [projectsOpen, setProjectsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -159,13 +170,6 @@ export default function ObjectsOverviewUnitsFilters({
         onFiltersChange({ ...filters, lot_types: next });
     }
 
-    const sortValue = `${filters.sort_by}|${filters.sort_desc ? 'desc' : 'asc'}`;
-
-    function handleSortChange(val: string) {
-        const [sb, sd] = val.split('|');
-        onFiltersChange({ ...filters, sort_by: sb, sort_desc: sd === 'desc' });
-    }
-
     const hasFilters =
         filters.project_ids.length > 0 ||
         filters.status_code.length > 0 ||
@@ -182,11 +186,12 @@ export default function ObjectsOverviewUnitsFilters({
         filters.price_to ||
         filters.price_m2_from ||
         filters.price_m2_to ||
-        filters.manager_user_id > 0 ||
+        filters.deal_manager_user_id > 0 ||
         filters.client_search ||
         filters.client_pin ||
         filters.client_passport;
 
+    /*******************************************************************************************************************************/
     return (
         <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm mb-7">
             {/* Filters Grid */}
@@ -194,9 +199,15 @@ export default function ObjectsOverviewUnitsFilters({
                 {/* Сортировка */}
                 <div>
                     <label className={labelCls}>Сортировка</label>
+
                     <select
-                        value={sortValue}
-                        onChange={(e) => handleSortChange(e.target.value)}
+                        value={filters.sort_by}
+                        onChange={(e) =>
+                            onFiltersChange({
+                                ...filters,
+                                sort_by: e.target.value,
+                            })
+                        }
                         className={inputCls}
                     >
                         {SORT_OPTIONS.map((o) => (
@@ -490,11 +501,16 @@ export default function ObjectsOverviewUnitsFilters({
             <div className="flex-shrink-0 w-48 mt-4">
                 <label className={labelCls}>Менеджер</label>
                 <select
-                    value={filters.manager_user_id}
-                    onChange={(e) => set('manager_user_id', +e.target.value)}
+                    value={filters.deal_manager_user_id}
+                    onChange={(e) => set('deal_manager_user_id', +e.target.value)}
                     className={inputCls}
                 >
-                    <option value={0}>Все менеджеры</option>
+                    <option value="">Не выбран</option>
+                    {managers?.map((manager) => (
+                        <option key={String(manager.id)} value={String(manager.id)}>
+                            {getManagerLabel(manager)}
+                        </option>
+                    ))}
                 </select>
             </div>
 
