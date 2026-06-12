@@ -11,6 +11,13 @@ export interface SalesUnitStatus {
     updated_at: string;
     deleted: boolean;
 }
+export interface SalesUnitFinishTypes {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    deleted: boolean;
+}
 
 export interface SalesLeadStatus {
     id: number;
@@ -47,11 +54,13 @@ export interface SalesPaymentScheduleStatus {
 
 interface SalesDictionariesState {
     unitStatuses: SalesUnitStatus[];
+    finishTypes: SalesUnitFinishTypes[];
     leadStatuses: SalesLeadStatus[];
     leadSources: SalesLeadSource[];
     paymentScheduleStatuses: SalesPaymentScheduleStatus[];
     loading: {
         unitStatuses: boolean;
+        finishTypes: boolean;
         leadStatuses: boolean;
         leadSources: boolean;
         paymentScheduleStatuses: boolean;
@@ -61,11 +70,13 @@ interface SalesDictionariesState {
 
 const initialState: SalesDictionariesState = {
     unitStatuses: [],
+    finishTypes: [],
     leadStatuses: [],
     leadSources: [],
     paymentScheduleStatuses: [],
     loading: {
         unitStatuses: false,
+        finishTypes: false,
         leadStatuses: false,
         leadSources: false,
         paymentScheduleStatuses: false,
@@ -80,6 +91,21 @@ export const fetchSalesUnitStatuses = createAsyncThunk<
 >('salesDictionaries/fetchUnitStatuses', async (_, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesUnitStatus[]>('/sales/unit-statuses', 'GET');
+
+        return res.data ?? [];
+    } catch (err: unknown) {
+        return rejectWithValue(
+            err instanceof Error ? err.message : 'Не удалось загрузить статусы лотов',
+        );
+    }
+});
+export const fetchSalesUnitFinishTypes = createAsyncThunk<
+    SalesUnitFinishTypes[],
+    void,
+    { rejectValue: string }
+>('salesDictionaries/fetchUnitFinishTypes', async (_, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<SalesUnitFinishTypes[]>('/sales/unit-finish-types', 'GET');
 
         return res.data ?? [];
     } catch (err: unknown) {

@@ -72,28 +72,28 @@ const SORT_OPTIONS = [
     { value: 'floor_desc', label: 'Этаж ↓' },
 ];
 
-const LOT_TYPE_OPTIONS = [
+export const LOT_TYPE_OPTIONS = [
     {
         value: 'apartment',
-        label: 'Квартира',
+        label: 'Кв',
         icon: Home,
         className: 'bg-sky-50 text-sky-700 border-sky-200',
     },
     {
         value: 'commercial',
-        label: 'Комм. помещение',
+        label: 'Комм',
         icon: Store,
         className: 'bg-purple-50 text-purple-700 border-purple-200',
     },
     {
         value: 'parking',
-        label: 'Паркинг',
+        label: 'Парк',
         icon: Car,
         className: 'bg-slate-50 text-slate-600 border-slate-200',
     },
     {
         value: 'storage',
-        label: 'Кладовая',
+        label: 'Клад',
         icon: Package,
         className: 'bg-orange-50 text-orange-600 border-orange-200',
     },
@@ -101,11 +101,10 @@ const LOT_TYPE_OPTIONS = [
 
 const ROOMS_OPTS = [
     { value: 0, label: 'Все комн.' },
-    { value: 1, label: 'Студия' },
-    { value: 2, label: '1' },
-    { value: 3, label: '2' },
-    { value: 4, label: '3' },
-    { value: 5, label: '4+' },
+    { value: 1, label: '1' },
+    { value: 2, label: '2' },
+    { value: 3, label: '3' },
+    { value: 4, label: '4+' },
 ];
 
 interface Props {
@@ -496,22 +495,22 @@ export default function ObjectsOverviewUnitsFilters({
                         />
                     </div>
                 </div>
-            </div>
-            {/* Менеджер */}
-            <div className="flex-shrink-0 w-48 mt-4">
-                <label className={labelCls}>Менеджер</label>
-                <select
-                    value={filters.deal_manager_user_id}
-                    onChange={(e) => set('deal_manager_user_id', +e.target.value)}
-                    className={inputCls}
-                >
-                    <option value="">Не выбран</option>
-                    {managers?.map((manager) => (
-                        <option key={String(manager.id)} value={String(manager.id)}>
-                            {getManagerLabel(manager)}
-                        </option>
-                    ))}
-                </select>
+                {/* Менеджер */}
+                <div className="flex-shrink-0 w-56 ">
+                    <label className={labelCls}>Менеджер</label>
+                    <select
+                        value={filters.deal_manager_user_id}
+                        onChange={(e) => set('deal_manager_user_id', +e.target.value)}
+                        className={inputCls}
+                    >
+                        <option value="">Не выбран</option>
+                        {managers?.map((manager) => (
+                            <option key={String(manager.id)} value={String(manager.id)}>
+                                {getManagerLabel(manager)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* Footer */}

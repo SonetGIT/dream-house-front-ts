@@ -10,14 +10,15 @@ import ObjectsOverviewUnitsFilters, {
     type UnitFilters,
 } from './ObjectsOverviewUnitsFilters';
 import { updateSalesUnit, type SalesUnit } from '../slices/salesUnitsSlice';
-import { fetchSalesUnitStatuses } from '../slices/salesDictionariesSlice';
+import {
+    fetchSalesUnitFinishTypes,
+    fetchSalesUnitStatuses,
+} from '../slices/salesDictionariesSlice';
 import toast from 'react-hot-toast';
 import { Add } from '@mui/icons-material';
-import { ObjectsOverviewUnitCreatForm } from './ObjectsOverviewUnitCreatForm';
 import { ObjectsOverviewUnitForm } from './ObjectsOverviewUnitForm';
 
 // ---- Build search payload ----
-
 export function buildPayload(filters: UnitFilters, page: number) {
     const payload: Record<string, unknown> = {
         page,
@@ -140,7 +141,7 @@ export default function ObjectsOverviewUnitsPage() {
     const dispatch = useAppDispatch();
     const { units, loading, unitsPagination } = useAppSelector((state) => state.salesObjOverview);
     const { projects } = useAppSelector((s) => s.salesObjOverview);
-    const { unitStatuses } = useAppSelector((s) => s.salesDictionaries);
+    const { unitStatuses, finishTypes } = useAppSelector((s) => s.salesDictionaries);
 
     const [showFilters, setShowFilters] = useState(true);
     const [filters, setFilters] = useState<UnitFilters>(DEFAULT_UNIT_FILTERS);
@@ -152,6 +153,7 @@ export default function ObjectsOverviewUnitsPage() {
     //ОДИН useEffect для первичной загрузки
     useEffect(() => {
         dispatch(fetchSalesUnitStatuses());
+        dispatch(fetchSalesUnitFinishTypes());
     }, [dispatch]);
     // Функция загрузки
     const load = useCallback(
@@ -207,9 +209,11 @@ export default function ObjectsOverviewUnitsPage() {
     // hooks всегда вызываются одинаково
     const projectStatuses = useReference('projectStatuses');
     const users = useReference('users');
+    const currencies = useReference('useReference');
     const refs = {
         projectStatuses,
         users,
+        currencies,
     };
     const managers = useMemo(
         () => (refs.users.data ?? []).filter((user) => String(user.role_id) === '16'),
@@ -273,23 +277,23 @@ export default function ObjectsOverviewUnitsPage() {
                 </>
             )}
             {/* MODALS */}
-            {
-               modal?.mode === 'create' && (
+            {modal && (
                 <ObjectsOverviewUnitForm
-                    mode="create"
+                    mode={modal.mode}
+                    unit={modal.unit}
+                    unitStatuses={unitStatuses}
+                    finishTypes={finishTypes}
+                    refs={refs}
                     onClose={() => setModal(null)}
                 />
-                );
-            }
-            {
-                modal?.mode === 'edit' && modal.unit && (
-                    <ObjectsOverviewUnitFor
-                        mode="edit"
-                        unit={modal.unit}
-                        onClose={() => setModal(null)}
-                    />
-                );
-            }
+            )}
+            {/* {modal?.mode === 'edit' && modal.unit && (
+                <ObjectsOverviewUnitForm
+                    mode="edit"
+                    unit={modal.unit}
+                    onClose={() => setModal(null)}
+                />
+            )} */}
         </Paper>
     );
 }

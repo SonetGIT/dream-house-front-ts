@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Collapse } from '@mui/material';
+import { Button, Collapse } from '@mui/material';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
@@ -11,6 +11,7 @@ import TypeChips from '@/components/ui/TypeChips';
 import UnitStat from '@/components/ui/UnitStat';
 import UnitBar from '@/components/ui/UnitBar';
 import { prjStatuses } from '@/utils/getStatusColor';
+import { Add } from '@mui/icons-material';
 
 interface PropsType {
     projects: SalesOverviewProject[];
@@ -92,9 +93,9 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                     </div>
                                 </th>
 
-                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                {/* <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Действия</div>
-                                </th>
+                                </th> */}
                             </tr>
                         </thead>
                         <tbody>
@@ -209,7 +210,7 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                     stor={prj.storage_units}
                                                 />
                                             </td>
-                                            <td className="px-2 py-2 space-y-0.5">
+                                            <td className="px-2 py-2 text-left space-y-0.5">
                                                 <div className="text-xs text-gray-600 ">
                                                     Своб фонд:{' '}
                                                     <span className="text-sm font-medium text-violet-600">
@@ -249,39 +250,27 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                     </span>
                                                 </div>
                                             </td>
-                                            {/* Действия */}
-                                            <td className="px-3 py-2 border-l bg-gray-50">
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                    <StyledTooltip title="Пока под вопросом">
-                                                        <button
-                                                            // onClick={(e) => {
-                                                            //     e.stopPropagation();
-                                                            //     props.onDeleteMatprjId(prj.id);
-                                                            // }}
-                                                            className="
-                                                                p-1.5
-                                                                text-gray-400
-                                                                hover:text-red-600
-                                                                hover:bg-red-50
-                                                                rounded
-                                                                transition-colors
-                                                            "
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </StyledTooltip>
-                                                </div>
-                                            </td>
                                         </tr>
 
                                         {/* ObjectsOverviewBlockTable*/}
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
-                                            <td colSpan={10} className="px-3 py-2">
+                                            <td colSpan={10} className="px-4 py-2">
                                                 <Collapse in={openRows[prj.id]} unmountOnExit>
-                                                    <div className="px-3 py-2">
-                                                        <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
-                                                            Блоки
-                                                        </p>
+                                                    <div className="px-4 py-2">
+                                                        <div className="flex items-center justify-between py-2 border-b-2 border-blue-600">
+                                                            <p className="text-sm font-medium text-blue-600">
+                                                                Блоки
+                                                            </p>
+
+                                                            <button
+                                                                // variant="outlined"
+                                                                className="inline-flex items-center w-16 h-8 text-sm font-medium text-center text-white transition rounded-lg border-fuchsia-700 bg-fuchsia-600 hover:bg-fuchsia-700 hover:text-white"
+                                                                // startIcon={<Add />}
+                                                            >
+                                                                + Этаж
+                                                            </button>
+                                                        </div>
+                                                        {/* </div> */}
                                                         <ObjectsOverviewBlockTable
                                                             blocks={props.blocks.filter(
                                                                 (b) => b.project_id === prj.id,

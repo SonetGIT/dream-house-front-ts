@@ -16,6 +16,7 @@ export default function ObjectsOverviewBlockTable({ blocks }: { blocks: SalesOve
                         <th className="px-3 py-2 text-sm text-left">По статусам</th>
                         <th className="px-3 py-2 text-sm text-left">По типам</th>
                         <th className="px-3 py-2 text-sm text-left">Стоимость</th>
+                        <th className="px-3 py-2 text-sm text-left">Этажи</th>
                     </tr>
                 </thead>
 
@@ -87,7 +88,7 @@ export default function ObjectsOverviewBlockTable({ blocks }: { blocks: SalesOve
                                         stor={block.storage_units}
                                     />
                                 </td>
-                                <td className="px-2 py-2 space-y-0.5">
+                                <td className="px-2 py-2 text-left space-y-0.5">
                                     <div className="text-xs text-gray-600 ">
                                         Своб фонд:{' '}
                                         <span className="text-sm font-medium text-violet-600">
@@ -112,6 +113,36 @@ export default function ObjectsOverviewBlockTable({ blocks }: { blocks: SalesOve
                                             {formatCurrency(block.total_price)}
                                         </span>
                                     </div>
+                                </td>
+                                <td className="px-2 py-2 border-l">
+                                    {block.floors.length <= 3 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                            {block.floors.map((floor) => (
+                                                <span
+                                                    key={floor.id}
+                                                    className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded border border-gray-200"
+                                                >
+                                                    {floor.name || `Эт. ${floor.floor_number}`}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <details className="group">
+                                            <summary className="text-xs font-medium cursor-pointer text-sky-600 hover:text-sky-700">
+                                                {block.floors.length} этажей
+                                            </summary>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {block.floors.map((floor) => (
+                                                    <span
+                                                        key={floor.id}
+                                                        className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded border border-gray-200"
+                                                    >
+                                                        {floor.name || `Эт. ${floor.floor_number}`}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </details>
+                                    )}
                                 </td>
                             </tr>
                         );

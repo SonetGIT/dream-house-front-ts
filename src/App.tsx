@@ -48,8 +48,12 @@ export default function App() {
             <Header onMenuClick={handleMenuClick} />
             <Menu open={drawerOpen} onClose={handleDrawerClose} />
 
-            <main>
-                {/* Упс... */}
+            <main className="text-center">
+                {/* <span> Властитель слабый и лукавый, </span> <br />
+                <span> Плешивый щеголь, враг труда,</span> <br />
+                <span> Нечаянно пригретый славой,</span>
+                <br />
+                <span> Над нами царствовал тогда.</span> */}
                 <Outlet />
             </main>
             <Footer />
