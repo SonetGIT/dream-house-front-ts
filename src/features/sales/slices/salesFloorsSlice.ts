@@ -13,6 +13,7 @@ export interface SalesFloor {
     updated_at: string;
     deleted: boolean;
 }
+
 export interface SalesFloorSearchPayload {
     project_id?: number;
     block_id?: number;
@@ -55,6 +56,7 @@ const initialState: SalesFloorsState = {
     lastUpdated: null,
     lastDeletedId: null,
 };
+
 export const fetchSalesFloor = createAsyncThunk<
     { data: SalesFloor[]; pagination: Pagination | null },
     SalesFloorSearchPayload | undefined,
@@ -62,6 +64,7 @@ export const fetchSalesFloor = createAsyncThunk<
 >('salesFloors/search', async (params = {}, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesFloor[]>('/sales/floors/search', 'POST', params);
+
         return {
             data: res.data ?? [],
             pagination: res.pagination ?? null,
@@ -70,6 +73,7 @@ export const fetchSalesFloor = createAsyncThunk<
         return rejectWithValue(err instanceof Error ? err.message : 'Не удалось загрузить этажи');
     }
 });
+
 export const createSalesFloor = createAsyncThunk<
     SalesFloor,
     SalesFloorCreatePayload,
@@ -77,6 +81,7 @@ export const createSalesFloor = createAsyncThunk<
 >('salesFloors/create', async (payload, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesFloor>('/sales/floors/create', 'POST', payload);
+
         return res.data;
     } catch (err: unknown) {
         return rejectWithValue(err instanceof Error ? err.message : 'Не удалось создать этаж');
@@ -90,6 +95,7 @@ export const updateSalesFloor = createAsyncThunk<
 >('salesFloors/update', async ({ id, payload }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesFloor>(`/sales/floors/update/${id}`, 'PUT', payload);
+
         return res.data;
     } catch (err: unknown) {
         return rejectWithValue(err instanceof Error ? err.message : 'Не удалось обновить этаж');
@@ -115,6 +121,7 @@ const salesFloorsSlice = createSlice({
         clearSalesFloorsError: (state) => {
             state.error = null;
         },
+
         resetSalesFloorsState: (state) => {
             state.error = null;
             state.lastCreated = null;
@@ -122,8 +129,10 @@ const salesFloorsSlice = createSlice({
             state.lastDeletedId = null;
         },
     },
+
     extraReducers: (builder) => {
         builder
+            // FETCH
             .addCase(fetchSalesFloor.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -137,39 +146,64 @@ const salesFloorsSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки этажей';
             })
+
+            // CREATE
             .addCase(createSalesFloor.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(createSalesFloor.fulfilled, (state, action) => {
                 state.loading = false;
+
                 state.lastCreated = action.payload;
+
+                state.items.unshift(action.payload);
+
+                if (state.pagination) {
+                    state.pagination.total += 1;
+                }
             })
             .addCase(createSalesFloor.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка создания этажа';
             })
 
+            // UPDATE
             .addCase(updateSalesFloor.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(updateSalesFloor.fulfilled, (state, action) => {
                 state.loading = false;
+
                 state.lastUpdated = action.payload;
+
+                const index = state.items.findIndex((item) => item.id === action.payload.id);
+
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
             })
             .addCase(updateSalesFloor.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка обновления этажа';
             })
 
+            // DELETE
             .addCase(deleteSalesFloor.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(deleteSalesFloor.fulfilled, (state, action) => {
                 state.loading = false;
+
                 state.lastDeletedId = action.payload;
+
+                state.items = state.items.filter((item) => item.id !== action.payload);
+
+                if (state.pagination) {
+                    state.pagination.total -= 1;
+                }
             })
             .addCase(deleteSalesFloor.rejected, (state, action) => {
                 state.loading = false;
@@ -179,4 +213,5 @@ const salesFloorsSlice = createSlice({
 });
 
 export const { clearSalesFloorsError, resetSalesFloorsState } = salesFloorsSlice.actions;
+
 export default salesFloorsSlice.reducer;

@@ -15,11 +15,19 @@ export default function ObjectsOverviewPage() {
     const { projects, blocks, loading, pagination } = useAppSelector(
         (state) => state.salesObjOverview,
     );
+    // const currentProject = projects.filter((p) => p.id === )
     //Первичная загрузка =====
     useEffect(() => {
         dispatch(fetchSalesOverview());
     }, [dispatch, page, size]);
-
+    const handleRefresh = () => {
+        // Перезапрашиваем данные с теми же параметрами, чтобы получить обновленные блоки с новыми этажами
+        dispatch(
+            fetchSalesOverview({
+                /* ваши текущие параметры поиска */
+            }),
+        );
+    };
     // hooks всегда вызываются одинаково
     const projectStatuses = useReference('projectStatuses');
 
@@ -43,7 +51,12 @@ export default function ObjectsOverviewPage() {
                 <Typography color="text.secondary">Объекты отсутствуют</Typography>
             ) : (
                 <>
-                    <ObjectsOverviewTable projects={projects} blocks={blocks} refs={refs} />
+                    <ObjectsOverviewTable
+                        projects={projects}
+                        blocks={blocks}
+                        refs={refs}
+                        onRefresh={handleRefresh}
+                    />
 
                     {pagination && (
                         <TablePagination

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Button, Collapse } from '@mui/material';
+import { Collapse } from '@mui/material';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { SalesOverviewBlock, SalesOverviewProject } from '../slices/salesObjOverviewSlice';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatArea } from '@/utils/formatNumber';
@@ -11,29 +10,32 @@ import TypeChips from '@/components/ui/TypeChips';
 import UnitStat from '@/components/ui/UnitStat';
 import UnitBar from '@/components/ui/UnitBar';
 import { prjStatuses } from '@/utils/getStatusColor';
-import { Add } from '@mui/icons-material';
+import ObjectsOverviewFloorForm from './ObjectsOverviewFloorForm';
+import type { SalesFloor } from '../slices/salesFloorsSlice';
 
 interface PropsType {
     projects: SalesOverviewProject[];
     blocks: SalesOverviewBlock[];
     refs: Record<string, ReferenceResult>;
+    onRefresh?: () => void; // <-- Добавлен проп для обновления данных родителем
 }
 
-/*************************************************************************************************************************/
 export default function ObjectsOverviewTable(props: PropsType) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-    /*TOGGLE*/
+    const [modal, setModal] = useState<{
+        mode: 'create' | 'edit';
+        floor?: SalesFloor;
+        project_id?: number;
+    } | null>(null);
+
     const toggleRow = (id: number) => {
         const isOpening = !openRows[id];
-
-        // 1. сначала обновляем state
         setOpenRows((prev) => ({
             ...prev,
             [id]: isOpening,
         }));
     };
 
-    /*STATUS************************************************************************************************************/
     const getStatusConfig = (statusId: number) => {
         return (
             prjStatuses[statusId] || {
@@ -43,14 +45,17 @@ export default function ObjectsOverviewTable(props: PropsType) {
         );
     };
 
-    /********************************************************************************************************************************/
+    // Обработчик успеха: сообщаем родителю, что нужно перезагрузить данные
+    const handleFloorSuccess = () => {
+        props.onRefresh?.();
+    };
+
     return (
         <div className="space-y-4">
-            {/* Table - ObjectsOverviewTable*/}
             <div className="overflow-hidden bg-white border rounded-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        {/* ObjectsOverviewTable- HEADER */}
+                        {/* HEADER */}
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
@@ -92,10 +97,6 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                         Лиды / Клиенты
                                     </div>
                                 </th>
-
-                                {/* <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
-                                    <div className="text-xs text-gray-600 uppercase">Действия</div>
-                                </th> */}
                             </tr>
                         </thead>
                         <tbody>
@@ -104,12 +105,10 @@ export default function ObjectsOverviewTable(props: PropsType) {
 
                                 return (
                                     <React.Fragment key={prj.id}>
-                                        {/* ObjectsOverviewTable */}
                                         <tr
-                                            className="transition-colors border-b hover:bg-gray-50"
+                                            className="transition-colors border-b cursor-pointer hover:bg-gray-50"
                                             onClick={() => toggleRow(prj.id)}
                                         >
-                                            {/* toggle */}
                                             <td className="px-2 py-2">
                                                 <button
                                                     onClick={(e) => {
@@ -129,18 +128,12 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                 {prj.id}
                                             </td>
 
-                                            {/* статус / наименование / дата*/}
                                             <td className="px-2 py-2 text-left align-top border-l">
                                                 <div className="flex flex-col gap-2">
-                                                    {/* Название + Статус в одной строке */}
                                                     <div className="flex items-start gap-2">
                                                         {prj.status != null && (
                                                             <span
-                                                                className={`
-                                                                    inline-flex items-center px-2 py-0.5
-                                                                    text-xs font-medium border rounded-full whitespace-nowrap
-                                                                    ${statusInfo.className}
-                                                                `}
+                                                                className={`inline-flex items-center px-2 py-0.5 text-xs font-medium border rounded-full whitespace-nowrap ${statusInfo.className}`}
                                                             >
                                                                 {props.refs.projectStatuses.lookup(
                                                                     prj.status,
@@ -151,7 +144,6 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                             {prj.name}
                                                         </span>
                                                     </div>
-                                                    {/* Площадь */}
                                                     <div className="text-xs text-gray-500">
                                                         Общая площадь:{' '}
                                                         <span className="text-xs text-sky-600">
@@ -166,7 +158,7 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                             <td className="px-2 py-2 text-sm text-center align-top">
                                                 {prj.blocks_count != null ? prj.blocks_count : '—'}
                                             </td>
-                                            <td className="px-2 py-2 text-sm text-center text-gray-900 ">
+                                            <td className="px-2 py-2 text-sm text-center text-gray-900">
                                                 <div className="flex items-center gap-3 mb-1">
                                                     <UnitStat
                                                         label="Всего"
@@ -211,25 +203,25 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                 />
                                             </td>
                                             <td className="px-2 py-2 text-left space-y-0.5">
-                                                <div className="text-xs text-gray-600 ">
+                                                <div className="text-xs text-gray-600">
                                                     Своб фонд:{' '}
                                                     <span className="text-sm font-medium text-violet-600">
                                                         {formatCurrency(prj.free_price)}
                                                     </span>
                                                 </div>
-                                                <div className="text-xs text-gray-600 ">
+                                                <div className="text-xs text-gray-600">
                                                     Продано:{' '}
                                                     <span className="text-sm font-medium text-sky-600">
                                                         {formatCurrency(prj.sold_price)}
                                                     </span>
                                                 </div>
-                                                <div className="text-xs text-gray-600 ">
+                                                <div className="text-xs text-gray-600">
                                                     Резерв:{' '}
                                                     <span className="text-sm font-medium text-amber-500">
                                                         {formatCurrency(prj.reserved_price)}
                                                     </span>
                                                 </div>
-                                                <div className="text-xs font-bold text-gray-600 ">
+                                                <div className="text-xs font-bold text-gray-600">
                                                     Итого:{' '}
                                                     <span className="text-sm font-medium text-emerald-700">
                                                         {formatCurrency(prj.total_price)}
@@ -237,13 +229,13 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                 </div>
                                             </td>
                                             <td className="px-2 py-2 text-center space-y-0.5">
-                                                <div className="text-xs text-gray-600 ">
+                                                <div className="text-xs text-gray-600">
                                                     Лиды:{' '}
                                                     <span className="text-sm font-medium text-violet-600">
                                                         {prj.leads_count}
                                                     </span>
                                                 </div>
-                                                <div className="text-xs text-gray-600 ">
+                                                <div className="text-xs text-gray-600">
                                                     Клиенты:{' '}
                                                     <span className="text-sm font-medium text-sky-600">
                                                         {prj.clients_count}
@@ -252,9 +244,8 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                             </td>
                                         </tr>
 
-                                        {/* ObjectsOverviewBlockTable*/}
                                         <tr className="border-b bg-gradient-to-r to-blue-50/50">
-                                            <td colSpan={10} className="px-4 py-2">
+                                            <td colSpan={9} className="px-4 py-2">
                                                 <Collapse in={openRows[prj.id]} unmountOnExit>
                                                     <div className="px-4 py-2">
                                                         <div className="flex items-center justify-between py-2 border-b-2 border-blue-600">
@@ -263,14 +254,18 @@ export default function ObjectsOverviewTable(props: PropsType) {
                                                             </p>
 
                                                             <button
-                                                                // variant="outlined"
-                                                                className="inline-flex items-center w-16 h-8 text-sm font-medium text-center text-white transition rounded-lg border-fuchsia-700 bg-fuchsia-600 hover:bg-fuchsia-700 hover:text-white"
-                                                                // startIcon={<Add />}
+                                                                className="inline-flex items-center px-3 text-sm font-medium text-center text-white transition rounded-lg h-9 bg-fuchsia-600 hover:bg-fuchsia-700"
+                                                                onClick={() =>
+                                                                    setModal({
+                                                                        mode: 'create',
+                                                                        project_id: prj.id,
+                                                                    })
+                                                                }
                                                             >
-                                                                + Этаж
+                                                                Создать этаж
                                                             </button>
                                                         </div>
-                                                        {/* </div> */}
+
                                                         <ObjectsOverviewBlockTable
                                                             blocks={props.blocks.filter(
                                                                 (b) => b.project_id === prj.id,
@@ -286,6 +281,17 @@ export default function ObjectsOverviewTable(props: PropsType) {
                         </tbody>
                     </table>
                 </div>
+
+                {/* MODALS */}
+                {modal && (
+                    <ObjectsOverviewFloorForm
+                        mode={modal.mode}
+                        floor={modal.floor}
+                        projectId={modal.project_id}
+                        onClose={() => setModal(null)}
+                        onSuccess={handleFloorSuccess} // <-- Передаем обработчик успеха
+                    />
+                )}
             </div>
         </div>
     );
