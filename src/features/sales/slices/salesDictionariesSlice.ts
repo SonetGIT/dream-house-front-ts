@@ -106,7 +106,6 @@ export const fetchSalesUnitFinishTypes = createAsyncThunk<
 >('salesDictionaries/fetchUnitFinishTypes', async (_, { rejectWithValue }) => {
     try {
         const res = await apiRequest<SalesUnitFinishTypes[]>('/sales/unit-finish-types', 'GET');
-
         return res.data ?? [];
     } catch (err: unknown) {
         return rejectWithValue(
@@ -182,8 +181,20 @@ const salesDictionariesSlice = createSlice({
                 state.unitStatuses = action.payload;
             })
             .addCase(fetchSalesUnitStatuses.rejected, (state, action) => {
-                state.loading.unitStatuses = false;
+                state.loading.finishTypes = false;
                 state.error = action.payload ?? 'Ошибка загрузки статусов лотов';
+            })
+            .addCase(fetchSalesUnitFinishTypes.pending, (state) => {
+                state.loading.finishTypes = true;
+                state.error = null;
+            })
+            .addCase(fetchSalesUnitFinishTypes.fulfilled, (state, action) => {
+                state.loading.finishTypes = false;
+                state.finishTypes = action.payload;
+            })
+            .addCase(fetchSalesUnitFinishTypes.rejected, (state, action) => {
+                state.loading.finishTypes = false;
+                state.error = action.payload ?? 'Ошибка загрузки статусов отделки';
             })
 
             .addCase(fetchSalesLeadStatuses.pending, (state) => {

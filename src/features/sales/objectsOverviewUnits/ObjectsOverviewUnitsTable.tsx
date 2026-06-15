@@ -1,17 +1,18 @@
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { SalesOverviewUnit } from '../slices/salesObjOverviewSlice';
-import { formatCurrency } from '@/utils/formatCurrency';
 import { formatArea } from '@/utils/formatNumber';
 import { Car, Check, ChevronDown, Home, Package, Pencil, Store } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import type { SalesUnitStatus } from '../slices/salesDictionariesSlice';
+import type { SalesUnitFinishTypes, SalesUnitStatus } from '../slices/salesDictionariesSlice';
 import { useEffect, useRef, useState } from 'react';
 
 interface PropsType {
     units: SalesOverviewUnit[];
     refs: Record<string, ReferenceResult>;
     unitStatuses: SalesUnitStatus[];
+    finishTypes: SalesUnitFinishTypes[];
     onStatusChange: (unitId: number, statusId: number) => void;
+    onEdit: (unit: SalesOverviewUnit) => void;
 }
 
 /*************************************************************************************************************************/
@@ -37,6 +38,8 @@ const lotTypeConfig = {
         className: 'bg-orange-50 text-orange-600 border-orange-200',
     },
 } as const;
+
+/*********************************************************************************************************************************/
 export default function ObjectsOverviewUnitsTable(props: PropsType) {
     const [statusPickerUnit, setStatusPickerUnit] = useState<SalesOverviewUnit | null>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
@@ -240,15 +243,13 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                         <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                                             {unt.price_total}
                                         </td>
+
+                                        <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+                                            {unt.price_per_m2 ? unt.price_per_m2 : '-'}
+                                        </td>
                                         <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                                             {unt.currency_code}
                                         </td>
-                                        <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                            {unt.price_per_m2
-                                                ? formatCurrency(unt.price_per_m2)
-                                                : '-'}
-                                        </td>
-
                                         {/* Статус */}
                                         <td className="relative px-2 py-2 text-sm text-center whitespace-nowrap">
                                             <button
@@ -308,7 +309,9 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
 
                                         {/* Характеристики */}
                                         <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
-                                            {unt.finish_type ?? '-'}
+                                            {props.finishTypes.find(
+                                                (ft) => ft.id === unt.finish_type,
+                                            )?.name ?? '-'}
                                         </td>
 
                                         {/* Дополнительно */}
@@ -324,7 +327,7 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                         <td className="px-2 py-2 text-sm text-center">
                                             <StyledTooltip title="Редактировать лот">
                                                 <button
-                                                    // onClick={() => setModal({ mode: 'edit', unt })}
+                                                    onClick={() => props.onEdit(unt)}
                                                     className="
                                                                         p-1.5
                                                                         text-gray-400

@@ -1,9 +1,9 @@
-import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Paper } from '@mui/material';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
-import { fetchSalesOverview } from '../slices/salesObjOverviewSlice';
+import { fetchSalesOverview, type SalesOverviewUnit } from '../slices/salesObjOverviewSlice';
 import ObjectsOverviewUnitsTable from './ObjectsOverviewUnitsTable';
 import ObjectsOverviewUnitsFilters, {
     DEFAULT_UNIT_FILTERS,
@@ -62,10 +62,8 @@ export function buildPayload(filters: UnitFilters, page: number) {
     }
 
     // этажи
-
     if (filters.floor_exact) {
         const floor = Number(filters.floor_exact);
-
         if (!Number.isNaN(floor)) {
             payload.floor_number = floor;
         }
@@ -83,7 +81,6 @@ export function buildPayload(filters: UnitFilters, page: number) {
     }
 
     // комнаты
-
     const roomsFrom = Number(filters.rooms_from);
     const roomsTo = Number(filters.rooms_to);
 
@@ -96,7 +93,6 @@ export function buildPayload(filters: UnitFilters, page: number) {
     }
 
     // площадь
-
     const areaFrom = Number(filters.area_from);
     const areaTo = Number(filters.area_to);
 
@@ -109,7 +105,6 @@ export function buildPayload(filters: UnitFilters, page: number) {
     }
 
     // цена
-
     const priceFrom = Number(filters.price_from);
     const priceTo = Number(filters.price_to);
 
@@ -122,7 +117,6 @@ export function buildPayload(filters: UnitFilters, page: number) {
     }
 
     // цена за м²
-
     const priceM2From = Number(filters.price_m2_from);
     const priceM2To = Number(filters.price_m2_to);
 
@@ -136,13 +130,12 @@ export function buildPayload(filters: UnitFilters, page: number) {
 
     return payload;
 }
-/*************************************************************************************************************************/
+
 export default function ObjectsOverviewUnitsPage() {
     const dispatch = useAppDispatch();
     const { units, loading, unitsPagination } = useAppSelector((state) => state.salesObjOverview);
     const { projects } = useAppSelector((s) => s.salesObjOverview);
     const { unitStatuses, finishTypes } = useAppSelector((s) => s.salesDictionaries);
-
     const [showFilters, setShowFilters] = useState(true);
     const [filters, setFilters] = useState<UnitFilters>(DEFAULT_UNIT_FILTERS);
     const [appliedFilters, setAppliedFilters] = useState<UnitFilters>(DEFAULT_UNIT_FILTERS);
@@ -150,40 +143,34 @@ export default function ObjectsOverviewUnitsPage() {
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
 
-    //ОДИН useEffect для первичной загрузки
     useEffect(() => {
         dispatch(fetchSalesUnitStatuses());
         dispatch(fetchSalesUnitFinishTypes());
     }, [dispatch]);
-    // Функция загрузки
+
     const load = useCallback(
         async (f: UnitFilters, p: number) => {
             await dispatch(fetchSalesOverview(buildPayload(f, p)));
         },
         [dispatch],
     );
-    //Автоматическая загрузка при изменении фильтров/поиска/страницы
+
     useEffect(() => {
         load(appliedFilters, page);
     }, [appliedFilters, page, load]);
 
-    // Применение фильтров
     function handleApply() {
         setPage(1);
         setAppliedFilters(filters);
     }
+    const handleEdit = (unit: SalesOverviewUnit) => {
+        setModal({ mode: 'edit', unit: unit as unknown as SalesUnit });
+    };
 
-    // Сброс фильтров
     function handleReset() {
         setFilters(DEFAULT_UNIT_FILTERS);
         setAppliedFilters(DEFAULT_UNIT_FILTERS);
         setPage(1);
-    }
-
-    // Обработчик изменения фильтров
-    function handleFiltersChange(newFilters: UnitFilters) {
-        setFilters(newFilters);
-        // load вызовется автоматически через useEffect выше
     }
 
     async function handleStatusChange(unitId: number, statusId: number) {
@@ -191,25 +178,27 @@ export default function ObjectsOverviewUnitsPage() {
         if (!st) return;
 
         try {
-            //Отправка на сервер
             await dispatch(
                 updateSalesUnit({ id: unitId, payload: { status_id: statusId } }),
             ).unwrap();
 
             toast.success(`Статус изменён на «${st.name}»`);
-
-            //Перезагрузка данных (для синхронизации с бэком)
             await load(filters, page);
         } catch (e) {
             toast.error(`Ошибка: ${e}`);
-            //4. Откат изменений при ошибке
             load(filters, page);
         }
     }
-    // hooks всегда вызываются одинаково
+
+    //
+    function handleUnitSuccess() {
+        // console.log('🔄 Обновляем таблицу лотов...');
+        load(appliedFilters, page);
+    }
+
     const projectStatuses = useReference('projectStatuses');
     const users = useReference('users');
-    const currencies = useReference('useReference');
+    const currencies = useReference('currencies');
     const refs = {
         projectStatuses,
         users,
@@ -219,14 +208,13 @@ export default function ObjectsOverviewUnitsPage() {
         () => (refs.users.data ?? []).filter((user) => String(user.role_id) === '16'),
         [refs.users.data],
     );
+
     if (loading) {
         return <div>Загрузка проекта...</div>;
     }
 
-    /*RENDER************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
-            {/* CONTENT */}
             {loading ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                     <CircularProgress />
@@ -258,7 +246,9 @@ export default function ObjectsOverviewUnitsPage() {
                         units={units}
                         refs={refs}
                         unitStatuses={unitStatuses}
+                        finishTypes={finishTypes}
                         onStatusChange={handleStatusChange}
+                        onEdit={handleEdit}
                     />
 
                     {unitsPagination && (
@@ -285,15 +275,9 @@ export default function ObjectsOverviewUnitsPage() {
                     finishTypes={finishTypes}
                     refs={refs}
                     onClose={() => setModal(null)}
+                    onSuccess={handleUnitSuccess}
                 />
             )}
-            {/* {modal?.mode === 'edit' && modal.unit && (
-                <ObjectsOverviewUnitForm
-                    mode="edit"
-                    unit={modal.unit}
-                    onClose={() => setModal(null)}
-                />
-            )} */}
         </Paper>
     );
 }

@@ -166,7 +166,7 @@ export interface SalesOverviewUnit {
     description: string | null;
     comment: string | null;
 
-    finish_type: string | null;
+    finish_type: number | null;
 
     deal_manager_user_id: number | null;
 

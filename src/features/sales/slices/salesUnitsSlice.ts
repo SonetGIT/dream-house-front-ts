@@ -40,7 +40,7 @@ export interface SalesUnit {
     currency: number | null;
     status_id: number | null;
 
-    finish_type: string | null;
+    finish_type: number;
     cadastral_number: string | null;
 
     is_active_for_sale: boolean;
@@ -93,7 +93,7 @@ export interface SalesUnitCreatePayload {
     currency?: number | null;
     status_id?: number | null;
 
-    finish_type?: string | null;
+    finish_type?: number;
     cadastral_number?: string | null;
 
     is_active_for_sale?: boolean;
