@@ -117,9 +117,9 @@ interface Props {
     managers: EnumItem[];
 }
 
-const inputCls =
+export const inputCls =
     'w-full px-2.5 py-1.5 text-xs border border-blue-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white text-gray-800 placeholder-gray-400';
-const labelCls =
+export const labelCls =
     'text-[10px] text-left font-semibold text-blue-500 uppercase tracking-wide mb-1.5 block';
 
 export default function ObjectsOverviewUnitsFilters({

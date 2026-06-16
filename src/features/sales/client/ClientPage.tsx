@@ -142,14 +142,14 @@ export default function ClientPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
             <div className="mx-auto max-w-[1800px] px-6 py-3">
-                <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-start lg:justify-between">
+                {/* <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <h1 className="mb-2 text-3xl font-bold text-sky-800">Клиенты</h1>
                         <p className="text-sm text-sky-700">
                             Панель управление клиентами, их контактами.
                         </p>
                     </div>
-                </div>
+                </div> */}
                 {/* ФИЛЬТРЫ */}
                 <div className="sticky top-0 z-10 border-b border-border bg-card/90 backdrop-blur-sm">
                     <header className="z-10 border-b shrink-0 border-border bg-card/80 backdrop-blur-sm">

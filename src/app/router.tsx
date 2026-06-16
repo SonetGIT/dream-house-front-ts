@@ -25,7 +25,7 @@ import LeadsPage from '@/features/sales/leads/LeadsPage';
 import ClientPage from '@/features/sales/client/ClientPage';
 import ObjectsOverviewPage from '@/features/sales/objectsOverview/ObjectsOverviewPage';
 import ObjectsOverviewUnitsPage from '@/features/sales/objectsOverviewUnits/ObjectsOverviewUnitsPage';
-import { SalesMatrixPage } from '@/features/sales/matrix/SalesMatrixPage';
+import SalesMatrixPage from '@/features/sales/matrix/SalesMatrixPage';
 // import SalesBlockPage from '@/features/sales/SalesBlockPage';
 
 export const router = createBrowserRouter([

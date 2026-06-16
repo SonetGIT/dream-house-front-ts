@@ -30,3 +30,24 @@ export async function downloadFile(endpoint: string, filename: string, token?: s
     a.remove();
     window.URL.revokeObjectURL(url);
 }
+export async function fetchFileContent(endpoint: string, token?: string): Promise<Blob> {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+        },
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Ошибка получения файла');
+    }
+
+    const blob = await res.blob();
+
+    if (blob.type.includes('application/json') || blob.type.includes('text/html')) {
+        throw new Error('Сервер вернул не файл');
+    }
+
+    return blob;
+}
