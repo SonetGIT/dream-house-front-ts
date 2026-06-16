@@ -30,12 +30,11 @@ interface MatrixUnitStatus {
 }
 
 const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 3;
-
+const MAX_ZOOM = 1;
 const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, +value.toFixed(3) || 1));
 
 const isSvgFile = (file: DocumentFile) =>
-    file.mime_type === 'image/svg+xml' || /\.svg$/i.test(file.name || '');
+    file.mime_type === 'image/svg+xml' || /.svg$/i.test(file.name || '');
 
 const getFloorLabel = (floor: SalesOverviewFloor | null) => {
     if (!floor) return '—';
@@ -53,7 +52,6 @@ const formatPrice = (value: number | null) => {
 
 const buildStatusMap = (units: SalesOverviewUnit[]) => {
     const map = new Map<number, MatrixUnitStatus>();
-
     units.forEach((unit) => {
         if (!unit.status_id) return;
         map.set(unit.status_id, {
@@ -63,14 +61,11 @@ const buildStatusMap = (units: SalesOverviewUnit[]) => {
             color: unit.status_color,
         });
     });
-
     return map;
 };
 
-/********************************************************************************************************************************************/
 export default function SalesMatrixPage() {
     const dispatch = useAppDispatch();
-
     const {
         projects,
         blocks,
@@ -82,11 +77,9 @@ export default function SalesMatrixPage() {
     const { items: documents, loading: documentsLoading } = useAppSelector(
         (state) => state.documents,
     );
-    console.log('doc', documents);
     const { data: documentFiles, loading: documentFilesLoading } = useAppSelector(
         (state) => state.documentFiles,
     );
-    console.log('documentFiles', documentFiles);
 
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
@@ -97,7 +90,7 @@ export default function SalesMatrixPage() {
     const [planFilesSaving, setPlanFilesSaving] = useState(false);
     const [loadingFloorPlan, setLoadingFloorPlan] = useState(false);
     const [floorPlanSvgRaw, setFloorPlanSvgRaw] = useState('');
-    const [floorPlanZoom, setFloorPlanZoom] = useState(1);
+    const [floorPlanZoom, setFloorPlanZoom] = useState(0.7);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
@@ -131,7 +124,6 @@ export default function SalesMatrixPage() {
             setSelectedBlockId(null);
             return;
         }
-
         const exists = filteredBlocks.some((block) => block.id === selectedBlockId);
         if (!exists) {
             setSelectedBlockId(filteredBlocks[0].id);
@@ -150,7 +142,6 @@ export default function SalesMatrixPage() {
             setSelectedFloorId(null);
             return;
         }
-
         const exists = floors.some((floor) => floor.id === selectedFloorId);
         if (!exists) {
             setSelectedFloorId(floors[0].id);
@@ -192,7 +183,6 @@ export default function SalesMatrixPage() {
             setLoadingFloorPlan(false);
             return;
         }
-
         dispatch(
             fetchDocuments({
                 entity_type: 'salesFloorPlan',
@@ -226,7 +216,6 @@ export default function SalesMatrixPage() {
             setLoadingFloorPlan(false);
             return;
         }
-
         setFloorPlanSvgRaw('');
         dispatch(fetchDocumentFiles(selectedFloorDocument.id));
     }, [dispatch, selectedFloorDocument?.id]);
@@ -246,7 +235,7 @@ export default function SalesMatrixPage() {
             try {
                 setLoadingFloorPlan(true);
 
-                // Используем новую функцию
+                // ИСПРАВЛЕНИЕ 1: Используем fetchFileContent вместо apiRequest
                 const blob = await fetchFileContent(
                     `/documentFiles/download/${svgFile.id}`,
                     localStorage.getItem('token') || undefined,
@@ -282,15 +271,17 @@ export default function SalesMatrixPage() {
             const code = String(status?.code || '').toLowerCase();
             const label = String(status?.name || '').toLowerCase();
 
+            // БРОНЬ - желтый
             if (code === 'reserved' || label.includes('брон')) {
                 return {
                     svgFill: '#facc15',
-                    svgFillOpacity: '0.55',
+                    svgFillOpacity: '0.6',
                     svgStroke: '#eab308',
                     svgStrokeOpacity: '0.95',
                 };
             }
 
+            // ПРОДАНО - темно-серый
             if (
                 code === 'sold' ||
                 code === 'buyout' ||
@@ -299,12 +290,13 @@ export default function SalesMatrixPage() {
             ) {
                 return {
                     svgFill: '#4b5563',
-                    svgFillOpacity: '0.72',
+                    svgFillOpacity: '0.75',
                     svgStroke: '#1f2937',
                     svgStrokeOpacity: '0.95',
                 };
             }
 
+            // СНЯТО С ПРОДАЖИ - серый
             if (
                 [
                     'offmarket',
@@ -319,25 +311,27 @@ export default function SalesMatrixPage() {
                 label.includes('продаж')
             ) {
                 return {
-                    svgFill: '#64748b',
-                    svgFillOpacity: '0.64',
-                    svgStroke: '#475569',
+                    svgFill: '#9ca3af',
+                    svgFillOpacity: '0.7',
+                    svgStroke: '#6b7280',
                     svgStrokeOpacity: '0.9',
                 };
             }
 
+            // ИСПРАВЛЕНИЕ 2: СВОБОДНО - зеленый (был прозрачный)
             if (code === 'free' || label.includes('свобод')) {
                 return {
-                    svgFill: 'none',
-                    svgFillOpacity: '0',
-                    svgStroke: 'none',
-                    svgStrokeOpacity: '0',
+                    svgFill: '#22c55e',
+                    svgFillOpacity: '0.5',
+                    svgStroke: '#16a34a',
+                    svgStrokeOpacity: '0.95',
                 };
             }
 
+            // БЕЗ СТАТУСА - светло-серый
             return {
                 svgFill: '#e2e8f0',
-                svgFillOpacity: '0.2',
+                svgFillOpacity: '0.3',
                 svgStroke: '#94a3b8',
                 svgStrokeOpacity: '0.7',
             };
@@ -440,14 +434,35 @@ export default function SalesMatrixPage() {
                 const targets = shapes.length ? shapes : [root];
 
                 targets.forEach((shape) => {
-                    const strokeWidth = shape.getAttribute('stroke-width') || '2';
-                    shape.setAttribute('fill', meta.svgFill);
-                    shape.setAttribute('fill-opacity', meta.svgFillOpacity);
-                    shape.setAttribute('stroke', meta.svgStroke);
-                    shape.setAttribute('stroke-opacity', meta.svgStrokeOpacity);
-                    shape.setAttribute('stroke-width', strokeWidth);
-                    shape.setAttribute('vector-effect', 'non-scaling-stroke');
+                    const strokeWidth =
+                        shape.getAttribute('stroke-width') ||
+                        (shape instanceof SVGElement ? shape.style.strokeWidth : '') ||
+                        '2';
+
+                    shape.setAttribute('data-colored-by-sales', 'true');
                     shape.setAttribute('pointer-events', 'all');
+
+                    if (shape instanceof SVGElement) {
+                        shape.style.setProperty('fill', meta.svgFill, 'important');
+                        shape.style.setProperty('fill-opacity', meta.svgFillOpacity, 'important');
+                        shape.style.setProperty('stroke', meta.svgStroke, 'important');
+                        shape.style.setProperty(
+                            'stroke-opacity',
+                            meta.svgStrokeOpacity,
+                            'important',
+                        );
+                        shape.style.setProperty('stroke-width', strokeWidth, 'important');
+                        shape.style.setProperty('vector-effect', 'non-scaling-stroke', 'important');
+                        shape.style.setProperty('pointer-events', 'all', 'important');
+                    } else {
+                        shape.setAttribute('fill', meta.svgFill);
+                        shape.setAttribute('fill-opacity', meta.svgFillOpacity);
+                        shape.setAttribute('stroke', meta.svgStroke);
+                        shape.setAttribute('stroke-opacity', meta.svgStrokeOpacity);
+                        shape.setAttribute('stroke-width', strokeWidth);
+                        shape.setAttribute('vector-effect', 'non-scaling-stroke');
+                        shape.setAttribute('pointer-events', 'all');
+                    }
                 });
             });
 
@@ -456,13 +471,13 @@ export default function SalesMatrixPage() {
             console.error('svg render error', error);
             return '';
         }
-    }, [filteredUnits, floorPlanSvgRaw, getStatusMeta, selectedUnitId]);
+    }, [filteredUnits, floorPlanSvgRaw, getStatusMeta, selectedUnitId, statusMap]);
 
     const applyFloorPlanZoomToNode = (zoom: number) => {
         const node = contentRef.current;
         if (!node) return;
         node.style.width = `${zoom * 100}%`;
-        node.style.maxWidth = `${1180 * zoom}px`;
+        node.style.maxWidth = `${900 * zoom}px`;
         node.style.minWidth = zoom > 1 ? `${100 * zoom}%` : '100%';
     };
 
@@ -489,7 +504,7 @@ export default function SalesMatrixPage() {
             event.preventDefault();
         }
 
-        const delta = event.deltaY < 0 ? 0.1 : -0.1;
+        const delta = event.deltaY < 0 ? 0.05 : -0.05;
         const prev = zoomRef.current;
         const next = clampZoom(prev + delta);
 
@@ -639,7 +654,7 @@ export default function SalesMatrixPage() {
     }
 
     return (
-        <Paper sx={{ p: 1, borderRadius: 3 }}>
+        <Paper sx={{ borderRadius: 3 }}>
             <SalesMatrixHeader
                 projects={projects}
                 blocks={filteredBlocks}
@@ -657,8 +672,8 @@ export default function SalesMatrixPage() {
 
             <div className="flex flex-1 overflow-hidden">
                 <div className="relative flex flex-col flex-1 overflow-hidden">
-                    <div className="absolute z-10 flex items-center justify-between gap-2 pointer-events-none left-2 right-2">
-                        <div className="pointer-events-auto flex flex-wrap items-center gap-2.5 rounded-xl border border-stone-200 bg-white/90 px-2 py-1.5 text-[11px] text-slate-700 shadow-sm backdrop-blur-sm">
+                    <div className="absolute z-10 flex items-center justify-between gap-2 pt-2 pointer-events-none left-2 right-2">
+                        <div className=" pointer-events-auto flex flex-wrap items-center gap-2.5 rounded-xl border border-stone-200 bg-white/90 px-3 py-1.5 text-[11px] text-slate-700 shadow-sm backdrop-blur-sm">
                             <div className="flex items-center gap-1.5">
                                 <span className="w-3 h-3 border rounded-full border-slate-600 bg-slate-500/80" />
                                 <span>Продано</span>
@@ -672,7 +687,7 @@ export default function SalesMatrixPage() {
                                 <span>Снято</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="w-3 h-3 bg-white border border-gray-300 rounded-full" />
+                                <span className="w-3 h-3 border border-green-500 rounded-full bg-green-500/60" />
                                 <span>Свободно</span>
                             </div>
                         </div>
@@ -704,7 +719,7 @@ export default function SalesMatrixPage() {
 
                     <div ref={scrollRef} className="flex-1 overflow-auto bg-[#f8f5ef]">
                         {loadingFloorPlan ? (
-                            <div className="flex min-h-[300px] w-full items-center justify-center text-sm text-slate-500">
+                            <div className="flex min-h-[400px] w-full items-center justify-center text-sm text-slate-500">
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="w-6 h-6 border-2 rounded-full animate-spin border-sky-400 border-t-transparent" />
                                     Загружаем план этажа...
@@ -714,7 +729,7 @@ export default function SalesMatrixPage() {
                             <div
                                 ref={contentRef}
                                 className="mx-auto bg-[#fcfbf7]"
-                                style={{ width: '100%', maxWidth: '1180px', minWidth: '100%' }}
+                                style={{ width: '100%', maxWidth: '900px', minWidth: '100%' }}
                             >
                                 <div
                                     className="w-full mx-auto"
@@ -743,17 +758,6 @@ export default function SalesMatrixPage() {
                         )}
                     </div>
                 </div>
-
-                <SalesMatrixSidebar
-                    floorLabel={getFloorLabel(selectedFloor)}
-                    units={filteredUnits}
-                    selectedUnit={selectedUnit}
-                    selectedUnitId={selectedUnitId}
-                    statusMap={statusMap}
-                    onSelectUnit={setSelectedUnitId}
-                    formatArea={formatArea}
-                    formatPrice={formatPrice}
-                />
             </div>
 
             <SalesMatrixPlanManagerModal

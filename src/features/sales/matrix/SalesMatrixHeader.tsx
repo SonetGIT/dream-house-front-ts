@@ -36,7 +36,7 @@ export default function SalesMatrixHeader({
     planDisabled,
 }: Props) {
     return (
-        <header className="p-3 bg-white border border-gray-200 rounded-lg shadow-sm mb-7">
+        <header className="p-1 mb-2 bg-white border border-gray-200 rounded-lg shadow-sm">
             <div className="grid grid-cols-4 gap-3">
                 <div>
                     <label className={labelCls}>Объекты</label>
