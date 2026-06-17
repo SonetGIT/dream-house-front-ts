@@ -52,18 +52,30 @@ export interface SalesPaymentScheduleStatus {
     deleted?: boolean;
 }
 
+export interface SalesDealTypes {
+    id: number;
+    name: string;
+    code: string;
+    color: string;
+    sort_order: number | null;
+    created_at: string;
+    updated_at: string;
+    deleted: boolean;
+}
 interface SalesDictionariesState {
     unitStatuses: SalesUnitStatus[];
     finishTypes: SalesUnitFinishTypes[];
     leadStatuses: SalesLeadStatus[];
     leadSources: SalesLeadSource[];
     paymentScheduleStatuses: SalesPaymentScheduleStatus[];
+    dealTypes: SalesDealTypes[];
     loading: {
         unitStatuses: boolean;
         finishTypes: boolean;
         leadStatuses: boolean;
         leadSources: boolean;
         paymentScheduleStatuses: boolean;
+        dealTypes: boolean;
     };
     error: string | null;
 }
@@ -74,12 +86,14 @@ const initialState: SalesDictionariesState = {
     leadStatuses: [],
     leadSources: [],
     paymentScheduleStatuses: [],
+    dealTypes: [],
     loading: {
         unitStatuses: false,
         finishTypes: false,
         leadStatuses: false,
         leadSources: false,
         paymentScheduleStatuses: false,
+        dealTypes: false,
     },
     error: null,
 };
@@ -99,6 +113,7 @@ export const fetchSalesUnitStatuses = createAsyncThunk<
         );
     }
 });
+
 export const fetchSalesUnitFinishTypes = createAsyncThunk<
     SalesUnitFinishTypes[],
     void,
@@ -161,6 +176,19 @@ export const fetchSalesPaymentScheduleStatuses = createAsyncThunk<
         );
     }
 });
+export const fetchSalesDealTypes = createAsyncThunk<
+    SalesDealTypes[],
+    void,
+    { rejectValue: string }
+>('salesDictionaries/fetchDealTypes', async (_, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<SalesDealTypes[]>('/sales/deal-types', 'GET');
+
+        return res.data ?? [];
+    } catch (err: unknown) {
+        return rejectWithValue(err instanceof Error ? err.message : 'Не удалось загрузить типы');
+    }
+});
 
 const salesDictionariesSlice = createSlice({
     name: 'salesDictionaries',
@@ -181,7 +209,7 @@ const salesDictionariesSlice = createSlice({
                 state.unitStatuses = action.payload;
             })
             .addCase(fetchSalesUnitStatuses.rejected, (state, action) => {
-                state.loading.finishTypes = false;
+                state.loading.unitStatuses = false;
                 state.error = action.payload ?? 'Ошибка загрузки статусов лотов';
             })
             .addCase(fetchSalesUnitFinishTypes.pending, (state) => {
@@ -234,6 +262,18 @@ const salesDictionariesSlice = createSlice({
             .addCase(fetchSalesPaymentScheduleStatuses.rejected, (state, action) => {
                 state.loading.paymentScheduleStatuses = false;
                 state.error = action.payload ?? 'Ошибка загрузки статусов графика';
+            })
+            .addCase(fetchSalesDealTypes.pending, (state) => {
+                state.loading.dealTypes = true;
+                state.error = null;
+            })
+            .addCase(fetchSalesDealTypes.fulfilled, (state, action) => {
+                state.loading.dealTypes = false;
+                state.dealTypes = action.payload;
+            })
+            .addCase(fetchSalesDealTypes.rejected, (state, action) => {
+                state.loading.dealTypes = false;
+                state.error = action.payload ?? 'Ошибка загрузки типов';
             });
     },
 });

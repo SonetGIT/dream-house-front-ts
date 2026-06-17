@@ -23,36 +23,43 @@ export interface SalesUnitCurrencyInfo {
 
 export interface SalesUnit {
     id: number;
+
     project_id: number;
     block_id: number;
     floor_id: number;
 
     unit_number: string;
     lot_type: string;
+
     plan_code: string | null;
     external_code: string | null;
 
     rooms: number | null;
+
     area_total: string | null;
 
     price_total: string | null;
     price_per_m2: string | null;
+
     currency: number | null;
     status_id: number | null;
 
-    finish_type: number;
+    finish_type: number | null;
     cadastral_number: string | null;
 
     is_active_for_sale: boolean;
+
     description: string | null;
     comment: string | null;
 
     manager_user_id: number | null;
+
     created_by: number | null;
     updated_by: number | null;
 
     created_at: string;
     updated_at: string;
+
     deleted: boolean;
 
     floor: SalesUnitFloor | null;
@@ -86,27 +93,81 @@ export interface SalesUnitCreatePayload {
     external_code?: string | null;
 
     rooms?: number | null;
+
     area_total?: string | null;
 
     price_total?: string | null;
     price_per_m2?: string | null;
+
     currency?: number | null;
     status_id?: number | null;
 
-    finish_type?: number;
+    finish_type?: number | null;
+
     cadastral_number?: string | null;
 
     is_active_for_sale?: boolean;
+
     description?: string | null;
     comment?: string | null;
+
     manager_user_id?: number | null;
 }
 
 export interface SalesUnitUpdatePayload extends Partial<SalesUnitCreatePayload> {}
 
 // Пока тип паспорта оставлен гибким, пока нет точного ответа API
-export type SalesUnitPassport = Record<string, unknown>;
+// export type SalesUnitPassport = Record<string, unknown>;
+export interface PassportClient {
+    id: number;
+    full_name: string;
+    phone: string | null;
+    email: string | null;
+    pin: string | null;
+    passport_number: string | null;
+    manager_user_id: number | null;
 
+    reservations: unknown[];
+    deals: unknown[];
+    payment_schedules: unknown[];
+
+    latest_at: string;
+}
+
+export interface SalesUnitPassport {
+    unit: {
+        id: number;
+        project_id: number;
+        block_id: number;
+        floor_id: number;
+
+        unit_number: string;
+        lot_type: string;
+
+        plan_code: string | null;
+        external_code: string | null;
+
+        rooms: number | null;
+        area_total: number | null;
+
+        price_total: number | null;
+        price_per_m2: number | null;
+
+        currency: number | null;
+        status_id: number | null;
+
+        finish_type: number | null;
+        cadastral_number: string | null;
+
+        description: string | null;
+        comment: string | null;
+
+        clients: PassportClient[];
+    };
+
+    reservations: unknown[];
+    deals: unknown[];
+}
 interface SalesUnitsState {
     items: SalesUnit[];
     pagination: Pagination | null;
@@ -169,21 +230,6 @@ export const updateSalesUnit = createAsyncThunk<
     }
 });
 
-export const fetchSalesUnitPassport = createAsyncThunk<
-    SalesUnitPassport,
-    number,
-    { rejectValue: string }
->('salesUnits/passport', async (unitId, { rejectWithValue }) => {
-    try {
-        const res = await apiRequest<SalesUnitPassport>(`/sales/units/${unitId}/passport`, 'GET');
-        return res.data;
-    } catch (err: unknown) {
-        return rejectWithValue(
-            err instanceof Error ? err.message : 'Не удалось загрузить паспорт лота',
-        );
-    }
-});
-
 const salesUnitsSlice = createSlice({
     name: 'salesUnits',
     initialState,
@@ -232,19 +278,6 @@ const salesUnitsSlice = createSlice({
             })
             .addCase(updateSalesUnit.rejected, (state, action) => {
                 state.error = action.payload ?? 'Ошибка обновления лота';
-            })
-
-            .addCase(fetchSalesUnitPassport.pending, (state) => {
-                state.passportLoading = true;
-                state.error = null;
-            })
-            .addCase(fetchSalesUnitPassport.fulfilled, (state, action) => {
-                state.passportLoading = false;
-                state.passport = action.payload;
-            })
-            .addCase(fetchSalesUnitPassport.rejected, (state, action) => {
-                state.passportLoading = false;
-                state.error = action.payload ?? 'Ошибка загрузки паспорта лота';
             });
     },
 });

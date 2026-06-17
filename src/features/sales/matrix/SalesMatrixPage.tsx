@@ -17,10 +17,10 @@ import {
     type DocumentFile,
 } from '@/features/projects/legal_department/files/documentFilesSlice';
 import SalesMatrixHeader from './SalesMatrixHeader';
-import SalesMatrixSidebar from './SalesMatrixSidebar';
 import SalesMatrixPlanManagerModal from './SalesMatrixPlanManagerModal';
 import { fetchFileContent } from '@/features/projects/legal_department/files/downloadFile';
 import { Paper } from '@mui/material';
+import SalesUnitDetailsPanel from '../unitPassport/SalesUnitDetailsPanel';
 
 interface MatrixUnitStatus {
     id: number;
@@ -39,15 +39,6 @@ const isSvgFile = (file: DocumentFile) =>
 const getFloorLabel = (floor: SalesOverviewFloor | null) => {
     if (!floor) return '—';
     return String(floor.name || '').trim() || `${floor.floor_number} этаж`;
-};
-
-const formatArea = (value: number | null) => (value != null ? `${value.toFixed(1)} м²` : '—');
-
-const formatPrice = (value: number | null) => {
-    if (value == null) return '—';
-    return value >= 1_000_000
-        ? `${(value / 1_000_000).toFixed(1)} млн`
-        : value.toLocaleString('ru-RU');
 };
 
 const buildStatusMap = (units: SalesOverviewUnit[]) => {
@@ -167,10 +158,10 @@ export default function SalesMatrixPage() {
 
     const statusMap = useMemo(() => buildStatusMap(filteredUnits), [filteredUnits]);
 
-    const selectedUnit = useMemo(
-        () => filteredUnits.find((unit) => unit.id === selectedUnitId) ?? null,
-        [filteredUnits, selectedUnitId],
-    );
+    // const selectedUnit = useMemo(
+    //     () => filteredUnits.find((unit) => unit.id === selectedUnitId) ?? null,
+    //     [filteredUnits, selectedUnitId],
+    // );
 
     useEffect(() => {
         setSelectedUnitId(null);
@@ -537,17 +528,21 @@ export default function SalesMatrixPage() {
         };
     }, [handleWheel]);
 
+    // const handleExternalSvgClick = (event: React.MouseEvent) => {
+    //     const unitNode = (event.target as Element)?.closest?.('[data-unit-id]');
+    //     if (!unitNode) return;
+    //     const unitId = Number(unitNode.getAttribute('data-unit-id'));
+    //     const unit = filteredUnits.find((item) => item.id === unitId);
+    //     if (unit) {
+    //         setSelectedUnitId((prev) => (prev === unit.id ? null : unit.id));
+    //     }
+    // };
     const handleExternalSvgClick = (event: React.MouseEvent) => {
         const unitNode = (event.target as Element)?.closest?.('[data-unit-id]');
         if (!unitNode) return;
-
         const unitId = Number(unitNode.getAttribute('data-unit-id'));
-        const unit = filteredUnits.find((item) => item.id === unitId);
-        if (unit) {
-            setSelectedUnitId((prev) => (prev === unit.id ? null : unit.id));
-        }
+        setSelectedUnitId((prev) => (prev === unitId ? null : unitId));
     };
-
     const ensureFloorDocument = useCallback(async () => {
         if (!selectedFloor?.id) return null;
         if (selectedFloorDocument) return selectedFloorDocument;
@@ -758,6 +753,12 @@ export default function SalesMatrixPage() {
                         )}
                     </div>
                 </div>
+                {selectedUnitId && (
+                    <SalesUnitDetailsPanel
+                        unitId={selectedUnitId}
+                        onClose={() => setSelectedUnitId(null)}
+                    />
+                )}
             </div>
 
             <SalesMatrixPlanManagerModal

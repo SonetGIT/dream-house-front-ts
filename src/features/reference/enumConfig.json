@@ -239,5 +239,26 @@
             "id": "id",
             "name": ["name"]
         }
+    },
+    "dealStatuses": {
+        "apiName": "/deal-statuses",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
+    },
+    "reservationStatuses": {
+        "apiName": "/reservation-statuses",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
+    },
+    "dealPaymentTypes": {
+        "apiName": "/deal-payment-types/gets",
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        }
     }
 }

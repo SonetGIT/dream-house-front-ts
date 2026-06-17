@@ -42,6 +42,7 @@ import salesClientsReducer from '@/features/sales/slices/salesClientsSlice';
 import salesFloorsReducer from '@/features/sales/slices/salesFloorsSlice';
 import salesPaymentSchedulesReducer from '@/features/sales/slices/salesPaymentSchedulesSlice';
 import salesDictionariesReducer from '@/features/sales/slices/salesDictionariesSlice';
+import salesUnitPassportReducer from '@/features/sales/slices/salesUnitPassportSlice';
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -87,6 +88,7 @@ export const rootReducer = combineReducers({
     salesFloors: salesFloorsReducer,
     salesPaymentSchedules: salesPaymentSchedulesReducer,
     salesDictionaries: salesDictionariesReducer,
+    salesUnitPassport: salesUnitPassportReducer,
 });
 
 export type RootReducerState = ReturnType<typeof rootReducer>;
