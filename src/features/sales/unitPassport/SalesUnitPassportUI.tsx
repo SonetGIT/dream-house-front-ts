@@ -1,4 +1,3 @@
-// src/components/ui/UnitDetails/ModalWrapper.tsx
 import { X } from 'lucide-react';
 export const ModalWrapper = ({ title, onClose, children, maxWidth = 'max-w-lg' }: any) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -19,7 +18,6 @@ export const ModalWrapper = ({ title, onClose, children, maxWidth = 'max-w-lg' }
     </div>
 );
 
-// src/components/ui/UnitDetails/Buttons.tsx
 export const PrimaryButton = ({
     children,
     onClick,
@@ -48,7 +46,6 @@ export const SecondaryButton = ({ children, onClick, disabled, className = '' }:
     </button>
 );
 
-// src/components/ui/UnitDetails/Inputs.tsx
 export const InputField = ({ label, ...props }: any) => (
     <div>
         {label && (

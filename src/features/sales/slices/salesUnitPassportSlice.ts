@@ -13,8 +13,8 @@ export interface CurrencyInfo {
 export interface StatusInfo {
     id: number;
     name: string;
-    code: string;
-    color: string;
+    code?: string;
+    color?: string;
     sort_order?: number;
     is_final?: boolean;
     created_at?: string;
@@ -52,11 +52,11 @@ export interface DealTypeInfo {
 export interface PaymentTypeInfo {
     id: number;
     name: string;
-    code: string;
-    sort_order: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
+    code?: string;
+    sort_order?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
 }
 
 export interface ArticleInfo {
@@ -75,94 +75,17 @@ export interface PaymentMethodRef {
     id: number;
     name: string;
     code: string;
-    // ... другие поля при необходимости
 }
 
 export interface EntityTypeRef {
     id: number;
     name: string;
     code: string;
+    sort_order?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
 }
-
-// PAYMENT SCHEDULE LINKS
-
-export interface PassportPaymentScheduleLinkPayment {
-    id: number;
-    project_id: number;
-    block_id: number;
-    payment_type: number;
-    entity_type: number;
-    entity_id: number;
-    article_id: number;
-    status: number;
-    counterparty_type: number;
-    counterparty_id: number;
-    counterparty_name: string;
-    counterparty_inn: string | null;
-    title: string;
-    description: string | null;
-    amount: number;
-    currency: number;
-    currency_rate: number | null;
-    planned_date: string | null;
-    paid_date: string | null;
-    payment_method: number | null;
-    account_type: number | null;
-    document_number: string | null;
-    external_number: string | null;
-    comment: string | null;
-    is_manual: boolean;
-    created_by: number;
-    updated_by: number;
-    created_at: string;
-    updated_at: string;
-    posted_at: string | null;
-    deleted: boolean;
-    payment_type_ref: PaymentTypeInfo | null;
-    status_ref: StatusInfo | null;
-    article: ArticleInfo | null;
-    currency_ref: CurrencyInfo | null;
-    payment_method_ref: PaymentMethodRef | null;
-}
-
-export interface PassportPaymentScheduleLink {
-    id: number;
-    schedule_id: number;
-    payment_id: number;
-    amount: string; // API возвращает строку "100000.00"
-    created_at: string;
-    deleted: boolean;
-    payment: PassportPaymentScheduleLinkPayment;
-}
-
-// PAYMENT SCHEDULES
-
-export interface PassportPaymentSchedule {
-    id: number;
-    project_id: number;
-    block_id: number;
-    unit_id: number;
-    client_id: number;
-    deal_id: number;
-    payment_no: number;
-    planned_date: string;
-    planned_amount: number;
-    paid_amount: number;
-    remaining_amount: number;
-    status: number;
-    paid_at: string | null;
-    overdue_days: number;
-    comment: string | null;
-    created_by: number;
-    updated_by: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
-    status_ref: StatusInfo | null;
-    links: PassportPaymentScheduleLink[];
-}
-
-// PAYMENTS
 
 export interface PassportPayment {
     id: number;
@@ -205,83 +128,51 @@ export interface PassportPayment {
     entity_type_code: string | null;
 }
 
-// DEALS
-
-export interface PassportDeal {
+export interface PassportPaymentScheduleLink {
     id: number;
-    project_id: number;
-    block_id: number;
-    unit_id: number;
-    client_id: number;
-    reservation_id: number | null;
-    deal_type_id: number;
-    status: number | null;
-    manager_user_id: number;
-    deal_number: string | null;
-    contract_number: string;
-    contract_date: string;
-    payment_type: number | null;
-    total_amount: number;
-    currency: string; // API возвращает строку "1"
-    note: string;
-    canceled_reason: string | null;
-    signed_at: string | null;
-    closed_at: string | null;
-    created_by: number;
-    updated_by: number;
+    schedule_id: number;
+    payment_id: number;
+    amount: string; // API возвращает строку "100000.00"
     created_at: string;
-    updated_at: string;
     deleted: boolean;
-    client?: PassportClientBrief;
-    currency_info: CurrencyInfo | null;
-    deal_type: DealTypeInfo | null;
-    payment_type_ref: PaymentTypeInfo | null;
-    status_ref: StatusInfo | null;
-    reservation?: PassportReservationBrief | null;
-    manager_user: UserInfo | null;
-    created_by_user: UserInfo | null;
-    updated_by_user: UserInfo | null;
-    payments?: PassportPayment[];
-    payment_schedules?: PassportPaymentSchedule[];
+    payment: PassportPayment;
 }
 
-// RESERVATIONS
-
-export interface PassportReservation {
+export interface PassportPaymentSchedule {
     id: number;
     project_id: number;
     block_id: number;
     unit_id: number;
     client_id: number;
-    status: number | null;
-    manager_user_id: number;
-    start_at: string;
-    expires_at: string;
-    confirmed_at: string | null;
-    canceled_at: string | null;
-    closed_at: string | null;
-    reservation_amount: number;
-    currency: string; // API возвращает строку "1"
+    deal_id: number;
+    payment_no: number;
+    planned_date: string;
+    planned_amount: number;
+    paid_amount: number;
+    remaining_amount: number;
+    status: number;
+    paid_at: string | null;
+    overdue_days: number;
     comment: string | null;
-    cancel_reason: string | null;
-    notify_3_days: boolean;
-    notify_2_days: boolean;
-    notify_1_day: boolean;
     created_by: number;
     updated_by: number;
     created_at: string;
     updated_at: string;
     deleted: boolean;
-    lead: unknown | null;
-    currency_info: CurrencyInfo | null;
     status_ref: StatusInfo | null;
-    manager_user: UserInfo | null;
-    created_by_user: UserInfo | null;
-    updated_by_user: UserInfo | null;
-    payments?: PassportPayment[];
+    links: PassportPaymentScheduleLink[];
 }
 
-// Краткие версии для вложенных структур
+export interface PassportClientBrief {
+    id: number;
+    full_name: string;
+    phone: string;
+    email: string | null;
+    passport_number: string | null;
+    pin: string | null;
+    manager_user_id: number | null;
+}
+
 export interface PassportReservationBrief {
     id: number;
     project_id: number;
@@ -309,26 +200,64 @@ export interface PassportReservationBrief {
     deleted: boolean;
 }
 
-export interface PassportClientBrief {
-    id: number;
-    full_name: string;
-    phone: string;
-    email: string;
-    passport_number: string;
-    pin: string;
-    manager_user_id: number | null;
+// БРОНИ (ПОЛНАЯ ВЕРСИЯ)
+export interface PassportReservation extends PassportReservationBrief {
+    lead: unknown | null;
+    currency_info: CurrencyInfo | null;
+    status_ref: StatusInfo | null;
+    manager_user: UserInfo | null;
+    created_by_user: UserInfo | null;
+    updated_by_user: UserInfo | null;
+    payments?: PassportPayment[];
 }
 
-// CLIENTS (внутри unit)
+// ДОГОВОРЫ (ПОЛНАЯ ВЕРСИЯ)
+export interface PassportDeal {
+    id: number;
+    project_id: number;
+    block_id: number;
+    unit_id: number;
+    client_id: number;
+    reservation_id: number | null;
+    deal_type_id: number;
+    status: number | null;
+    manager_user_id: number;
+    deal_number: string | null;
+    contract_number: string;
+    contract_date: string;
+    payment_type: number | null;
+    total_amount: number;
+    currency: string;
+    note: string;
+    canceled_reason: string | null;
+    signed_at: string | null;
+    closed_at: string | null;
+    created_by: number;
+    updated_by: number;
+    created_at: string;
+    updated_at: string;
+    deleted: boolean;
+    client?: PassportClientBrief;
+    currency_info: CurrencyInfo | null;
+    deal_type: DealTypeInfo | null;
+    payment_type_ref: PaymentTypeInfo | null;
+    status_ref: StatusInfo | null;
+    reservation?: PassportReservationBrief | null;
+    manager_user: UserInfo | null;
+    created_by_user: UserInfo | null;
+    updated_by_user: UserInfo | null;
+    payments?: PassportPayment[];
+    payment_schedules?: PassportPaymentSchedule[];
+}
 
+// КЛИЕНТЫ (ПОЛНАЯ ВЕРСИЯ С ВЛОЖЕННЫМИ ДАННЫМИ)
 export interface PassportClient extends PassportClientBrief {
     reservations: PassportReservation[];
     deals: PassportDeal[];
     payment_schedules: PassportPaymentSchedule[];
 }
 
-// UNIT (внутри паспорта)
-
+// ЛОТ (UNIT)
 export interface PassportUnit {
     id: number;
     project_id: number;
@@ -359,8 +288,7 @@ export interface PassportUnit {
     clients: PassportClient[];
 }
 
-// ROOT: UNIT PASSPORT
-
+// КОРНЕВОЙ ОБЪЕКТ: ПАСПОРТ ЛОТА
 export interface UnitPassport {
     unit: PassportUnit;
     reservations: PassportReservation[];
@@ -370,8 +298,7 @@ export interface UnitPassport {
     latest_at?: string;
 }
 
-// SLICE STATE
-
+// СОСТОЯНИЕ SLICE
 interface SalesUnitPassportState {
     passport: UnitPassport | null;
     loading: boolean;
@@ -389,10 +316,13 @@ export const fetchSalesUnitPassport = createAsyncThunk<
     UnitPassport,
     number,
     { rejectValue: string }
->('salesUnits/passport', async (unitId, { rejectWithValue }) => {
+>('salesUnitPassport/fetchSalesUnitPassport', async (unitId, { rejectWithValue }) => {
     try {
+        // apiRequest возвращает { data: T, success?: boolean, ... }
+        // Благодаря нормализации в apiRequest, res.data уже содержит UnitPassport
         const res = await apiRequest<UnitPassport>(`/sales/units/${unitId}/passport`, 'GET');
 
+        // res.data уже нормализован благодаря apiRequest
         return res.data;
     } catch (err) {
         return rejectWithValue(
@@ -417,12 +347,10 @@ const salesUnitPassportSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Pending
             .addCase(fetchSalesUnitPassport.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            // Fulfilled
             .addCase(
                 fetchSalesUnitPassport.fulfilled,
                 (state, action: PayloadAction<UnitPassport>) => {
@@ -431,7 +359,6 @@ const salesUnitPassportSlice = createSlice({
                     state.error = null;
                 },
             )
-            // Rejected
             .addCase(fetchSalesUnitPassport.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Неизвестная ошибка';
@@ -469,5 +396,4 @@ export const selectPassportPayments = (state: { salesUnitPassport: SalesUnitPass
 export const selectPassportSchedules = (state: { salesUnitPassport: SalesUnitPassportState }) =>
     state.salesUnitPassport.passport?.payment_schedules ?? [];
 
-// REDUCER
 export default salesUnitPassportSlice.reducer;

@@ -1,5 +1,5 @@
 import { Divider, Paper, Tab, Tabs } from '@mui/material';
-import { Building2, CalendarCheck, Grid3X3, Home, Target, Users } from 'lucide-react';
+import { Building2, Grid3X3, Home, Target, Users } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 export default function SalesPageTabs() {
@@ -11,7 +11,6 @@ export default function SalesPageTabs() {
         if (location.pathname.includes('matrix')) return 2;
         if (location.pathname.includes('leads')) return 3;
         if (location.pathname.includes('clients')) return 4;
-        if (location.pathname.includes('paymentSchedules')) return 5;
         return 0;
     };
 
@@ -26,7 +25,6 @@ export default function SalesPageTabs() {
                     if (value === 2) navigate('matrix', { replace: true });
                     if (value === 3) navigate('leads', { replace: true });
                     if (value === 4) navigate('clients', { replace: true });
-                    if (value === 5) navigate('paymentSchedules', { replace: true });
                 }}
                 sx={{ mb: 1 }}
             >
@@ -35,7 +33,6 @@ export default function SalesPageTabs() {
                 <Tab label="Шахматка" icon={<Grid3X3 size={16} />} />
                 <Tab label="Лиды" icon={<Target size={16} />} />
                 <Tab label="Клиенты" icon={<Users size={16} />} />
-                <Tab label="Графики оплат" icon={<CalendarCheck size={16} />} />
             </Tabs>
 
             <Divider sx={{ mb: 2 }} />

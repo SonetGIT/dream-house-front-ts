@@ -20,7 +20,7 @@ import SalesMatrixHeader from './SalesMatrixHeader';
 import SalesMatrixPlanManagerModal from './SalesMatrixPlanManagerModal';
 import { fetchFileContent } from '@/features/projects/legal_department/files/downloadFile';
 import { Paper } from '@mui/material';
-import SalesUnitDetailsPanel from '../unitPassport/SalesUnitDetailsPanel';
+import SalesUnitPasportSidbar from '../unitPassport/SalesUnitPassportSidbar';
 
 interface MatrixUnitStatus {
     id: number;
@@ -55,6 +55,7 @@ const buildStatusMap = (units: SalesOverviewUnit[]) => {
     return map;
 };
 
+/***********************************************************************************************************************/
 export default function SalesMatrixPage() {
     const dispatch = useAppDispatch();
     const {
@@ -754,7 +755,7 @@ export default function SalesMatrixPage() {
                     </div>
                 </div>
                 {selectedUnitId && (
-                    <SalesUnitDetailsPanel
+                    <SalesUnitPasportSidbar
                         unitId={selectedUnitId}
                         onClose={() => setSelectedUnitId(null)}
                     />
