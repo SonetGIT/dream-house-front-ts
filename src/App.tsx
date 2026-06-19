@@ -53,7 +53,7 @@ export default function App() {
                 <span> Плешивый щеголь, враг труда,</span> <br />
                 <span> Нечаянно пригретый славой,</span>
                 <br />
-                <span> Над нами царствовал тогда.</span> */}
+                <span> Над нами царствовал тогда.</span>*/}
                 <Outlet />
             </main>
             <Footer />

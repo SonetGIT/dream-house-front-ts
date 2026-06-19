@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
     X,
-    Plus,
     Pencil,
     Wallet,
     Home,
@@ -122,7 +121,6 @@ export default function SalesUnitPasportSidbar({
 
     const { clientHistory, getReservationStatusName, getDealStatusName, isActiveReservation } =
         salesUnitPassportLogic(passport, undefined, dealStatuses);
-    console.log('clientHistory', clientHistory);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [reservationModalOpen, setReservationModalOpen] = useState(false);
     const [resForm, setResForm] = useState({

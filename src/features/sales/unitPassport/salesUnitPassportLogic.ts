@@ -4,7 +4,6 @@ import {
     type PassportReservation,
     type PassportDeal,
     type PassportPayment,
-    type PassportPaymentSchedule,
     type UnitPassport,
     type PassportReservationBrief,
 } from '../slices/salesUnitPassportSlice';
@@ -279,6 +278,7 @@ export function salesUnitPassportLogic(
             );
     }, [reservations, deals, payments, isSignedDeal, isActiveReservation]);
 
+    /*******************************************************************************************************************/
     return {
         reservations,
         deals,
