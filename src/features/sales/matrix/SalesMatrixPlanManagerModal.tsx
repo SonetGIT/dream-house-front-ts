@@ -32,71 +32,83 @@ export default function SalesMatrixPlanManagerModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
             onClick={(event) => event.target === event.currentTarget && onClose()}
         >
-            <div className="w-full max-w-md p-5 text-white bg-gray-900 border border-gray-800 shadow-2xl rounded-2xl">
-                <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="w-full max-w-md overflow-hidden bg-white border shadow-2xl border-stone-200 rounded-xl">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 p-3 border-b border-stone-200 bg-slate-50">
                     <div>
-                        <div className="text-lg font-semibold">Планы этажа</div>
-                        <div className="mt-0.5 text-sm text-gray-400">
+                        <div className="text-lg font-semibold text-slate-800">Планы этажа</div>
+                        <div className="mt-0.5 text-sm text-slate-500">
                             {blockName} · {floorLabel}
                         </div>
                     </div>
 
                     <button
                         onClick={onClose}
-                        className="rounded-lg bg-gray-800 p-1.5 text-gray-300 hover:bg-gray-700"
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-200 transition-colors"
                     >
-                        <X size={15} />
+                        <X size={18} />
                     </button>
                 </div>
 
-                <div className="flex gap-2 p-3 mb-4 text-sm text-gray-300 border border-gray-700 rounded-xl bg-gray-800/60">
-                    <Info size={14} className="mt-0.5 shrink-0 text-blue-400" />
-                    <span>
-                        У зоны в SVG должен быть <strong className="text-white">id</strong>,
-                        совпадающий с <strong className="text-white">номером лота</strong>. На этаж
-                        — один SVG.
-                    </span>
+                {/* Info */}
+                <div className="p-4">
+                    <div className="flex gap-3 p-3 text-sm text-blue-800 border border-blue-200 rounded-lg bg-blue-50">
+                        <Info size={16} className="mt-0.5 shrink-0 text-blue-600" />
+                        <span>
+                            У зоны в SVG должен быть <strong className="font-semibold">id</strong>,
+                            совпадающий с <strong className="font-semibold">номером лота</strong>.
+                            На этаж — один SVG.
+                        </span>
+                    </div>
                 </div>
 
-                <label
-                    className={`mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                        limitReached || saving
-                            ? 'cursor-not-allowed bg-gray-700 opacity-60'
-                            : 'bg-blue-600 hover:bg-blue-500'
-                    }`}
-                >
-                    <Upload size={15} />
-                    {limitReached ? 'SVG уже загружен' : saving ? 'Загрузка...' : 'Загрузить SVG'}
-                    <input
-                        type="file"
-                        accept=".svg,image/svg+xml"
-                        className="hidden"
-                        onChange={onUpload}
-                        disabled={limitReached || saving}
-                    />
-                </label>
+                {/* Upload Button */}
+                <div className="px-4 pb-4">
+                    <label
+                        className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                            limitReached || saving
+                                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                    >
+                        <Upload size={16} />
+                        {limitReached
+                            ? 'SVG уже загружен'
+                            : saving
+                              ? 'Загрузка...'
+                              : 'Загрузить SVG'}
+                        <input
+                            type="file"
+                            accept=".svg,image/svg+xml"
+                            className="hidden"
+                            onChange={onUpload}
+                            disabled={limitReached || saving}
+                        />
+                    </label>
+                </div>
 
-                <div className="space-y-2">
+                {/* Files List */}
+                <div className="px-4 pb-5 space-y-2">
                     {loading ? (
-                        <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-700 border-dashed rounded-xl">
+                        <div className="px-4 py-6 text-sm text-center border border-dashed rounded-lg text-slate-500 border-stone-300 bg-slate-50">
                             Загружаем файлы...
                         </div>
                     ) : files.length ? (
                         files.map((file) => (
                             <div
                                 key={file.id}
-                                className="p-3 border border-gray-700 rounded-xl bg-gray-800/50"
+                                className="p-3 bg-white border rounded-lg border-stone-200"
                             >
                                 <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <div className="text-sm font-medium text-white truncate">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium truncate text-slate-800">
                                             {file.name}
                                         </div>
-                                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                                            <span className="rounded-full border border-gray-600 px-2 py-0.5">
+                                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                            <span className="rounded-full border border-stone-300 px-2 py-0.5 bg-slate-50">
                                                 SVG
                                             </span>
                                             <span>Активный план</span>
@@ -106,22 +118,24 @@ export default function SalesMatrixPlanManagerModal({
                                     <div className="flex shrink-0 items-center gap-1.5">
                                         <button
                                             onClick={() => onDownload(file)}
-                                            className="p-2 transition-colors bg-gray-700 rounded-lg hover:bg-gray-600"
+                                            className="p-2 transition-colors rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                            title="Скачать"
                                         >
-                                            <Download size={13} />
+                                            <Download size={14} />
                                         </button>
                                         <button
                                             onClick={() => void onDelete(file.id)}
-                                            className="p-2 transition-colors bg-red-700 rounded-lg hover:bg-red-600"
+                                            className="p-2 text-red-600 transition-colors rounded-lg bg-red-50 hover:bg-red-100"
+                                            title="Удалить"
                                         >
-                                            <Trash2 size={13} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-700 border-dashed rounded-xl">
+                        <div className="px-4 py-6 text-sm text-center border border-dashed rounded-lg text-slate-500 border-stone-300 bg-slate-50">
                             Для этого этажа пока не загружен SVG-план
                         </div>
                     )}
