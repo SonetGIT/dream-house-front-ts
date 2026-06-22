@@ -241,21 +241,21 @@
         }
     },
     "dealStatuses": {
-        "apiName": "/deal-statuses",
+        "apiName": "/sales/deal-statuses",
         "data": {
             "id": "id",
             "name": ["name"]
         }
     },
     "reservationStatuses": {
-        "apiName": "/reservation-statuses",
+        "apiName": "/sales/reservation-statuses",
         "data": {
             "id": "id",
             "name": ["name"]
         }
     },
     "dealPaymentTypes": {
-        "apiName": "/deal-payment-types/gets",
+        "apiName": "/sales/deal-payment-types/gets",
         "data": {
             "id": "id",
             "name": ["name"]

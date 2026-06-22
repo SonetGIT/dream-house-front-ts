@@ -198,6 +198,7 @@ export interface PassportReservationBrief {
     created_at: string;
     updated_at: string;
     deleted: boolean;
+    manager_user: UserInfo | null;
 }
 
 // БРОНИ (ПОЛНАЯ ВЕРСИЯ)

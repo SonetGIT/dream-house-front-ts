@@ -29,7 +29,7 @@ export default function WarehouseMaterialsTab({ warehouse, refs }: WarehouseMate
 
     return (
         <WarehouseStocksTable
-            // ✅ ИСПРАВЛЕНО: таблица теперь подписана на Redux
+            //ИСПРАВЛЕНО: таблица теперь подписана на Redux
             items={warehouseStockItems}
             whItemPagination={pagination}
             refs={refs}

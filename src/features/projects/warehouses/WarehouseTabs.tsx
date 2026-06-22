@@ -12,6 +12,7 @@ const tabs: { key: WarehouseTabType; label: string }[] = [
     { key: 'writeOffMbp', label: 'Списание МБП' },
     { key: 'writeOffprocess', label: 'Переработка' },
     { key: 'warehouseTransfers', label: 'Перемещения' },
+    { key: 'warehouseReceiptInvoices', label: 'Накладные' },
 ];
 
 /*******************************************************************************************************/

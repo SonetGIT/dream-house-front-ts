@@ -32,6 +32,7 @@ import materialWriteOffReducer from '@/features/projects/warehouses/materialWrit
 import mbpWriteOffReducer from '@/features/projects/warehouses/mbpWriteOffs/mbpWriteOffSlice';
 import processingWriteOffReducer from '@/features/projects/warehouses/materialProcessingWriteOffs/processingWriteOffSlice';
 import warehouseTransfersReducer from '@/features/projects/warehouses/warehouseTransfers/warehouseTransfersSlice';
+import warehouseReceiptInvoicesReducer from '@/features/projects/warehouses/warehouseReceiptInvoices/warehouseReceiptInvoicesSlice';
 import reportDefinitionsReducer from '@/features/projects/reports/reportDefinitionsSlice';
 import paymentsReducer from '@/features/projects/payments/paymentSlice';
 import salesObjOverviewReducer from '@/features/sales/slices/salesObjOverviewSlice';
@@ -78,6 +79,7 @@ export const rootReducer = combineReducers({
     mbpWriteOff: mbpWriteOffReducer,
     processingWriteOff: processingWriteOffReducer,
     warehouseTransfers: warehouseTransfersReducer,
+    warehouseReceiptInvoices: warehouseReceiptInvoicesReducer,
     reportDefinitions: reportDefinitionsReducer,
     payments: paymentsReducer,
     salesObjOverview: salesObjOverviewReducer,

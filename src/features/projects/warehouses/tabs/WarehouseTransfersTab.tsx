@@ -407,7 +407,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
         return null;
     };
 
-    // ✍️ Обработчик отклонения
+    // Обработчик отклонения
     const handleReject = async (whT: WarehouseTransfer, preferredSide?: 'sender' | 'receiver') => {
         // Подтверждение действия
         const confirmed = window.confirm('Вы уверены, что хотите отклонить это перемещение?');

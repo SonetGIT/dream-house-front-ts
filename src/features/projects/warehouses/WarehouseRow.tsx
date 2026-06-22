@@ -15,6 +15,7 @@ import WarehouseWriteOffMbpTab from './tabs/WarehouseWriteOffMBPTab';
 import WarehouseWriteOffProcessTab from './tabs/WarehouseWriteOffProcessTab';
 import { ActionButton, ACTIONS } from '@/components/ui/ActionButton';
 import WarehouseTransfersTab from './tabs/WarehouseTransfersTab';
+import WarehouseReceiptInvoicesTab from './warehouseReceiptInvoices/warehouseReceiptInvoicesTab';
 
 export type WarehouseTabType =
     | 'materials'
@@ -22,7 +23,8 @@ export type WarehouseTabType =
     | 'writeOffAvr'
     | 'writeOffMbp'
     | 'writeOffprocess'
-    | 'warehouseTransfers';
+    | 'warehouseTransfers'
+    | 'warehouseReceiptInvoices';
 
 interface WarehouseRowProps {
     warehouse: Warehouse;
@@ -195,6 +197,9 @@ export default function WarehouseRow({
                             )}
                             {activeTab === 'warehouseTransfers' && (
                                 <WarehouseTransfersTab warehouseId={warehouse.id} refs={refs} />
+                            )}
+                            {activeTab === 'warehouseReceiptInvoices' && (
+                                <WarehouseReceiptInvoicesTab warehouseId={warehouse.id} />
                             )}
                         </div>
                     </Collapse>

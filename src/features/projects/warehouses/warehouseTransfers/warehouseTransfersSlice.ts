@@ -77,29 +77,6 @@ export interface CreateWarehouseTransferPayload {
     items: CreateWarehouseTransferItemPayload[];
 }
 
-// export interface UpdateWarehouseTransferPayload {
-//     warehouse_id?: number;
-//     posted_at?: string;
-//     note?: string | null;
-//     items?: CreateWarehouseTransferItemPayload[];
-
-//     foreman_user_id: number | null;
-//     signed_by_foreman: boolean | null;
-//     signed_by_foreman_time: string | null;
-
-//     planning_engineer_user_id: number | null;
-//     signed_by_planning_engineer: boolean | null;
-//     signed_by_planning_engineer_time: string | null;
-
-//     main_engineer_user_id: number | null;
-//     signed_by_main_engineer: boolean | null;
-//     signed_by_main_engineer_time: string | null;
-
-//     general_director_user_id: number | null;
-//     signed_by_general_director: boolean | null;
-//     signed_by_general_director_time: string | null;
-// }
-
 interface WarehouseTransferState {
     data: WarehouseTransfer[];
     current: WarehouseTransfer | null;

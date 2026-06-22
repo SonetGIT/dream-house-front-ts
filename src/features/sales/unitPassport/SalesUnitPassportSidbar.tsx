@@ -53,12 +53,16 @@ import {
 import { fetchSalesClients } from '@/features/sales/slices/salesClientsSlice';
 import {
     fetchSalesDealTypes,
+    fetchSalesUnitFinishTypes,
     fetchSalesUnitStatuses,
     type SalesDealTypes,
+    type SalesUnitStatus,
 } from '@/features/sales/slices/salesDictionariesSlice';
-import { updateSalesUnit } from '@/features/sales/slices/salesUnitsSlice';
+import { fetchSalesOverview } from '@/features/sales/slices/salesObjOverviewSlice';
+import { updateSalesUnit, type SalesUnit } from '@/features/sales/slices/salesUnitsSlice';
 import { generateSalesPaymentSchedule } from '@/features/sales/slices/salesPaymentSchedulesSlice';
 import { ClientAccordionItem } from './ClientAccordionItem';
+import { ObjectsOverviewUnitForm } from '../objectsOverviewUnits/ObjectsOverviewUnitForm';
 import {
     InlineHint,
     InputField,
@@ -129,6 +133,27 @@ const getUnitStatusTone = (code?: string) => {
     return 'border-blue-200 bg-blue-50 text-blue-700';
 };
 
+const isOffSaleStatus = (
+    status: Pick<SalesUnitStatus, 'code' | 'name'> | null | undefined,
+) => {
+    const code = String(status?.code || '').toLowerCase();
+    const name = String(status?.name || '').toLowerCase();
+
+    return (
+        [
+            'off_sale',
+            'off_market',
+            'offmarket',
+            'not_for_sale',
+            'withdrawn',
+            'removed',
+            'inactive',
+        ].includes(code) ||
+        name.includes('снят') ||
+        name.includes('продаж')
+    );
+};
+
 const toDateInput = (value?: string | Date | null) => {
     if (!value) return '';
     const date = new Date(value);
@@ -143,7 +168,9 @@ const formatEditableNumber = (value: unknown) => {
 };
 
 const toNullableNumber = (value: string) => {
-    const normalized = String(value || '').trim().replace(',', '.');
+    const normalized = String(value || '')
+        .trim()
+        .replace(',', '.');
     if (!normalized) return null;
     const numeric = Number(normalized);
     return Number.isFinite(numeric) ? numeric : null;
@@ -194,14 +221,14 @@ function InlineMetric({
     };
 
     return (
-        <div className="flex min-w-0 items-center gap-2 rounded-xl border border-stone-200 bg-white px-2 py-2">
+        <div className="flex items-center min-w-0 gap-2 px-2 py-2 bg-white border rounded-xl border-stone-200">
             <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${toneMap[tone]}`}>
                 {icon}
             </div>
             <div className="min-w-0">
                 <div className="text-[12px] leading-none text-slate-500">
                     {label}:{' '}
-                    <span className="mt-1 truncate text-sm font-semibold text-slate-700">
+                    <span className="mt-1 text-sm font-semibold truncate text-slate-700">
                         {value}{' '}
                     </span>
                 </div>
@@ -215,18 +242,21 @@ export function HeaderIconAction({
     icon,
     className,
     onClick,
+    disabled = false,
 }: {
     title: string;
     icon: React.ReactNode;
     className: string;
     onClick?: () => void;
+    disabled?: boolean;
 }) {
     return (
         <StyledTooltip title={title}>
             <button
                 type="button"
                 onClick={onClick}
-                className={`flex h-6 w-6 items-center justify-center rounded-lg text-white transition ${className}`}
+                disabled={disabled}
+                className={`flex h-6 w-6 items-center justify-center rounded-lg text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
             >
                 {icon}
             </button>
@@ -242,14 +272,24 @@ export default function SalesUnitPasportSidbar({
     onClose: () => void;
 }) {
     const dispatch = useAppDispatch();
+    const currentUser = useAppSelector((state) => state.auth.user);
     const passport = useAppSelector(selectPassport);
     const passportLoading = useAppSelector(selectPassportLoading);
     const passportUnit = useAppSelector(selectPassportUnit);
+    const { projects, blocks } = useAppSelector((state) => state.salesObjOverview);
     const clients = useAppSelector((state) => state.salesClients?.items ?? EMPTY_ARRAY);
     const dealTypes = useAppSelector((state) => state.salesDictionaries?.dealTypes ?? EMPTY_ARRAY);
+    const unitStatuses = useAppSelector(
+        (state) => state.salesDictionaries?.unitStatuses ?? EMPTY_ARRAY,
+    );
+    const finishTypes = useAppSelector(
+        (state) => state.salesDictionaries?.finishTypes ?? EMPTY_ARRAY,
+    );
     const paymentTypes = useAppSelector((state) => state.payments?.types ?? EMPTY_ARRAY);
     const paymentArticles = useAppSelector((state) => state.payments?.articles ?? EMPTY_ARRAY);
-    const counterpartyTypes = useAppSelector((state) => state.payments?.counterpartyTypes ?? EMPTY_ARRAY);
+    const counterpartyTypes = useAppSelector(
+        (state) => state.payments?.counterpartyTypes ?? EMPTY_ARRAY,
+    );
 
     const currenciesRef = useReference('currencies');
     const dealStatusesRef = useReference('dealStatuses');
@@ -290,6 +330,7 @@ export default function SalesUnitPasportSidbar({
     const [actionLoading, setActionLoading] = useState(false);
     const [filesLoading, setFilesLoading] = useState(false);
     const [downloadingScheduleDealId, setDownloadingScheduleDealId] = useState<number | null>(null);
+    const [editingReservation, setEditingReservation] = useState<PassportReservation | PassportReservationBrief | null>(null);
     const [editingDeal, setEditingDeal] = useState<PassportDeal | null>(null);
     const [unitForm, setUnitForm] = useState(EMPTY_UNIT_FORM);
     const [dealForm, setDealForm] = useState(EMPTY_DEAL_FORM);
@@ -310,6 +351,7 @@ export default function SalesUnitPasportSidbar({
             dispatch(fetchSalesUnitPassport(unitId));
             dispatch(fetchSalesClients({ page: 1, size: 200 }));
             dispatch(fetchSalesUnitStatuses());
+            dispatch(fetchSalesUnitFinishTypes());
             dispatch(fetchSalesDealTypes());
             dispatch(fetchPaymentTypes());
             dispatch(fetchPaymentArticles());
@@ -323,7 +365,10 @@ export default function SalesUnitPasportSidbar({
     }, [currencies]);
 
     const activeReservation = useMemo(
-        () => reservations.find((item: PassportReservation | PassportReservationBrief) => isActiveReservation(item)) || null,
+        () =>
+            reservations.find((item: PassportReservation | PassportReservationBrief) =>
+                isActiveReservation(item),
+            ) || null,
         [reservations, isActiveReservation],
     );
 
@@ -343,15 +388,52 @@ export default function SalesUnitPasportSidbar({
     const salePaymentArticle = useMemo(() => {
         return (
             paymentArticles.find((item: any) => item.code === 'sale_apartment_income') ||
-            paymentArticles.find((item: any) => Number(item.payment_type) === Number(incomePaymentType?.id)) ||
+            paymentArticles.find(
+                (item: any) => Number(item.payment_type) === Number(incomePaymentType?.id),
+            ) ||
             paymentArticles[0] ||
             null
         );
     }, [incomePaymentType?.id, paymentArticles]);
 
     const clientCounterpartyType = useMemo(
-        () => counterpartyTypes.find((item: any) => item.code === 'client') || counterpartyTypes[0] || null,
+        () =>
+            counterpartyTypes.find((item: any) => item.code === 'client') ||
+            counterpartyTypes[0] ||
+            null,
         [counterpartyTypes],
+    );
+
+    const unitStatusMap = useMemo(() => {
+        const map = new Map<number, SalesUnitStatus>();
+        unitStatuses.forEach((item) => {
+            map.set(Number(item.id), item);
+        });
+        return map;
+    }, [unitStatuses]);
+
+    const currentUnitStatus = useMemo(
+        () => passportUnit?.status || unitStatusMap.get(Number(passportUnit?.status_id)) || null,
+        [passportUnit?.status, passportUnit?.status_id, unitStatusMap],
+    );
+
+    const isUnitOffSale = useMemo(
+        () => isOffSaleStatus(currentUnitStatus),
+        [currentUnitStatus],
+    );
+
+    const freeUnitStatus = useMemo(
+        () =>
+            unitStatuses.find(
+                (item) => String(item.code || '').toLowerCase() === 'free',
+            ) ||
+            unitStatuses.find((item) =>
+                String(item.name || '')
+                    .toLowerCase()
+                    .includes('свобод'),
+            ) ||
+            null,
+        [unitStatuses],
     );
 
     const statusTextHas = (item: any, parts: string[]) => {
@@ -372,12 +454,25 @@ export default function SalesUnitPasportSidbar({
         return Number(match?.id || fallback[key] || 0);
     };
 
+    const getReservationStatusIdByKey = (key: 'active' | 'closed' | 'canceled') => {
+        const keywords = {
+            active: ['active', 'Р°РєС‚РёРІ'],
+            closed: ['closed', 'Р·Р°РєСЂС‹', 'РїРѕРґРїРёСЃ'],
+            canceled: ['canceled', 'cancel', 'РѕС‚РјРµРЅ', 'СЃРЅСЏС‚'],
+        };
+        const match = reservationStatuses.find((item) => statusTextHas(item, keywords[key]));
+        const fallback = { active: 1, closed: 2, canceled: 3 };
+        return Number(match?.id || fallback[key] || 0);
+    };
+
     const getPreferredDealTypeId = () => {
         const match = (dealTypes as SalesDealTypes[]).find((type) => {
             const code = String(type.code || '').toLowerCase();
             const name = String(type.name || '').toLowerCase();
-            return ['buyout', 'sale', 'regular'].includes(code) ||
-                ['выкуп', 'обыч', 'продаж'].some((part) => name.includes(part));
+            return (
+                ['buyout', 'sale', 'regular'].includes(code) ||
+                ['выкуп', 'обыч', 'продаж'].some((part) => name.includes(part))
+            );
         });
         return String(match?.id || dealTypes[0]?.id || '');
     };
@@ -399,6 +494,29 @@ export default function SalesUnitPasportSidbar({
         await dispatch(fetchSalesUnitPassport(unitId));
     };
 
+    const canManageReservation = (reservation: PassportReservation | PassportReservationBrief | null) => {
+        if (!reservation) return false;
+        if (!isActiveReservation(reservation)) return false;
+
+        const hasSignedDeal = deals.some(
+            (deal: PassportDeal) =>
+                Number(deal.reservation_id) === Number(reservation.id) &&
+                ['active', 'signed', 'closed'].includes(
+                    String(deal.status_ref?.code || '').toLowerCase(),
+                ),
+        );
+        if (hasSignedDeal) return false;
+
+        if (Number(currentUser?.role_id) === 1) return true;
+
+        const currentUserId = Number(currentUser?.id || 0);
+        return Boolean(
+            currentUserId &&
+                (Number(reservation.manager_user_id) === currentUserId ||
+                    Number(reservation.created_by) === currentUserId),
+        );
+    };
+
     const normalizeEntityType = (value: unknown) => String(value || '').toLowerCase();
 
     const isPaymentForDeal = (payment: PassportPayment, deal: PassportDeal | undefined) => {
@@ -410,7 +528,9 @@ export default function SalesUnitPasportSidbar({
             return true;
         }
 
-        const contractNumber = String(deal.contract_number || deal.deal_number || '').trim().toLowerCase();
+        const contractNumber = String(deal.contract_number || deal.deal_number || '')
+            .trim()
+            .toLowerCase();
         if (!contractNumber) return false;
 
         return String(payment.title || payment.description || '')
@@ -432,7 +552,9 @@ export default function SalesUnitPasportSidbar({
     };
 
     const getDealSchedules = (dealId: number) => {
-        const direct = deals.find((item: PassportDeal) => Number(item.id) === Number(dealId))?.payment_schedules;
+        const direct = deals.find(
+            (item: PassportDeal) => Number(item.id) === Number(dealId),
+        )?.payment_schedules;
         const rows =
             Array.isArray(direct) && direct.length
                 ? direct
@@ -465,7 +587,9 @@ export default function SalesUnitPasportSidbar({
             (group?.reservations || []).some(
                 (reservation: PassportReservationBrief) =>
                     normalizeEntityType(
-                        payment.entity_type_code || payment.entity_type_ref?.code || payment.entity_type,
+                        payment.entity_type_code ||
+                            payment.entity_type_ref?.code ||
+                            payment.entity_type,
                     ) === 'salesreservation' &&
                     Number(payment.entity_id) === Number(reservation.id),
             ),
@@ -516,19 +640,53 @@ export default function SalesUnitPasportSidbar({
 
     const openEditUnitModal = () => {
         if (!passportUnit) return;
-        setUnitForm({
-            unit_number: String(passportUnit.unit_number || ''),
-            lot_type: passportUnit.lot_type || 'apartment',
-            rooms:
-                passportUnit.rooms === null || passportUnit.rooms === undefined
-                    ? ''
-                    : String(passportUnit.rooms),
-            area_total: formatEditableNumber(passportUnit.area_total),
-            price_total: formatEditableNumber(passportUnit.price_total),
-            currency: passportUnit.currency ? String(passportUnit.currency) : defaultCurrencyId,
-            comment: String(passportUnit.comment || passportUnit.description || ''),
-        });
+        if (!projects.length || !blocks.length) {
+            dispatch(fetchSalesOverview({ page: 1, size: 1 }));
+        }
+        if (!finishTypes.length) {
+            dispatch(fetchSalesUnitFinishTypes());
+        }
         setEditUnitOpen(true);
+    };
+
+    const openReservationModal = (
+        context?: PassportReservation | PassportReservationBrief | { client_id?: number | null } | null,
+    ) => {
+        const reservation =
+            context && 'start_at' in context ? (context as PassportReservation | PassportReservationBrief) : null;
+        const defaults =
+            context && !('start_at' in context) ? (context as { client_id?: number | null }) : null;
+
+        if (!reservation && activeReservation) {
+            toast.error('По этой квартире уже есть активная бронь');
+            return;
+        }
+
+        if (reservation && !canManageReservation(reservation)) {
+            toast.error('Редактировать бронь может только ее менеджер или администратор');
+            return;
+        }
+
+        setEditingReservation(reservation);
+        setResForm({
+            client_id: reservation?.client_id
+                ? String(reservation.client_id)
+                : defaults?.client_id
+                  ? String(defaults.client_id)
+                  : '',
+            start_at: reservation ? toDateInput(reservation.start_at) : '',
+            expires_at: reservation ? toDateInput(reservation.expires_at) : '',
+            reservation_amount: reservation
+                ? formatEditableNumber(reservation.reservation_amount)
+                : '',
+            currency: reservation?.currency
+                ? String(reservation.currency)
+                : passportUnit?.currency
+                  ? String(passportUnit.currency)
+                  : defaultCurrencyId,
+            comment: reservation?.comment || '',
+        });
+        setReservationModalOpen(true);
     };
 
     const saveUnit = async (event: FormEvent<HTMLFormElement>) => {
@@ -565,7 +723,41 @@ export default function SalesUnitPasportSidbar({
         }
     };
 
-    const openCreateDealModal = (defaults?: { client_id?: number | null; reservation_id?: number | null }) => {
+    const returnUnitToFree = async () => {
+        if (!passportUnit?.id) return;
+        if (!freeUnitStatus?.id) {
+            toast.error('Статус "Свободно" не найден');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            await dispatch(
+                updateSalesUnit({
+                    id: passportUnit.id,
+                    payload: {
+                        status_id: Number(freeUnitStatus.id),
+                    },
+                }),
+            ).unwrap();
+
+            toast.success('Квартира снова свободна');
+            await refreshPassport();
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : 'Не удалось вернуть квартиру в свободные',
+            );
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const openCreateDealModal = (defaults?: {
+        client_id?: number | null;
+        reservation_id?: number | null;
+    }) => {
         setEditingDeal(null);
         setDealForm({
             ...EMPTY_DEAL_FORM,
@@ -708,14 +900,19 @@ export default function SalesUnitPasportSidbar({
                         paymentForm.title.trim() ||
                         `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`,
                     amount,
-                    currency: Number(paymentForm.currency || selectedDeal.currency || defaultCurrencyId),
+                    currency: Number(
+                        paymentForm.currency || selectedDeal.currency || defaultCurrencyId,
+                    ),
                     planned_date: paymentForm.planned_date || null,
                     paid_date: paymentForm.paid_date || null,
                     counterparty_type: clientCounterpartyType?.id
                         ? String(clientCounterpartyType.id)
                         : null,
                     counterparty_id: selectedDeal.client_id || null,
-                    counterparty_name: getClientName(selectedDeal.client_id, selectedDeal.client?.full_name || ''),
+                    counterparty_name: getClientName(
+                        selectedDeal.client_id,
+                        selectedDeal.client?.full_name || '',
+                    ),
                     is_manual: false,
                 }),
             ).unwrap();
@@ -734,7 +931,8 @@ export default function SalesUnitPasportSidbar({
         const schedules = getDealSchedules(deal.id);
         const firstSchedule = schedules[0] || null;
         const secondSchedule = schedules[1] || null;
-        const startDate = firstSchedule?.planned_date || deal.contract_date || toDateInput(new Date());
+        const startDate =
+            firstSchedule?.planned_date || deal.contract_date || toDateInput(new Date());
 
         setScheduleForm({
             deal_id: String(deal.id),
@@ -879,7 +1077,9 @@ export default function SalesUnitPasportSidbar({
             });
             setDealFilesOpen(true);
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Не удалось открыть файлы договора');
+            toast.error(
+                error instanceof Error ? error.message : 'Не удалось открыть файлы договора',
+            );
         } finally {
             setFilesLoading(false);
         }
@@ -900,7 +1100,9 @@ export default function SalesUnitPasportSidbar({
                 ).unwrap();
             }
 
-            const filesRes = await dispatch(fetchDocumentFiles(dealFilesContext.documentId)).unwrap();
+            const filesRes = await dispatch(
+                fetchDocumentFiles(dealFilesContext.documentId),
+            ).unwrap();
             setDealFilesContext((prev) => ({
                 ...prev,
                 files: filesRes.data || [],
@@ -949,6 +1151,76 @@ export default function SalesUnitPasportSidbar({
         event.preventDefault();
         setActionLoading(true);
         try {
+            if (!resForm.client_id) {
+                throw new Error('Выберите клиента');
+            }
+
+            if (!editingReservation && activeReservation) {
+                throw new Error('По этой квартире уже есть активная бронь');
+            }
+
+            if (editingReservation && !canManageReservation(editingReservation)) {
+                throw new Error('Редактировать бронь может только ее менеджер или администратор');
+            }
+
+            const payload = {
+                unit_id: Number(unitId),
+                client_id: Number(resForm.client_id),
+                start_at: resForm.start_at || null,
+                expires_at: resForm.expires_at || null,
+                reservation_amount: toNullableNumber(resForm.reservation_amount),
+                currency: resForm.currency ? Number(resForm.currency) : null,
+                comment: resForm.comment.trim() || null,
+                status: editingReservation
+                    ? Number(editingReservation.status || getReservationStatusIdByKey('active'))
+                    : getReservationStatusIdByKey('active'),
+                cancel_reason: editingReservation?.cancel_reason || null,
+            };
+
+            if (editingReservation?.id) {
+                await apiRequest(`/sales/reservations/update/${editingReservation.id}`, 'PUT', payload);
+            } else {
+                await apiRequest('/sales/reservations/create', 'POST', payload);
+            }
+
+            toast.success(editingReservation ? 'Бронь обновлена' : 'Бронь создана');
+            setEditingReservation(null);
+            setReservationModalOpen(false);
+            await refreshPassport();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Ошибка сохранения брони');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const cancelReservation = async (reservation: PassportReservation | PassportReservationBrief) => {
+        if (!reservation?.id) return;
+        if (!canManageReservation(reservation)) {
+            toast.error('Снять бронь может только ее менеджер или администратор');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            await apiRequest(`/sales/reservations/update/${reservation.id}`, 'PUT', {
+                status: getReservationStatusIdByKey('canceled'),
+                cancel_reason: 'Бронь снята менеджером',
+            });
+
+            toast.success('Бронь снята');
+            await refreshPassport();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Ошибка снятия брони');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const _legacyHandleSaveReservation = async (event: FormEvent) => {
+        event.preventDefault();
+        setActionLoading(true);
+        try {
             toast.success('Бронь сохранена');
             setReservationModalOpen(false);
             await refreshPassport();
@@ -958,6 +1230,8 @@ export default function SalesUnitPasportSidbar({
             setActionLoading(false);
         }
     };
+
+    void _legacyHandleSaveReservation;
 
     if (passportLoading && !passport) {
         return (
@@ -977,30 +1251,31 @@ export default function SalesUnitPasportSidbar({
 
     return (
         <div className="flex h-full w-[680px] flex-col overflow-hidden border-l border-stone-200 bg-[#f8fafc] shadow-xl">
-            <div className="border-b border-stone-200 bg-white">
-                <div className="px-2 pb-4 pt-1">
+            <div className="bg-white border-b border-stone-200">
+                <div className="px-2 pt-1 pb-4">
                     <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="flex items-center gap-2 mt-2">
                                 <Home size={16} className="text-blue-500" />
                                 <h2 className="font-semibold text-slate-800">
                                     Квартира {passportUnit.unit_number}
                                 </h2>
                                 <span
-                                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getUnitStatusTone(passportUnit.status?.code)}`}
+                                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getUnitStatusTone(currentUnitStatus?.code)}`}
                                 >
-                                    {passportUnit.status?.name || 'Статус'}
+                                    {currentUnitStatus?.name || 'Статус'}
                                 </span>
                             </div>
 
-                            <div className="mt-2 flex flex-wrap gap-5 text-sm text-slate-500">
+                            <div className="flex flex-wrap gap-5 mt-2 text-sm text-slate-500">
                                 <span className="inline-flex items-center gap-1.5">
                                     <Ruler size={14} className="text-blue-500" />
                                     {passportUnit.area_total} м²
                                 </span>
                                 <span className="inline-flex items-center gap-1.5">
                                     <Layers3 size={14} className="text-emerald-500" />
-                                    {passportUnit.rooms} комн. • {passportUnit.floor?.floor_number} этаж
+                                    {passportUnit.rooms} комн. • {passportUnit.floor?.floor_number}{' '}
+                                    этаж
                                 </span>
                                 <span className="inline-flex items-center gap-1.5">
                                     <CircleDollarSign size={14} className="text-orange-500" />
@@ -1010,11 +1285,21 @@ export default function SalesUnitPasportSidbar({
                         </div>
 
                         <div className="flex items-start gap-2">
+                            {isUnitOffSale ? (
+                                <HeaderIconAction
+                                    title="Вернуть в свободные"
+                                    icon={<Home size={14} />}
+                                    className="bg-emerald-500 hover:bg-emerald-600"
+                                    onClick={returnUnitToFree}
+                                    disabled={actionLoading}
+                                />
+                            ) : null}
                             <HeaderIconAction
                                 title="Редактировать квартиру"
                                 icon={<Pencil size={14} />}
                                 className="bg-sky-500 hover:bg-sky-600"
                                 onClick={openEditUnitModal}
+                                disabled={actionLoading}
                             />
                             <HeaderIconAction
                                 title="Закрыть"
@@ -1054,7 +1339,7 @@ export default function SalesUnitPasportSidbar({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-2 py-2">
+            <div className="flex-1 px-2 py-2 overflow-y-auto">
                 <div className="mb-3">
                     <h3 className="text-sm font-semibold text-slate-800">История клиента</h3>
                     <p className="mt-0.5 text-xs text-slate-500">
@@ -1076,9 +1361,10 @@ export default function SalesUnitPasportSidbar({
                                             : [...prev, group.key],
                                     )
                                 }
+                                onCreateReservation={openReservationModal}
                                 onCreateDeal={openCreateDealModal}
-                                onEditReservation={() => {}}
-                                onCancelReservation={() => {}}
+                                onEditReservation={openReservationModal}
+                                onCancelReservation={cancelReservation}
                                 onPaymentClick={openPaymentModal}
                                 onScheduleClick={openScheduleModal}
                                 onEditDeal={openEditDealModal}
@@ -1095,8 +1381,18 @@ export default function SalesUnitPasportSidbar({
                         ))}
                     </div>
                 ) : (
-                    <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-6 text-center text-sm text-rose-400">
-                        По квартире пока нет истории клиентов
+                    <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-6 text-center">
+                        <p className="text-sm text-rose-400">
+                            По квартире пока нет истории клиентов
+                        </p>
+                        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                            <PrimaryButton onClick={() => openCreateDealModal()}>
+                                + Выкуп
+                            </PrimaryButton>
+                            <SecondaryButton onClick={openReservationModal}>
+                                Создать бронь
+                            </SecondaryButton>
+                        </div>
                     </div>
                 )}
             </div>
@@ -1105,7 +1401,10 @@ export default function SalesUnitPasportSidbar({
                 <ModalWrapper
                     title="Новая бронь"
                     subtitle={`Квартира №${passportUnit.unit_number}`}
-                    onClose={() => setReservationModalOpen(false)}
+                    onClose={() => {
+                        setReservationModalOpen(false);
+                        setEditingReservation(null);
+                    }}
                     maxWidth="max-w-lg"
                 >
                     <form onSubmit={handleSaveReservation} className="space-y-3">
@@ -1144,10 +1443,46 @@ export default function SalesUnitPasportSidbar({
                                     }
                                 />
                             </div>
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <InputField
+                                    label="Сумма брони"
+                                    value={resForm.reservation_amount}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                        setResForm({ ...resForm, reservation_amount: e.target.value })
+                                    }
+                                />
+                                <SelectField
+                                    label="Валюта"
+                                    value={resForm.currency}
+                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                                        setResForm({ ...resForm, currency: e.target.value })
+                                    }
+                                >
+                                    <option value="">Выберите валюту</option>
+                                    {currencies.map((currency) => (
+                                        <option key={currency.id} value={currency.id}>
+                                            {currency.name}
+                                        </option>
+                                    ))}
+                                </SelectField>
+                            </div>
+
+                            <TextareaField
+                                label="Комментарий"
+                                value={resForm.comment}
+                                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                                    setResForm({ ...resForm, comment: e.target.value })
+                                }
+                            />
                         </ModalSection>
 
                         <ModalActions>
-                            <SecondaryButton onClick={() => setReservationModalOpen(false)}>
+                            <SecondaryButton
+                                onClick={() => {
+                                    setReservationModalOpen(false);
+                                    setEditingReservation(null);
+                                }}
+                            >
                                 Отмена
                             </SecondaryButton>
                             <PrimaryButton type="submit" disabled={actionLoading}>
@@ -1158,10 +1493,22 @@ export default function SalesUnitPasportSidbar({
                 </ModalWrapper>
             )}
 
-            {editUnitOpen && (
+            {editUnitOpen && passportUnit && (
+                <ObjectsOverviewUnitForm
+                    mode="edit"
+                    unit={passportUnit as unknown as SalesUnit}
+                    unitStatuses={unitStatuses}
+                    finishTypes={finishTypes}
+                    refs={{ currencies: currenciesRef }}
+                    onClose={() => setEditUnitOpen(false)}
+                    onSuccess={refreshPassport}
+                />
+            )}
+
+            {editUnitOpen && !passportUnit && (
                 <ModalWrapper
                     title="Редактировать квартиру"
-                    subtitle={`Лот №${passportUnit.unit_number}`}
+                    // subtitle={`Лот №${passportUnit.unit_number}`}
                     onClose={() => setEditUnitOpen(false)}
                     maxWidth="max-w-xl"
                 >
@@ -1172,14 +1519,20 @@ export default function SalesUnitPasportSidbar({
                                     label="Номер лота"
                                     value={unitForm.unit_number}
                                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({ ...prev, unit_number: e.target.value }))
+                                        setUnitForm((prev) => ({
+                                            ...prev,
+                                            unit_number: e.target.value,
+                                        }))
                                     }
                                 />
                                 <SelectField
                                     label="Тип"
                                     value={unitForm.lot_type}
                                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setUnitForm((prev) => ({ ...prev, lot_type: e.target.value }))
+                                        setUnitForm((prev) => ({
+                                            ...prev,
+                                            lot_type: e.target.value,
+                                        }))
                                     }
                                 >
                                     <option value="apartment">Квартира</option>
@@ -1204,7 +1557,10 @@ export default function SalesUnitPasportSidbar({
                                     label="Площадь"
                                     value={unitForm.area_total}
                                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({ ...prev, area_total: e.target.value }))
+                                        setUnitForm((prev) => ({
+                                            ...prev,
+                                            area_total: e.target.value,
+                                        }))
                                     }
                                 />
                             </div>
@@ -1214,7 +1570,10 @@ export default function SalesUnitPasportSidbar({
                                     label="Валюта"
                                     value={unitForm.currency}
                                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setUnitForm((prev) => ({ ...prev, currency: e.target.value }))
+                                        setUnitForm((prev) => ({
+                                            ...prev,
+                                            currency: e.target.value,
+                                        }))
                                     }
                                 >
                                     <option value="">Выберите валюту</option>
@@ -1228,7 +1587,10 @@ export default function SalesUnitPasportSidbar({
                                     label="Цена"
                                     value={unitForm.price_total}
                                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({ ...prev, price_total: e.target.value }))
+                                        setUnitForm((prev) => ({
+                                            ...prev,
+                                            price_total: e.target.value,
+                                        }))
                                     }
                                 />
                             </div>
@@ -1273,14 +1635,19 @@ export default function SalesUnitPasportSidbar({
                                     label="Клиент *"
                                     value={dealForm.client_id}
                                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({ ...prev, client_id: e.target.value }))
+                                        setDealForm((prev) => ({
+                                            ...prev,
+                                            client_id: e.target.value,
+                                        }))
                                     }
                                     required
                                 >
                                     <option value="">Выберите клиента</option>
                                     {clients.map((client: any) => (
                                         <option key={client.id} value={client.id}>
-                                            {client.full_name || client.phone || `Клиент #${client.id}`}
+                                            {client.full_name ||
+                                                client.phone ||
+                                                `Клиент #${client.id}`}
                                         </option>
                                     ))}
                                 </SelectField>
@@ -1298,7 +1665,8 @@ export default function SalesUnitPasportSidbar({
                                     <option value="">Без брони</option>
                                     {dealReservationOptions.map((reservation: any) => (
                                         <option key={reservation.id} value={reservation.id}>
-                                            Бронь #{reservation.id} · {getReservationStatusName(reservation)}
+                                            Бронь #{reservation.id} ·{' '}
+                                            {getReservationStatusName(reservation)}
                                         </option>
                                     ))}
                                 </SelectField>
@@ -1371,7 +1739,10 @@ export default function SalesUnitPasportSidbar({
                                     label="Валюта"
                                     value={dealForm.currency}
                                     onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({ ...prev, currency: e.target.value }))
+                                        setDealForm((prev) => ({
+                                            ...prev,
+                                            currency: e.target.value,
+                                        }))
                                     }
                                 >
                                     <option value="">Не выбрана</option>
@@ -1436,7 +1807,8 @@ export default function SalesUnitPasportSidbar({
                                 onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                                     const nextDealId = e.target.value;
                                     const selectedDeal = deals.find(
-                                        (item: PassportDeal) => Number(item.id) === Number(nextDealId),
+                                        (item: PassportDeal) =>
+                                            Number(item.id) === Number(nextDealId),
                                     );
                                     setPaymentForm((prev) => ({
                                         ...prev,
@@ -1471,7 +1843,10 @@ export default function SalesUnitPasportSidbar({
                                     label="Сумма"
                                     value={paymentForm.amount}
                                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setPaymentForm((prev) => ({ ...prev, amount: e.target.value }))
+                                        setPaymentForm((prev) => ({
+                                            ...prev,
+                                            amount: e.target.value,
+                                        }))
                                     }
                                 />
                                 <SelectField
@@ -1541,99 +1916,99 @@ export default function SalesUnitPasportSidbar({
                     <form onSubmit={saveSchedule} className="space-y-3">
                         <ModalSection className="space-y-3">
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <InputField
-                                label="Дата старта"
-                                type="date"
-                                value={scheduleForm.start_date}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        start_date: e.target.value,
-                                    }))
-                                }
-                            />
-                            <InputField
-                                label="День месяца"
-                                value={scheduleForm.payment_day}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        payment_day: e.target.value.replace(/[^\d]/g, '').slice(0, 2),
-                                    }))
-                                }
-                            />
-                        </div>
+                                <InputField
+                                    label="Дата старта"
+                                    type="date"
+                                    value={scheduleForm.start_date}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                        setScheduleForm((prev) => ({
+                                            ...prev,
+                                            start_date: e.target.value,
+                                        }))
+                                    }
+                                />
+                                <InputField
+                                    label="День месяца"
+                                    value={scheduleForm.payment_day}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                        setScheduleForm((prev) => ({
+                                            ...prev,
+                                            payment_day: e.target.value
+                                                .replace(/[^\d]/g, '')
+                                                .slice(0, 2),
+                                        }))
+                                    }
+                                />
+                            </div>
 
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <InputField
-                                label="Количество платежей"
-                                value={scheduleForm.payments_count}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        payments_count: e.target.value.replace(/[^\d]/g, ''),
-                                    }))
-                                }
-                            />
-                            <SelectField
-                                label="Интервал, мес."
-                                value={scheduleForm.interval_months}
-                                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        interval_months: e.target.value,
-                                    }))
-                                }
-                            >
-                                <option value="1">Каждый месяц</option>
-                                <option value="2">Раз в 2 месяца</option>
-                                <option value="3">Раз в 3 месяца</option>
-                                <option value="6">Раз в 6 месяцев</option>
-                            </SelectField>
-                        </div>
+                                <InputField
+                                    label="Количество платежей"
+                                    value={scheduleForm.payments_count}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                        setScheduleForm((prev) => ({
+                                            ...prev,
+                                            payments_count: e.target.value.replace(/[^\d]/g, ''),
+                                        }))
+                                    }
+                                />
+                                <SelectField
+                                    label="Интервал, мес."
+                                    value={scheduleForm.interval_months}
+                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                                        setScheduleForm((prev) => ({
+                                            ...prev,
+                                            interval_months: e.target.value,
+                                        }))
+                                    }
+                                >
+                                    <option value="1">Каждый месяц</option>
+                                    <option value="2">Раз в 2 месяца</option>
+                                    <option value="3">Раз в 3 месяца</option>
+                                    <option value="6">Раз в 6 месяцев</option>
+                                </SelectField>
+                            </div>
 
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <InputField
-                                label="Сумма договора"
-                                value={scheduleForm.total_amount}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        total_amount: e.target.value,
-                                    }))
-                                }
-                            />
-                            <InputField
-                                label="Первый платеж"
-                                value={scheduleForm.first_payment_amount}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        first_payment_amount: e.target.value,
-                                    }))
-                                }
-                            />
-                        </div>
-
+                                <InputField
+                                    label="Сумма договора"
+                                    value={scheduleForm.total_amount}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                        setScheduleForm((prev) => ({
+                                            ...prev,
+                                            total_amount: e.target.value,
+                                        }))
+                                    }
+                                />
+                                <InputField
+                                    label="Первый платеж"
+                                    value={scheduleForm.first_payment_amount}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                        setScheduleForm((prev) => ({
+                                            ...prev,
+                                            first_payment_amount: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
                         </ModalSection>
 
                         <ModalSection className="space-y-3">
                             <TextareaField
-                            label="Комментарий"
-                            value={scheduleForm.comment}
-                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                                setScheduleForm((prev) => ({
-                                    ...prev,
-                                    comment: e.target.value,
-                                }))
-                            }
-                        />
+                                label="Комментарий"
+                                value={scheduleForm.comment}
+                                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                                    setScheduleForm((prev) => ({
+                                        ...prev,
+                                        comment: e.target.value,
+                                    }))
+                                }
+                            />
 
-                        <InlineHint tone="amber">
-                            Новый график заменит старый по этому договору. Уже оплаченные платежи
-                            будут перераспределены сервером автоматически.
-                        </InlineHint>
-
+                            <InlineHint tone="amber">
+                                Новый график заменит старый по этому договору. Уже оплаченные
+                                платежи будут перераспределены сервером автоматически.
+                            </InlineHint>
                         </ModalSection>
 
                         <ModalActions>
@@ -1657,19 +2032,20 @@ export default function SalesUnitPasportSidbar({
                 >
                     <div className="space-y-3">
                         <ModalSection className="space-y-3">
-                            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                            <Upload size={16} />
-                            {filesLoading ? 'Загрузка...' : 'Добавить файлы'}
-                            <input
-                                type="file"
-                                multiple
-                                className="hidden"
-                                onChange={handleUploadDealFiles}
-                            />
+                            <label className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-blue-600 cursor-pointer rounded-xl hover:bg-blue-700">
+                                <Upload size={16} />
+                                {filesLoading ? 'Загрузка...' : 'Добавить файлы'}
+                                <input
+                                    type="file"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handleUploadDealFiles}
+                                />
                             </label>
 
                             <InlineHint>
-                                Загрузите один или несколько файлов договора, чтобы они были доступны для скачивания из карточки.
+                                Загрузите один или несколько файлов договора, чтобы они были
+                                доступны для скачивания из карточки.
                             </InlineHint>
                         </ModalSection>
 
@@ -1680,32 +2056,32 @@ export default function SalesUnitPasportSidbar({
                                         key={file.id}
                                         className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2.5"
                                     >
-                                        <div className="min-w-0 truncate text-sm font-medium text-slate-700">
+                                        <div className="min-w-0 text-sm font-medium truncate text-slate-700">
                                             {file.name || `Файл #${file.id}`}
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-2">
+                                        <div className="flex items-center gap-2 shrink-0">
                                             <button
                                                 type="button"
                                                 onClick={() => handleDownloadDealFile(file)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                                                className="flex items-center justify-center w-8 h-8 transition rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200"
                                             >
                                                 <Download size={15} />
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteDealFile(file.id)}
-                                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                className="flex items-center justify-center w-8 h-8 text-red-600 transition rounded-xl bg-red-50 hover:bg-red-100"
                                             >
                                                 <Trash2 size={15} />
                                             </button>
                                         </div>
                                     </div>
                                 ))
-                        ) : (
-                            <div className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
-                                Файлы пока не прикреплены
-                            </div>
-                        )}
+                            ) : (
+                                <div className="px-4 py-6 text-sm text-center bg-white border border-dashed rounded-xl border-stone-200 text-slate-500">
+                                    Файлы пока не прикреплены
+                                </div>
+                            )}
                         </ModalSection>
                     </div>
                 </ModalWrapper>

@@ -276,15 +276,6 @@ export default function PaymentsPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
             <div className="mx-auto max-w-[1800px] px-6 py-3">
-                <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                        <h1 className="mb-2 text-3xl font-bold text-sky-800">Платежи</h1>
-                        <p className="text-sm text-sky-700">
-                            Управление входящими и исходящими платежами по проекту
-                        </p>
-                    </div>
-                </div>
-
                 <div className="p-4 mb-6 bg-white border border-gray-200 shadow-sm rounded-2xl">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-8">
                         <div className="xl:col-span-2">
