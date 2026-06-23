@@ -2,7 +2,7 @@ import { CalendarClock, FileText, Pencil, Phone, Plus, Trash2, User2 } from 'luc
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
 import type { PassportDeal, PassportReservationBrief } from '../slices/salesUnitPassportSlice';
-import { HeaderIconAction } from './SalesUnitPassportSidbar';
+import { HeaderIconAction } from './SalesUnitPassportUI';
 import { SalesUnitPassportDeal } from './SalesUnitPassportDeal';
 
 export const ClientAccordionItem = ({
@@ -16,12 +16,16 @@ export const ClientAccordionItem = ({
     onPaymentClick,
     onScheduleClick,
     onEditDeal,
+    onSignDeal,
+    onCancelDeal,
     onDealFiles,
     onDownloadScheduleClick,
     downloadingScheduleDealId,
     getReservationStatusName,
     getDealStatusName,
     isActiveReservation,
+    canSignDeal,
+    canCancelDeal,
     getDealPayments,
     getDealSchedules,
     getReservationPayments,
@@ -198,9 +202,13 @@ export const ClientAccordionItem = ({
                                         onPaymentClick={onPaymentClick}
                                         onScheduleClick={onScheduleClick}
                                         onEditClick={onEditDeal}
+                                        onSignClick={onSignDeal}
+                                        onCancelClick={onCancelDeal}
                                         onFileClick={onDealFiles}
                                         onDownloadScheduleClick={onDownloadScheduleClick}
                                         downloadingScheduleDealId={downloadingScheduleDealId}
+                                        canSign={canSignDeal?.(deal)}
+                                        canCancel={canCancelDeal?.(deal)}
                                     />
                                 ))}
                             </div>

@@ -210,7 +210,7 @@ export default function PurchaseOrdersTable({
                                             <td colSpan={6} className="px-3 py-2">
                                                 <Collapse in={openRows[po.id]} unmountOnExit>
                                                     <div className="px-3 py-2">
-                                                        <p className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                                                        <p className="px-4 py-2 text-sm font-medium text-left text-blue-600 border-b-2 border-blue-600">
                                                             Материалы
                                                         </p>
 

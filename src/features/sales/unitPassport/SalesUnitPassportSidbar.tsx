@@ -1,23 +1,8 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
-import {
-    CircleDollarSign,
-    Download,
-    FileText,
-    Home,
-    Layers3,
-    Pencil,
-    Ruler,
-    Trash2,
-    Upload,
-    Wallet,
-    X,
-    CalendarClock,
-} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '@/features/reference/useReference';
 import { apiRequest } from '@/utils/apiRequest';
-import { formatCurrency } from '@/utils/formatCurrency';
 import { parseNumber } from '@/utils/parseNumber';
 import {
     createDocument,
@@ -61,31 +46,20 @@ import {
 import { fetchSalesOverview } from '@/features/sales/slices/salesObjOverviewSlice';
 import { updateSalesUnit, type SalesUnit } from '@/features/sales/slices/salesUnitsSlice';
 import { generateSalesPaymentSchedule } from '@/features/sales/slices/salesPaymentSchedulesSlice';
-import { ClientAccordionItem } from './ClientAccordionItem';
 import { ObjectsOverviewUnitForm } from '../objectsOverviewUnits/ObjectsOverviewUnitForm';
 import {
-    InlineHint,
-    InputField,
-    ModalActions,
-    ModalSection,
-    ModalWrapper,
-    PrimaryButton,
-    SecondaryButton,
-    SelectField,
-    TextareaField,
-} from './SalesUnitPassportUI';
+    SalesUnitPassportHistoryPanel,
+    SalesUnitPassportSidebarHeader,
+    type ClientHistoryGroup,
+} from './SalesUnitPassportSidebarSections';
+import {
+    DealFilesModal,
+    DealModal,
+    PaymentModal,
+    ReservationModal,
+    ScheduleModal,
+} from './SalesUnitPassportModals';
 import { salesUnitPassportLogic } from './salesUnitPassportLogic';
-import { StyledTooltip } from '@/components/ui/StyledTooltip';
-
-const EMPTY_UNIT_FORM = {
-    unit_number: '',
-    lot_type: 'apartment',
-    rooms: '',
-    area_total: '',
-    price_total: '',
-    currency: '',
-    comment: '',
-};
 
 const EMPTY_DEAL_FORM = {
     client_id: '',
@@ -202,68 +176,6 @@ const getMonthDiff = (start: string, end: string) => {
     return Math.max(diff || 1, 1);
 };
 
-function InlineMetric({
-    icon,
-    label,
-    value,
-    tone,
-}: {
-    icon: React.ReactNode;
-    label: string;
-    value: string;
-    tone: 'blue' | 'green' | 'orange' | 'slate';
-}) {
-    const toneMap = {
-        blue: 'bg-blue-50 text-blue-800',
-        green: 'bg-emerald-50 text-emerald-800',
-        orange: 'bg-orange-50 text-orange-800',
-        slate: 'bg-violet-50 text-violet-800',
-    };
-
-    return (
-        <div className="flex items-center min-w-0 gap-2 px-2 py-2 bg-white border rounded-xl border-stone-200">
-            <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${toneMap[tone]}`}>
-                {icon}
-            </div>
-            <div className="min-w-0">
-                <div className="text-[12px] leading-none text-slate-500">
-                    {label}:{' '}
-                    <span className="mt-1 text-sm font-semibold truncate text-slate-700">
-                        {value}{' '}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-export function HeaderIconAction({
-    title,
-    icon,
-    className,
-    onClick,
-    disabled = false,
-}: {
-    title: string;
-    icon: React.ReactNode;
-    className: string;
-    onClick?: () => void;
-    disabled?: boolean;
-}) {
-    return (
-        <StyledTooltip title={title}>
-            <button
-                type="button"
-                onClick={onClick}
-                disabled={disabled}
-                className={`flex h-6 w-6 items-center justify-center rounded-lg text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
-            >
-                {icon}
-            </button>
-        </StyledTooltip>
-    );
-}
-
 export default function SalesUnitPasportSidbar({
     unitId,
     onClose,
@@ -332,7 +244,6 @@ export default function SalesUnitPasportSidbar({
     const [downloadingScheduleDealId, setDownloadingScheduleDealId] = useState<number | null>(null);
     const [editingReservation, setEditingReservation] = useState<PassportReservation | PassportReservationBrief | null>(null);
     const [editingDeal, setEditingDeal] = useState<PassportDeal | null>(null);
-    const [unitForm, setUnitForm] = useState(EMPTY_UNIT_FORM);
     const [dealForm, setDealForm] = useState(EMPTY_DEAL_FORM);
     const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT_FORM);
     const [scheduleForm, setScheduleForm] = useState(EMPTY_SCHEDULE_FORM);
@@ -452,6 +363,34 @@ export default function SalesUnitPasportSidbar({
         const match = dealStatuses.find((item) => statusTextHas(item, keywords[key]));
         const fallback = { draft: 1, active: 2, signed: 3, closed: 4, canceled: 5 };
         return Number(match?.id || fallback[key] || 0);
+    };
+
+    const getDealStatusCode = (deal: PassportDeal | null | undefined) => {
+        const statusRow =
+            deal?.status_ref ||
+            dealStatuses.find((item) => Number(item.id) === Number(deal?.status || 0)) ||
+            null;
+
+        const mapped =
+            statusRow?.code ||
+            statusRow?.name ||
+            '';
+
+        return String(mapped).toLowerCase();
+    };
+
+    const canSignDeal = (deal: PassportDeal | null | undefined) => {
+        if (!deal?.id) return false;
+
+        const statusCode = getDealStatusCode(deal);
+        return !['signed', 'closed', 'canceled', 'cancelled'].includes(statusCode);
+    };
+
+    const canCancelDeal = (deal: PassportDeal | null | undefined) => {
+        if (!deal?.id) return false;
+
+        const statusCode = getDealStatusCode(deal);
+        return !['closed', 'canceled', 'cancelled'].includes(statusCode);
     };
 
     const getReservationStatusIdByKey = (key: 'active' | 'closed' | 'canceled') => {
@@ -689,40 +628,6 @@ export default function SalesUnitPasportSidbar({
         setReservationModalOpen(true);
     };
 
-    const saveUnit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!passportUnit?.id) return;
-
-        setActionLoading(true);
-        try {
-            const areaTotal = toNullableNumber(unitForm.area_total);
-            const priceTotal = toNullableNumber(unitForm.price_total);
-
-            await dispatch(
-                updateSalesUnit({
-                    id: passportUnit.id,
-                    payload: {
-                        unit_number: unitForm.unit_number.trim(),
-                        lot_type: unitForm.lot_type,
-                        rooms: unitForm.rooms ? Number(unitForm.rooms) : null,
-                        area_total: areaTotal === null ? null : String(areaTotal),
-                        price_total: priceTotal === null ? null : String(priceTotal),
-                        currency: unitForm.currency ? Number(unitForm.currency) : null,
-                        comment: unitForm.comment.trim() || null,
-                    },
-                }),
-            ).unwrap();
-
-            toast.success('Квартира обновлена');
-            setEditUnitOpen(false);
-            await refreshPassport();
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Ошибка сохранения квартиры');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
     const returnUnitToFree = async () => {
         if (!passportUnit?.id) return;
         if (!freeUnitStatus?.id) {
@@ -846,6 +751,57 @@ export default function SalesUnitPasportSidbar({
             await refreshPassport();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Ошибка сохранения договора');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const changeDealStatus = async (deal: PassportDeal, nextStatus: 'signed' | 'canceled') => {
+        if (!deal?.id || !passportUnit?.id) return;
+
+        if (nextStatus === 'signed' && !String(deal.contract_number || '').trim()) {
+            toast.error('Для подписания сначала укажите номер договора');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const payload = {
+                unit_id: Number(deal.unit_id || passportUnit.id),
+                client_id: Number(deal.client_id),
+                reservation_id: deal.reservation_id ? Number(deal.reservation_id) : null,
+                deal_type_id: deal.deal_type_id ? Number(deal.deal_type_id) : null,
+                status: getDealStatusIdByKey(nextStatus),
+                deal_number: deal.deal_number || null,
+                contract_number: String(deal.contract_number || '').trim() || null,
+                contract_date: deal.contract_date || null,
+                payment_type: deal.payment_type ? Number(deal.payment_type) : null,
+                total_amount: toNullableNumber(formatEditableNumber(deal.total_amount)),
+                currency: deal.currency ? Number(deal.currency) : null,
+                note: String(deal.note || '').trim() || null,
+                canceled_reason:
+                    nextStatus === 'canceled'
+                        ? deal.canceled_reason || 'Отменено из паспорта квартиры'
+                        : null,
+            };
+
+            await apiRequest(`/sales/deals/update/${deal.id}`, 'PUT', payload);
+
+            if (editingDeal?.id === deal.id) {
+                setDealModalOpen(false);
+                setEditingDeal(null);
+            }
+
+            toast.success(nextStatus === 'signed' ? 'Договор подписан' : 'Договор отменен');
+            await refreshPassport();
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : nextStatus === 'signed'
+                      ? 'Не удалось подписать договор'
+                      : 'Не удалось отменить договор',
+            );
         } finally {
             setActionLoading(false);
         }
@@ -1217,21 +1173,6 @@ export default function SalesUnitPasportSidbar({
         }
     };
 
-    const _legacyHandleSaveReservation = async (event: FormEvent) => {
-        event.preventDefault();
-        setActionLoading(true);
-        try {
-            toast.success('Бронь сохранена');
-            setReservationModalOpen(false);
-            await refreshPassport();
-        } catch {
-            toast.error('Ошибка сохранения');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    void _legacyHandleSaveReservation;
 
     if (passportLoading && !passport) {
         return (
@@ -1251,247 +1192,71 @@ export default function SalesUnitPasportSidbar({
 
     return (
         <div className="flex h-full w-[680px] flex-col overflow-hidden border-l border-stone-200 bg-[#f8fafc] shadow-xl">
-            <div className="bg-white border-b border-stone-200">
-                <div className="px-2 pt-1 pb-4">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-2 mt-2">
-                                <Home size={16} className="text-blue-500" />
-                                <h2 className="font-semibold text-slate-800">
-                                    Квартира {passportUnit.unit_number}
-                                </h2>
-                                <span
-                                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getUnitStatusTone(currentUnitStatus?.code)}`}
-                                >
-                                    {currentUnitStatus?.name || 'Статус'}
-                                </span>
-                            </div>
+            <SalesUnitPassportSidebarHeader
+                unitNumber={passportUnit.unit_number}
+                areaTotal={passportUnit.area_total}
+                rooms={passportUnit.rooms}
+                floorNumber={passportUnit.floor?.floor_number}
+                priceTotal={passportUnit.price_total}
+                statusName={currentUnitStatus?.name}
+                statusToneClass={getUnitStatusTone(currentUnitStatus?.code)}
+                summary={summary}
+                isUnitOffSale={isUnitOffSale}
+                actionLoading={actionLoading}
+                onReturnToFree={returnUnitToFree}
+                onEditUnit={openEditUnitModal}
+                onClose={onClose}
+            />
 
-                            <div className="flex flex-wrap gap-5 mt-2 text-sm text-slate-500">
-                                <span className="inline-flex items-center gap-1.5">
-                                    <Ruler size={14} className="text-blue-500" />
-                                    {passportUnit.area_total} м²
-                                </span>
-                                <span className="inline-flex items-center gap-1.5">
-                                    <Layers3 size={14} className="text-emerald-500" />
-                                    {passportUnit.rooms} комн. • {passportUnit.floor?.floor_number}{' '}
-                                    этаж
-                                </span>
-                                <span className="inline-flex items-center gap-1.5">
-                                    <CircleDollarSign size={14} className="text-orange-500" />
-                                    {formatCurrency(passportUnit.price_total)}
-                                </span>
-                            </div>
-                        </div>
+            <SalesUnitPassportHistoryPanel
+                clientHistory={clientHistory as ClientHistoryGroup[]}
+                expandedKeys={expandedKeys}
+                onToggleGroup={(groupKey) =>
+                    setExpandedKeys((prev) =>
+                        prev.includes(groupKey)
+                            ? prev.filter((key) => key !== groupKey)
+                            : [...prev, groupKey],
+                    )
+                }
+                onCreateReservation={openReservationModal}
+                onCreateDeal={openCreateDealModal}
+                onEditReservation={openReservationModal}
+                onCancelReservation={cancelReservation}
+                onPaymentClick={openPaymentModal}
+                onScheduleClick={openScheduleModal}
+                onEditDeal={openEditDealModal}
+                onSignDeal={(deal) => changeDealStatus(deal, 'signed')}
+                onCancelDeal={(deal) => changeDealStatus(deal, 'canceled')}
+                onDealFiles={openDealFiles}
+                onDownloadScheduleClick={downloadScheduleReport}
+                downloadingScheduleDealId={downloadingScheduleDealId}
+                getReservationStatusName={getReservationStatusName}
+                getDealStatusName={getDealStatusName}
+                isActiveReservation={isActiveReservation}
+                canSignDeal={canSignDeal}
+                canCancelDeal={canCancelDeal}
+                getDealPayments={getDealPayments}
+                getDealSchedules={getDealSchedules}
+                getReservationPayments={getReservationPayments}
+            />
 
-                        <div className="flex items-start gap-2">
-                            {isUnitOffSale ? (
-                                <HeaderIconAction
-                                    title="Вернуть в свободные"
-                                    icon={<Home size={14} />}
-                                    className="bg-emerald-500 hover:bg-emerald-600"
-                                    onClick={returnUnitToFree}
-                                    disabled={actionLoading}
-                                />
-                            ) : null}
-                            <HeaderIconAction
-                                title="Редактировать квартиру"
-                                icon={<Pencil size={14} />}
-                                className="bg-sky-500 hover:bg-sky-600"
-                                onClick={openEditUnitModal}
-                                disabled={actionLoading}
-                            />
-                            <HeaderIconAction
-                                title="Закрыть"
-                                icon={<X size={16} />}
-                                className="bg-red-500 hover:bg-red-600"
-                                onClick={onClose}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2.5">
-                        <InlineMetric
-                            icon={<CalendarClock size={15} />}
-                            label="Брони"
-                            value={String(summary.reservationCount)}
-                            tone="orange"
-                        />
-                        <InlineMetric
-                            icon={<FileText size={15} />}
-                            label="Сделки"
-                            value={String(summary.dealCount)}
-                            tone="blue"
-                        />
-                        <InlineMetric
-                            icon={<Wallet size={15} />}
-                            label="Оплачено"
-                            value={formatCurrency(summary.totalPaid)}
-                            tone="green"
-                        />
-                        <InlineMetric
-                            icon={<CircleDollarSign size={15} />}
-                            label="Остаток"
-                            value={formatCurrency(summary.remaining)}
-                            tone="slate"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex-1 px-2 py-2 overflow-y-auto">
-                <div className="mb-3">
-                    <h3 className="text-sm font-semibold text-slate-800">История клиента</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                        История брони, сделки, платежей, и по графику платежей
-                    </p>
-                </div>
-
-                {clientHistory.length > 0 ? (
-                    <div className="space-y-3">
-                        {clientHistory.map((group: any) => (
-                            <ClientAccordionItem
-                                key={group.key}
-                                group={group}
-                                isExpanded={expandedKeys.includes(group.key)}
-                                onToggle={() =>
-                                    setExpandedKeys((prev) =>
-                                        prev.includes(group.key)
-                                            ? prev.filter((key) => key !== group.key)
-                                            : [...prev, group.key],
-                                    )
-                                }
-                                onCreateReservation={openReservationModal}
-                                onCreateDeal={openCreateDealModal}
-                                onEditReservation={openReservationModal}
-                                onCancelReservation={cancelReservation}
-                                onPaymentClick={openPaymentModal}
-                                onScheduleClick={openScheduleModal}
-                                onEditDeal={openEditDealModal}
-                                onDealFiles={openDealFiles}
-                                onDownloadScheduleClick={downloadScheduleReport}
-                                downloadingScheduleDealId={downloadingScheduleDealId}
-                                getReservationStatusName={getReservationStatusName}
-                                getDealStatusName={getDealStatusName}
-                                isActiveReservation={isActiveReservation}
-                                getDealPayments={getDealPayments}
-                                getDealSchedules={getDealSchedules}
-                                getReservationPayments={getReservationPayments}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-6 text-center">
-                        <p className="text-sm text-rose-400">
-                            По квартире пока нет истории клиентов
-                        </p>
-                        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                            <PrimaryButton onClick={() => openCreateDealModal()}>
-                                + Выкуп
-                            </PrimaryButton>
-                            <SecondaryButton onClick={openReservationModal}>
-                                Создать бронь
-                            </SecondaryButton>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {reservationModalOpen && (
-                <ModalWrapper
-                    title="Новая бронь"
-                    subtitle={`Квартира №${passportUnit.unit_number}`}
-                    onClose={() => {
-                        setReservationModalOpen(false);
-                        setEditingReservation(null);
-                    }}
-                    maxWidth="max-w-lg"
-                >
-                    <form onSubmit={handleSaveReservation} className="space-y-3">
-                        <ModalSection className="space-y-3">
-                            <SelectField
-                                label="Клиент *"
-                                value={resForm.client_id}
-                                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                    setResForm({ ...resForm, client_id: e.target.value })
-                                }
-                                required
-                            >
-                                <option value="">Выберите клиента</option>
-                                {clients.map((client: any) => (
-                                    <option key={client.id} value={client.id}>
-                                        {client.full_name || client.phone}
-                                    </option>
-                                ))}
-                            </SelectField>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Начало"
-                                    type="date"
-                                    value={resForm.start_at}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setResForm({ ...resForm, start_at: e.target.value })
-                                    }
-                                />
-                                <InputField
-                                    label="Окончание"
-                                    type="date"
-                                    value={resForm.expires_at}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setResForm({ ...resForm, expires_at: e.target.value })
-                                    }
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Сумма брони"
-                                    value={resForm.reservation_amount}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setResForm({ ...resForm, reservation_amount: e.target.value })
-                                    }
-                                />
-                                <SelectField
-                                    label="Валюта"
-                                    value={resForm.currency}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setResForm({ ...resForm, currency: e.target.value })
-                                    }
-                                >
-                                    <option value="">Выберите валюту</option>
-                                    {currencies.map((currency) => (
-                                        <option key={currency.id} value={currency.id}>
-                                            {currency.name}
-                                        </option>
-                                    ))}
-                                </SelectField>
-                            </div>
-
-                            <TextareaField
-                                label="Комментарий"
-                                value={resForm.comment}
-                                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                                    setResForm({ ...resForm, comment: e.target.value })
-                                }
-                            />
-                        </ModalSection>
-
-                        <ModalActions>
-                            <SecondaryButton
-                                onClick={() => {
-                                    setReservationModalOpen(false);
-                                    setEditingReservation(null);
-                                }}
-                            >
-                                Отмена
-                            </SecondaryButton>
-                            <PrimaryButton type="submit" disabled={actionLoading}>
-                                {actionLoading ? 'Сохранение...' : 'Сохранить'}
-                            </PrimaryButton>
-                        </ModalActions>
-                    </form>
-                </ModalWrapper>
-            )}
+            <ReservationModal
+                open={reservationModalOpen}
+                unitNumber={passportUnit.unit_number}
+                isEditing={Boolean(editingReservation)}
+                actionLoading={actionLoading}
+                resForm={resForm}
+                clients={
+                    clients as { id: number | string; full_name?: string | null; phone?: string | null }[]
+                }
+                currencies={currencies}
+                onChange={(patch) => setResForm((prev) => ({ ...prev, ...patch }))}
+                onSubmit={handleSaveReservation}
+                onClose={() => {
+                    setReservationModalOpen(false);
+                    setEditingReservation(null);
+                }}
+            />
 
             {editUnitOpen && passportUnit && (
                 <ObjectsOverviewUnitForm
@@ -1505,587 +1270,72 @@ export default function SalesUnitPasportSidbar({
                 />
             )}
 
-            {editUnitOpen && !passportUnit && (
-                <ModalWrapper
-                    title="Редактировать квартиру"
-                    // subtitle={`Лот №${passportUnit.unit_number}`}
-                    onClose={() => setEditUnitOpen(false)}
-                    maxWidth="max-w-xl"
-                >
-                    <form onSubmit={saveUnit} className="space-y-3">
-                        <ModalSection className="space-y-3">
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Номер лота"
-                                    value={unitForm.unit_number}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({
-                                            ...prev,
-                                            unit_number: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <SelectField
-                                    label="Тип"
-                                    value={unitForm.lot_type}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setUnitForm((prev) => ({
-                                            ...prev,
-                                            lot_type: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="apartment">Квартира</option>
-                                    <option value="parking">Паркинг</option>
-                                    <option value="storage">Кладовая</option>
-                                    <option value="commercial">Коммерция</option>
-                                </SelectField>
-                            </div>
 
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Комнат"
-                                    value={unitForm.rooms}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({
-                                            ...prev,
-                                            rooms: e.target.value.replace(/[^\d]/g, ''),
-                                        }))
-                                    }
-                                />
-                                <InputField
-                                    label="Площадь"
-                                    value={unitForm.area_total}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({
-                                            ...prev,
-                                            area_total: e.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
+            <DealModal
+                open={dealModalOpen}
+                unitNumber={passportUnit.unit_number}
+                editingDeal={editingDeal}
+                actionLoading={actionLoading}
+                dealForm={dealForm}
+                clients={clients as { id: number | string; full_name?: string | null; phone?: string | null }[]}
+                dealReservationOptions={dealReservationOptions}
+                dealTypes={dealTypes as { id: number | string; name?: string | null }[]}
+                dealPaymentTypes={dealPaymentTypes}
+                currencies={currencies}
+                getReservationStatusName={getReservationStatusName}
+                onChange={(patch) => setDealForm((prev) => ({ ...prev, ...patch }))}
+                onSubmit={saveDeal}
+                onClose={() => {
+                    setDealModalOpen(false);
+                    setEditingDeal(null);
+                }}
+            />
 
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <SelectField
-                                    label="Валюта"
-                                    value={unitForm.currency}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setUnitForm((prev) => ({
-                                            ...prev,
-                                            currency: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="">Выберите валюту</option>
-                                    {currencies.map((currency) => (
-                                        <option key={currency.id} value={currency.id}>
-                                            {currency.name}
-                                        </option>
-                                    ))}
-                                </SelectField>
-                                <InputField
-                                    label="Цена"
-                                    value={unitForm.price_total}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setUnitForm((prev) => ({
-                                            ...prev,
-                                            price_total: e.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-                        </ModalSection>
+            <PaymentModal
+                open={paymentModalOpen}
+                unitNumber={passportUnit.unit_number}
+                deals={deals}
+                paymentForm={paymentForm}
+                currencies={currencies}
+                actionLoading={actionLoading}
+                onDealChange={(nextDealId) => {
+                    const selectedDeal = deals.find(
+                        (item: PassportDeal) => Number(item.id) === Number(nextDealId),
+                    );
+                    setPaymentForm((prev) => ({
+                        ...prev,
+                        deal_id: nextDealId,
+                        title: selectedDeal
+                            ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
+                            : prev.title,
+                        currency: selectedDeal?.currency ? String(selectedDeal.currency) : prev.currency,
+                    }));
+                }}
+                onChange={(patch) => setPaymentForm((prev) => ({ ...prev, ...patch }))}
+                onSubmit={savePayment}
+                onClose={() => setPaymentModalOpen(false)}
+            />
 
-                        <ModalSection>
-                            <TextareaField
-                                label="Комментарий"
-                                value={unitForm.comment}
-                                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                                    setUnitForm((prev) => ({ ...prev, comment: e.target.value }))
-                                }
-                            />
-                        </ModalSection>
+            <ScheduleModal
+                open={scheduleModalOpen}
+                unitNumber={passportUnit.unit_number}
+                scheduleForm={scheduleForm}
+                actionLoading={actionLoading}
+                onChange={(patch) => setScheduleForm((prev) => ({ ...prev, ...patch }))}
+                onSubmit={saveSchedule}
+                onClose={() => setScheduleModalOpen(false)}
+            />
 
-                        <ModalActions>
-                            <SecondaryButton onClick={() => setEditUnitOpen(false)}>
-                                Отмена
-                            </SecondaryButton>
-                            <PrimaryButton type="submit" disabled={actionLoading}>
-                                {actionLoading ? 'Сохранение...' : 'Сохранить'}
-                            </PrimaryButton>
-                        </ModalActions>
-                    </form>
-                </ModalWrapper>
-            )}
-
-            {dealModalOpen && (
-                <ModalWrapper
-                    title={editingDeal ? 'Редактировать договор' : 'Новый договор'}
-                    subtitle={`Квартира №${passportUnit.unit_number}`}
-                    onClose={() => {
-                        setDealModalOpen(false);
-                        setEditingDeal(null);
-                    }}
-                    maxWidth="max-w-xl"
-                >
-                    <form onSubmit={saveDeal} className="space-y-3">
-                        <ModalSection className="space-y-3">
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <SelectField
-                                    label="Клиент *"
-                                    value={dealForm.client_id}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            client_id: e.target.value,
-                                        }))
-                                    }
-                                    required
-                                >
-                                    <option value="">Выберите клиента</option>
-                                    {clients.map((client: any) => (
-                                        <option key={client.id} value={client.id}>
-                                            {client.full_name ||
-                                                client.phone ||
-                                                `Клиент #${client.id}`}
-                                        </option>
-                                    ))}
-                                </SelectField>
-
-                                <SelectField
-                                    label="Бронь"
-                                    value={dealForm.reservation_id}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            reservation_id: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="">Без брони</option>
-                                    {dealReservationOptions.map((reservation: any) => (
-                                        <option key={reservation.id} value={reservation.id}>
-                                            Бронь #{reservation.id} ·{' '}
-                                            {getReservationStatusName(reservation)}
-                                        </option>
-                                    ))}
-                                </SelectField>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="№ договора"
-                                    value={dealForm.contract_number}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            contract_number: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <InputField
-                                    label="Дата договора"
-                                    type="date"
-                                    value={dealForm.contract_date}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            contract_date: e.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <SelectField
-                                    label="Тип сделки"
-                                    value={dealForm.deal_type_id}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            deal_type_id: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="">Не выбран</option>
-                                    {dealTypes.map((type: any) => (
-                                        <option key={type.id} value={type.id}>
-                                            {type.name}
-                                        </option>
-                                    ))}
-                                </SelectField>
-
-                                <SelectField
-                                    label="Оплата"
-                                    value={dealForm.payment_type}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            payment_type: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="">Не выбрана</option>
-                                    {dealPaymentTypes.map((type) => (
-                                        <option key={type.id} value={type.id}>
-                                            {type.name}
-                                        </option>
-                                    ))}
-                                </SelectField>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <SelectField
-                                    label="Валюта"
-                                    value={dealForm.currency}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            currency: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="">Не выбрана</option>
-                                    {currencies.map((currency) => (
-                                        <option key={currency.id} value={currency.id}>
-                                            {currency.name}
-                                        </option>
-                                    ))}
-                                </SelectField>
-                                <InputField
-                                    label="Сумма"
-                                    value={dealForm.total_amount}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setDealForm((prev) => ({
-                                            ...prev,
-                                            total_amount: e.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-                        </ModalSection>
-
-                        <ModalSection>
-                            <TextareaField
-                                label="Заметка"
-                                value={dealForm.note}
-                                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                                    setDealForm((prev) => ({ ...prev, note: e.target.value }))
-                                }
-                            />
-                        </ModalSection>
-
-                        <ModalActions>
-                            <SecondaryButton
-                                onClick={() => {
-                                    setDealModalOpen(false);
-                                    setEditingDeal(null);
-                                }}
-                            >
-                                Отмена
-                            </SecondaryButton>
-                            <PrimaryButton type="submit" disabled={actionLoading}>
-                                {actionLoading ? 'Сохранение...' : 'Сохранить договор'}
-                            </PrimaryButton>
-                        </ModalActions>
-                    </form>
-                </ModalWrapper>
-            )}
-
-            {paymentModalOpen && (
-                <ModalWrapper
-                    title="Добавить платеж"
-                    subtitle={`Квартира №${passportUnit.unit_number}`}
-                    onClose={() => setPaymentModalOpen(false)}
-                    maxWidth="max-w-lg"
-                >
-                    <form onSubmit={savePayment} className="space-y-3">
-                        <ModalSection className="space-y-3">
-                            <SelectField
-                                label="Договор"
-                                value={paymentForm.deal_id}
-                                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-                                    const nextDealId = e.target.value;
-                                    const selectedDeal = deals.find(
-                                        (item: PassportDeal) =>
-                                            Number(item.id) === Number(nextDealId),
-                                    );
-                                    setPaymentForm((prev) => ({
-                                        ...prev,
-                                        deal_id: nextDealId,
-                                        title: selectedDeal
-                                            ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
-                                            : prev.title,
-                                        currency: selectedDeal?.currency
-                                            ? String(selectedDeal.currency)
-                                            : prev.currency,
-                                    }));
-                                }}
-                            >
-                                <option value="">Выберите договор</option>
-                                {deals.map((deal: PassportDeal) => (
-                                    <option key={deal.id} value={deal.id}>
-                                        Договор №{deal.contract_number || deal.id}
-                                    </option>
-                                ))}
-                            </SelectField>
-
-                            <InputField
-                                label="Название"
-                                value={paymentForm.title}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setPaymentForm((prev) => ({ ...prev, title: e.target.value }))
-                                }
-                            />
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Сумма"
-                                    value={paymentForm.amount}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setPaymentForm((prev) => ({
-                                            ...prev,
-                                            amount: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <SelectField
-                                    label="Валюта"
-                                    value={paymentForm.currency}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setPaymentForm((prev) => ({
-                                            ...prev,
-                                            currency: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="">Не выбрана</option>
-                                    {currencies.map((currency) => (
-                                        <option key={currency.id} value={currency.id}>
-                                            {currency.name}
-                                        </option>
-                                    ))}
-                                </SelectField>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Плановая дата"
-                                    type="date"
-                                    value={paymentForm.planned_date}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setPaymentForm((prev) => ({
-                                            ...prev,
-                                            planned_date: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <InputField
-                                    label="Фактическая дата"
-                                    type="date"
-                                    value={paymentForm.paid_date}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setPaymentForm((prev) => ({
-                                            ...prev,
-                                            paid_date: e.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-                        </ModalSection>
-
-                        <ModalActions>
-                            <SecondaryButton onClick={() => setPaymentModalOpen(false)}>
-                                Отмена
-                            </SecondaryButton>
-                            <PrimaryButton type="submit" disabled={actionLoading}>
-                                {actionLoading ? 'Создание...' : 'Создать платеж'}
-                            </PrimaryButton>
-                        </ModalActions>
-                    </form>
-                </ModalWrapper>
-            )}
-
-            {scheduleModalOpen && (
-                <ModalWrapper
-                    title="График платежей"
-                    subtitle={`Квартира №${passportUnit.unit_number}`}
-                    onClose={() => setScheduleModalOpen(false)}
-                    maxWidth="max-w-2xl"
-                >
-                    <form onSubmit={saveSchedule} className="space-y-3">
-                        <ModalSection className="space-y-3">
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Дата старта"
-                                    type="date"
-                                    value={scheduleForm.start_date}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setScheduleForm((prev) => ({
-                                            ...prev,
-                                            start_date: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <InputField
-                                    label="День месяца"
-                                    value={scheduleForm.payment_day}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setScheduleForm((prev) => ({
-                                            ...prev,
-                                            payment_day: e.target.value
-                                                .replace(/[^\d]/g, '')
-                                                .slice(0, 2),
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Количество платежей"
-                                    value={scheduleForm.payments_count}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setScheduleForm((prev) => ({
-                                            ...prev,
-                                            payments_count: e.target.value.replace(/[^\d]/g, ''),
-                                        }))
-                                    }
-                                />
-                                <SelectField
-                                    label="Интервал, мес."
-                                    value={scheduleForm.interval_months}
-                                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                        setScheduleForm((prev) => ({
-                                            ...prev,
-                                            interval_months: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    <option value="1">Каждый месяц</option>
-                                    <option value="2">Раз в 2 месяца</option>
-                                    <option value="3">Раз в 3 месяца</option>
-                                    <option value="6">Раз в 6 месяцев</option>
-                                </SelectField>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                <InputField
-                                    label="Сумма договора"
-                                    value={scheduleForm.total_amount}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setScheduleForm((prev) => ({
-                                            ...prev,
-                                            total_amount: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <InputField
-                                    label="Первый платеж"
-                                    value={scheduleForm.first_payment_amount}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                        setScheduleForm((prev) => ({
-                                            ...prev,
-                                            first_payment_amount: e.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-                        </ModalSection>
-
-                        <ModalSection className="space-y-3">
-                            <TextareaField
-                                label="Комментарий"
-                                value={scheduleForm.comment}
-                                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                                    setScheduleForm((prev) => ({
-                                        ...prev,
-                                        comment: e.target.value,
-                                    }))
-                                }
-                            />
-
-                            <InlineHint tone="amber">
-                                Новый график заменит старый по этому договору. Уже оплаченные
-                                платежи будут перераспределены сервером автоматически.
-                            </InlineHint>
-                        </ModalSection>
-
-                        <ModalActions>
-                            <SecondaryButton onClick={() => setScheduleModalOpen(false)}>
-                                Отмена
-                            </SecondaryButton>
-                            <PrimaryButton type="submit" disabled={actionLoading}>
-                                {actionLoading ? 'Формирование...' : 'Сформировать график'}
-                            </PrimaryButton>
-                        </ModalActions>
-                    </form>
-                </ModalWrapper>
-            )}
-
-            {dealFilesOpen && (
-                <ModalWrapper
-                    title={`Файлы договора №${dealFilesContext.deal?.contract_number || dealFilesContext.deal?.id || ''}`}
-                    subtitle={`Квартира №${passportUnit.unit_number}`}
-                    onClose={() => setDealFilesOpen(false)}
-                    maxWidth="max-w-2xl"
-                >
-                    <div className="space-y-3">
-                        <ModalSection className="space-y-3">
-                            <label className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-blue-600 cursor-pointer rounded-xl hover:bg-blue-700">
-                                <Upload size={16} />
-                                {filesLoading ? 'Загрузка...' : 'Добавить файлы'}
-                                <input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    onChange={handleUploadDealFiles}
-                                />
-                            </label>
-
-                            <InlineHint>
-                                Загрузите один или несколько файлов договора, чтобы они были
-                                доступны для скачивания из карточки.
-                            </InlineHint>
-                        </ModalSection>
-
-                        <ModalSection className="space-y-2">
-                            {dealFilesContext.files.length ? (
-                                dealFilesContext.files.map((file) => (
-                                    <div
-                                        key={file.id}
-                                        className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2.5"
-                                    >
-                                        <div className="min-w-0 text-sm font-medium truncate text-slate-700">
-                                            {file.name || `Файл #${file.id}`}
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDownloadDealFile(file)}
-                                                className="flex items-center justify-center w-8 h-8 transition rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                            >
-                                                <Download size={15} />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDeleteDealFile(file.id)}
-                                                className="flex items-center justify-center w-8 h-8 text-red-600 transition rounded-xl bg-red-50 hover:bg-red-100"
-                                            >
-                                                <Trash2 size={15} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="px-4 py-6 text-sm text-center bg-white border border-dashed rounded-xl border-stone-200 text-slate-500">
-                                    Файлы пока не прикреплены
-                                </div>
-                            )}
-                        </ModalSection>
-                    </div>
-                </ModalWrapper>
-            )}
+            <DealFilesModal
+                open={dealFilesOpen}
+                unitNumber={passportUnit.unit_number}
+                filesLoading={filesLoading}
+                dealFilesContext={dealFilesContext}
+                onUpload={handleUploadDealFiles}
+                onDownload={handleDownloadDealFile}
+                onDelete={handleDeleteDealFile}
+                onClose={() => setDealFilesOpen(false)}
+            />
         </div>
     );
 }

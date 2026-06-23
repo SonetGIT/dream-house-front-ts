@@ -1,4 +1,34 @@
+import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
+
+export function HeaderIconAction({
+    title,
+    icon,
+    className,
+    onClick,
+    disabled = false,
+}: {
+    title: string;
+    icon: ReactNode;
+    className: string;
+    onClick?: () => void;
+    disabled?: boolean;
+}) {
+    return (
+        <StyledTooltip title={title}>
+            <button
+                type="button"
+                onClick={onClick}
+                disabled={disabled}
+                className={`flex h-6 w-6 items-center justify-center rounded-lg text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+            >
+                {icon}
+            </button>
+        </StyledTooltip>
+    );
+}
+
 export const ModalWrapper = ({
     title,
     subtitle,
@@ -6,27 +36,30 @@ export const ModalWrapper = ({
     children,
     maxWidth = 'max-w-xl',
 }: any) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[3px]">
+    <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/50 backdrop-blur-sm"
+        onClick={(e) => e.target === e.currentTarget && onClose?.()}
+    >
         <div
-            className={`flex max-h-[88vh] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]`}
+            className={`flex max-h-[92vh] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl bg-white shadow-2xl`}
         >
-            <div className="shrink-0 border-b border-stone-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-3.5">
+            <div className="shrink-0 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white px-3 py-2.5">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <h3 className="truncate text-base font-semibold text-slate-900">{title}</h3>
+                        <h3 className="text-base font-bold text-gray-900 truncate">{title}</h3>
                         {subtitle ? (
-                            <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
+                            <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>
                         ) : null}
                     </div>
                     <button
                         onClick={onClose}
-                        className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        className="p-2 text-gray-400 transition-colors rounded-lg hover:bg-gray-100 hover:text-gray-600"
                     >
-                        <X size={17} />
+                        <X size={18} />
                     </button>
                 </div>
             </div>
-            <div className="flex-1 overflow-y-auto bg-white p-4">
+            <div className="flex-1 px-4 py-3 overflow-y-auto bg-white">
                 <div className="space-y-3">{children}</div>
             </div>
         </div>
@@ -34,14 +67,12 @@ export const ModalWrapper = ({
 );
 
 export const ModalSection = ({ children, className = '' }: any) => (
-    <div className={`rounded-2xl border border-stone-200 bg-slate-50/80 p-3 ${className}`}>
-        {children}
-    </div>
+    <div className={`rounded-xl ${className}`}>{children}</div>
 );
 
 export const ModalActions = ({ children, className = '' }: any) => (
     <div
-        className={`flex items-center justify-end gap-2 border-t border-stone-200 pt-3 ${className}`}
+        className={`flex items-center justify-end gap-2 border-t border-gray-100 bg-white pt-3 ${className}`}
     >
         {children}
     </div>
@@ -53,7 +84,11 @@ export const InlineHint = ({ children, tone = 'slate', className = '' }: any) =>
             ? 'border-amber-200 bg-amber-50 text-amber-800'
             : 'border-slate-200 bg-slate-50 text-slate-600';
 
-    return <div className={`rounded-xl border px-3 py-2 text-xs ${toneClass} ${className}`}>{children}</div>;
+    return (
+        <div className={`rounded-xl border px-3 py-2 text-xs ${toneClass} ${className}`}>
+            {children}
+        </div>
+    );
 };
 
 export const PrimaryButton = ({
@@ -67,7 +102,7 @@ export const PrimaryButton = ({
         type={type}
         onClick={onClick}
         disabled={disabled}
-        className={`inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`inline-flex h-10 items-center justify-center rounded-lg bg-sky-500 px-4 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
         {children}
     </button>
@@ -78,7 +113,7 @@ export const SecondaryButton = ({ children, onClick, disabled, className = '' }:
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className={`inline-flex h-10 items-center justify-center rounded-xl border border-stone-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
         {children}
     </button>
@@ -87,10 +122,12 @@ export const SecondaryButton = ({ children, onClick, disabled, className = '' }:
 export const InputField = ({ label, ...props }: any) => (
     <div>
         {label && (
-            <label className="mb-1.5 block text-[12px] font-medium text-slate-600">{label}</label>
+            <label className="block mb-1 text-sm font-semibold text-left text-sky-800">
+                {label}
+            </label>
         )}
         <input
-            className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="w-full px-3 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg outline-none h-9 placeholder:text-gray-400 focus:border-transparent focus:ring-2 focus:ring-sky-400"
             {...props}
         />
     </div>
@@ -99,10 +136,12 @@ export const InputField = ({ label, ...props }: any) => (
 export const SelectField = ({ label, children, ...props }: any) => (
     <div>
         {label && (
-            <label className="mb-1.5 block text-[12px] font-medium text-slate-600">{label}</label>
+            <label className="mb-1.5 block text-left text-sm font-semibold text-sky-800">
+                {label}
+            </label>
         )}
         <select
-            className="h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="w-full px-3 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg outline-none h-9 focus:border-transparent focus:ring-2 focus:ring-sky-400"
             {...props}
         >
             {children}
@@ -113,10 +152,10 @@ export const SelectField = ({ label, children, ...props }: any) => (
 export const TextareaField = ({ label, className = '', ...props }: any) => (
     <div>
         {label && (
-            <label className="mb-1.5 block text-[12px] font-medium text-slate-600">{label}</label>
+            <label className="mb-1.5 block text-sm font-semibold text-sky-800">{label}</label>
         )}
         <textarea
-            className={`min-h-[88px] w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${className}`}
+            className={` w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-transparent focus:ring-2 focus:ring-sky-400 ${className}`}
             {...props}
         />
     </div>

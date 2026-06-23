@@ -15,7 +15,7 @@ import WarehouseWriteOffMbpTab from './tabs/WarehouseWriteOffMBPTab';
 import WarehouseWriteOffProcessTab from './tabs/WarehouseWriteOffProcessTab';
 import { ActionButton, ACTIONS } from '@/components/ui/ActionButton';
 import WarehouseTransfersTab from './tabs/WarehouseTransfersTab';
-import WarehouseReceiptInvoicesTab from './warehouseReceiptInvoices/warehouseReceiptInvoicesTab';
+import WarehouseReceiptInvoicesTab from './warehouseReceiptInvoices/WarehouseReceiptInvoicesTab';
 
 export type WarehouseTabType =
     | 'materials'

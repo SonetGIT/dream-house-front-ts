@@ -116,8 +116,7 @@ const inputCls =
     'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all';
 const inputErrCls =
     'w-full px-3 py-2 text-sm text-gray-900 bg-white border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition-all';
-const labelCls =
-    'flex items-center gap-2 py-2 mb-1 text-sm font-semibold text-sky-800 rounded-r-lg';
+const labelCls = 'flex items-center gap-2 py-1 text-sm font-semibold text-sky-800 rounded-r-lg';
 
 type Errors = Partial<Record<string, string>>;
 
@@ -146,6 +145,7 @@ function initForm(unit?: SalesUnit): Partial<SalesUnitCreatePayload> {
     };
 }
 
+/***************************************************************************************************************************/
 export function ObjectsOverviewUnitForm({
     mode,
     unit,
@@ -243,14 +243,14 @@ export function ObjectsOverviewUnitForm({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-black/50 backdrop-blur-sm"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white">
+                <div className="flex items-center justify-between px-2 py-2 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white">
                     <div className="flex items-center gap-3">
                         <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-sm ${
                                 isEdit ? 'bg-amber-500' : 'bg-sky-500'
                             }`}
                         >
@@ -281,7 +281,7 @@ export function ObjectsOverviewUnitForm({
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex-1 px-6 py-5 space-y-5 overflow-y-auto"
+                    className="flex-1 px-4 py-2 space-y-3 overflow-y-auto"
                 >
                     <div>
                         <div className="grid grid-cols-2 gap-3">

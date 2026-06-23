@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { Collapse } from '@mui/material';
-import { ChevronDown, ChevronRight, ListChecks } from 'lucide-react';
+import { ChevronDown, ChevronRight, ListChecks, Paperclip } from 'lucide-react';
 import { TablePagination } from '@/components/ui/TablePagination';
 import { useReference } from '@/features/reference/useReference';
 import type { Pagination } from '@/features/users/userSlice';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { TabBtn } from '../../pto/workPerformed/WorkPerformedTable';
-import type {
-    WarehouseReceiptInvoice,
-    WarehouseReceiptInvoiceItem,
-} from './warehouseReceiptInvoicesSlice';
+import type { WarehouseReceiptInvoice } from './warehouseReceiptInvoicesSlice';
+import WarehouseReceiptInvoiceFilesSection from './WarehouseReceiptInvoiceFilesSection';
 
 type WarehouseReceiptInvoiceProps = {
     data: WarehouseReceiptInvoice[];
@@ -19,6 +17,8 @@ type WarehouseReceiptInvoiceProps = {
     onPageChange?: (page: number) => void;
     onSizeChange?: (size: number) => void;
 };
+
+type RowTab = 'items' | 'files';
 
 const FALLBACK = '—';
 
@@ -30,12 +30,14 @@ export default function WarehouseReceiptInvoicesTable({
     onSizeChange,
 }: WarehouseReceiptInvoiceProps) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
+    const [rowTabs, setRowTabs] = useState<Record<number, RowTab>>({});
 
-    const warehouses = useReference('warehouses');
-    const projects = useReference('projects');
     const projectBlocks = useReference('projectBlocks');
-    const unitsOfMeasure = useReference('unitsOfMeasure');
     const users = useReference('users');
+    const purchaseOrderItemStatuses = useReference('purchaseOrderItemStatuses');
+    const currencies = useReference('currencies');
+    const suppliers = useReference('suppliers');
+    const unitsOfMeasure = useReference('unitsOfMeasure');
 
     const toggleRow = (id: number) => {
         setOpenRows((prev) => ({
@@ -44,19 +46,11 @@ export default function WarehouseReceiptInvoicesTable({
         }));
     };
 
-    const getWarehouseName = (invoice: WarehouseReceiptInvoice) => {
-        return invoice.warehouse?.name || warehouses.lookup(invoice.warehouse_id) || FALLBACK;
-    };
-
-    const getProjectBlockLabel = (invoice: WarehouseReceiptInvoice) => {
-        const projectName = invoice.project_id ? projects.lookup(invoice.project_id) : '';
-        const blockName = invoice.block_id ? projectBlocks.lookup(invoice.block_id) : '';
-
-        if (projectName && blockName) {
-            return `${projectName} / ${blockName}`;
-        }
-
-        return projectName || blockName || FALLBACK;
+    const setRowTab = (id: number, tab: RowTab) => {
+        setRowTabs((prev) => ({
+            ...prev,
+            [id]: tab,
+        }));
     };
 
     const getReceiverName = (invoice: WarehouseReceiptInvoice) => {
@@ -75,10 +69,6 @@ export default function WarehouseReceiptInvoicesTable({
         }
 
         return invoice.received_by ? users.lookup(invoice.received_by) : FALLBACK;
-    };
-
-    const getUnitName = (item: WarehouseReceiptInvoiceItem) => {
-        return item.unit_of_measure ? unitsOfMeasure.lookup(item.unit_of_measure) : FALLBACK;
     };
 
     if (loading) {
@@ -105,217 +95,250 @@ export default function WarehouseReceiptInvoicesTable({
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
                                 <th className="bg-emerald-50 px-1 py-1 text-left" />
-                                <th className="bg-emerald-50 px-2 py-1 text-left text-xs font-semibold uppercase text-emerald-700">
+                                <th className="bg-emerald-50 px-1 py-1 text-left text-sm font-semibold text-emerald-700">
                                     №
                                 </th>
-                                <th className="bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Дата приемки
+                                <th className="border-l bg-emerald-50 px-1 py-1 text-center">
+                                    <div className="text-xs font-semibold uppercase text-emerald-700">
+                                        Блок
+                                    </div>
                                 </th>
-                                <th className="border-l bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Склад
+                                <th className="border-l bg-emerald-50 px-1 py-1 text-center">
+                                    <div className="text-xs font-semibold uppercase text-emerald-700">
+                                        Заказ
+                                    </div>
                                 </th>
-                                <th className="border-l bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Проект / блок
+                                <th className="border-l bg-emerald-50 px-1 py-1 text-center">
+                                    <div className="text-xs font-semibold uppercase text-emerald-700">
+                                        Сумма
+                                    </div>
                                 </th>
-                                <th className="border-l bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Заказ
+                                <th className="border-l bg-emerald-50 px-1 py-1 text-center">
+                                    <div className="text-xs font-semibold uppercase text-emerald-700">
+                                        Дата приемки
+                                    </div>
                                 </th>
-                                <th className="border-l bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Сумма
-                                </th>
-                                <th className="border-l bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Получил
-                                </th>
-                                <th className="border-l bg-emerald-50 px-2 py-1 text-center text-xs font-semibold uppercase text-emerald-700">
-                                    Комментарий
+                                <th className="border-l bg-emerald-50 px-1 py-1 text-center">
+                                    <div className="text-xs font-semibold uppercase text-emerald-700">
+                                        Принял
+                                    </div>
                                 </th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {data.map((invoice) => (
-                                <React.Fragment key={invoice.id}>
-                                    <tr
-                                        className="border-b transition-colors hover:bg-gray-50"
-                                        onClick={() => toggleRow(invoice.id)}
-                                    >
-                                        <td className="px-2 py-2">
-                                            <button
-                                                type="button"
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    toggleRow(invoice.id);
-                                                }}
-                                                className="text-gray-400 transition-colors hover:text-gray-600"
-                                            >
-                                                {openRows[invoice.id] ? (
-                                                    <ChevronDown className="h-4 w-4" />
+                            {data.map((invoice) => {
+                                const activeTab: RowTab = rowTabs[invoice.id] ?? 'items';
+
+                                return (
+                                    <React.Fragment key={invoice.id}>
+                                        <tr
+                                            className="border-b transition-colors hover:bg-gray-50"
+                                            onClick={() => toggleRow(invoice.id)}
+                                        >
+                                            <td className="px-2 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        toggleRow(invoice.id);
+                                                    }}
+                                                    className="text-gray-400 transition-colors hover:text-gray-600"
+                                                >
+                                                    {openRows[invoice.id] ? (
+                                                        <ChevronDown className="h-4 w-4" />
+                                                    ) : (
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </td>
+
+                                            <td className="px-2 py-2 text-left text-xs font-medium text-gray-700">
+                                                {invoice.id}
+                                            </td>
+
+                                            <td className="px-2 py-2 text-center text-xs text-gray-900">
+                                                {projectBlocks.lookup(invoice.block_id || '')}
+                                            </td>
+
+                                            <td className="px-2 py-2 text-center text-xs text-gray-800">
+                                                {invoice.purchase_order_id ? (
+                                                    <div>
+                                                        <div className="font-medium">
+                                                            Завка №{invoice.purchase_order_id}
+                                                        </div>
+                                                        {invoice.purchase_order?.status ? (
+                                                            <div className="mt-1 text-[12px] text-emerald-500">
+                                                                Статус:{' '}
+                                                                {purchaseOrderItemStatuses.lookup(
+                                                                    invoice.purchase_order.status,
+                                                                )}
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
                                                 ) : (
-                                                    <ChevronRight className="h-4 w-4" />
+                                                    FALLBACK
                                                 )}
-                                            </button>
-                                        </td>
+                                            </td>
 
-                                        <td className="px-2 py-2 text-left text-xs font-medium text-gray-700">
-                                            {invoice.id}
-                                        </td>
+                                            <td className="px-2 py-2 text-center text-xs font-semibold text-emerald-700">
+                                                {formatCurrency(invoice.total_amount)}
+                                            </td>
 
-                                        <td className="px-2 py-2 text-center text-xs text-gray-900">
-                                            {formatDateTime(invoice.received_at)}
-                                        </td>
+                                            <td className="px-2 py-2 text-center text-xs text-gray-900">
+                                                {formatDateTime(invoice.received_at)}
+                                            </td>
 
-                                        <td className="px-2 py-2 text-center text-xs text-gray-900">
-                                            <div className="font-medium">
-                                                {getWarehouseName(invoice)}
-                                            </div>
-                                            <div className="mt-1 text-[11px] text-gray-400">
-                                                ID: {invoice.warehouse_id}
-                                            </div>
-                                        </td>
+                                            <td className="px-2 py-2 text-center text-xs text-gray-900">
+                                                {getReceiverName(invoice)}
+                                            </td>
+                                        </tr>
 
-                                        <td className="px-2 py-2 text-center text-xs text-gray-900">
-                                            {getProjectBlockLabel(invoice)}
-                                        </td>
-
-                                        <td className="px-2 py-2 text-center text-xs text-gray-900">
-                                            {invoice.purchase_order_id ? (
-                                                <div>
-                                                    <div className="font-medium">
-                                                        Заказ #{invoice.purchase_order_id}
-                                                    </div>
-                                                    {invoice.purchase_order?.status ? (
-                                                        <div className="mt-1 text-[11px] text-gray-400">
-                                                            Статус: {invoice.purchase_order.status}
+                                        <tr className="border-b bg-gradient-to-r from-emerald-50/40 to-white">
+                                            <td colSpan={9} className="px-3 py-2">
+                                                <Collapse in={openRows[invoice.id]} unmountOnExit>
+                                                    <div className="px-3 py-2">
+                                                        <div className="mb-3 flex items-center gap-0 border-b border-gray-200">
+                                                            <TabBtn
+                                                                active={activeTab === 'items'}
+                                                                icon={
+                                                                    <ListChecks className="h-3.5 w-3.5" />
+                                                                }
+                                                                label="Материалы накладной"
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    setRowTab(invoice.id, 'items');
+                                                                }}
+                                                            />
+                                                            <TabBtn
+                                                                active={activeTab === 'files'}
+                                                                icon={<Paperclip className="h-3.5 w-3.5" />}
+                                                                label="Файлы"
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    setRowTab(invoice.id, 'files');
+                                                                }}
+                                                            />
                                                         </div>
-                                                    ) : null}
-                                                </div>
-                                            ) : (
-                                                FALLBACK
-                                            )}
-                                        </td>
 
-                                        <td className="px-2 py-2 text-center text-xs font-semibold text-emerald-700">
-                                            {formatCurrency(invoice.total_amount)}
-                                        </td>
-
-                                        <td className="px-2 py-2 text-center text-xs text-gray-900">
-                                            {getReceiverName(invoice)}
-                                        </td>
-
-                                        <td className="px-2 py-2 text-center text-xs text-gray-700">
-                                            {invoice.comment || FALLBACK}
-                                        </td>
-                                    </tr>
-
-                                    <tr className="border-b bg-gradient-to-r from-emerald-50/40 to-white">
-                                        <td colSpan={9} className="px-3 py-2">
-                                            <Collapse in={openRows[invoice.id]} unmountOnExit>
-                                                <div className="px-3 py-2">
-                                                    <div className="mb-3 flex items-center gap-0 border-b border-gray-200">
-                                                        <TabBtn
-                                                            active
-                                                            icon={<ListChecks className="h-3.5 w-3.5" />}
-                                                            label="Материалы накладной"
-                                                            onClick={(event) =>
-                                                                event.stopPropagation()
-                                                            }
-                                                        />
-                                                    </div>
-
-                                                    <div onClick={(event) => event.stopPropagation()}>
-                                                        <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
-                                                            <table className="w-full">
-                                                                <thead className="bg-gray-50 text-gray-700">
-                                                                    <tr className="border-b">
-                                                                        <th className="w-12 px-3 py-3 text-left text-sm font-semibold">
-                                                                            №
-                                                                        </th>
-                                                                        <th className="px-3 py-2 text-left text-sm">
-                                                                            Материал
-                                                                        </th>
-                                                                        <th className="w-28 px-3 py-2 text-center text-sm">
-                                                                            Ед. изм
-                                                                        </th>
-                                                                        <th className="w-28 px-3 py-2 text-right text-sm">
-                                                                            Кол-во
-                                                                        </th>
-                                                                        <th className="w-32 px-3 py-2 text-right text-sm">
-                                                                            Цена
-                                                                        </th>
-                                                                        <th className="w-36 px-3 py-2 text-right text-sm">
-                                                                            Сумма
-                                                                        </th>
-                                                                        <th className="px-3 py-2 text-left text-sm">
-                                                                            Комментарий
-                                                                        </th>
-                                                                    </tr>
-                                                                </thead>
-
-                                                                <tbody>
-                                                                    {invoice.items?.map(
-                                                                        (item, index) => (
-                                                                            <tr
-                                                                                key={item.id}
-                                                                                className="border-b bg-blue-50/30 hover:bg-gray-50"
-                                                                            >
-                                                                                <td className="px-2 py-2 text-xs font-medium text-gray-600">
-                                                                                    {index + 1}
-                                                                                </td>
-
-                                                                                <td className="px-2 py-2 text-sm text-gray-800">
-                                                                                    {item.material
-                                                                                        ?.name ||
-                                                                                        `Материал #${item.material_id}`}
-                                                                                </td>
-
-                                                                                <td className="px-2 py-2 text-center text-sm text-gray-700">
-                                                                                    {getUnitName(item)}
-                                                                                </td>
-
-                                                                                <td className="px-2 py-2 text-right font-bold text-green-700">
-                                                                                    {item.quantity}
-                                                                                </td>
-
-                                                                                <td className="px-2 py-2 text-right text-sm text-gray-700">
-                                                                                    {formatCurrency(
-                                                                                        item.price,
-                                                                                    )}
-                                                                                </td>
-
-                                                                                <td className="px-2 py-2 text-right text-sm font-semibold text-gray-900">
-                                                                                    {formatCurrency(
-                                                                                        item.total_amount,
-                                                                                    )}
-                                                                                </td>
-
-                                                                                <td className="px-2 py-2 text-sm text-gray-600">
-                                                                                    {item.comment ||
-                                                                                        FALLBACK}
-                                                                                </td>
+                                                        {activeTab === 'items' ? (
+                                                            <div
+                                                                onClick={(event) =>
+                                                                    event.stopPropagation()
+                                                                }
+                                                            >
+                                                                <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+                                                                    <table className="w-full">
+                                                                        <thead className="bg-gray-50 text-gray-700">
+                                                                            <tr className="border-b">
+                                                                                <th className="w-12 px-3 py-3 text-left text-sm font-semibold">
+                                                                                    №
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-left text-sm">
+                                                                                    Материал
+                                                                                </th>
+                                                                                <th className="w-28 px-3 py-2 text-sm">
+                                                                                    Ед. изм
+                                                                                </th>
+                                                                                <th className="w-28 px-3 py-2 text-sm">
+                                                                                    Кол-во
+                                                                                </th>
+                                                                                <th className="w-32 px-3 py-2 text-sm">
+                                                                                    Цена
+                                                                                </th>
+                                                                                <th className="w-36 px-3 py-2 text-sm">
+                                                                                    Сумма
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-sm">
+                                                                                    Валюта
+                                                                                </th>
+                                                                                <th className="px-3 py-2 text-center text-sm">
+                                                                                    Поставщик
+                                                                                </th>
                                                                             </tr>
-                                                                        ),
-                                                                    )}
+                                                                        </thead>
 
-                                                                    {!invoice.items?.length ? (
-                                                                        <tr>
-                                                                            <td
-                                                                                colSpan={7}
-                                                                                className="px-3 py-8 text-center text-sm text-gray-400"
-                                                                            >
-                                                                                В накладной пока нет материалов
-                                                                            </td>
-                                                                        </tr>
-                                                                    ) : null}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
+                                                                        <tbody>
+                                                                            {invoice.items?.map(
+                                                                                (item, index) => (
+                                                                                    <tr
+                                                                                        key={item.id}
+                                                                                        className="border-b bg-blue-50/30 hover:bg-gray-50"
+                                                                                    >
+                                                                                        <td className="px-2 py-2 text-xs font-medium text-gray-600">
+                                                                                            {index + 1}
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 text-left text-sm text-gray-800">
+                                                                                            {item.material
+                                                                                                ?.name ||
+                                                                                                `Материал ${item.material_id}`}
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 text-sm text-gray-700">
+                                                                                            {unitsOfMeasure.lookup(
+                                                                                                item.unit_of_measure ||
+                                                                                                    '',
+                                                                                            )}
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 font-bold text-green-700">
+                                                                                            {item.quantity}
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 text-sm text-gray-700">
+                                                                                            {item.price}
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 text-sm font-semibold text-gray-900">
+                                                                                            {
+                                                                                                item.total_amount
+                                                                                            }
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 font-bold text-green-700">
+                                                                                            {currencies.lookup(
+                                                                                                item.currency ||
+                                                                                                    1,
+                                                                                            )}
+                                                                                        </td>
+
+                                                                                        <td className="px-2 py-2 text-sm text-gray-600">
+                                                                                            {suppliers.lookup(
+                                                                                                item.supplier_id ||
+                                                                                                    '',
+                                                                                            )}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ),
+                                                                            )}
+
+                                                                            {!invoice.items?.length ? (
+                                                                                <tr>
+                                                                                    <td
+                                                                                        colSpan={8}
+                                                                                        className="px-3 py-8 text-center text-sm text-gray-400"
+                                                                                    >
+                                                                                        В накладной пока нет материалов
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ) : null}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <WarehouseReceiptInvoiceFilesSection
+                                                                invoiceId={invoice.id}
+                                                            />
+                                                        )}
                                                     </div>
-                                                </div>
-                                            </Collapse>
-                                        </td>
-                                    </tr>
-                                </React.Fragment>
-                            ))}
+                                                </Collapse>
+                                            </td>
+                                        </tr>
+                                    </React.Fragment>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

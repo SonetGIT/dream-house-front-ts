@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import {
+    BadgeCheck,
+    Ban,
     CalendarRange,
     ChevronDown,
     Download,
@@ -12,7 +14,7 @@ import {
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
-import { HeaderIconAction } from './SalesUnitPassportSidbar';
+import { HeaderIconAction } from './SalesUnitPassportUI';
 
 export const SalesUnitPassportDeal = ({
     deal,
@@ -21,10 +23,14 @@ export const SalesUnitPassportDeal = ({
     onPaymentClick,
     onScheduleClick,
     onEditClick,
+    onSignClick,
+    onCancelClick,
     onFileClick,
     onDownloadScheduleClick,
     downloadingScheduleDealId,
     getDealStatusName,
+    canSign,
+    canCancel,
 }: any) => {
     const [activeTab, setActiveTab] = useState<'payments' | 'schedule'>('payments');
     const [expandedScheduleIds, setExpandedScheduleIds] = useState<number[]>([]);
@@ -73,6 +79,30 @@ export const SalesUnitPassportDeal = ({
                                       .join(' ')
                                 : '—'}
                         </div>
+                        {canSign || canCancel ? (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                                {canSign ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => onSignClick?.(deal)}
+                                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                    >
+                                        <BadgeCheck size={13} />
+                                        Подписать
+                                    </button>
+                                ) : null}
+                                {canCancel ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => onCancelClick?.(deal)}
+                                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-red-50 px-2.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
+                                    >
+                                        <Ban size={13} />
+                                        Отменить
+                                    </button>
+                                ) : null}
+                            </div>
+                        ) : null}
                     </div>
                     <div className="text-xs font-medium text-slate-700">
                         {formatDate(deal.contract_date)}

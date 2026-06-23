@@ -84,6 +84,11 @@ export default function EstimatesTable({
                                         Стоимость (сом)
                                     </div>
                                 </th>
+                                <th className="px-4 py-3 text-center border-l bg-green-50 w-[700px]">
+                                    <div className="text-xs font-semibold text-green-700 uppercase">
+                                        Этап подписи
+                                    </div>
+                                </th>
                                 <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
@@ -91,6 +96,26 @@ export default function EstimatesTable({
                         </thead>
                         <tbody>
                             {data.map((item) => {
+                                const signatures = [
+                                    {
+                                        label: 'Инженер ПТО',
+                                        userId: workPerf.planning_engineer_user_id,
+                                        approved: workPerf.signed_by_planning_engineer,
+                                        approvedTime: workPerf.signed_by_planning_engineer_time,
+                                    },
+                                    {
+                                        label: 'Гл. инженер',
+                                        userId: workPerf.main_engineer_user_id,
+                                        approved: workPerf.signed_by_main_engineer,
+                                        approvedTime: workPerf.signed_by_main_engineer_time,
+                                    },
+                                    {
+                                        label: 'Ген. директор',
+                                        userId: workPerf.main_engineer_user_id,
+                                        approved: workPerf.signed_by_main_engineer,
+                                        approvedTime: workPerf.signed_by_main_engineer_time,
+                                    },
+                                ];
                                 const items = estimateItems[item.id] ?? [];
                                 const isExpanded = expandedRows.has(item.id);
 
@@ -108,7 +133,48 @@ export default function EstimatesTable({
                                                 (sums[item.id]?.service || 0)
                                             }
                                         />
+                                        {/*ЭТАП ПОДПИСИ  */}
+                                        <td className="px-2 py-2 pl-2 text-sm text-center text-gray-900 ">
+                                            <div className="grid grid-cols-3 gap-4 text-xs items-left">
+                                                {signatures.map((s) => (
+                                                    <div
+                                                        key={s.label}
+                                                        className="space-y-0.5 text-left"
+                                                    >
+                                                        {/* ROLE */}
+                                                        <div className="flex items-center gap-1 pl-1 font-medium text-gray-700">
+                                                            <span className="space-y-0.5 text-left min-w-0 text-xs">
+                                                                {s.label}
+                                                            </span>
+                                                        </div>
 
+                                                        {/* USER */}
+                                                        <div className="text-[0.75rem] text-gray-500 italic truncate pl-1">
+                                                            {s.userId
+                                                                ? props.refs.users.lookup(s.userId)
+                                                                : '—'}
+                                                        </div>
+
+                                                        {/* STATUS */}
+                                                        <div
+                                                            className={`text-[0.75rem] pl-1 whitespace-nowrap ${
+                                                                s.approved
+                                                                    ? 'text-green-600'
+                                                                    : s.approved === false
+                                                                      ? 'text-red-500'
+                                                                      : 'text-gray-400'
+                                                            }`}
+                                                        >
+                                                            {s.approved === true
+                                                                ? `✔ ${formatDateTime(s.approvedTime)}`
+                                                                : s.approved === false
+                                                                  ? `✖ ${formatDateTime(s.approvedTime)}`
+                                                                  : '⏳ Ожидает'}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
                                         {isExpanded && (
                                             <EstimateDetails
                                                 blockId={blockId}
