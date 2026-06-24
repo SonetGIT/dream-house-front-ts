@@ -92,6 +92,7 @@ const initialState: MaterialRequestsState = {
 interface FetchSearchMaterialReqParams {
     page?: number;
     size?: number;
+    id?: number;
     search?: string;
     filters?: {
         status?: number;

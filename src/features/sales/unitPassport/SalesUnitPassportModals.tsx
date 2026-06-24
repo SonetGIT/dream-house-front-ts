@@ -49,6 +49,8 @@ type DealFormState = {
 
 type PaymentFormState = {
     deal_id: string;
+    reservation_id: string;
+    client_id: string;
     title: string;
     amount: string;
     currency: string;
@@ -250,7 +252,7 @@ export function DealModal({
                             <option value="">Без брони</option>
                             {dealReservationOptions.map((reservation) => (
                                 <option key={reservation.id} value={reservation.id}>
-                                    Бронь #{reservation.id} ·{' '}
+                                    Бронь №{reservation.id} ·{' '}
                                     {getReservationStatusName(reservation)}
                                 </option>
                             ))}
@@ -358,6 +360,7 @@ export function PaymentModal({
     unitNumber,
     deals,
     paymentForm,
+    reservationOptionLabel,
     currencies,
     actionLoading,
     onDealChange,
@@ -369,6 +372,7 @@ export function PaymentModal({
     unitNumber: string | number;
     deals: PassportDeal[];
     paymentForm: PaymentFormState;
+    reservationOptionLabel?: string | null;
     currencies: EnumItem[];
     actionLoading: boolean;
     onDealChange: (dealId: string) => void;
@@ -388,13 +392,13 @@ export function PaymentModal({
             <form onSubmit={onSubmit} className="space-y-3">
                 <ModalSection className="space-y-3">
                     <SelectField
-                        label="Договор"
+                        label="Привязка"
                         value={paymentForm.deal_id}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                             onDealChange(e.target.value)
                         }
                     >
-                        <option value="">Выберите договор</option>
+                        <option value="">{reservationOptionLabel || 'Выберите договор'}</option>
                         {deals.map((deal) => (
                             <option key={deal.id} value={deal.id}>
                                 Договор №{deal.contract_number || deal.id}

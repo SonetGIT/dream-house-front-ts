@@ -8,6 +8,7 @@ import { SalesUnitPassportDeal } from './SalesUnitPassportDeal';
 export const ClientAccordionItem = ({
     group,
     isExpanded,
+    hasActiveReservation,
     onToggle,
     onCreateReservation,
     onCreateDeal,
@@ -29,9 +30,10 @@ export const ClientAccordionItem = ({
     getDealPayments,
     getDealSchedules,
     getReservationPayments,
+    getSingleReservationPayments,
 }: any) => {
     const statusClass =
-        group.status === 'buyout'
+        group.status === 'current'
             ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
             : group.status === 'reservation'
               ? 'border-orange-200 bg-orange-50 text-orange-700'
@@ -96,12 +98,16 @@ export const ClientAccordionItem = ({
                                 <CalendarClock size={14} className="text-orange-600" />
                                 Брони
                             </div>
-                            <HeaderIconAction
-                                title="Создать бронь"
-                                icon={<Plus size={15} />}
-                                className="bg-orange-400 hover:bg-orange-500"
-                                onClick={() => onCreateReservation?.({ client_id: group.client_id })}
-                            />
+                            {!hasActiveReservation ? (
+                                <HeaderIconAction
+                                    title="Создать бронь"
+                                    icon={<Plus size={15} />}
+                                    className="bg-orange-400 hover:bg-orange-500"
+                                    onClick={() =>
+                                        onCreateReservation?.({ client_id: group.client_id })
+                                    }
+                                />
+                            ) : null}
                         </div>
                         {group.reservations.length > 0 ? (
                             <div className="overflow-hidden border border-orange-100 rounded-md">
@@ -115,54 +121,115 @@ export const ClientAccordionItem = ({
                                     <div />
                                 </div>
 
-                                {group.reservations.map((reservation: PassportReservationBrief) => (
-                                    <div
-                                        key={reservation.id}
-                                        className="grid grid-cols-[1.2fr_100px_100px_110px_130px_110px_72px] items-center border-t border-stone-100 px-3 py-2.5 text-sm text-slate-700"
-                                    >
-                                        <div className="text-xs font-medium text-blue-800">
-                                            {getReservationStatusName(reservation)}
+                                {group.reservations.map((reservation: PassportReservationBrief) => {
+                                    const reservationPayments =
+                                        getSingleReservationPayments?.(reservation) || [];
+
+                                    return (
+                                        <div key={reservation.id} className="border-t border-stone-100">
+                                            <div className="grid grid-cols-[1.2fr_100px_100px_110px_130px_110px_112px] items-center px-3 py-2.5 text-sm text-slate-700">
+                                                <div className="text-xs font-medium text-blue-800">
+                                                    {getReservationStatusName(reservation)}
+                                                </div>
+                                                <div className="text-xs">
+                                                    {formatDate(reservation.start_at)}
+                                                </div>
+                                                <div className="text-xs">
+                                                    {formatDate(reservation.expires_at)}
+                                                </div>
+                                                <div className="text-xs font-medium text-green-800">
+                                                    {formatCurrency(reservation.reservation_amount)}
+                                                </div>
+                                                <div className="text-xs text-slate-800">
+                                                    {[
+                                                        reservation.manager_user?.last_name,
+                                                        reservation.manager_user?.first_name,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(' ') || '—'}
+                                                </div>
+                                                <div className="text-xs">
+                                                    {formatDate(reservation.closed_at)}
+                                                </div>
+                                                <div className="flex justify-end gap-1">
+                                                    {isActiveReservation(reservation) ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    onPaymentClick?.({
+                                                                        reservation,
+                                                                        reservation_id:
+                                                                            reservation.id,
+                                                                        client_id:
+                                                                            group.client_id,
+                                                                    })
+                                                                }
+                                                                className="inline-flex h-8 items-center rounded-lg bg-blue-600 px-2 text-[11px] font-semibold text-white transition hover:bg-blue-500"
+                                                            >
+                                                                Платеж
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    onEditReservation?.(reservation)
+                                                                }
+                                                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    onCancelReservation?.(reservation)
+                                                                }
+                                                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </>
+                                                    ) : null}
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-stone-100 bg-orange-50/40 px-3 py-2">
+                                                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-orange-600">
+                                                    Платежи по брони
+                                                </div>
+                                                {reservationPayments.length ? (
+                                                    <div className="space-y-1.5">
+                                                        {reservationPayments.map((payment: any) => (
+                                                            <div
+                                                                key={payment.id}
+                                                                className="flex items-start justify-between gap-2 rounded-lg border border-orange-100 bg-white px-2.5 py-2"
+                                                            >
+                                                                <div className="min-w-0">
+                                                                    <div className="truncate text-xs font-semibold text-slate-700">
+                                                                        {payment.title || 'Платеж'}
+                                                                    </div>
+                                                                    <div className="mt-0.5 text-[11px] text-slate-500">
+                                                                        {payment.status_ref?.name || 'Статус'} ·{' '}
+                                                                        {formatDate(
+                                                                            payment.paid_date ||
+                                                                                payment.planned_date,
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="shrink-0 text-xs font-semibold text-emerald-700">
+                                                                    {formatCurrency(payment.amount)}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-lg border border-dashed border-orange-200 bg-white px-3 py-3 text-center text-xs text-slate-500">
+                                                        Платежей по этой брони пока нет
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="text-xs">
-                                            {formatDate(reservation.start_at)}
-                                        </div>
-                                        <div className="text-xs">
-                                            {formatDate(reservation.expires_at)}
-                                        </div>
-                                        <div className="text-xs font-medium text-green-800">
-                                            {formatCurrency(reservation.reservation_amount)}
-                                        </div>
-                                        <div className="text-xs text-slate-800">
-                                            {reservation.manager_user?.first_name +
-                                                ' ' +
-                                                reservation.manager_user?.first_name +
-                                                ' '}
-                                        </div>
-                                        <div className="text-xs">
-                                            {formatDate(reservation.closed_at)}
-                                        </div>
-                                        <div className="flex justify-end gap-1">
-                                            {isActiveReservation(reservation) ? (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onEditReservation?.(reservation)}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition hover:bg-slate-200"
-                                                    >
-                                                        <Pencil size={14} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onCancelReservation?.(reservation)}
-                                                        className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </>
-                                            ) : null}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="px-4 py-6 text-sm text-center bg-white border border-dashed rounded-2xl border-stone-300 text-rose-400">

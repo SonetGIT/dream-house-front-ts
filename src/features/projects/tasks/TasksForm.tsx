@@ -1,7 +1,7 @@
-import { X, Building2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type { Task } from './tasksSlice';
+import { Building2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
+import type { CreateTaskPayload, Task, UpdateTaskPayload } from './tasksSlice';
 
 interface TaskFormProps {
     open: boolean;
@@ -9,7 +9,7 @@ interface TaskFormProps {
     projectId: number;
     task: Task | null;
     refs: Record<string, ReferenceResult>;
-    onSubmit: (data: Partial<Task>) => Promise<void> | void;
+    onSubmit: (data: CreateTaskPayload | UpdateTaskPayload & { assignee_user_ids: number[] }) => Promise<void> | void;
 }
 
 type TaskFormData = {
@@ -18,7 +18,7 @@ type TaskFormData = {
     description: string;
     priority: number | null;
     deadline: string;
-    responsible_user_id: number | null;
+    assignee_user_ids: number[];
 };
 
 type TaskFormErrors = Partial<Record<keyof TaskFormData, string>>;
@@ -33,30 +33,38 @@ export default function TaskForm({
 }: TaskFormProps) {
     const nameInputRef = useRef<HTMLInputElement>(null);
 
+    const existingAssigneeIds = useMemo(
+        () => new Set(task?.assignee_user_ids ?? (task?.responsible_user_id ? [task.responsible_user_id] : [])),
+        [task],
+    );
+
     const [formData, setFormData] = useState<TaskFormData>({
         project_id: projectId,
         title: task?.title ?? '',
         description: task?.description ?? '',
         priority: task?.priority ?? null,
         deadline: task?.deadline ? task.deadline.slice(0, 10) : '',
-        responsible_user_id: task?.responsible_user_id ?? null,
+        assignee_user_ids:
+            task?.assignee_user_ids ?? (task?.responsible_user_id ? [task.responsible_user_id] : []),
     });
 
     const [errors, setErrors] = useState<TaskFormErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (open) {
-            setFormData({
-                project_id: projectId,
-                title: task?.title ?? '',
-                description: task?.description ?? '',
-                priority: task?.priority ?? null,
-                deadline: task?.deadline ? task.deadline.slice(0, 10) : '',
-                responsible_user_id: task?.responsible_user_id ?? null,
-            });
-            setErrors({});
-        }
+        if (!open) return;
+
+        setFormData({
+            project_id: projectId,
+            title: task?.title ?? '',
+            description: task?.description ?? '',
+            priority: task?.priority ?? null,
+            deadline: task?.deadline ? task.deadline.slice(0, 10) : '',
+            assignee_user_ids:
+                task?.assignee_user_ids ??
+                (task?.responsible_user_id ? [task.responsible_user_id] : []),
+        });
+        setErrors({});
     }, [open, task, projectId]);
 
     useEffect(() => {
@@ -76,30 +84,26 @@ export default function TaskForm({
                     return 'Название должно содержать минимум 3 символа';
                 }
                 return '';
-
             case 'description':
                 if (!String(value || '').trim()) return 'Введите описание задачи';
                 if (String(value).trim().length < 5) {
                     return 'Описание должно содержать минимум 5 символов';
                 }
                 return '';
-
             case 'priority':
                 if (value == null) return 'Выберите приоритет';
                 return '';
-
-            case 'responsible_user_id':
-                if (value == null) return 'Выберите исполнителя';
+            case 'assignee_user_ids':
+                if (!Array.isArray(value) || value.length === 0) {
+                    return 'Выберите хотя бы одного исполнителя';
+                }
                 return '';
-
             case 'deadline':
                 if (!String(value || '').trim()) return 'Укажите дедлайн';
                 return '';
-
             case 'project_id':
                 if (!value) return 'Проект не определён';
                 return '';
-
             default:
                 return '';
         }
@@ -123,11 +127,11 @@ export default function TaskForm({
         setFormData((prev) => ({ ...prev, [key]: value }));
 
         const error = validateField(key, value);
-
         setErrors((prev) => {
             if (!error) {
-                const { [key]: _, ...rest } = prev;
-                return rest;
+                const nextErrors = { ...prev };
+                delete nextErrors[key];
+                return nextErrors;
             }
 
             return {
@@ -142,8 +146,9 @@ export default function TaskForm({
 
         setErrors((prev) => {
             if (!error) {
-                const { [field]: _, ...rest } = prev;
-                return rest;
+                const nextErrors = { ...prev };
+                delete nextErrors[field];
+                return nextErrors;
             }
 
             return {
@@ -151,6 +156,17 @@ export default function TaskForm({
                 [field]: error,
             };
         });
+    };
+
+    const toggleAssignee = (userId: number) => {
+        const isExisting = task && existingAssigneeIds.has(userId);
+        if (isExisting) return;
+
+        const nextIds = formData.assignee_user_ids.includes(userId)
+            ? formData.assignee_user_ids.filter((id) => id !== userId)
+            : [...formData.assignee_user_ids, userId];
+
+        handleChange('assignee_user_ids', nextIds);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -183,17 +199,17 @@ export default function TaskForm({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 duration-200 bg-black/40 backdrop-blur-sm animate-in fade-in"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
             onClick={onClose}
         >
             <div
-                className="w-full max-w-[600px] bg-white rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
+                className="w-full max-w-[700px] rounded-lg bg-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-blue-600 rounded-lg">
-                            <Building2 className="w-4 h-4 text-white" />
+                        <div className="rounded-lg bg-blue-600 p-2">
+                            <Building2 className="h-4 w-4 text-white" />
                         </div>
                         <h2 className="text-base font-semibold text-gray-800">
                             {task ? 'Редактировать задачу' : 'Добавить новую задачу'}
@@ -202,19 +218,18 @@ export default function TaskForm({
 
                     <button
                         onClick={onClose}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-                        title="Закрыть (Esc)"
+                        className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        title="Закрыть"
                     >
-                        <X className="w-5 h-5 text-red-500" />
+                        <X className="h-5 w-5 text-red-500" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="px-6 py-5 space-y-5">
+                    <div className="space-y-5 px-6 py-5">
                         <div className="space-y-1.5">
                             <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                Название задачи
-                                <span className="text-red-500">*</span>
+                                Название задачи <span className="text-red-500">*</span>
                             </label>
                             <input
                                 ref={nameInputRef}
@@ -222,7 +237,7 @@ export default function TaskForm({
                                 value={formData.title}
                                 onChange={(e) => handleChange('title', e.target.value)}
                                 onBlur={() => handleBlur('title')}
-                                placeholder="Например: Задача ..."
+                                placeholder="Например: Подготовить документы"
                                 className={getFieldClassName('title')}
                             />
                             {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
@@ -230,98 +245,118 @@ export default function TaskForm({
 
                         <div className="space-y-1.5">
                             <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                Описание задачи
-                                <span className="text-red-500">*</span>
+                                Описание задачи <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
+                            <textarea
                                 value={formData.description}
                                 onChange={(e) => handleChange('description', e.target.value)}
                                 onBlur={() => handleBlur('description')}
-                                className={getFieldClassName('description')}
+                                rows={3}
+                                className={`${getFieldClassName('description')} resize-none`}
                             />
                             {errors.description && (
                                 <p className="text-sm text-red-500">{errors.description}</p>
                             )}
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                Приоритет <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                value={formData.priority || ''}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'priority',
-                                        e.target.value ? Number(e.target.value) : null,
-                                    )
-                                }
-                                onBlur={() => handleBlur('priority')}
-                                className={`${getFieldClassName('priority')} text-right`}
-                            >
-                                <option value="">Выберите приоритет задачи</option>
-                                {refs.taskPriorities.data?.map((tskPriority) => (
-                                    <option key={tskPriority.id} value={tskPriority.id}>
-                                        {tskPriority.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.priority && (
-                                <p className="text-sm text-red-500">{errors.priority}</p>
-                            )}
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <div className="space-y-1.5">
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    Приоритет <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={formData.priority || ''}
+                                    onChange={(e) =>
+                                        handleChange(
+                                            'priority',
+                                            e.target.value ? Number(e.target.value) : null,
+                                        )
+                                    }
+                                    onBlur={() => handleBlur('priority')}
+                                    className={getFieldClassName('priority')}
+                                >
+                                    <option value="">Выберите приоритет задачи</option>
+                                    {refs.taskPriorities.data?.map((taskPriority) => (
+                                        <option key={taskPriority.id} value={taskPriority.id}>
+                                            {taskPriority.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.priority && (
+                                    <p className="text-sm text-red-500">{errors.priority}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                                    Дедлайн <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    value={formData.deadline}
+                                    onChange={(e) => handleChange('deadline', e.target.value)}
+                                    onBlur={() => handleBlur('deadline')}
+                                    className={getFieldClassName('deadline')}
+                                />
+                                {errors.deadline && (
+                                    <p className="text-sm text-red-500">{errors.deadline}</p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                             <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                Исполнитель/Ответственный <span className="text-red-500">*</span>
+                                Исполнители <span className="text-red-500">*</span>
                             </label>
-                            <select
-                                value={formData.responsible_user_id || ''}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'responsible_user_id',
-                                        e.target.value ? Number(e.target.value) : null,
-                                    )
-                                }
-                                onBlur={() => handleBlur('responsible_user_id')}
-                                className={`${getFieldClassName('responsible_user_id')} text-right`}
-                            >
-                                <option value="">Выберите исполнителя</option>
-                                {refs.users.data?.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.responsible_user_id && (
-                                <p className="text-sm text-red-500">{errors.responsible_user_id}</p>
-                            )}
-                        </div>
+                            {task ? (
+                                <p className="text-xs text-amber-700">
+                                    Для существующей задачи можно добавлять новых исполнителей.
+                                    Уже назначенные пользователи заблокированы.
+                                </p>
+                            ) : null}
+                            <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3">
+                                {refs.users.data?.map((user) => {
+                                    const userId = Number(user.id);
+                                    const checked = formData.assignee_user_ids.includes(userId);
+                                    const disabled = Boolean(task && existingAssigneeIds.has(userId));
 
-                        <div className="space-y-1.5">
-                            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                                Дедлайн <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.deadline}
-                                onChange={(e) => handleChange('deadline', e.target.value)}
-                                onBlur={() => handleBlur('deadline')}
-                                className={`${getFieldClassName('deadline')} text-right`}
-                            />
-                            {errors.deadline && (
-                                <p className="text-sm text-red-500">{errors.deadline}</p>
+                                    return (
+                                        <label
+                                            key={user.id}
+                                            className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 transition-colors ${
+                                                checked
+                                                    ? 'border-blue-300 bg-blue-50'
+                                                    : 'border-gray-200 bg-white hover:border-blue-200'
+                                            } ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={checked}
+                                                disabled={disabled}
+                                                onChange={() => toggleAssignee(userId)}
+                                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600"
+                                            />
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-medium text-gray-800">
+                                                    {user.name}
+                                                </div>
+                                            </div>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            {errors.assignee_user_ids && (
+                                <p className="text-sm text-red-500">{errors.assignee_user_ids}</p>
                             )}
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50"
+                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
                         >
                             Отмена
                         </button>
@@ -329,7 +364,7 @@ export default function TaskForm({
                         <button
                             type="submit"
                             disabled={isSubmitting || !formData.title.trim()}
-                            className="px-5 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed hover:shadow-md"
+                            className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-300"
                         >
                             {isSubmitting
                                 ? task

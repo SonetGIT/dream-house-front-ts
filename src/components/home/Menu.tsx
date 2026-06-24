@@ -39,7 +39,7 @@ const drawerItems: DrawerItem[] = [
         icon: <SwitchAccountSharpIcon />,
     },
     {
-        label: 'Проекты',
+        label: 'Объекты',
         path: '/projects',
         icon: <AssessmentOutlinedIcon />,
     },

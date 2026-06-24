@@ -59,7 +59,7 @@ import {
     ReservationModal,
     ScheduleModal,
 } from './SalesUnitPassportModals';
-import { salesUnitPassportLogic } from './salesUnitPassportLogic';
+import { useSalesUnitPassportLogic } from './salesUnitPassportLogic';
 
 const EMPTY_DEAL_FORM = {
     client_id: '',
@@ -75,6 +75,8 @@ const EMPTY_DEAL_FORM = {
 
 const EMPTY_PAYMENT_FORM = {
     deal_id: '',
+    reservation_id: '',
+    client_id: '',
     title: '',
     amount: '',
     currency: '',
@@ -95,6 +97,14 @@ const EMPTY_SCHEDULE_FORM = {
 
 const EMPTY_ARRAY: never[] = [];
 
+type PaymentModalContext =
+    | PassportDeal
+    | {
+          reservation?: PassportReservation | PassportReservationBrief | null;
+          reservation_id?: number | string | null;
+          client_id?: number | string | null;
+      };
+
 const getUnitStatusTone = (code?: string) => {
     const normalized = String(code || '').toLowerCase();
 
@@ -107,9 +117,7 @@ const getUnitStatusTone = (code?: string) => {
     return 'border-blue-200 bg-blue-50 text-blue-700';
 };
 
-const isOffSaleStatus = (
-    status: Pick<SalesUnitStatus, 'code' | 'name'> | null | undefined,
-) => {
+const isOffSaleStatus = (status: Pick<SalesUnitStatus, 'code' | 'name'> | null | undefined) => {
     const code = String(status?.code || '').toLowerCase();
     const name = String(status?.name || '').toLowerCase();
 
@@ -176,6 +184,25 @@ const getMonthDiff = (start: string, end: string) => {
     return Math.max(diff || 1, 1);
 };
 
+const getSalesReportBaseUrls = () => {
+    const candidates = [REPORT_BASE_URL];
+
+    [import.meta.env.VITE_BASE_URL as string | undefined, window.location.origin].forEach(
+        (value) => {
+            if (!value) return;
+
+            try {
+                const url = new URL(value);
+                candidates.push(`${url.protocol}//${url.hostname}:8080`);
+            } catch {
+                // Ignore malformed runtime URL values.
+            }
+        },
+    );
+
+    return Array.from(new Set(candidates.filter(Boolean)));
+};
+
 export default function SalesUnitPasportSidbar({
     unitId,
     onClose,
@@ -222,7 +249,8 @@ export default function SalesUnitPasportSidbar({
         getReservationStatusName,
         getDealStatusName,
         isActiveReservation,
-    } = salesUnitPassportLogic(passport, reservationStatuses, dealStatuses);
+        getDealStatusKey,
+    } = useSalesUnitPassportLogic(passport, reservationStatuses, dealStatuses);
 
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [reservationModalOpen, setReservationModalOpen] = useState(false);
@@ -242,7 +270,9 @@ export default function SalesUnitPasportSidbar({
     const [actionLoading, setActionLoading] = useState(false);
     const [filesLoading, setFilesLoading] = useState(false);
     const [downloadingScheduleDealId, setDownloadingScheduleDealId] = useState<number | null>(null);
-    const [editingReservation, setEditingReservation] = useState<PassportReservation | PassportReservationBrief | null>(null);
+    const [editingReservation, setEditingReservation] = useState<
+        PassportReservation | PassportReservationBrief | null
+    >(null);
     const [editingDeal, setEditingDeal] = useState<PassportDeal | null>(null);
     const [dealForm, setDealForm] = useState(EMPTY_DEAL_FORM);
     const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT_FORM);
@@ -328,16 +358,11 @@ export default function SalesUnitPasportSidbar({
         [passportUnit?.status, passportUnit?.status_id, unitStatusMap],
     );
 
-    const isUnitOffSale = useMemo(
-        () => isOffSaleStatus(currentUnitStatus),
-        [currentUnitStatus],
-    );
+    const isUnitOffSale = useMemo(() => isOffSaleStatus(currentUnitStatus), [currentUnitStatus]);
 
     const freeUnitStatus = useMemo(
         () =>
-            unitStatuses.find(
-                (item) => String(item.code || '').toLowerCase() === 'free',
-            ) ||
+            unitStatuses.find((item) => String(item.code || '').toLowerCase() === 'free') ||
             unitStatuses.find((item) =>
                 String(item.name || '')
                     .toLowerCase()
@@ -347,9 +372,12 @@ export default function SalesUnitPasportSidbar({
         [unitStatuses],
     );
 
-    const statusTextHas = (item: any, parts: string[]) => {
-        const value = String(item?.name || '').toLowerCase();
-        return parts.some((part) => value.includes(part));
+    const statusTextHas = (
+        item: { name?: string | null; code?: string | null } | null,
+        parts: string[],
+    ) => {
+        const values = [item?.name, item?.code].map((value) => String(value || '').toLowerCase());
+        return parts.some((part) => values.some((value) => value.includes(part)));
     };
 
     const getDealStatusIdByKey = (key: 'draft' | 'active' | 'signed' | 'closed' | 'canceled') => {
@@ -365,32 +393,16 @@ export default function SalesUnitPasportSidbar({
         return Number(match?.id || fallback[key] || 0);
     };
 
-    const getDealStatusCode = (deal: PassportDeal | null | undefined) => {
-        const statusRow =
-            deal?.status_ref ||
-            dealStatuses.find((item) => Number(item.id) === Number(deal?.status || 0)) ||
-            null;
-
-        const mapped =
-            statusRow?.code ||
-            statusRow?.name ||
-            '';
-
-        return String(mapped).toLowerCase();
-    };
-
     const canSignDeal = (deal: PassportDeal | null | undefined) => {
         if (!deal?.id) return false;
 
-        const statusCode = getDealStatusCode(deal);
-        return !['signed', 'closed', 'canceled', 'cancelled'].includes(statusCode);
+        return getDealStatusKey(deal) === 'draft';
     };
 
     const canCancelDeal = (deal: PassportDeal | null | undefined) => {
         if (!deal?.id) return false;
 
-        const statusCode = getDealStatusCode(deal);
-        return !['closed', 'canceled', 'cancelled'].includes(statusCode);
+        return getDealStatusKey(deal) === 'draft';
     };
 
     const getReservationStatusIdByKey = (key: 'active' | 'closed' | 'canceled') => {
@@ -433,16 +445,16 @@ export default function SalesUnitPasportSidbar({
         await dispatch(fetchSalesUnitPassport(unitId));
     };
 
-    const canManageReservation = (reservation: PassportReservation | PassportReservationBrief | null) => {
+    const canManageReservation = (
+        reservation: PassportReservation | PassportReservationBrief | null,
+    ) => {
         if (!reservation) return false;
         if (!isActiveReservation(reservation)) return false;
 
         const hasSignedDeal = deals.some(
             (deal: PassportDeal) =>
                 Number(deal.reservation_id) === Number(reservation.id) &&
-                ['active', 'signed', 'closed'].includes(
-                    String(deal.status_ref?.code || '').toLowerCase(),
-                ),
+                ['active', 'signed', 'closed'].includes(getDealStatusKey(deal)),
         );
         if (hasSignedDeal) return false;
 
@@ -451,8 +463,8 @@ export default function SalesUnitPasportSidbar({
         const currentUserId = Number(currentUser?.id || 0);
         return Boolean(
             currentUserId &&
-                (Number(reservation.manager_user_id) === currentUserId ||
-                    Number(reservation.created_by) === currentUserId),
+            (Number(reservation.manager_user_id) === currentUserId ||
+                Number(reservation.created_by) === currentUserId),
         );
     };
 
@@ -535,6 +547,32 @@ export default function SalesUnitPasportSidbar({
         );
     };
 
+    const getSingleReservationPayments = (
+        reservation: PassportReservation | PassportReservationBrief,
+    ) => {
+        if (
+            Array.isArray((reservation as PassportReservation).payments) &&
+            (reservation as PassportReservation).payments?.length
+        ) {
+            return [...((reservation as PassportReservation).payments || [])].sort(
+                (a, b) =>
+                    new Date(b.paid_date || b.planned_date || b.created_at).getTime() -
+                    new Date(a.paid_date || a.planned_date || a.created_at).getTime(),
+            );
+        }
+
+        return payments.filter((payment: PassportPayment) => {
+            const entityType = normalizeEntityType(
+                payment.entity_type_code || payment.entity_type_ref?.code || payment.entity_type,
+            );
+
+            return (
+                entityType === 'salesreservation' &&
+                Number(payment.entity_id) === Number(reservation.id)
+            );
+        });
+    };
+
     const summary = useMemo(() => {
         const reservationCount = clientHistory.reduce(
             (sum: number, group: any) => sum + (group.reservations?.length || 0),
@@ -589,10 +627,16 @@ export default function SalesUnitPasportSidbar({
     };
 
     const openReservationModal = (
-        context?: PassportReservation | PassportReservationBrief | { client_id?: number | null } | null,
+        context?:
+            | PassportReservation
+            | PassportReservationBrief
+            | { client_id?: number | null }
+            | null,
     ) => {
         const reservation =
-            context && 'start_at' in context ? (context as PassportReservation | PassportReservationBrief) : null;
+            context && 'start_at' in context
+                ? (context as PassportReservation | PassportReservationBrief)
+                : null;
         const defaults =
             context && !('start_at' in context) ? (context as { client_id?: number | null }) : null;
 
@@ -613,7 +657,7 @@ export default function SalesUnitPasportSidbar({
                 : defaults?.client_id
                   ? String(defaults.client_id)
                   : '',
-            start_at: reservation ? toDateInput(reservation.start_at) : '',
+            start_at: reservation ? toDateInput(reservation.start_at) : toDateInput(new Date()),
             expires_at: reservation ? toDateInput(reservation.expires_at) : '',
             reservation_amount: reservation
                 ? formatEditableNumber(reservation.reservation_amount)
@@ -650,9 +694,7 @@ export default function SalesUnitPasportSidbar({
             await refreshPassport();
         } catch (error) {
             toast.error(
-                error instanceof Error
-                    ? error.message
-                    : 'Не удалось вернуть квартиру в свободные',
+                error instanceof Error ? error.message : 'Не удалось вернуть квартиру в свободные',
             );
         } finally {
             setActionLoading(false);
@@ -663,17 +705,20 @@ export default function SalesUnitPasportSidbar({
         client_id?: number | null;
         reservation_id?: number | null;
     }) => {
+        const nextClientId = defaults?.client_id ?? activeReservation?.client_id ?? null;
+        const nextReservationId = defaults?.reservation_id ?? activeReservation?.id ?? null;
+
         setEditingDeal(null);
         setDealForm({
             ...EMPTY_DEAL_FORM,
-            client_id: defaults?.client_id ? String(defaults.client_id) : '',
-            reservation_id: defaults?.reservation_id ? String(defaults.reservation_id) : '',
+            client_id: nextClientId ? String(nextClientId) : '',
+            reservation_id: nextReservationId ? String(nextReservationId) : '',
             deal_type_id: getPreferredDealTypeId(),
             contract_date: toDateInput(new Date()),
             payment_type: getPreferredDealPaymentTypeId(),
             total_amount: formatEditableNumber(passportUnit?.price_total),
             currency: passportUnit?.currency ? String(passportUnit.currency) : defaultCurrencyId,
-            note: '',
+            note: 'Выкуп квартиры',
         });
         setDealModalOpen(true);
     };
@@ -766,26 +811,13 @@ export default function SalesUnitPasportSidbar({
 
         setActionLoading(true);
         try {
-            const payload = {
-                unit_id: Number(deal.unit_id || passportUnit.id),
-                client_id: Number(deal.client_id),
-                reservation_id: deal.reservation_id ? Number(deal.reservation_id) : null,
-                deal_type_id: deal.deal_type_id ? Number(deal.deal_type_id) : null,
+            await apiRequest(`/sales/deals/update/${deal.id}`, 'PUT', {
                 status: getDealStatusIdByKey(nextStatus),
-                deal_number: deal.deal_number || null,
-                contract_number: String(deal.contract_number || '').trim() || null,
-                contract_date: deal.contract_date || null,
-                payment_type: deal.payment_type ? Number(deal.payment_type) : null,
-                total_amount: toNullableNumber(formatEditableNumber(deal.total_amount)),
-                currency: deal.currency ? Number(deal.currency) : null,
-                note: String(deal.note || '').trim() || null,
                 canceled_reason:
                     nextStatus === 'canceled'
                         ? deal.canceled_reason || 'Отменено из паспорта квартиры'
                         : null,
-            };
-
-            await apiRequest(`/sales/deals/update/${deal.id}`, 'PUT', payload);
+            });
 
             if (editingDeal?.id === deal.id) {
                 setDealModalOpen(false);
@@ -807,12 +839,60 @@ export default function SalesUnitPasportSidbar({
         }
     };
 
-    const openPaymentModal = (deal: PassportDeal) => {
+    const openPaymentModal = (context?: PaymentModalContext | null) => {
+        if (!context) {
+            if (!activeReservation?.id) {
+                toast.error(
+                    'РџР»Р°С‚РµР¶ РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё РёР»Рё РґРѕРіРѕРІРѕСЂСѓ',
+                );
+                return;
+            }
+        }
+
+        const selectedDeal =
+            context && ('contract_number' in context || 'deal_number' in context)
+                ? (context as PassportDeal)
+                : null;
+        const contextReservationId =
+            selectedDeal?.reservation_id ||
+            (context && 'reservation_id' in context ? context.reservation_id : null) ||
+            (context && 'reservation' in context ? context.reservation?.id : null) ||
+            null;
+
+        const selectedReservation = contextReservationId
+            ? reservations.find(
+                  (item: PassportReservation | PassportReservationBrief) =>
+                      Number(item.id) === Number(contextReservationId),
+              ) || null
+            : (context && 'reservation' in context ? context.reservation : activeReservation) ||
+              null;
+
+        if (!selectedDeal?.id && !selectedReservation?.id) {
+            toast.error('Платеж можно создать только по активной брони или договору');
+            return;
+        }
+
+        const nextCurrency = selectedDeal?.currency
+            ? String(selectedDeal.currency)
+            : selectedReservation?.currency
+              ? String(selectedReservation.currency)
+              : defaultCurrencyId;
+
         setPaymentForm({
             ...EMPTY_PAYMENT_FORM,
-            deal_id: String(deal.id),
-            title: `Платеж по договору №${deal.contract_number || deal.id}`,
-            currency: deal.currency ? String(deal.currency) : defaultCurrencyId,
+            deal_id: selectedDeal?.id ? String(selectedDeal.id) : '',
+            reservation_id: selectedReservation?.id ? String(selectedReservation.id) : '',
+            client_id: selectedDeal?.client_id
+                ? String(selectedDeal.client_id)
+                : selectedReservation?.client_id
+                  ? String(selectedReservation.client_id)
+                  : context && 'client_id' in context && context.client_id
+                    ? String(context.client_id)
+                    : '',
+            title: selectedDeal?.id
+                ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
+                : `Платеж по брони №${selectedReservation?.id}`,
+            currency: nextCurrency,
         });
         setPaymentModalOpen(true);
     };
@@ -826,9 +906,13 @@ export default function SalesUnitPasportSidbar({
             const selectedDeal = deals.find(
                 (item: PassportDeal) => Number(item.id) === Number(paymentForm.deal_id),
             );
+            const selectedReservation = reservations.find(
+                (item: PassportReservation | PassportReservationBrief) =>
+                    Number(item.id) === Number(paymentForm.reservation_id),
+            );
 
-            if (!selectedDeal?.id) {
-                throw new Error('Выберите договор');
+            if (!selectedDeal?.id && !selectedReservation?.id) {
+                throw new Error('Платеж можно создать только по активной брони или договору');
             }
 
             const amount = toNullableNumber(paymentForm.amount);
@@ -850,24 +934,37 @@ export default function SalesUnitPasportSidbar({
                     block_id: Number(passportUnit.block_id),
                     payment_type: Number(incomePaymentType.id),
                     article_id: Number(salePaymentArticle.id),
-                    entity_type: 'salesDeal',
-                    entity_id: Number(selectedDeal.id),
+                    entity_type: selectedDeal?.id ? 'salesDeal' : 'salesReservation',
+                    entity_id: Number(selectedDeal?.id || selectedReservation?.id),
                     title:
                         paymentForm.title.trim() ||
-                        `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`,
+                        (selectedDeal?.id
+                            ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
+                            : `Платеж по брони №${selectedReservation?.id}`),
                     amount,
                     currency: Number(
-                        paymentForm.currency || selectedDeal.currency || defaultCurrencyId,
+                        paymentForm.currency ||
+                            selectedDeal?.currency ||
+                            selectedReservation?.currency ||
+                            defaultCurrencyId,
                     ),
                     planned_date: paymentForm.planned_date || null,
                     paid_date: paymentForm.paid_date || null,
                     counterparty_type: clientCounterpartyType?.id
                         ? String(clientCounterpartyType.id)
                         : null,
-                    counterparty_id: selectedDeal.client_id || null,
+                    counterparty_id:
+                        selectedDeal?.client_id ||
+                        selectedReservation?.client_id ||
+                        Number(paymentForm.client_id || 0) ||
+                        null,
                     counterparty_name: getClientName(
-                        selectedDeal.client_id,
-                        selectedDeal.client?.full_name || '',
+                        selectedDeal?.client_id ||
+                            selectedReservation?.client_id ||
+                            paymentForm.client_id,
+                        selectedDeal?.client?.full_name ||
+                            selectedReservation?.client?.full_name ||
+                            '',
                     ),
                     is_manual: false,
                 }),
@@ -952,8 +1049,9 @@ export default function SalesUnitPasportSidbar({
 
         setDownloadingScheduleDealId(Number(deal.id));
         try {
+            const [baseUrl] = getSalesReportBaseUrls();
             const response = await fetch(
-                `${REPORT_BASE_URL}/report/sales-payment-schedule?dealId=${deal.id}`,
+                `${baseUrl}/report/sales-payment-schedule?dealId=${deal.id}`,
                 {
                     method: 'GET',
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -1134,7 +1232,11 @@ export default function SalesUnitPasportSidbar({
             };
 
             if (editingReservation?.id) {
-                await apiRequest(`/sales/reservations/update/${editingReservation.id}`, 'PUT', payload);
+                await apiRequest(
+                    `/sales/reservations/update/${editingReservation.id}`,
+                    'PUT',
+                    payload,
+                );
             } else {
                 await apiRequest('/sales/reservations/create', 'POST', payload);
             }
@@ -1150,7 +1252,9 @@ export default function SalesUnitPasportSidbar({
         }
     };
 
-    const cancelReservation = async (reservation: PassportReservation | PassportReservationBrief) => {
+    const cancelReservation = async (
+        reservation: PassportReservation | PassportReservationBrief,
+    ) => {
         if (!reservation?.id) return;
         if (!canManageReservation(reservation)) {
             toast.error('Снять бронь может только ее менеджер или администратор');
@@ -1172,7 +1276,6 @@ export default function SalesUnitPasportSidbar({
             setActionLoading(false);
         }
     };
-
 
     if (passportLoading && !passport) {
         return (
@@ -1211,6 +1314,7 @@ export default function SalesUnitPasportSidbar({
             <SalesUnitPassportHistoryPanel
                 clientHistory={clientHistory as ClientHistoryGroup[]}
                 expandedKeys={expandedKeys}
+                hasActiveReservation={Boolean(activeReservation)}
                 onToggleGroup={(groupKey) =>
                     setExpandedKeys((prev) =>
                         prev.includes(groupKey)
@@ -1238,6 +1342,7 @@ export default function SalesUnitPasportSidbar({
                 getDealPayments={getDealPayments}
                 getDealSchedules={getDealSchedules}
                 getReservationPayments={getReservationPayments}
+                getSingleReservationPayments={getSingleReservationPayments}
             />
 
             <ReservationModal
@@ -1247,7 +1352,11 @@ export default function SalesUnitPasportSidbar({
                 actionLoading={actionLoading}
                 resForm={resForm}
                 clients={
-                    clients as { id: number | string; full_name?: string | null; phone?: string | null }[]
+                    clients as {
+                        id: number | string;
+                        full_name?: string | null;
+                        phone?: string | null;
+                    }[]
                 }
                 currencies={currencies}
                 onChange={(patch) => setResForm((prev) => ({ ...prev, ...patch }))}
@@ -1270,14 +1379,19 @@ export default function SalesUnitPasportSidbar({
                 />
             )}
 
-
             <DealModal
                 open={dealModalOpen}
                 unitNumber={passportUnit.unit_number}
                 editingDeal={editingDeal}
                 actionLoading={actionLoading}
                 dealForm={dealForm}
-                clients={clients as { id: number | string; full_name?: string | null; phone?: string | null }[]}
+                clients={
+                    clients as {
+                        id: number | string;
+                        full_name?: string | null;
+                        phone?: string | null;
+                    }[]
+                }
                 dealReservationOptions={dealReservationOptions}
                 dealTypes={dealTypes as { id: number | string; name?: string | null }[]}
                 dealPaymentTypes={dealPaymentTypes}
@@ -1296,6 +1410,11 @@ export default function SalesUnitPasportSidbar({
                 unitNumber={passportUnit.unit_number}
                 deals={deals}
                 paymentForm={paymentForm}
+                reservationOptionLabel={
+                    activeReservation?.id
+                        ? `К активной брони №${activeReservation.id}`
+                        : 'Выберите договор'
+                }
                 currencies={currencies}
                 actionLoading={actionLoading}
                 onDealChange={(nextDealId) => {
@@ -1305,10 +1424,28 @@ export default function SalesUnitPasportSidbar({
                     setPaymentForm((prev) => ({
                         ...prev,
                         deal_id: nextDealId,
+                        reservation_id: nextDealId
+                            ? ''
+                            : activeReservation?.id
+                              ? String(activeReservation.id)
+                              : prev.reservation_id,
+                        client_id: nextDealId
+                            ? selectedDeal?.client_id
+                                ? String(selectedDeal.client_id)
+                                : prev.client_id
+                            : activeReservation?.client_id
+                              ? String(activeReservation.client_id)
+                              : prev.client_id,
                         title: selectedDeal
                             ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
-                            : prev.title,
-                        currency: selectedDeal?.currency ? String(selectedDeal.currency) : prev.currency,
+                            : activeReservation?.id
+                              ? `Платеж по брони №${activeReservation.id}`
+                              : prev.title,
+                        currency: selectedDeal?.currency
+                            ? String(selectedDeal.currency)
+                            : activeReservation?.currency
+                              ? String(activeReservation.currency)
+                              : prev.currency,
                     }));
                 }}
                 onChange={(patch) => setPaymentForm((prev) => ({ ...prev, ...patch }))}

@@ -2,11 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { deleteEstimate, fetchEstimates, createEstimate } from './estimatesSlice';
+import {
+    createEstimate,
+    deleteEstimate,
+    fetchEstimates,
+    signEstimate,
+    type Estimate,
+} from './estimatesSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { deleteEstimateItem, fetchEstimateItems } from './estimateItems/estimateItemsSlice';
 import EstimatesTable from './EstimatesTable';
+import type { User } from '@/features/users/userSlice';
 
 interface Props {
     blockId: number;
@@ -16,7 +23,8 @@ interface Props {
 /**********************************************************************************************************/
 export default function EstimatesPage({ blockId, blockName }: Props) {
     const dispatch = useAppDispatch();
-    const { data, loading } = useAppSelector((state) => state.estimates);
+    const { data, loading, pagination, submitting } = useAppSelector((state) => state.estimates);
+    const currentUser = useAppSelector((state) => state.auth.user);
     const page = 1;
     const size = 10;
 
@@ -74,6 +82,133 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
         return `Смета — ${blockName}`;
     };
 
+    const isFullyApproved = (estimate: Estimate) => {
+        return (
+            !!estimate.signed_by_planning_engineer &&
+            !!estimate.signed_by_main_engineer &&
+            !!estimate.signed_by_general_director
+        );
+    };
+
+    const canSign = (estimate: Estimate, user?: User | null) => {
+        if (!user) return false;
+
+        const userId = Number(user.id);
+        const roleId = Number(user.role_id);
+
+        if (roleId === 1) {
+            return !isFullyApproved(estimate);
+        }
+
+        switch (roleId) {
+            case 10:
+                return (
+                    !estimate.signed_by_planning_engineer &&
+                    (!estimate.planning_engineer_user_id ||
+                        Number(estimate.planning_engineer_user_id) === userId)
+                );
+
+            case 11:
+                return (
+                    !estimate.signed_by_main_engineer &&
+                    (!estimate.main_engineer_user_id ||
+                        Number(estimate.main_engineer_user_id) === userId)
+                );
+
+            case 2:
+                return (
+                    !estimate.signed_by_general_director &&
+                    (!estimate.general_director_user_id ||
+                        Number(estimate.general_director_user_id) === userId)
+                );
+
+            default:
+                return false;
+        }
+    };
+
+    const getSignStage = (
+        user?: User | null,
+    ): 'planning_engineer' | 'main_engineer' | 'general_director' | null => {
+        if (!user) return null;
+
+        const roleId = Number(user.role_id);
+
+        if (roleId === 10) return 'planning_engineer';
+        if (roleId === 11) return 'main_engineer';
+        if (roleId === 2) return 'general_director';
+
+        return null;
+    };
+
+    const refetchEstimates = useCallback(
+        async (nextPage = pagination?.page ?? page, nextSize = pagination?.size ?? size) => {
+            await dispatch(
+                fetchEstimates({
+                    block_id: blockId,
+                    page: nextPage,
+                    size: nextSize,
+                }),
+            ).unwrap();
+        },
+        [blockId, dispatch, page, pagination?.page, pagination?.size, size],
+    );
+
+    const handleSign = useCallback(
+        async (estimate: Estimate) => {
+            if (!currentUser) {
+                toast.error('У вас нет прав на подписание');
+                return;
+            }
+
+            const roleId = Number(currentUser.role_id);
+
+            try {
+                if (roleId === 1) {
+                    const stages: Array<
+                        'planning_engineer' | 'main_engineer' | 'general_director'
+                    > = [];
+
+                    if (!estimate.signed_by_planning_engineer) {
+                        stages.push('planning_engineer');
+                    }
+
+                    if (!estimate.signed_by_main_engineer) {
+                        stages.push('main_engineer');
+                    }
+
+                    if (!estimate.signed_by_general_director) {
+                        stages.push('general_director');
+                    }
+
+                    if (!stages.length) {
+                        toast.success('Смета уже полностью подписана');
+                        return;
+                    }
+
+                    for (const stage of stages) {
+                        await dispatch(signEstimate({ id: estimate.id, stage })).unwrap();
+                    }
+                } else {
+                    const stage = getSignStage(currentUser);
+
+                    if (!stage) {
+                        toast.error('У вас нет прав на подписание');
+                        return;
+                    }
+
+                    await dispatch(signEstimate({ id: estimate.id, stage })).unwrap();
+                }
+
+                toast.success('Смета подписана');
+                await refetchEstimates();
+            } catch (error: unknown) {
+                toast.error(error instanceof Error ? error.message : 'Ошибка подписания сметы');
+            }
+        },
+        [currentUser, dispatch, refetchEstimates],
+    );
+
     //CREATE
     const handleCreateEstimate = useCallback(async () => {
         try {
@@ -129,6 +264,11 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
                     <EstimatesTable
                         blockId={blockId}
                         data={data}
+                        currentUser={currentUser}
+                        canSign={canSign}
+                        isFullyApproved={isFullyApproved}
+                        onSign={handleSign}
+                        signing={submitting}
                         onDeleteEstimateId={(id) => setDeleteState({ type: 'estimate', id })} // удалить смету
                         onDeleteEstimateItemId={(itemId: number) =>
                             setDeleteState({ type: 'item', id: itemId })

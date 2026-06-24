@@ -132,6 +132,7 @@ export interface Payment {
 export interface PaymentSearchParams {
     page?: number;
     size?: number;
+    id?: number;
     search?: string;
     project_id?: number;
     block_id?: number;

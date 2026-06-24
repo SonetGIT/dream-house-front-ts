@@ -1,66 +1,113 @@
-import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/app/store';
-import { useReference } from '../../reference/useReference';
-import { useOutletContext } from 'react-router-dom';
-import type { ProjectOutletContext } from '../pto/PtoPage';
+import { Add } from '@mui/icons-material';
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
 import { FolderOpen, XCircle } from 'lucide-react';
-import { Add } from '@mui/icons-material';
-import { TablePagination } from '@/components/ui/TablePagination';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { createTask, deleteTask, fetchTasks, updateTask, type Task } from './tasksSlice';
-import TasksTable from './TasksTable';
-import TaskForm from './TasksForm';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '@/app/store';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { useReference } from '../../reference/useReference';
+import type { ProjectOutletContext } from '../pto/PtoPage';
+import TaskForm from './TasksForm';
+import TasksTable from './TasksTable';
+import {
+    addTaskAssignees,
+    createTask,
+    deleteTask,
+    fetchTasks,
+    getTaskAssigneeIds,
+    updateOwnTaskAssigneeStatus,
+    updateTask,
+    type CreateTaskPayload,
+    type Task,
+    type UpdateTaskPayload,
+} from './tasksSlice';
 
 export const TASK_STATUS_CREATED = 1;
 export const TASK_STATUS_ACKNOWLEDGED = 2;
 export const TASK_STATUS_IN_PROGRESS = 3;
 export const TASK_STATUS_COMPLETED = 4;
 export const TASK_STATUS_CANCELED = 6;
-/*******************************************************************************************************************************************************************/
+
+type TaskSubmitData = (CreateTaskPayload | UpdateTaskPayload) & {
+    assignee_user_ids: number[];
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback;
+
 export default function TasksPage() {
     const { projectId } = useOutletContext<ProjectOutletContext>();
+    const location = useLocation();
+    const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const { items, stats, pagination, loading } = useAppSelector((s) => s.tasks);
+    const { items, stats, pagination, loading } = useAppSelector((state) => state.tasks);
+    const currentUser = useAppSelector((state) => state.auth.user);
+    const isAdmin = currentUser?.role_id === 1;
 
-    const newCount = stats?.statuses?.[1] ?? 0; // Создана
-    const readCount = stats?.statuses?.[2] ?? 0; //Ознакомлен
-    const activeCount = stats?.statuses?.[3] ?? 0; // В работе
-    const doneCount = stats?.statuses?.[4] ?? 0; // Исполнена
-    const cancelCount = stats?.statuses?.[5] ?? 0; // Отменена
-    const overdueCount = stats?.overdueCount ?? 0; // просрочена
+    const newCount = stats?.statuses?.[1] ?? 0;
+    const readCount = stats?.statuses?.[2] ?? 0;
+    const activeCount = stats?.statuses?.[3] ?? 0;
+    const doneCount = stats?.statuses?.[4] ?? 0;
+    const cancelCount = stats?.statuses?.[5] ?? 0;
+    const overdueCount = stats?.overdueCount ?? 0;
 
     const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
     const [openCreate, setOpenCreate] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
-
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
-    const currentUser = useAppSelector((state) => state.auth.user);
-    const isAdmin = currentUser?.role_id === 1;
+    const focusId = useMemo(() => {
+        const params = new URLSearchParams(location.search);
+        const value = params.get('focus');
+        if (!value) return null;
 
-    //Справочники
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }, [location.search]);
+
     const refs = {
         users: useReference('users'),
         taskStatuses: useReference('taskStatuses'),
         taskPriorities: useReference('taskPriorities'),
     };
 
-    //Первичная загрузка =====
+    const loadTasks = () =>
+        dispatch(
+            fetchTasks({
+                project_id: Number(projectId),
+                ...(focusId ? { id: focusId } : { page, size }),
+                ...(focusId ? {} : isAdmin ? {} : { user_id: currentUser?.id }),
+            }),
+        );
+
+    const clearFocusFromUrl = () => {
+        const params = new URLSearchParams(location.search);
+        if (!params.has('focus')) return;
+        params.delete('focus');
+
+        navigate(
+            {
+                pathname: location.pathname,
+                search: params.toString() ? `?${params.toString()}` : '',
+            },
+            { replace: true },
+        );
+    };
+
     useEffect(() => {
         if (!projectId) return;
 
         dispatch(
             fetchTasks({
                 project_id: Number(projectId),
-                page,
-                size,
-                ...(isAdmin ? {} : { user_id: currentUser?.id }),
+                ...(focusId ? { id: focusId } : { page, size }),
+                ...(focusId ? {} : isAdmin ? {} : { user_id: currentUser?.id }),
             }),
         );
-    }, [dispatch, projectId, page, size, isAdmin, currentUser?.id]);
+    }, [dispatch, projectId, page, size, isAdmin, currentUser?.id, focusId]);
 
     function StatusBadge({
         color,
@@ -93,64 +140,72 @@ export default function TasksPage() {
         );
     }
 
-    /*CREATE*/
-    const handleCreate = async (data: Partial<Task>) => {
+    const handleCreateOrUpdate = async (data: TaskSubmitData) => {
         try {
+            const { assignee_user_ids, ...rest } = data;
+
             if (editingTask) {
+                const existingAssigneeIds = getTaskAssigneeIds(editingTask);
+                const newAssigneeIds = assignee_user_ids.filter(
+                    (userId) => !existingAssigneeIds.includes(Number(userId)),
+                );
+
                 await dispatch(
                     updateTask({
                         id: editingTask.id,
-                        data,
+                        data: rest,
                     }),
                 ).unwrap();
 
-                toast.success('Задача успешно обновлена');
+                if (newAssigneeIds.length) {
+                    await dispatch(
+                        addTaskAssignees({
+                            taskId: editingTask.id,
+                            assignee_user_ids: newAssigneeIds,
+                        }),
+                    ).unwrap();
+                }
+
+                toast.success(
+                    newAssigneeIds.length
+                        ? 'Задача обновлена, новые исполнители добавлены'
+                        : 'Задача успешно обновлена',
+                );
             } else {
-                await dispatch(createTask(data)).unwrap();
+                await dispatch(
+                    createTask({
+                        ...(rest as CreateTaskPayload),
+                        project_id: Number(projectId),
+                        assignee_user_ids,
+                    }),
+                ).unwrap();
 
                 toast.success('Задача успешно создана');
             }
 
-            dispatch(
-                fetchTasks({
-                    page,
-                    size,
-                    project_id: projectId,
-                }),
-            );
-
+            await loadTasks();
             setOpenCreate(false);
             setEditingTask(null);
-        } catch (error: any) {
-            toast.error(error || 'Ошибка при сохранении задачи');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Ошибка при сохранении задачи'));
         }
     };
 
-    /* удаление */
     const handleDelete = (id: number) => {
         setSelectedTaskId(id);
         setConfirmOpen(true);
     };
 
-    /* CONFIRM DELETE */
     const handleConfirm = async () => {
         if (!selectedTaskId) return;
 
         try {
             await dispatch(deleteTask(selectedTaskId)).unwrap();
-
-            dispatch(
-                fetchTasks({
-                    page,
-                    size,
-                    project_id: projectId,
-                }),
-            );
-
-            toast.success(`Задача успешно удалёна`);
-        } catch (error: any) {
+            await loadTasks();
+            toast.success('Задача успешно удалена');
+        } catch (error: unknown) {
             toast.error(
-                error || 'Ошибка при удалении задачи. Проверьте права доступа на удаление.',
+                getErrorMessage(error, 'Ошибка при удалении задачи. Проверьте права доступа.'),
             );
         } finally {
             setConfirmOpen(false);
@@ -158,46 +213,40 @@ export default function TasksPage() {
         }
     };
 
-    /**********************************************/
     const handleChangeTaskStatus = async (taskId: number, status: number) => {
         const statusMessages: Record<number, string> = {
-            [TASK_STATUS_ACKNOWLEDGED]: 'Задача переведена в статус "Ознакомлен"',
-            [TASK_STATUS_IN_PROGRESS]: 'Задача переведена в статус "В работе"',
-            [TASK_STATUS_COMPLETED]: 'Задача переведена в статус "Выполнена"',
+            [TASK_STATUS_ACKNOWLEDGED]: 'Ваш статус по задаче обновлён: "Ознакомлен"',
+            [TASK_STATUS_IN_PROGRESS]: 'Ваш статус по задаче обновлён: "В работе"',
+            [TASK_STATUS_COMPLETED]: 'Ваш статус по задаче обновлён: "Выполнена"',
             [TASK_STATUS_CANCELED]: 'Задача переведена в статус "Отменена"',
         };
 
         try {
-            await dispatch(
-                updateTask({
-                    id: taskId,
-                    data: { status },
-                }),
-            ).unwrap();
+            if (status === TASK_STATUS_CANCELED) {
+                await dispatch(
+                    updateTask({
+                        id: taskId,
+                        data: { status },
+                    }),
+                ).unwrap();
+            } else {
+                await dispatch(updateOwnTaskAssigneeStatus({ taskId, status })).unwrap();
+            }
 
+            await loadTasks();
             toast.success(statusMessages[status] || 'Статус задачи обновлён');
-        } catch (e) {
-            console.error(e);
+        } catch (error) {
+            console.error(error);
             toast.error('Не удалось изменить статус задачи');
         }
     };
 
-    /********************************************************************************************************************************************/
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
-            {/* HEADER */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button variant="outlined" startIcon={<Add />} onClick={() => setOpenCreate(true)}>
-                    Добавить задачу
-                </Button>
-            </Box>
-
-            <div className="flex items-center gap-6 mb-6 text-sm">
-                <div
-                    className="flex flex-wrap items-center gap-5"
-                    style={{ padding: '10px 20px', borderBottom: '1px solid #f0f0f0' }}
-                >
-                    <StatusBadge color="#1976d2" bg="#e3f2fd" label="Новых" count={newCount} />
+            <div className="flex items-center justify-between mb-3 text-sm">
+                {/* ЛЕВАЯ ЧАСТЬ: Бейджи + Линия снизу */}
+                <div className="flex items-center gap-4 pb-2 pr-4 border-b border-stone-200">
+                    <StatusBadge color="#1976d2" bg="#e3f2fd" label="Новые" count={newCount} />
                     <StatusBadge
                         color="#e65100"
                         bg="#fff3e0"
@@ -217,27 +266,32 @@ export default function TasksPage() {
                         label="Отменено"
                         count={cancelCount}
                     />
-                    <div className="flex items-center gap-2">
-                        <XCircle style={{ width: '15px', height: '15px', color: '#e53935' }} />
-                        <span style={{ fontSize: '13px', color: '#757575' }}>Просрочено:</span>
-                        <span
-                            style={{
-                                backgroundColor: '#e53935',
-                                color: 'white',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                padding: '1px 8px',
-                                borderRadius: '4px',
-                            }}
-                        >
+
+                    {/* Блок "Просрочено" */}
+                    <div className="flex items-center gap-2 pl-4 ml-2 border-l border-stone-200">
+                        <XCircle className="w-4 h-4 text-red-600" />
+                        <span className="text-stone-500">Просрочено:</span>
+                        <span className="bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold">
                             {overdueCount}
                         </span>
                     </div>
                 </div>
+
+                {/* ПРАВАЯ ЧАСТЬ: Кнопка (отдельно, без линии снизу) */}
+                <div className="shrink-0">
+                    <Button
+                        variant="outlined"
+                        startIcon={<Add />}
+                        onClick={() => setOpenCreate(true)}
+                        className="ml-4" /* Отступ от фильтров */
+                    >
+                        Добавить задачу
+                    </Button>
+                </div>
             </div>
-            {/* CONTENT */}
+
             {loading ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Box sx={{ py: 4, textAlign: 'center' }}>
                     <CircularProgress />
                 </Box>
             ) : items.length === 0 ? (
@@ -246,8 +300,8 @@ export default function TasksPage() {
                         <FolderOpen className="w-8 h-8 text-gray-400" />
                     </div>
                     <h3 className="mb-1 text-base font-medium text-gray-900">
-                        В объекте отсутствуют задачи. Добавьте новую задачу нажав на кнопку "
-                        Добавить задачу".
+                        В объекте отсутствуют задачи. Добавьте новую задачу кнопкой "Добавить
+                        задачу".
                     </h3>
                 </div>
             ) : (
@@ -256,19 +310,26 @@ export default function TasksPage() {
                         items={items}
                         refs={refs}
                         currentUserId={currentUser?.id ?? null}
+                        focusedTaskId={focusId}
                         onEdit={setEditingTask}
                         onDeleteTasksId={handleDelete}
-                        onAcknowledgeTask={(id) => handleChangeTaskStatus(id, 2)}
-                        onStartTask={(id) => handleChangeTaskStatus(id, 3)}
-                        onCompleteTask={(id) => handleChangeTaskStatus(id, 4)}
-                        onCancelTask={(id) => handleChangeTaskStatus(id, 6)}
+                        onAcknowledgeTask={(id) =>
+                            handleChangeTaskStatus(id, TASK_STATUS_ACKNOWLEDGED)
+                        }
+                        onStartTask={(id) => handleChangeTaskStatus(id, TASK_STATUS_IN_PROGRESS)}
+                        onCompleteTask={(id) => handleChangeTaskStatus(id, TASK_STATUS_COMPLETED)}
+                        onCancelTask={(id) => handleChangeTaskStatus(id, TASK_STATUS_CANCELED)}
                     />
 
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
-                            onPageChange={(newPage) => setPage(newPage)}
+                            onPageChange={(newPage) => {
+                                clearFocusFromUrl();
+                                setPage(newPage);
+                            }}
                             onSizeChange={(newSize) => {
+                                clearFocusFromUrl();
                                 setPage(1);
                                 setSize(newSize);
                             }}
@@ -279,20 +340,19 @@ export default function TasksPage() {
                     )}
                 </>
             )}
-            {/* CREATE/EDIT MODAL */}
+
             <TaskForm
                 open={openCreate || !!editingTask}
-                projectId={projectId}
+                projectId={Number(projectId)}
                 task={editingTask}
                 refs={refs}
-                onSubmit={handleCreate}
+                onSubmit={handleCreateOrUpdate}
                 onClose={() => {
                     setOpenCreate(false);
                     setEditingTask(null);
                 }}
             />
 
-            {/* Диалог подтверждения */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Удаление задачи"

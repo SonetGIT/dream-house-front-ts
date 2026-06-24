@@ -88,12 +88,22 @@ const initialState: PurchaseOrdersState = {
     error: null,
 };
 
+export interface FetchPurchaseOrdersParams {
+    page?: number;
+    size?: number;
+    id?: number;
+    project_id?: number;
+    block_id?: number;
+    status?: number;
+    search?: string;
+}
+
 /* ================== THUNKS ================== */
 
 /* FETCH */
 export const fetchPurchaseOrders = createAsyncThunk<
     { data: PurchaseOrder[]; pagination: Pagination | null },
-    Record<string, any>,
+    FetchPurchaseOrdersParams,
     { rejectValue: string }
 >('purchaseOrders/search', async (params, { rejectWithValue }) => {
     try {

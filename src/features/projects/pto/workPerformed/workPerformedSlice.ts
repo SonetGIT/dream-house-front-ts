@@ -71,6 +71,7 @@ export interface WorkPerformed {
 export interface FetchWorkPerformedPayload {
     page?: number;
     size?: number;
+    id?: number;
     project_id?: number;
     block_id?: number;
     status?: number;
@@ -100,7 +101,7 @@ const initialState: State = {
 //FETCH
 export const fetchWorkPerformed = createAsyncThunk<
     { data: WorkPerformed[]; pagination: Pagination | null },
-    Record<string, any>,
+    FetchWorkPerformedPayload,
     { rejectValue: string }
 >('workPerformed/search', async (params, { rejectWithValue }) => {
     try {

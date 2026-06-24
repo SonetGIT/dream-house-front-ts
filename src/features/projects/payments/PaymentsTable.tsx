@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { FolderOpen, Loader2, Pencil } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { Payment, PaymentStatusRef } from './paymentSlice';
@@ -7,6 +8,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 interface PaymentsTableProps {
     payments: Payment[];
     loading?: boolean;
+    focusedPaymentId?: number | null;
     onView: (payment: Payment) => void;
     onEdit: (payment: Payment) => void;
     onDelete: (payment: Payment) => void;
@@ -49,11 +51,27 @@ const isIncome = (payment: Payment) => {
 export default function PaymentsTable({
     payments,
     loading = false,
+    focusedPaymentId,
     onView,
     onEdit,
     onDelete,
 }: PaymentsTableProps) {
     void onDelete;
+
+    useEffect(() => {
+        if (!focusedPaymentId) return;
+
+        const exists = payments.some((payment) => payment.id === focusedPaymentId);
+        if (!exists) return;
+
+        const timeoutId = window.setTimeout(() => {
+            document
+                .getElementById(`payment-row-${focusedPaymentId}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [focusedPaymentId, payments]);
 
     if (loading) {
         return (
@@ -134,11 +152,20 @@ export default function PaymentsTable({
                     {payments.map((payment) => {
                         const statusStyle = buildStatusStyle(payment.status_ref);
                         const income = isIncome(payment);
+                        const isFocused = focusedPaymentId === payment.id;
 
                         return (
                             <tr
+                                id={`payment-row-${payment.id}`}
                                 key={payment.id}
-                                className="transition-colors cursor-pointer hover:bg-sky-50/50 group"
+                                className={`transition-colors cursor-pointer group ${
+                                    isFocused ? 'bg-amber-50 hover:bg-amber-100/70' : 'hover:bg-sky-50/50'
+                                }`}
+                                style={
+                                    isFocused
+                                        ? { boxShadow: 'inset 3px 0 0 #f59e0b' }
+                                        : undefined
+                                }
                                 onClick={() => onView(payment)}
                             >
                                 <td className="px-3 py-3 text-xs font-medium text-gray-600">

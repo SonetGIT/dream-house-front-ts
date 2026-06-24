@@ -109,7 +109,7 @@ export default function Header(props: HeaderProps) {
                             },
                         }}
                     >
-                        <NotificationsTable />
+                        <NotificationsTable onNavigate={handleClose} />
                     </Popover>
                 </Toolbar>
             </AppBar>

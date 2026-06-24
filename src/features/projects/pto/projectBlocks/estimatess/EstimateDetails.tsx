@@ -75,98 +75,96 @@ export default function EstimateDetails({
     /*********************************************************************************************************************/
     return (
         <>
-            <tr className="border-b bg-gradient-to-r from-blue-50 to-blue-50/50">
-                <td colSpan={12} className="px-4 py-6">
-                    <div className="ml-8">
-                        {/* Tabs */}
-                        <div className="flex gap-2 mb-4 border-b">
-                            <button
-                                onClick={() => setTab('materials')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                    tab === 'materials'
-                                        ? 'text-blue-600 border-b-2 border-blue-600'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                Материалы
-                            </button>
+            <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-blue-50/50 px-4 py-6">
+                <div className="ml-8">
+                    {/* Tabs */}
+                    <div className="mb-4 flex gap-2 border-b">
+                        <button
+                            onClick={() => setTab('materials')}
+                            className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                tab === 'materials'
+                                    ? 'text-blue-600 border-b-2 border-blue-600'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            Материалы
+                        </button>
 
-                            <button
-                                onClick={() => setTab('services')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                    tab === 'services'
-                                        ? 'text-blue-600 border-b-2 border-blue-600'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                Услуги
-                            </button>
+                        <button
+                            onClick={() => setTab('services')}
+                            className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                tab === 'services'
+                                    ? 'text-blue-600 border-b-2 border-blue-600'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            Услуги
+                        </button>
 
-                            {/* <button
-                                onClick={() => setTab('history')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                    tab === 'history'
-                                        ? 'text-blue-600 border-b-2 border-blue-600'
-                                        : 'text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                История изменений
-                            </button> */}
-                        </div>
-
-                        {/* MATERIALS */}
-                        {tab === 'materials' && (
-                            <div>
-                                <div className="flex justify-end mb-1">
-                                    <StyledTooltip title="Добавить материал">
-                                        <button
-                                            className="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition-all duration-200 rounded-md bg-blue-50 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
-                                            onClick={() => handleAddMaterial(item.id)}
-                                        >
-                                            <PlusCircle className="w-6 h-6" />
-                                        </button>
-                                    </StyledTooltip>
-                                </div>
-
-                                <MaterialsTable
-                                    items={items}
-                                    refs={refs}
-                                    calcRowTotal={calcRowTotal}
-                                    onDeleteEstimateItemId={onDeleteEstimateItemId}
-                                    onUpdateEstimateItem={handleUpdateEstimateItem}
-                                />
-                            </div>
-                        )}
-
-                        {/* SERVICES */}
-                        {tab === 'services' && (
-                            <div>
-                                <div className="flex justify-end mb-1">
-                                    <StyledTooltip title="Добавить услугу">
-                                        <button
-                                            className="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition-all duration-200 rounded-md bg-blue-50 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
-                                            onClick={() => handleAddService(item.id)}
-                                        >
-                                            <PlusCircle className="w-6 h-6" />
-                                        </button>
-                                    </StyledTooltip>
-                                </div>
-
-                                <ServicesTable
-                                    items={items}
-                                    refs={refs}
-                                    calcRowTotal={calcRowTotal}
-                                    onDeleteEstimateItemId={onDeleteEstimateItemId}
-                                    onUpdateEstimateItem={handleUpdateEstimateItem}
-                                />
-                            </div>
-                        )}
-
-                        {/* HISTORY */}
-                        {tab === 'history' && <EstimateHistory />}
+                        {/* <button
+                            onClick={() => setTab('history')}
+                            className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                tab === 'history'
+                                    ? 'text-blue-600 border-b-2 border-blue-600'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            История изменений
+                        </button> */}
                     </div>
-                </td>
-            </tr>
+
+                    {/* MATERIALS */}
+                    {tab === 'materials' && (
+                        <div>
+                            <div className="mb-1 flex justify-end">
+                                <StyledTooltip title="Добавить материал">
+                                    <button
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-blue-600 transition-all duration-200 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
+                                        onClick={() => handleAddMaterial(item.id)}
+                                    >
+                                        <PlusCircle className="h-6 w-6" />
+                                    </button>
+                                </StyledTooltip>
+                            </div>
+
+                            <MaterialsTable
+                                items={items}
+                                refs={refs}
+                                calcRowTotal={calcRowTotal}
+                                onDeleteEstimateItemId={onDeleteEstimateItemId}
+                                onUpdateEstimateItem={handleUpdateEstimateItem}
+                            />
+                        </div>
+                    )}
+
+                    {/* SERVICES */}
+                    {tab === 'services' && (
+                        <div>
+                            <div className="mb-1 flex justify-end">
+                                <StyledTooltip title="Добавить услугу">
+                                    <button
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-blue-600 transition-all duration-200 hover:bg-blue-600 hover:text-white hover:shadow-md active:scale-95"
+                                        onClick={() => handleAddService(item.id)}
+                                    >
+                                        <PlusCircle className="h-6 w-6" />
+                                    </button>
+                                </StyledTooltip>
+                            </div>
+
+                            <ServicesTable
+                                items={items}
+                                refs={refs}
+                                calcRowTotal={calcRowTotal}
+                                onDeleteEstimateItemId={onDeleteEstimateItemId}
+                                onUpdateEstimateItem={handleUpdateEstimateItem}
+                            />
+                        </div>
+                    )}
+
+                    {/* HISTORY */}
+                    {tab === 'history' && <EstimateHistory />}
+                </div>
+            </div>
             <MaterialEstimateItemsCreate
                 blockId={blockId}
                 isOpen={formType === 'material'}

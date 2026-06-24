@@ -1,20 +1,36 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { BellOff, Clock, ChevronDown, Loader2, Eye, Bell } from 'lucide-react';
-import { fetchNotifications, markAsRead } from './notificationSlice';
-import { formatDate } from '@/utils/formatData';
+import {
+    Bell,
+    BellOff,
+    ChevronDown,
+    Clock,
+    ExternalLink,
+    Eye,
+    Loader2,
+} from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { formatDate } from '@/utils/formatData';
+import { resolveNotificationRoute } from './notificationRouting';
+import { fetchNotifications, markAsRead, type Notification } from './notificationSlice';
 
 type FilterType = 'all' | 'unread' | 'read';
 
-export default function NotificationsTable() {
+interface NotificationsTableProps {
+    onNavigate?: () => void;
+}
+
+export default function NotificationsTable({ onNavigate }: NotificationsTableProps) {
     const dispatch = useAppDispatch();
-    const { items, loading } = useAppSelector((s) => s.notifications);
+    const navigate = useNavigate();
+    const { items, loading } = useAppSelector((state) => state.notifications);
 
     const [filter, setFilter] = useState<FilterType>('all');
     const [search, setSearch] = useState('');
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [markingId, setMarkingId] = useState<number | null>(null);
+    const [openingId, setOpeningId] = useState<number | null>(null);
 
     useEffect(() => {
         dispatch(fetchNotifications({ page: 1, size: 20 }));
@@ -29,15 +45,34 @@ export default function NotificationsTable() {
         }
     };
 
+    const handleOpen = async (notification: Notification) => {
+        const path = resolveNotificationRoute(notification);
+        if (!path) return;
+
+        try {
+            setOpeningId(notification.id);
+
+            if (!notification.is_read) {
+                await dispatch(markAsRead(notification.id)).unwrap();
+            }
+
+            onNavigate?.();
+            navigate(path);
+        } finally {
+            setOpeningId(null);
+        }
+    };
+
     const filtered = useMemo(() => {
-        return items.filter((n) => {
-            if (filter === 'unread' && n.is_read) return false;
-            if (filter === 'read' && !n.is_read) return false;
+        return items.filter((notification) => {
+            if (filter === 'unread' && notification.is_read) return false;
+            if (filter === 'read' && !notification.is_read) return false;
 
             if (search.trim()) {
                 const q = search.toLowerCase();
                 return (
-                    n.title.toLowerCase().includes(q) || (n.message || '').toLowerCase().includes(q)
+                    notification.title.toLowerCase().includes(q) ||
+                    (notification.message || '').toLowerCase().includes(q)
                 );
             }
 
@@ -46,23 +81,23 @@ export default function NotificationsTable() {
     }, [items, filter, search]);
 
     return (
-        <div className="p-1 bg-gray-50">
+        <div className="bg-gray-50 p-1">
             <div className="space-y-3">
-                <div className="bg-white border border-gray-200 shadow-sm rounded-xl">
-                    <div className="flex flex-col gap-3 px-4 py-3 border-b border-gray-100 sm:flex-row sm:items-center sm:justify-between">
+                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-2">
-                            <Bell className="w-4 h-4 text-blue-600" />
+                            <Bell className="h-4 w-4 text-blue-600" />
                             <span className="text-sm font-semibold text-gray-800">Уведомления</span>
-                            <span className="px-2 py-0.5 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-full">
+                            <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
                                 {filtered.length}
                             </span>
                         </div>
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg items-left">
+                            <div className="flex items-left gap-1 rounded-lg bg-gray-100 p-1">
                                 <button
                                     onClick={() => setFilter('all')}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                                         filter === 'all'
                                             ? 'bg-white text-blue-700 shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
@@ -72,7 +107,7 @@ export default function NotificationsTable() {
                                 </button>
                                 <button
                                     onClick={() => setFilter('unread')}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                                         filter === 'unread'
                                             ? 'bg-white text-blue-700 shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
@@ -82,7 +117,7 @@ export default function NotificationsTable() {
                                 </button>
                                 <button
                                     onClick={() => setFilter('read')}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                                         filter === 'read'
                                             ? 'bg-white text-blue-700 shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
@@ -95,20 +130,20 @@ export default function NotificationsTable() {
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[700px]">
+                        <table className="w-full min-w-[720px]">
                             <thead>
                                 <tr className="border-b border-gray-100">
-                                    <th className="w-8 px-4 py-2 text-left text-[10px] font-bold tracking-widest text-blue-700 uppercase"></th>
-                                    <th className="px-3 py-2 text-left text-[10px] font-bold tracking-widest text-blue-700 uppercase">
+                                    <th className="w-8 px-4 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-blue-700"></th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-blue-700">
                                         Заголовок
                                     </th>
-                                    <th className="w-36 px-3 py-2 text-center text-[10px] font-bold tracking-widest text-blue-700 uppercase">
+                                    <th className="w-36 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-blue-700">
                                         Время
                                     </th>
-                                    <th className="w-28 px-3 py-2 text-center text-[10px] font-bold tracking-widest text-blue-700 uppercase">
+                                    <th className="w-28 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-blue-700">
                                         Статус
                                     </th>
-                                    <th className="w-20 px-3 py-2 text-center text-[10px] font-bold tracking-widest text-blue-700 uppercase"></th>
+                                    <th className="w-24 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-widest text-blue-700"></th>
                                 </tr>
                             </thead>
 
@@ -117,10 +152,8 @@ export default function NotificationsTable() {
                                     <tr>
                                         <td colSpan={6} className="py-12 text-center">
                                             <div className="flex flex-col items-center gap-2 text-gray-400">
-                                                <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-                                                <span className="text-xs">
-                                                    Загрузка уведомлений...
-                                                </span>
+                                                <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+                                                <span className="text-xs">Загрузка уведомлений...</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -128,7 +161,7 @@ export default function NotificationsTable() {
                                     <tr>
                                         <td colSpan={6} className="py-12 text-center">
                                             <div className="flex flex-col items-center gap-2 text-gray-400">
-                                                <BellOff className="w-8 h-8 text-gray-300" />
+                                                <BellOff className="h-8 w-8 text-gray-300" />
                                                 <span className="text-sm">Нет уведомлений</span>
                                                 {(filter !== 'all' || search) && (
                                                     <button
@@ -145,23 +178,32 @@ export default function NotificationsTable() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filtered.map((n, index) => {
-                                        const isUnread = !n.is_read;
-                                        const isExpanded = expandedId === n.id;
-                                        const isMarking = markingId === n.id;
+                                    filtered.map((notification, index) => {
+                                        const isUnread = !notification.is_read;
+                                        const isExpanded = expandedId === notification.id;
+                                        const isMarking = markingId === notification.id;
+                                        const isOpening = openingId === notification.id;
+                                        const canOpen = Boolean(
+                                            resolveNotificationRoute(notification),
+                                        );
 
                                         return (
                                             <FragmentRow
-                                                key={n.id}
-                                                n={n}
+                                                key={notification.id}
+                                                notification={notification}
                                                 index={index}
                                                 isUnread={isUnread}
                                                 isExpanded={isExpanded}
                                                 isMarking={isMarking}
+                                                isOpening={isOpening}
+                                                canOpen={canOpen}
                                                 onToggle={() =>
-                                                    setExpandedId(isExpanded ? null : n.id)
+                                                    setExpandedId(
+                                                        isExpanded ? null : notification.id,
+                                                    )
                                                 }
-                                                onRead={() => handleRead(n.id)}
+                                                onRead={() => handleRead(notification.id)}
+                                                onOpen={() => handleOpen(notification)}
                                             />
                                         );
                                     })
@@ -176,33 +218,33 @@ export default function NotificationsTable() {
 }
 
 function FragmentRow({
-    n,
+    notification,
     index,
     isUnread,
     isExpanded,
     isMarking,
+    isOpening,
+    canOpen,
     onToggle,
     onRead,
+    onOpen,
 }: {
-    n: {
-        id: number;
-        title: string;
-        message?: string;
-        is_read: boolean;
-        created_at: string;
-    };
+    notification: Notification;
     index: number;
     isUnread: boolean;
     isExpanded: boolean;
     isMarking: boolean;
+    isOpening: boolean;
+    canOpen: boolean;
     onToggle: () => void;
     onRead: () => void;
+    onOpen: () => void;
 }) {
     return (
         <>
             <tr
                 onClick={onToggle}
-                className={`border-b border-gray-50 cursor-pointer transition-colors group ${
+                className={`group cursor-pointer border-b border-gray-50 transition-colors ${
                     isUnread
                         ? 'bg-blue-50/30 hover:bg-blue-50/60'
                         : index % 2 === 0
@@ -212,7 +254,7 @@ function FragmentRow({
             >
                 <td className="py-2.5 pl-4 pr-1">
                     <div
-                        className={`w-1.5 h-1.5 rounded-full mx-auto transition-opacity ${
+                        className={`mx-auto h-1.5 w-1.5 rounded-full transition-opacity ${
                             isUnread ? 'bg-blue-500 opacity-100' : 'opacity-0'
                         }`}
                     />
@@ -220,27 +262,27 @@ function FragmentRow({
 
                 <td className="px-3 py-2.5">
                     <span
-                        className={`text-xs leading-snug max-w-[180px] truncate block ${
+                        className={`block max-w-[220px] truncate text-xs leading-snug ${
                             isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-600'
                         }`}
                     >
-                        {n.title}
+                        {notification.title}
                     </span>
                 </td>
 
                 <td className="px-3 py-2.5 text-center">
-                    <div className="flex items-center justify-center gap-1 text-[11px] text-gray-600 whitespace-nowrap">
-                        <Clock className="flex-shrink-0 w-3 h-3" />
-                        {formatDate(n.created_at)}
+                    <div className="flex items-center justify-center gap-1 whitespace-nowrap text-[11px] text-gray-600">
+                        <Clock className="h-3 w-3 flex-shrink-0" />
+                        {formatDate(notification.created_at)}
                     </div>
                 </td>
 
                 <td className="px-3 py-2.5 text-center">
                     <span
-                        className={`inline-block px-2 py-0.5 rounded border text-[10px] font-semibold whitespace-nowrap ${
+                        className={`inline-block rounded border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap ${
                             isUnread
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-gray-100 text-gray-500 border-gray-200'
+                                ? 'border-blue-600 bg-blue-600 text-white'
+                                : 'border-gray-200 bg-gray-100 text-gray-500'
                         }`}
                     >
                         {isUnread ? '● Новое' : '✓ Прочитано'}
@@ -249,17 +291,33 @@ function FragmentRow({
 
                 <td className="px-3 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-1">
+                        {canOpen && (
+                            <button
+                                onClick={onOpen}
+                                disabled={isOpening}
+                                className="flex h-6 w-6 items-center justify-center rounded text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50"
+                            >
+                                <StyledTooltip title="Открыть">
+                                    {isOpening ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                    )}
+                                </StyledTooltip>
+                            </button>
+                        )}
+
                         {isUnread && (
                             <button
                                 onClick={onRead}
                                 disabled={isMarking}
-                                className="flex items-center justify-center w-6 h-6 text-blue-600 transition rounded hover:bg-blue-100 disabled:opacity-50"
+                                className="flex h-6 w-6 items-center justify-center rounded text-blue-600 transition hover:bg-blue-100 disabled:opacity-50"
                             >
                                 <StyledTooltip title="Отметить как прочитанное">
                                     {isMarking ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                     ) : (
-                                        <Eye className="w-3.5 h-3.5" />
+                                        <Eye className="h-3.5 w-3.5" />
                                     )}
                                 </StyledTooltip>
                             </button>
@@ -268,11 +326,11 @@ function FragmentRow({
                         <button
                             onClick={onToggle}
                             title="Подробнее"
-                            className={`flex items-center justify-center w-6 h-6 rounded hover:bg-gray-100 text-gray-400 transition ${
+                            className={`flex h-6 w-6 items-center justify-center rounded text-gray-400 transition hover:bg-gray-100 ${
                                 isExpanded ? 'rotate-180' : ''
                             }`}
                         >
-                            <ChevronDown className="w-3.5 h-3.5" />
+                            <ChevronDown className="h-3.5 w-3.5" />
                         </button>
                     </div>
                 </td>
@@ -287,35 +345,20 @@ function FragmentRow({
                     <td colSpan={6} className="px-8 py-3">
                         <div className="flex items-start gap-3">
                             <div
-                                className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 mt-0.5 border ${
+                                className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border ${
                                     isUnread
-                                        ? 'bg-blue-100 text-blue-600 border-blue-200'
-                                        : 'bg-gray-100 text-gray-500 border-gray-200'
+                                        ? 'border-blue-200 bg-blue-100 text-blue-600'
+                                        : 'border-gray-200 bg-gray-100 text-gray-500'
                                 }`}
                             >
-                                <Bell className="w-3.5 h-3.5" />
+                                <Bell className="h-3.5 w-3.5" />
                             </div>
 
-                            <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                                 <p className="text-[11px] leading-relaxed text-gray-600">
-                                    {n.message || 'Сообщение отсутствует'}
+                                    {notification.message || 'Сообщение отсутствует'}
                                 </p>
                             </div>
-
-                            {/* {isUnread && (
-                                <button
-                                    onClick={onRead}
-                                    disabled={isMarking}
-                                    className="flex items-center gap-1 px-2.5 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-medium hover:bg-blue-100 transition flex-shrink-0 disabled:opacity-50"
-                                >
-                                    {isMarking ? (
-                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                        <Eye className="w-3 h-3" />
-                                    )}
-                                    Прочитано
-                                </button>
-                            )} */}
                         </div>
                     </td>
                 </tr>

@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { RotateCcw, Search } from 'lucide-react';
 import { Box, Button } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { TablePagination } from '@/components/ui/TablePagination';
 import Modal from '@/components/ui/Modal';
@@ -52,6 +52,8 @@ const initialFilters: FiltersState = {
 
 export default function PaymentsPage() {
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const navigate = useNavigate();
     const { projectId, prjBlockId } = useParams();
 
     const projectIdNum = projectId ? Number(projectId) : null;
@@ -89,6 +91,26 @@ export default function PaymentsPage() {
     const [size, setSize] = useState(10);
     const [modal, setModal] = useState<ModalMode>(null);
     const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+
+    const focusId = useMemo(() => {
+        const value = Number(new URLSearchParams(location.search).get('focus'));
+        return Number.isInteger(value) && value > 0 ? value : null;
+    }, [location.search]);
+
+    const clearFocusFromUrl = useCallback(() => {
+        const searchParams = new URLSearchParams(location.search);
+
+        if (!searchParams.has('focus')) return;
+
+        searchParams.delete('focus');
+        navigate(
+            {
+                pathname: location.pathname,
+                search: searchParams.toString() ? `?${searchParams.toString()}` : '',
+            },
+            { replace: true },
+        );
+    }, [location.pathname, location.search, navigate]);
 
     useEffect(() => {
         const timeoutId = window.setTimeout(() => {
@@ -134,19 +156,29 @@ export default function PaymentsPage() {
     ]);
 
     const requestParams = useMemo<PaymentSearchParams>(
-        () => ({
-            page,
-            size,
-            search: debouncedSearch || undefined,
-            project_id: projectIdNum ?? currentProject?.id ?? undefined,
-            block_id: blockIdNum ?? undefined,
-            payment_type: filters.payment_type ?? undefined,
-            status: filters.status ?? undefined,
-            article_id: filters.article_id ?? undefined,
-            dateFrom: filters.dateFrom || undefined,
-            dateTo: filters.dateTo || undefined,
-        }),
+        () =>
+            focusId
+                ? {
+                      id: focusId,
+                      page: 1,
+                      size,
+                      project_id: projectIdNum ?? currentProject?.id ?? undefined,
+                      block_id: blockIdNum ?? undefined,
+                  }
+                : {
+                      page,
+                      size,
+                      search: debouncedSearch || undefined,
+                      project_id: projectIdNum ?? currentProject?.id ?? undefined,
+                      block_id: blockIdNum ?? undefined,
+                      payment_type: filters.payment_type ?? undefined,
+                      status: filters.status ?? undefined,
+                      article_id: filters.article_id ?? undefined,
+                      dateFrom: filters.dateFrom || undefined,
+                      dateTo: filters.dateTo || undefined,
+                  },
         [
+            focusId,
             page,
             size,
             debouncedSearch,
@@ -176,6 +208,7 @@ export default function PaymentsPage() {
     };
 
     const handleFilterChange = <K extends keyof FiltersState>(field: K, value: FiltersState[K]) => {
+        clearFocusFromUrl();
         setFilters((prev) => ({
             ...prev,
             [field]: value,
@@ -183,6 +216,7 @@ export default function PaymentsPage() {
     };
 
     const handleResetFilters = () => {
+        clearFocusFromUrl();
         setFilters(initialFilters);
     };
 
@@ -418,6 +452,7 @@ export default function PaymentsPage() {
                     <PaymentsTable
                         payments={data}
                         loading={loading}
+                        focusedPaymentId={focusId}
                         onView={handleView}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
@@ -427,9 +462,11 @@ export default function PaymentsPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
+                                clearFocusFromUrl();
                                 setPage(newPage);
                             }}
                             onSizeChange={(newSize) => {
+                                clearFocusFromUrl();
                                 setPage(1);
                                 setSize(newSize);
                             }}

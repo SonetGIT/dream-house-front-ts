@@ -31,6 +31,42 @@ export default function UsersPage() {
     const [formLoading, setFormLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
+    const getErrorMessage = (error: unknown, fallback: string) => {
+        return typeof error === 'string'
+            ? error
+            : error instanceof Error
+              ? error.message
+              : fallback;
+    };
+
+    const buildFetchParams = (
+        page: number,
+        size: number,
+        nextFilters: typeof filters = filters,
+    ) => {
+        const params: {
+            page: number;
+            size: number;
+            search?: string;
+            role_id?: number;
+        } = {
+            page,
+            size,
+        };
+
+        const trimmedSearch = nextFilters.search.trim();
+
+        if (trimmedSearch) {
+            params.search = trimmedSearch;
+        }
+
+        if (nextFilters.role_id != null) {
+            params.role_id = nextFilters.role_id;
+        }
+
+        return params;
+    };
+
     //Первичная загрузка
     useEffect(() => {
         dispatch(
@@ -57,20 +93,8 @@ export default function UsersPage() {
     //Поиск
     const handleSearch = (newFilters: typeof filters) => {
         setFilters(newFilters);
-        const params: any = {
-            page: 1,
-            size: pagination?.size ?? 10,
-        };
 
-        if (newFilters.search) {
-            params.search = newFilters.search;
-        }
-
-        if (newFilters.role_id) {
-            params.role_id = newFilters.role_id;
-        }
-
-        dispatch(fetchUsers(params));
+        dispatch(fetchUsers(buildFetchParams(1, pagination?.size ?? 10, newFilters)));
     };
 
     const handleReset = () => {
@@ -80,12 +104,7 @@ export default function UsersPage() {
         };
 
         setFilters(resetFilters);
-        dispatch(
-            fetchUsers({
-                page: 1,
-                size: pagination?.size ?? 10,
-            }),
-        );
+        dispatch(fetchUsers(buildFetchParams(1, pagination?.size ?? 10, resetFilters)));
     };
 
     //CRUD
@@ -104,20 +123,7 @@ export default function UsersPage() {
         setModal('delete');
     };
     const refetchUsers = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
-        const params: any = {
-            page,
-            size,
-        };
-
-        if (filters.search) {
-            params.search = filters.search;
-        }
-
-        if (filters.role_id) {
-            params.role_id = filters.role_id;
-        }
-
-        dispatch(fetchUsers(params));
+        dispatch(fetchUsers(buildFetchParams(page, size)));
     };
 
     const handleCreateUser = async (data: UserFormData) => {
@@ -131,8 +137,8 @@ export default function UsersPage() {
             refetchUsers(1); //всегда на первую страницу
 
             setModal(null);
-        } catch (err: any) {
-            toast.error(err || 'Ошибка создания пользователя');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Ошибка создания пользователя'));
         } finally {
             setFormLoading(false);
         }
@@ -157,8 +163,8 @@ export default function UsersPage() {
 
             setModal(null);
             setSelectedUser(null);
-        } catch (err: any) {
-            toast.error(err || 'Ошибка обновления пользователя');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Ошибка обновления пользователя'));
         } finally {
             setFormLoading(false);
         }
@@ -180,8 +186,8 @@ export default function UsersPage() {
 
             setModal(null);
             setSelectedUser(null);
-        } catch (err: any) {
-            toast.error(err || 'Ошибка удаления пользователя');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Ошибка удаления пользователя'));
         } finally {
             setDeleteLoading(false);
         }
@@ -190,11 +196,10 @@ export default function UsersPage() {
     /*******************************************************************************************************************/
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-            <div className="mx-auto max-w-[1800px] px-6 py-8">
+            <div className="mx-auto max-w-[1800px] px-4 py-6">
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="mb-2 text-3xl font-bold text-sky-800">Пользователи</h1>
-                    <p className="text-sm text-sky-700">Панель управления пользователями</p>
+                <div>
+                    <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Пользователи</h1>
                 </div>
 
                 {/* Фильтры */}
@@ -220,22 +225,10 @@ export default function UsersPage() {
                         <TablePagination
                             pagination={pagination}
                             onPageChange={(newPage) => {
-                                dispatch(
-                                    fetchUsers({
-                                        page: newPage,
-                                        size: pagination.size,
-                                        ...filters,
-                                    }),
-                                );
+                                dispatch(fetchUsers(buildFetchParams(newPage, pagination.size)));
                             }}
                             onSizeChange={(newSize) => {
-                                dispatch(
-                                    fetchUsers({
-                                        page: 1,
-                                        size: newSize,
-                                        ...filters,
-                                    }),
-                                );
+                                dispatch(fetchUsers(buildFetchParams(1, newSize)));
                             }}
                             sizeOptions={[10, 25, 50, 100]}
                             showFirstButton

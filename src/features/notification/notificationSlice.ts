@@ -8,6 +8,14 @@ export interface Notification {
     message?: string;
     is_read: boolean;
     created_at: string;
+    entity_type?: string | null;
+    entity_id?: number | null;
+    route_params?: {
+        project_id?: number | string | null;
+        prjBlockId?: number | string | null;
+        prj_block_id?: number | string | null;
+        block_id?: number | string | null;
+    } | null;
 }
 
 type UnreadData = {
@@ -29,6 +37,9 @@ const initialState: State = {
     error: null,
 };
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback;
+
 //THUNKS
 //теперь всё чисто — используем res.data
 export const fetchUnreadCount = createAsyncThunk<number, void, { rejectValue: string }>(
@@ -38,8 +49,8 @@ export const fetchUnreadCount = createAsyncThunk<number, void, { rejectValue: st
             const res = await apiRequest<UnreadData>('/notifications/unreadCount', 'GET');
 
             return res.data.unread_count ?? 0;
-        } catch (e: any) {
-            return rejectWithValue(e.message);
+        } catch (error: unknown) {
+            return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки'));
         }
     },
 );
@@ -54,8 +65,8 @@ export const fetchNotifications = createAsyncThunk<
         const res = await apiRequest<Notification[]>('/notifications/search', 'POST', params);
 
         return res.data ?? [];
-    } catch (e: any) {
-        return rejectWithValue(e.message);
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки'));
     }
 });
 
@@ -66,8 +77,8 @@ export const markAsRead = createAsyncThunk<number, number, { rejectValue: string
         try {
             await apiRequest(`/notifications/update/${id}`, 'PUT');
             return id;
-        } catch (e: any) {
-            return rejectWithValue(e.message);
+        } catch (error: unknown) {
+            return rejectWithValue(getErrorMessage(error, 'Ошибка обновления'));
         }
     },
 );

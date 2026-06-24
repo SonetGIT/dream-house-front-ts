@@ -145,7 +145,7 @@ export default function ProjectsPage() {
 
             toast.success(`Объект обновлён: ${data.name}`);
 
-            refetchProjects(); // 👈 остаёмся на текущей странице
+            refetchProjects(); //остаёмся на текущей странице
 
             setModal(null);
             setSelectedProject(null);
@@ -183,13 +183,10 @@ export default function ProjectsPage() {
     /*******************************************************************************************************************/
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-            <div className="mx-auto max-w-[1800px] px-6 py-8">
+            <div className="mx-auto max-w-[1800px] px-4 py-5">
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="mb-2 text-3xl font-bold text-sky-800">Объекты</h1>
-                    <p className="text-sm text-sky-700">
-                        Панель управления строительными объектами
-                    </p>
+                <div>
+                    <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Объекты</h1>
                 </div>
 
                 {/* Фильтры */}

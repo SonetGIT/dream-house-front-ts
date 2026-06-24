@@ -1,8 +1,19 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
 
-/* TYPES */
+export interface TaskAssignee {
+    id?: number;
+    user_id: number;
+    status: number | null;
+    user?: {
+        id?: number;
+        name?: string | null;
+        first_name?: string | null;
+        last_name?: string | null;
+    } | null;
+}
+
 export interface Task {
     id: number;
     project_id: number;
@@ -10,6 +21,8 @@ export interface Task {
     description: string;
     created_user_id: number;
     responsible_user_id: number | null;
+    assignee_user_ids: number[];
+    assignees: TaskAssignee[];
     deadline: string;
     status: number;
     priority: number | null;
@@ -23,9 +36,26 @@ export interface Task {
 export interface TaskForm {
     title: string;
     description: string;
-    responsible_user_id: number | null;
+    assignee_user_ids: number[];
     deadline: string;
     priority: number | null;
+}
+
+export interface CreateTaskPayload {
+    project_id: number;
+    title: string;
+    description: string;
+    priority: number | null;
+    deadline: string;
+    assignee_user_ids: number[];
+}
+
+export interface UpdateTaskPayload {
+    title?: string;
+    description?: string;
+    priority?: number | null;
+    deadline?: string;
+    status?: number;
 }
 
 export type TaskFormData = Omit<
@@ -39,6 +69,7 @@ export interface FetchTasksPayload {
     project_id?: number;
     status?: number;
     user_id?: number;
+    id?: number;
 }
 
 export interface TasksStats {
@@ -52,7 +83,6 @@ export interface TasksResponse {
     pagination: Pagination | null;
 }
 
-/* STATE */
 interface TasksState {
     items: Task[];
     stats: TasksStats | null;
@@ -69,16 +99,100 @@ const initialState: TasksState = {
     error: null,
 };
 
-/* THUNKS */
+const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback;
 
-/* FETCH */
+type RawTask = Record<string, unknown> & {
+    id: number | string;
+    project_id: number | string;
+    created_user_id: number | string;
+    responsible_user_id?: number | string | null;
+    assignee_user_ids?: Array<number | string>;
+    assignees?: Array<Record<string, unknown>>;
+    status: number | string;
+    priority?: number | string | null;
+};
+
+const normalizeTaskAssignees = (task: RawTask): TaskAssignee[] => {
+    if (Array.isArray(task?.assignees) && task.assignees.length) {
+        return task.assignees
+            .map((item) => ({
+                id: item?.id ? Number(item.id) : undefined,
+                user_id: Number(item?.user_id || item?.id || 0),
+                status:
+                    item?.status === null || item?.status === undefined
+                        ? null
+                        : Number(item.status),
+                user: item?.user || item?.user_ref || null,
+            }))
+            .filter((item) => item.user_id > 0);
+    }
+
+    if (Array.isArray(task?.assignee_user_ids) && task.assignee_user_ids.length) {
+        return task.assignee_user_ids
+            .map((userId: number | string) => Number(userId))
+            .filter(Boolean)
+            .map((user_id) => ({
+                user_id,
+                status: null,
+                user: null,
+            }));
+    }
+
+    if (task?.responsible_user_id) {
+        return [
+            {
+                user_id: Number(task.responsible_user_id),
+                status: task?.status === undefined ? null : Number(task.status),
+                user: null,
+            },
+        ];
+    }
+
+    return [];
+};
+
+export const getTaskAssigneeIds = (task: Partial<Task> | null | undefined) => {
+    if (!task) return [];
+
+    if (Array.isArray(task.assignee_user_ids) && task.assignee_user_ids.length) {
+        return task.assignee_user_ids.map((id) => Number(id)).filter(Boolean);
+    }
+
+    if (Array.isArray(task.assignees) && task.assignees.length) {
+        return task.assignees.map((item) => Number(item.user_id)).filter(Boolean);
+    }
+
+    return task.responsible_user_id ? [Number(task.responsible_user_id)] : [];
+};
+
+const normalizeTask = (task: RawTask): Task => {
+    const assignees = normalizeTaskAssignees(task);
+    const assignee_user_ids = assignees.map((item) => Number(item.user_id)).filter(Boolean);
+
+    return {
+        ...task,
+        id: Number(task.id),
+        project_id: Number(task.project_id),
+        created_user_id: Number(task.created_user_id),
+        responsible_user_id:
+            task?.responsible_user_id != null
+                ? Number(task.responsible_user_id)
+                : assignee_user_ids[0] || null,
+        assignee_user_ids,
+        assignees,
+        status: Number(task.status),
+        priority: task?.priority == null ? null : Number(task.priority),
+    };
+};
+
 export const fetchTasks = createAsyncThunk<
     TasksResponse,
     FetchTasksPayload | undefined,
     { rejectValue: string }
 >('tasks/fetchTasks', async (params = {}, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<any>('/tasks/search', 'POST', params);
+        const res = await apiRequest<RawTask[]>('/tasks/search', 'POST', params);
 
         const rawStatuses = res.stats?.statuses ?? {};
         const normalizedStatuses: Record<number, number> = Object.fromEntries(
@@ -86,7 +200,7 @@ export const fetchTasks = createAsyncThunk<
         );
 
         return {
-            data: res.data ?? [],
+            data: (res.data ?? []).map((task) => normalizeTask(task)),
             pagination: res.pagination ?? null,
             stats: res.stats
                 ? {
@@ -96,52 +210,84 @@ export const fetchTasks = createAsyncThunk<
                   }
                 : null,
         };
-    } catch (e: any) {
-        return rejectWithValue(e.message || 'Ошибка загрузки задач');
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки задач'));
     }
 });
 
-/* CREATE */
-export const createTask = createAsyncThunk<Task, Partial<Task>, { rejectValue: string }>(
-    'tasks/createTask',
-    async (payload, { rejectWithValue }) => {
-        try {
-            const res = await apiRequest<Task>('/tasks/create', 'POST', payload);
-            return res.data;
-        } catch (e: any) {
-            return rejectWithValue(e.message || 'Ошибка создания задачи');
-        }
-    },
-);
+export const createTask = createAsyncThunk<
+    Task,
+    CreateTaskPayload,
+    { rejectValue: string }
+>('tasks/createTask', async (payload, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<Task>('/tasks/create', 'POST', payload);
+        return normalizeTask(res.data);
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка создания задачи'));
+    }
+});
 
-/* UPDATE */
 export const updateTask = createAsyncThunk<
     Task,
-    { id: number; data: Partial<Task> },
+    { id: number; data: UpdateTaskPayload },
     { rejectValue: string }
 >('tasks/updateTask', async ({ id, data }, { rejectWithValue }) => {
     try {
         const res = await apiRequest<Task>(`/tasks/update/${id}`, 'PUT', data);
-        return res.data;
-    } catch (e: any) {
-        return rejectWithValue(e.message || 'Ошибка обновления задачи');
+        return normalizeTask(res.data);
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка обновления задачи'));
     }
 });
 
-/* DELETE */
+export const addTaskAssignees = createAsyncThunk<
+    { taskId: number; assignee_user_ids: number[] },
+    { taskId: number; assignee_user_ids: number[] },
+    { rejectValue: string }
+>('tasks/addTaskAssignees', async ({ taskId, assignee_user_ids }, { rejectWithValue }) => {
+    try {
+        try {
+            await apiRequest(`/tasks/${taskId}/assignees/add`, 'POST', {
+                assignee_user_ids,
+            });
+        } catch {
+            await apiRequest(`/tasks/${taskId}/assignees/ad`, 'POST', {
+                assignee_user_ids,
+            });
+        }
+
+        return { taskId, assignee_user_ids };
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка добавления исполнителей'));
+    }
+});
+
+export const updateOwnTaskAssigneeStatus = createAsyncThunk<
+    { taskId: number; status: number },
+    { taskId: number; status: number },
+    { rejectValue: string }
+>('tasks/updateOwnTaskAssigneeStatus', async ({ taskId, status }, { rejectWithValue }) => {
+    try {
+        await apiRequest(`/tasks/${taskId}/assignees/status`, 'PUT', { status });
+        return { taskId, status };
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка изменения статуса'));
+    }
+});
+
 export const deleteTask = createAsyncThunk<number, number, { rejectValue: string }>(
     'tasks/deleteTask',
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`/tasks/delete/${id}`, 'DELETE');
             return id;
-        } catch (e: any) {
-            return rejectWithValue(e.message || 'Ошибка удаления задачи');
+        } catch (error: unknown) {
+            return rejectWithValue(getErrorMessage(error, 'Ошибка удаления задачи'));
         }
     },
 );
 
-/* SLICE */
 const tasksSlice = createSlice({
     name: 'tasks',
     initialState,
@@ -155,7 +301,6 @@ const tasksSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            /* FETCH */
             .addCase(fetchTasks.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -170,8 +315,6 @@ const tasksSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки задач';
             })
-
-            /* CREATE */
             .addCase(createTask.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -193,8 +336,6 @@ const tasksSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка создания задачи';
             })
-
-            /* UPDATE */
             .addCase(updateTask.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -202,7 +343,7 @@ const tasksSlice = createSlice({
             .addCase(updateTask.fulfilled, (state, action) => {
                 state.loading = false;
 
-                const index = state.items.findIndex((t) => t.id === action.payload.id);
+                const index = state.items.findIndex((task) => task.id === action.payload.id);
                 if (index !== -1) {
                     const oldStatus = state.items[index].status;
                     const newStatus = action.payload.status;
@@ -214,7 +355,6 @@ const tasksSlice = createSlice({
                             (state.stats.statuses[oldStatus] || 1) - 1,
                             0,
                         );
-
                         state.stats.statuses[newStatus] =
                             (state.stats.statuses[newStatus] || 0) + 1;
                     }
@@ -224,8 +364,28 @@ const tasksSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка обновления задачи';
             })
-
-            /* DELETE */
+            .addCase(addTaskAssignees.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(addTaskAssignees.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(addTaskAssignees.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка добавления исполнителей';
+            })
+            .addCase(updateOwnTaskAssigneeStatus.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateOwnTaskAssigneeStatus.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(updateOwnTaskAssigneeStatus.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка изменения статуса';
+            })
             .addCase(deleteTask.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -233,8 +393,8 @@ const tasksSlice = createSlice({
             .addCase(deleteTask.fulfilled, (state, action) => {
                 state.loading = false;
 
-                const deletedTask = state.items.find((t) => t.id === action.payload);
-                state.items = state.items.filter((t) => t.id !== action.payload);
+                const deletedTask = state.items.find((task) => task.id === action.payload);
+                state.items = state.items.filter((task) => task.id !== action.payload);
 
                 if (state.pagination) {
                     state.pagination.total = Math.max(state.pagination.total - 1, 0);
@@ -255,6 +415,5 @@ const tasksSlice = createSlice({
     },
 });
 
-/* EXPORTS */
 export const { clearTasks } = tasksSlice.actions;
 export default tasksSlice.reducer;

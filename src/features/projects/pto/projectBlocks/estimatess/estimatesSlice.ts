@@ -15,6 +15,15 @@ export interface Estimate {
     created_at?: string;
     updated_at?: string;
     deleted: boolean;
+    main_engineer_user_id: number | null;
+    signed_by_main_engineer: boolean | null;
+    signed_by_main_engineer_time: string | null;
+    planning_engineer_user_id: number | null;
+    signed_by_planning_engineer: boolean | null;
+    signed_by_planning_engineer_time: string | null;
+    general_director_user_id: number | null;
+    signed_by_general_director: boolean | null;
+    signed_by_general_director_time: string | null;
 
     items: EstimateItem[];
 }
@@ -23,6 +32,11 @@ export interface EstimateFormData {
     block_id: number;
     status?: number;
     name: string;
+}
+
+export interface EstimateSearchResponse {
+    data: Estimate[];
+    pagination?: Pagination;
 }
 
 /* ================= SEARCH PARAMS ================= */
@@ -39,6 +53,7 @@ interface EstimatesState {
     data: Estimate[];
     pagination: Pagination | null;
     loading: boolean;
+    submitting: boolean;
     error: string | null;
 }
 
@@ -46,13 +61,43 @@ const initialState: EstimatesState = {
     data: [],
     pagination: null,
     loading: false,
+    submitting: false,
     error: null,
+};
+
+const normalizeItem = (value: unknown): Estimate | null => {
+    if (!value || typeof value !== 'object') return null;
+
+    const data = value as Estimate & {
+        data?: Estimate;
+        item?: Estimate;
+    };
+
+    if (data?.id) return data;
+    if (data?.data?.id) return data.data;
+    if (data?.item?.id) return data.item;
+
+    return null;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    return error instanceof Error ? error.message : fallback;
+};
+
+const upsertItem = (state: EstimatesState, item: Estimate) => {
+    const index = state.data.findIndex((row) => row.id === item.id);
+
+    if (index !== -1) {
+        state.data[index] = item;
+    } else {
+        state.data.unshift(item);
+    }
 };
 
 /* ================= SEARCH ================= */
 
 export const fetchEstimates = createAsyncThunk<
-    { data: Estimate[]; pagination?: Pagination },
+    EstimateSearchResponse,
     FetchEstimatesParams,
     { rejectValue: string }
 >('estimates/search', async (params, { rejectWithValue }) => {
@@ -63,8 +108,8 @@ export const fetchEstimates = createAsyncThunk<
             data: res.data,
             pagination: res.pagination ?? undefined,
         };
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка загрузки смет');
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка загрузки смет'));
     }
 });
 
@@ -75,8 +120,8 @@ export const createEstimate = createAsyncThunk<Estimate, EstimateFormData, { rej
         try {
             const res = await apiRequest<Estimate>('/materialEstimates/create', 'POST', data);
             return res.data;
-        } catch (err: any) {
-            return rejectWithValue(err.message || 'Ошибка создания сметы');
+        } catch (error: unknown) {
+            return rejectWithValue(getErrorMessage(error, 'Ошибка создания сметы'));
         }
     },
 );
@@ -90,8 +135,8 @@ export const updateEstimate = createAsyncThunk<
     try {
         const res = await apiRequest<Estimate>(`/materialEstimates/update/${id}`, 'PUT', data);
         return res.data;
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка обновления сметы');
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка обновления сметы'));
     }
 });
 
@@ -102,11 +147,34 @@ export const deleteEstimate = createAsyncThunk<number, number, { rejectValue: st
         try {
             await apiRequest(`/materialEstimates/delete/${id}`, 'DELETE');
             return id;
-        } catch (err: any) {
-            return rejectWithValue(err.message || 'Ошибка удаления сметы');
+        } catch (error: unknown) {
+            return rejectWithValue(getErrorMessage(error, 'Ошибка удаления сметы'));
         }
     },
 );
+
+/* ================= SIGN ================= */
+export const signEstimate = createAsyncThunk<
+    Estimate,
+    { id: number; stage: 'planning_engineer' | 'main_engineer' | 'general_director' },
+    { rejectValue: string }
+>('estimates/sign', async ({ id, stage }, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<Estimate>(`/materialEstimates/sign/${id}`, 'POST', {
+            stage,
+        });
+
+        const item = normalizeItem(res.data);
+
+        if (!item) {
+            throw new Error('Сервер не вернул подписанную смету');
+        }
+
+        return item;
+    } catch (error: unknown) {
+        return rejectWithValue(getErrorMessage(error, 'Ошибка подписания сметы'));
+    }
+});
 
 /* ================= SLICE ================= */
 const estimatesSlice = createSlice({
@@ -116,6 +184,8 @@ const estimatesSlice = createSlice({
         clearMaterialEstimates: (state) => {
             state.data = [];
             state.pagination = null;
+            state.loading = false;
+            state.submitting = false;
             state.error = null;
         },
     },
@@ -159,6 +229,20 @@ const estimatesSlice = createSlice({
                 if (state.pagination) {
                     state.pagination.total -= 1;
                 }
+            })
+
+            /* SIGN */
+            .addCase(signEstimate.pending, (state) => {
+                state.submitting = true;
+                state.error = null;
+            })
+            .addCase(signEstimate.fulfilled, (state, action) => {
+                state.submitting = false;
+                upsertItem(state, action.payload);
+            })
+            .addCase(signEstimate.rejected, (state, action) => {
+                state.submitting = false;
+                state.error = action.payload ?? 'Ошибка подписания сметы';
             });
     },
 });

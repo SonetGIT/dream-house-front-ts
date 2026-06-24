@@ -5,6 +5,7 @@ import {
     Home,
     Layers3,
     Pencil,
+    Plus,
     Ruler,
     Wallet,
     X,
@@ -19,11 +20,7 @@ import type {
     PassportReservationBrief,
 } from '../slices/salesUnitPassportSlice';
 import { ClientAccordionItem } from './ClientAccordionItem';
-import {
-    HeaderIconAction,
-    PrimaryButton,
-    SecondaryButton,
-} from './SalesUnitPassportUI';
+import { HeaderIconAction, PrimaryButton, SecondaryButton } from './SalesUnitPassportUI';
 
 export type ClientHistoryGroup = {
     key: string;
@@ -56,14 +53,14 @@ function InlineMetric({
     };
 
     return (
-        <div className="flex items-center min-w-0 gap-2 rounded-xl border border-stone-200 bg-white px-2 py-2">
+        <div className="flex items-center min-w-0 gap-2 px-2 py-2 bg-white border rounded-xl border-stone-200">
             <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${toneMap[tone]}`}>
                 {icon}
             </div>
             <div className="min-w-0">
                 <div className="text-[12px] leading-none text-slate-500">
                     {label}:{' '}
-                    <span className="mt-1 truncate text-sm font-semibold text-slate-700">
+                    <span className="mt-1 text-sm font-semibold truncate text-slate-700">
                         {value}{' '}
                     </span>
                 </div>
@@ -107,11 +104,11 @@ export function SalesUnitPassportSidebarHeader({
     onClose: () => void;
 }) {
     return (
-        <div className="border-b border-stone-200 bg-white">
-            <div className="px-2 pb-4 pt-1">
+        <div className="bg-white border-b border-stone-200">
+            <div className="px-2 pt-1 pb-4">
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="flex items-center gap-2 mt-2">
                             <Home size={16} className="text-blue-500" />
                             <h2 className="font-semibold text-slate-800">Квартира {unitNumber}</h2>
                             <span
@@ -121,7 +118,7 @@ export function SalesUnitPassportSidebarHeader({
                             </span>
                         </div>
 
-                        <div className="mt-2 flex flex-wrap gap-5 text-sm text-slate-500">
+                        <div className="flex flex-wrap gap-5 mt-2 text-sm text-slate-500">
                             <span className="inline-flex items-center gap-1.5">
                                 <Ruler size={14} className="text-blue-500" />
                                 {areaTotal} м2
@@ -197,6 +194,7 @@ export function SalesUnitPassportSidebarHeader({
 export function SalesUnitPassportHistoryPanel({
     clientHistory,
     expandedKeys,
+    hasActiveReservation,
     onToggleGroup,
     onCreateReservation,
     onCreateDeal,
@@ -218,15 +216,34 @@ export function SalesUnitPassportHistoryPanel({
     getDealPayments,
     getDealSchedules,
     getReservationPayments,
+    getSingleReservationPayments,
 }: {
     clientHistory: ClientHistoryGroup[];
     expandedKeys: string[];
+    hasActiveReservation: boolean;
     onToggleGroup: (groupKey: string) => void;
-    onCreateReservation: (context?: PassportReservation | PassportReservationBrief | { client_id?: number | null } | null) => void;
-    onCreateDeal: (defaults?: { client_id?: number | null; reservation_id?: number | null }) => void;
+    onCreateReservation: (
+        context?:
+            | PassportReservation
+            | PassportReservationBrief
+            | { client_id?: number | null }
+            | null,
+    ) => void;
+    onCreateDeal: (defaults?: {
+        client_id?: number | null;
+        reservation_id?: number | null;
+    }) => void;
     onEditReservation: (reservation: PassportReservation | PassportReservationBrief) => void;
     onCancelReservation: (reservation: PassportReservation | PassportReservationBrief) => void;
-    onPaymentClick: (deal: PassportDeal) => void;
+    onPaymentClick: (
+        context:
+            | PassportDeal
+            | {
+                  reservation?: PassportReservation | PassportReservationBrief | null;
+                  reservation_id?: number | string | null;
+                  client_id?: number | string | null;
+              },
+    ) => void;
     onScheduleClick: (deal: PassportDeal) => void;
     onEditDeal: (deal: PassportDeal) => void;
     onSignDeal: (deal: PassportDeal) => void;
@@ -242,14 +259,41 @@ export function SalesUnitPassportHistoryPanel({
     getDealPayments: (dealId: number) => PassportPayment[];
     getDealSchedules: (dealId: number) => PassportPaymentSchedule[];
     getReservationPayments: (group: ClientHistoryGroup) => PassportPayment[];
+    getSingleReservationPayments: (
+        reservation: PassportReservation | PassportReservationBrief,
+    ) => PassportPayment[];
 }) {
     return (
-        <div className="flex-1 overflow-y-auto px-2 py-2">
-            <div className="mb-3">
-                <h3 className="text-sm font-semibold text-slate-800">История клиента</h3>
-                <p className="mt-0.5 text-xs text-slate-500">
-                    История брони, сделки, платежей, и по графику платежей
-                </p>
+        <div className="flex-1 px-2 py-2 overflow-y-auto">
+            <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                    <h3 className="text-sm font-semibold text-slate-800">История клиента</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                        История брони, сделки, платежей, и по графику платежей
+                    </p>
+                </div>
+
+                {clientHistory.length ? (
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => onCreateDeal()}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-white transition bg-emerald-600 rounded-lg h-8 px-3.5 hover:bg-emerald-700 active:scale-95 shadow-sm"
+                        >
+                            <Plus size={14} />
+                            Выкуп
+                        </button>
+
+                        {!hasActiveReservation ? (
+                            <button
+                                onClick={() => onCreateReservation()}
+                                className="inline-flex items-center gap-1.5 text-sm font-medium text-white transition bg-blue-600 rounded-lg h-8 px-3.5 hover:bg-blue-700 active:scale-95 shadow-sm"
+                            >
+                                <Plus size={14} />
+                                Создать бронь
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
 
             {clientHistory.length > 0 ? (
@@ -275,26 +319,37 @@ export function SalesUnitPassportHistoryPanel({
                             getReservationStatusName={getReservationStatusName}
                             getDealStatusName={getDealStatusName}
                             isActiveReservation={isActiveReservation}
+                            hasActiveReservation={hasActiveReservation}
                             canSignDeal={canSignDeal}
                             canCancelDeal={canCancelDeal}
                             getDealPayments={getDealPayments}
                             getDealSchedules={getDealSchedules}
                             getReservationPayments={getReservationPayments}
+                            getSingleReservationPayments={getSingleReservationPayments}
                         />
                     ))}
                 </div>
             ) : (
-                <div className="rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-6 text-center">
-                    <p className="text-sm text-rose-400">
-                        По квартире пока нет истории клиентов
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                        <PrimaryButton onClick={() => onCreateDeal()}>
-                            + Выкуп
-                        </PrimaryButton>
-                        <SecondaryButton onClick={() => onCreateReservation()}>
-                            Создать бронь
-                        </SecondaryButton>
+                <div className="px-4 py-6 text-center bg-white border border-dashed rounded-2xl border-stone-300">
+                    <p className="text-sm text-rose-400">По квартире пока нет истории клиентов</p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                        <button
+                            onClick={() => onCreateDeal()}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-white transition bg-emerald-600 rounded-lg h-8 px-3.5 hover:bg-emerald-700 active:scale-95 shadow-sm"
+                        >
+                            <Plus size={14} />
+                            Выкуп
+                        </button>
+
+                        {!hasActiveReservation ? (
+                            <button
+                                onClick={() => onCreateReservation()}
+                                className="inline-flex items-center gap-1.5 text-sm font-medium text-white transition bg-blue-600 rounded-lg h-8 px-3.5 hover:bg-blue-700 active:scale-95 shadow-sm"
+                            >
+                                <Plus size={14} />
+                                Создать бронь
+                            </button>
+                        ) : null}
                     </div>
                 </div>
             )}
