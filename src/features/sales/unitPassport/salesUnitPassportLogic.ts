@@ -6,7 +6,7 @@ import {
     type PassportPayment,
     type UnitPassport,
     type PassportReservationBrief,
-} from '../slices/salesUnitPassportSlice';
+} from '../slices/salesUnitPassportSlice copy';
 import type { EnumItem } from '@/features/reference/referenceService';
 
 export function useSalesUnitPassportLogic(
@@ -134,8 +134,7 @@ export function useSalesUnitPassportLogic(
 
     const statusTextHas = (item: EnumItem | null | undefined, parts: string[]) => {
         const row = item || null;
-        const values = [row?.code, row?.name]
-            .map((value) => String(value || '').toLowerCase());
+        const values = [row?.code, row?.name].map((value) => String(value || '').toLowerCase());
 
         return parts.some((part) => values.some((value) => value.includes(part)));
     };
@@ -146,25 +145,30 @@ export function useSalesUnitPassportLogic(
         const rawStatus = typeof value === 'object' ? value?.status : value;
         const id = Number(rawStatus);
 
-        return (typeof value === 'object' ? ('status_ref' in value ? value.status_ref : null) : null) ||
+        return (
+            (typeof value === 'object'
+                ? 'status_ref' in value
+                    ? value.status_ref
+                    : null
+                : null) ||
             reservationStatusMap.get(id) ||
-            null;
+            null
+        );
     };
 
     const getDealStatusRow = (value: PassportDeal | number | null | undefined) => {
         const rawStatus = typeof value === 'object' ? value?.status : value;
         const id = Number(rawStatus);
 
-        return (typeof value === 'object' ? value?.status_ref : null) || dealStatusMap.get(id) || null;
+        return (
+            (typeof value === 'object' ? value?.status_ref : null) || dealStatusMap.get(id) || null
+        );
     };
 
     const getReservationStatusName = (
         value: PassportReservation | PassportReservationBrief | number | null | undefined,
     ) => {
-        return (
-            getReservationStatusRow(value)?.name ||
-            'Бронь'
-        );
+        return getReservationStatusRow(value)?.name || 'Бронь';
     };
 
     const getDealStatusName = (value: PassportDeal | number | null | undefined) =>
@@ -174,10 +178,7 @@ export function useSalesUnitPassportLogic(
         value: PassportReservation | PassportReservationBrief | number | null | undefined,
     ) => {
         const row = getReservationStatusRow(value);
-        const rawStatus =
-            typeof value === 'object'
-                ? value?.status
-                : value;
+        const rawStatus = typeof value === 'object' ? value?.status : value;
         const id = Number(rawStatus);
         const rawText = String(rawStatus || '').toLowerCase();
 
@@ -229,7 +230,9 @@ export function useSalesUnitPassportLogic(
 
         const ensureGroup = (clientId: number | null, client: PassportClient | null = null) => {
             const key = clientId ? `client-${clientId}` : 'client-empty';
-            const passportClient = clientId ? passportClientById.get(Number(clientId)) || null : null;
+            const passportClient = clientId
+                ? passportClientById.get(Number(clientId)) || null
+                : null;
 
             if (!groups.has(key)) {
                 groups.set(key, {
@@ -344,7 +347,11 @@ export function useSalesUnitPassportLogic(
                 const hasReservation = group.reservations.some(
                     (r: PassportReservation | PassportReservationBrief) => isActiveReservation(r),
                 );
-                const status = hasCurrentDeal ? 'current' : hasReservation ? 'reservation' : 'history';
+                const status = hasCurrentDeal
+                    ? 'current'
+                    : hasReservation
+                      ? 'reservation'
+                      : 'history';
 
                 return {
                     ...group,
@@ -375,13 +382,7 @@ export function useSalesUnitPassportLogic(
                     (b.createdDate?.getTime() || 0) - (a.createdDate?.getTime() || 0) ||
                     (b.latestDate?.getTime() || 0) - (a.latestDate?.getTime() || 0),
             );
-    }, [
-        reservations,
-        deals,
-        payments,
-        isActiveReservation,
-        passportClientById,
-    ]);
+    }, [reservations, deals, payments, isActiveReservation, passportClientById]);
 
     /*******************************************************************************************************************/
     return {

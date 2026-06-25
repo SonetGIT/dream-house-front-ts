@@ -20,6 +20,13 @@
         },
         "apiName": "/projectStatuses/gets"
     },
+    "projects": {
+        "data": {
+            "id": "id",
+            "name": ["name"]
+        },
+        "apiName": "/projects/gets"
+    },
     "unitsOfMeasure": {
         "data": {
             "id": "id",

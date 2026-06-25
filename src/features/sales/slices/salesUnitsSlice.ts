@@ -134,7 +134,7 @@ export interface PassportClient {
     latest_at: string;
 }
 
-export interface SalesUnitPassport {
+interface SalesUnitPassport {
     unit: {
         id: number;
         project_id: number;

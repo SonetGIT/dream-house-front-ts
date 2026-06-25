@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '@/features/reference/useReference';
@@ -34,7 +34,7 @@ import {
     type PassportPaymentSchedule,
     type PassportReservation,
     type PassportReservationBrief,
-} from '@/features/sales/slices/salesUnitPassportSlice';
+} from '@/features/sales/slices/salesUnitPassportSlice copy';
 import { fetchSalesClients } from '@/features/sales/slices/salesClientsSlice';
 import {
     fetchSalesDealTypes,
@@ -96,6 +96,29 @@ const EMPTY_SCHEDULE_FORM = {
 };
 
 const EMPTY_ARRAY: never[] = [];
+const NEW_RESERVATION_STATUS_ID = 2;
+const UNIT_DOCUMENT_ENTITY_TYPE = 'salesUnit';
+const UNIT_FILE_TYPES = ['2d', '3d'] as const;
+
+type UnitFileType = (typeof UNIT_FILE_TYPES)[number];
+type UnitFilesState = Record<
+    UnitFileType,
+    {
+        documentId: number | null;
+        files: DocumentFile[];
+    }
+>;
+
+const EMPTY_UNIT_FILES: UnitFilesState = {
+    '2d': {
+        documentId: null,
+        files: [],
+    },
+    '3d': {
+        documentId: null,
+        files: [],
+    },
+};
 
 type PaymentModalContext =
     | PassportDeal
@@ -104,6 +127,34 @@ type PaymentModalContext =
           reservation_id?: number | string | null;
           client_id?: number | string | null;
       };
+
+const getUnitFileDocumentMeta = (
+    kind: UnitFileType,
+    unitNumber: string | number | undefined,
+    unitId: number,
+) => {
+    const title = kind === '2d' ? '2D файл' : '3D файл';
+    const marker = `unit-file:${kind}`;
+
+    return {
+        title,
+        marker,
+        name: `${title} квартиры №${unitNumber || unitId}`,
+        description: `${marker}; Материалы квартиры №${unitNumber || unitId}`,
+    };
+};
+
+const isMatchingUnitFileDocument = (doc: Document, kind: UnitFileType) => {
+    const marker = `unit-file:${kind}`;
+    const docName = String(doc.name || '').toLowerCase();
+    const docDescription = String(doc.description || '').toLowerCase();
+
+    return (
+        docDescription.includes(marker) ||
+        docName.includes(`${kind} файл`) ||
+        docName.includes(`${kind}-файл`)
+    );
+};
 
 const getUnitStatusTone = (code?: string) => {
     const normalized = String(code || '').toLowerCase();
@@ -203,6 +254,7 @@ const getSalesReportBaseUrls = () => {
     return Array.from(new Set(candidates.filter(Boolean)));
 };
 
+/************************************************************************************************************/
 export default function SalesUnitPasportSidbar({
     unitId,
     onClose,
@@ -218,9 +270,7 @@ export default function SalesUnitPasportSidbar({
     const { projects, blocks } = useAppSelector((state) => state.salesObjOverview);
     const clients = useAppSelector((state) => state.salesClients?.items ?? EMPTY_ARRAY);
     const dealTypes = useAppSelector((state) => state.salesDictionaries?.dealTypes ?? EMPTY_ARRAY);
-    const unitStatuses = useAppSelector(
-        (state) => state.salesDictionaries?.unitStatuses ?? EMPTY_ARRAY,
-    );
+    const unitStatuses = useAppSelector((state) => state.salesDictionaries?.unitStatuses);
     const finishTypes = useAppSelector(
         (state) => state.salesDictionaries?.finishTypes ?? EMPTY_ARRAY,
     );
@@ -286,6 +336,8 @@ export default function SalesUnitPasportSidbar({
         documentId: null,
         files: [],
     });
+    const [unitFilesLoading, setUnitFilesLoading] = useState(false);
+    const [unitFiles, setUnitFiles] = useState<UnitFilesState>(EMPTY_UNIT_FILES);
 
     useEffect(() => {
         if (unitId) {
@@ -441,6 +493,97 @@ export default function SalesUnitPasportSidbar({
         return client?.full_name || client?.phone || fallback;
     };
 
+    const loadUnitFiles = useCallback(async () => {
+        if (!passportUnit?.id) {
+            setUnitFiles(EMPTY_UNIT_FILES);
+            return;
+        }
+
+        setUnitFilesLoading(true);
+        try {
+            const docsRes = await dispatch(
+                fetchDocuments({
+                    entity_type: UNIT_DOCUMENT_ENTITY_TYPE,
+                    entity_id: passportUnit.id,
+                    page: 1,
+                    size: 50,
+                }),
+            ).unwrap();
+
+            const docs = docsRes.data || [];
+            const nextState: UnitFilesState = {
+                '2d': { documentId: null, files: [] },
+                '3d': { documentId: null, files: [] },
+            };
+
+            for (const kind of UNIT_FILE_TYPES) {
+                const matchedDoc = docs.find((doc) => isMatchingUnitFileDocument(doc, kind));
+                if (!matchedDoc?.id) continue;
+
+                const filesRes = await dispatch(fetchDocumentFiles(matchedDoc.id)).unwrap();
+                nextState[kind] = {
+                    documentId: matchedDoc.id,
+                    files: filesRes.data || [],
+                };
+            }
+
+            setUnitFiles(nextState);
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : 'Не удалось загрузить 2D/3D файлы квартиры',
+            );
+        } finally {
+            setUnitFilesLoading(false);
+        }
+    }, [dispatch, passportUnit?.id]);
+
+    const getOrCreateUnitFileDocument = useCallback(
+        async (kind: UnitFileType) => {
+            if (!passportUnit?.id) {
+                throw new Error('Квартира не найдена');
+            }
+
+            const docsRes = await dispatch(
+                fetchDocuments({
+                    entity_type: UNIT_DOCUMENT_ENTITY_TYPE,
+                    entity_id: passportUnit.id,
+                    page: 1,
+                    size: 50,
+                }),
+            ).unwrap();
+
+            const existingDocument = (docsRes.data || []).find((doc) =>
+                isMatchingUnitFileDocument(doc, kind),
+            );
+            if (existingDocument?.id) {
+                return existingDocument;
+            }
+
+            const meta = getUnitFileDocumentMeta(kind, passportUnit.unit_number, passportUnit.id);
+            return dispatch(
+                createDocument({
+                    entity_type: UNIT_DOCUMENT_ENTITY_TYPE,
+                    entity_id: passportUnit.id,
+                    name: meta.name,
+                    description: meta.description,
+                    status: 1,
+                }),
+            ).unwrap();
+        },
+        [dispatch, passportUnit?.id, passportUnit?.unit_number],
+    );
+
+    useEffect(() => {
+        if (!passportUnit?.id) {
+            setUnitFiles(EMPTY_UNIT_FILES);
+            return;
+        }
+
+        void loadUnitFiles();
+    }, [loadUnitFiles, passportUnit?.id]);
+
     const refreshPassport = async () => {
         await dispatch(fetchSalesUnitPassport(unitId));
     };
@@ -470,37 +613,43 @@ export default function SalesUnitPasportSidbar({
 
     const normalizeEntityType = (value: unknown) => String(value || '').toLowerCase();
 
-    const isPaymentForDeal = (payment: PassportPayment, deal: PassportDeal | undefined) => {
-        if (!payment || !deal?.id) return false;
-        const entityType = normalizeEntityType(
-            payment.entity_type_code || payment.entity_type_ref?.code || payment.entity_type,
-        );
-        if (entityType === 'salesdeal' && Number(payment.entity_id) === Number(deal.id)) {
-            return true;
-        }
-
-        const contractNumber = String(deal.contract_number || deal.deal_number || '')
-            .trim()
-            .toLowerCase();
-        if (!contractNumber) return false;
-
-        return String(payment.title || payment.description || '')
-            .toLowerCase()
-            .includes(contractNumber);
-    };
-
-    const getDealPayments = (dealId: number) => {
-        const deal = deals.find((item: PassportDeal) => Number(item.id) === Number(dealId));
-        if (Array.isArray(deal?.payments) && deal.payments.length) {
-            return [...deal.payments].sort(
-                (a, b) =>
-                    new Date(b.paid_date || b.planned_date || b.created_at).getTime() -
-                    new Date(a.paid_date || a.planned_date || a.created_at).getTime(),
+    const isPaymentForDeal = useCallback(
+        (payment: PassportPayment, deal: PassportDeal | undefined) => {
+            if (!payment || !deal?.id) return false;
+            const entityType = normalizeEntityType(
+                payment.entity_type_code || payment.entity_type_ref?.code || payment.entity_type,
             );
-        }
+            if (entityType === 'salesdeal' && Number(payment.entity_id) === Number(deal.id)) {
+                return true;
+            }
 
-        return payments.filter((payment: PassportPayment) => isPaymentForDeal(payment, deal));
-    };
+            const contractNumber = String(deal.contract_number || deal.deal_number || '')
+                .trim()
+                .toLowerCase();
+            if (!contractNumber) return false;
+
+            return String(payment.title || payment.description || '')
+                .toLowerCase()
+                .includes(contractNumber);
+        },
+        [],
+    );
+
+    const getDealPayments = useCallback(
+        (dealId: number) => {
+            const deal = deals.find((item: PassportDeal) => Number(item.id) === Number(dealId));
+            if (Array.isArray(deal?.payments) && deal.payments.length) {
+                return [...deal.payments].sort(
+                    (a, b) =>
+                        new Date(b.paid_date || b.planned_date || b.created_at).getTime() -
+                        new Date(a.paid_date || a.planned_date || a.created_at).getTime(),
+                );
+            }
+
+            return payments.filter((payment: PassportPayment) => isPaymentForDeal(payment, deal));
+        },
+        [deals, isPaymentForDeal, payments],
+    );
 
     const getDealSchedules = (dealId: number) => {
         const direct = deals.find(
@@ -613,7 +762,7 @@ export default function SalesUnitPasportSidbar({
             totalPaid,
             remaining: Math.max(totalDealAmount - totalPaid, 0),
         };
-    }, [clientHistory, payments]);
+    }, [clientHistory, getDealPayments]);
 
     const openEditUnitModal = () => {
         if (!passportUnit) return;
@@ -1201,6 +1350,73 @@ export default function SalesUnitPasportSidbar({
         }
     };
 
+    const handleUploadUnitFile = async (
+        kind: UnitFileType,
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+
+        if (!file) return;
+
+        setUnitFilesLoading(true);
+        try {
+            const document = await getOrCreateUnitFileDocument(kind);
+            await dispatch(
+                uploadDocumentFile({
+                    documentId: document.id,
+                    file,
+                }),
+            ).unwrap();
+
+            await loadUnitFiles();
+            const meta = getUnitFileDocumentMeta(
+                kind,
+                passportUnit?.unit_number,
+                passportUnit?.id || unitId,
+            );
+            toast.success(`${meta.title} загружен`);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Ошибка загрузки файла квартиры');
+        } finally {
+            setUnitFilesLoading(false);
+        }
+    };
+
+    const handleDownloadUnitFile = async (file: DocumentFile) => {
+        try {
+            await dispatch(
+                downloadDocumentFile({
+                    file_id: file.id,
+                    filename: file.name || `file-${file.id}`,
+                }),
+            ).unwrap();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Ошибка скачивания файла');
+        }
+    };
+
+    const handleDeleteUnitFile = async (kind: UnitFileType, fileId: number) => {
+        if (!window.confirm('Удалить файл?')) return;
+
+        setUnitFilesLoading(true);
+        try {
+            await dispatch(deleteDocumentFile(fileId)).unwrap();
+            await loadUnitFiles();
+
+            const meta = getUnitFileDocumentMeta(
+                kind,
+                passportUnit?.unit_number,
+                passportUnit?.id || unitId,
+            );
+            toast.success(`${meta.title} удален`);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Ошибка удаления файла');
+        } finally {
+            setUnitFilesLoading(false);
+        }
+    };
+
     const handleSaveReservation = async (event: FormEvent) => {
         event.preventDefault();
         setActionLoading(true);
@@ -1227,7 +1443,7 @@ export default function SalesUnitPasportSidbar({
                 comment: resForm.comment.trim() || null,
                 status: editingReservation
                     ? Number(editingReservation.status || getReservationStatusIdByKey('active'))
-                    : getReservationStatusIdByKey('active'),
+                    : NEW_RESERVATION_STATUS_ID,
                 cancel_reason: editingReservation?.cancel_reason || null,
             };
 
@@ -1296,12 +1512,8 @@ export default function SalesUnitPasportSidbar({
     return (
         <div className="flex h-full w-[680px] flex-col overflow-hidden border-l border-stone-200 bg-[#f8fafc] shadow-xl">
             <SalesUnitPassportSidebarHeader
-                unitNumber={passportUnit.unit_number}
-                areaTotal={passportUnit.area_total}
-                rooms={passportUnit.rooms}
-                floorNumber={passportUnit.floor?.floor_number}
-                priceTotal={passportUnit.price_total}
-                statusName={currentUnitStatus?.name}
+                unit={passportUnit}
+                currentUnitStatus={currentUnitStatus}
                 statusToneClass={getUnitStatusTone(currentUnitStatus?.code)}
                 summary={summary}
                 isUnitOffSale={isUnitOffSale}
@@ -1310,6 +1522,95 @@ export default function SalesUnitPasportSidbar({
                 onEditUnit={openEditUnitModal}
                 onClose={onClose}
             />
+
+            <div className="px-2 py-3 bg-white border-b border-stone-200">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                    <div>
+                        <div className="text-sm font-semibold text-slate-800">Файлы квартиры</div>
+                        <p className="text-xs text-slate-500">
+                            Загрузка 2D и 3D материалов по этой квартире
+                        </p>
+                    </div>
+                    {unitFilesLoading ? (
+                        <span className="text-xs font-medium text-slate-500">Загрузка...</span>
+                    ) : null}
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                    {UNIT_FILE_TYPES.map((kind) => {
+                        const meta = getUnitFileDocumentMeta(
+                            kind,
+                            passportUnit.unit_number,
+                            passportUnit.id,
+                        );
+                        const files = unitFiles[kind].files;
+
+                        return (
+                            <div
+                                key={kind}
+                                className="p-3 border rounded-xl border-stone-200 bg-slate-50"
+                            >
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                    <div className="text-sm font-semibold text-slate-700">
+                                        {meta.title}
+                                    </div>
+                                    <label className="inline-flex cursor-pointer items-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700">
+                                        Загрузить
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            onChange={(event) =>
+                                                void handleUploadUnitFile(kind, event)
+                                            }
+                                        />
+                                    </label>
+                                </div>
+
+                                {files.length ? (
+                                    <div className="space-y-2">
+                                        {files.map((file) => (
+                                            <div
+                                                key={file.id}
+                                                className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2"
+                                            >
+                                                <div className="min-w-0 text-xs font-medium truncate text-slate-700">
+                                                    {file.name || `Файл #${file.id}`}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        title="Скачать файл"
+                                                        onClick={() =>
+                                                            void handleDownloadUnitFile(file)
+                                                        }
+                                                        className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200"
+                                                    >
+                                                        Скачать
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="Удалить файл"
+                                                        onClick={() =>
+                                                            void handleDeleteUnitFile(kind, file.id)
+                                                        }
+                                                        className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
+                                                    >
+                                                        Удалить
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="px-3 py-4 text-xs text-center bg-white border border-dashed rounded-lg border-stone-300 text-slate-500">
+                                        Файл пока не загружен
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
             <SalesUnitPassportHistoryPanel
                 clientHistory={clientHistory as ClientHistoryGroup[]}

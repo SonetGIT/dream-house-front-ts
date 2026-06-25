@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Collapse } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
@@ -23,6 +23,7 @@ interface PropsType {
     blockId: number;
     data: WorkPerformed[];
     refs: Record<string, ReferenceResult>;
+    focusedWorkPerformedId?: number | null;
     onDeleteWorkPerformedId: (id: number) => void;
     onDeleteWorkPerformedItemId: (id: number) => void;
 }
@@ -65,6 +66,37 @@ export default function WorkPerformedTable(props: PropsType) {
     const [rowTabs, setRowTabs] = useState<Record<number, RowTab>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
+
+    useEffect(() => {
+        const focusedWorkPerformedId = props.focusedWorkPerformedId;
+        if (!focusedWorkPerformedId) return;
+
+        const exists = props.data?.some(
+            (workPerformed) => Number(workPerformed.id) === Number(focusedWorkPerformedId),
+        );
+        if (!exists) return;
+
+        setOpenRows((prev) => ({
+            ...prev,
+            [focusedWorkPerformedId]: true,
+        }));
+
+        dispatch(
+            fetchWorkPerformedItems({
+                work_performed_id: focusedWorkPerformedId,
+                page: 1,
+                size: 10,
+            }),
+        );
+
+        const timeoutId = window.setTimeout(() => {
+            document
+                .getElementById(`work-performed-row-${focusedWorkPerformedId}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [dispatch, props.data, props.focusedWorkPerformedId]);
 
     /*TOGGLE*/
     const toggleRow = (id: number) => {
@@ -300,13 +332,26 @@ export default function WorkPerformedTable(props: PropsType) {
                                 ];
                                 const statusInfo = getStatusConfig(workPerf.status);
                                 const activeTab: RowTab = rowTabs[workPerf.id] ?? 'items';
+                                const isFocused =
+                                    props.focusedWorkPerformedId != null &&
+                                    Number(props.focusedWorkPerformedId) === Number(workPerf.id);
 
                                 return (
                                     <React.Fragment key={workPerf.id}>
                                         {/* WorkPerformedTable */}
                                         <tr
+                                            id={`work-performed-row-${workPerf.id}`}
                                             className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(workPerf.id)}
+                                            style={
+                                                isFocused
+                                                    ? {
+                                                          backgroundColor: '#eff6ff',
+                                                          boxShadow:
+                                                              'inset 3px 0 0 #2563eb, inset 0 0 0 1px rgba(37,99,235,0.15)',
+                                                      }
+                                                    : undefined
+                                            }
                                         >
                                             {/* toggle */}
                                             <td className="px-2 py-2">

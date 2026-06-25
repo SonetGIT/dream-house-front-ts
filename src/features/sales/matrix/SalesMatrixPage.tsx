@@ -21,6 +21,7 @@ import SalesMatrixPlanManagerModal from './SalesMatrixPlanManagerModal';
 import { fetchFileContent } from '@/features/projects/legal_department/files/downloadFile';
 import { Paper } from '@mui/material';
 import SalesUnitPasportSidbar from '../unitPassport/SalesUnitPassportSidbar';
+import { SalesUnitPassportPage } from '../unitsPassport/SalesUnitPassportPage';
 
 interface MatrixUnitStatus {
     id: number;
@@ -755,7 +756,7 @@ export default function SalesMatrixPage() {
                     </div>
                 </div>
                 {selectedUnitId && (
-                    <SalesUnitPasportSidbar
+                    <SalesUnitPassportPage
                         unitId={selectedUnitId}
                         onClose={() => setSelectedUnitId(null)}
                     />

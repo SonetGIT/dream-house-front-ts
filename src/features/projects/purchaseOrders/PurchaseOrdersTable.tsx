@@ -69,6 +69,14 @@ export default function PurchaseOrdersTable({
             ...prev,
             [openOrderId]: true,
         }));
+
+        const timeoutId = window.setTimeout(() => {
+            document
+                .getElementById(`purchase-order-row-${openOrderId}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+
+        return () => window.clearTimeout(timeoutId);
     }, [openOrderId, data]);
 
     const toggleRow = (id: number) => {
@@ -127,12 +135,24 @@ export default function PurchaseOrdersTable({
                         <tbody>
                             {data?.map((po) => {
                                 const statusInfo = getStatusConfig(po.status);
+                                const isFocused =
+                                    openOrderId != null && Number(openOrderId) === Number(po.id);
 
                                 return (
                                     <React.Fragment key={po.id}>
                                         <tr
+                                            id={`purchase-order-row-${po.id}`}
                                             className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(po.id)}
+                                            style={
+                                                isFocused
+                                                    ? {
+                                                          backgroundColor: '#eff6ff',
+                                                          boxShadow:
+                                                              'inset 3px 0 0 #2563eb, inset 0 0 0 1px rgba(37,99,235,0.15)',
+                                                      }
+                                                    : undefined
+                                            }
                                         >
                                             <td className="px-2 py-2">
                                                 <button

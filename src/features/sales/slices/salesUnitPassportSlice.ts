@@ -1,5 +1,5 @@
 import { apiRequest } from '@/utils/apiRequest';
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 export interface CurrencyInfo {
     id: number;
@@ -29,8 +29,6 @@ export interface UserInfo {
     middle_name: string | null;
     username: string;
     full_name?: string;
-    label?: string;
-    role_id?: number;
 }
 
 export interface FloorInfo {
@@ -43,10 +41,10 @@ export interface DealTypeInfo {
     id: number;
     name: string;
     code: string;
-    sort_order: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
+    sort_order?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
 }
 
 export interface PaymentTypeInfo {
@@ -64,17 +62,17 @@ export interface ArticleInfo {
     name: string;
     code: string;
     payment_type: number;
-    sort_order: number;
+    sort_order?: number;
     description: string | null;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
 }
 
 export interface PaymentMethodRef {
     id: number;
     name: string;
-    code: string;
+    code?: string;
 }
 
 export interface EntityTypeRef {
@@ -87,7 +85,132 @@ export interface EntityTypeRef {
     deleted?: boolean;
 }
 
-export interface PassportPayment {
+export interface SalesUnitPassportData {
+    unit: SalesUnitPassport;
+}
+
+export interface SalesUnitPassport {
+    id: number;
+    project_id: number;
+    block_id: number;
+    floor_id: number;
+    unit_number: string;
+    lot_type: string;
+    plan_code?: string | null;
+    external_code?: string | null;
+    rooms: number | null;
+    area_total: number | null;
+    price_total: number | null;
+    price_per_m2?: number | null;
+    currency: number | string | null;
+    status_id: number | null;
+    finish_type?: number | null;
+    cadastral_number?: string | null;
+    comment?: string | null;
+    description?: string | null;
+    created_by?: number;
+    updated_by?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
+    floor?: FloorInfo | null;
+    status?: StatusInfo | null;
+    currency_info?: CurrencyInfo | null;
+    reservationCount?: number | null;
+    dealCount?: number | null;
+    totalDealAmount?: number | null;
+    totalPaid?: number | null;
+    remaining?: number | null;
+    clients?: SalesClient[];
+}
+
+export interface SalesClient {
+    id: number;
+    full_name: string;
+    phone?: string | null;
+    email?: string | null;
+    pin?: string | null;
+    passport_number?: string | null;
+    manager_user_id?: number | null;
+    reservations?: SalesReservation[];
+    deals?: SalesDeal[];
+    payment_schedules?: SalesPaymentSchedule[];
+    deal_created_at?: string | null;
+    created_at?: string | null;
+    latest_at?: string | null;
+}
+
+export interface SalesReservation {
+    id: number;
+    project_id: number;
+    block_id: number;
+    client_id: number;
+    unit_id: number;
+    status: number | null;
+    manager_user_id: number;
+    start_at: string | null;
+    expires_at: string | null;
+    confirmed_at?: string | null;
+    canceled_at?: string | null;
+    closed_at?: string | null;
+    reservation_amount?: number | null;
+    currency?: number | string | null;
+    comment?: string | null;
+    cancel_reason?: string | null;
+    notify_3_days?: boolean;
+    notify_2_days?: boolean;
+    notify_1_day?: boolean;
+    created_by?: number;
+    updated_by?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
+    lead?: unknown | null;
+    payments?: SalesPayment[];
+    currency_info?: CurrencyInfo | null;
+    status_ref?: StatusInfo | null;
+    manager_user?: UserInfo | null;
+    created_by_user?: UserInfo | null;
+    updated_by_user?: UserInfo | null;
+}
+
+export interface SalesDeal {
+    id: number;
+    project_id: number;
+    block_id: number;
+    client_id: number;
+    unit_id: number;
+    reservation_id?: number | null;
+    deal_type_id?: number;
+    status: number | null;
+    manager_user_id?: number;
+    deal_number?: string | null;
+    contract_number?: string | null;
+    contract_date?: string | null;
+    payment_type?: number | null;
+    total_amount?: number | null;
+    currency?: number | string | null;
+    note?: string | null;
+    canceled_reason?: string | null;
+    signed_at?: string | null;
+    closed_at?: string | null;
+    created_by?: number;
+    updated_by?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
+    payments?: SalesPayment[];
+    payment_schedules?: SalesPaymentSchedule[];
+    currency_info?: CurrencyInfo | null;
+    deal_type?: DealTypeInfo | null;
+    payment_type_ref?: PaymentTypeInfo | null;
+    status_ref?: StatusInfo | null;
+    manager_user?: UserInfo | null;
+    created_by_user?: UserInfo | null;
+    updated_by_user?: UserInfo | null;
+}
+
+export interface SalesPayment {
     id: number;
     project_id: number;
     block_id: number;
@@ -103,7 +226,7 @@ export interface PassportPayment {
     title: string;
     description: string | null;
     amount: number;
-    currency: number;
+    currency: number | string;
     currency_rate: number | null;
     planned_date: string | null;
     paid_date: string | null;
@@ -119,230 +242,141 @@ export interface PassportPayment {
     updated_at: string;
     posted_at: string | null;
     deleted: boolean;
-    payment_type_ref: PaymentTypeInfo | null;
-    status_ref: StatusInfo | null;
-    article: ArticleInfo | null;
-    currency_ref: CurrencyInfo | null;
-    payment_method_ref: PaymentMethodRef | null;
-    entity_type_ref: EntityTypeRef | null;
-    entity_type_code: string | null;
+    payment_type_ref?: PaymentTypeInfo | null;
+    status_ref?: StatusInfo | null;
+    article?: ArticleInfo | null;
+    currency_ref?: CurrencyInfo | null;
+    payment_method_ref?: PaymentMethodRef | null;
+    entity_type_ref?: EntityTypeRef | null;
+    entity_type_code?: string | null;
 }
 
-export interface PassportPaymentScheduleLink {
+export interface SalesPaymentScheduleLink {
     id: number;
     schedule_id: number;
     payment_id: number;
-    amount: string; // API возвращает строку "100000.00"
+    amount: string;
     created_at: string;
     deleted: boolean;
-    payment: PassportPayment;
+    payment?: SalesPayment;
 }
 
-export interface PassportPaymentSchedule {
+export interface SalesPaymentSchedule {
     id: number;
-    project_id: number;
-    block_id: number;
-    unit_id: number;
-    client_id: number;
-    deal_id: number;
-    payment_no: number;
-    planned_date: string;
-    planned_amount: number;
-    paid_amount: number;
-    remaining_amount: number;
-    status: number;
-    paid_at: string | null;
-    overdue_days: number;
-    comment: string | null;
-    created_by: number;
-    updated_by: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
-    status_ref: StatusInfo | null;
-    links: PassportPaymentScheduleLink[];
+    project_id?: number;
+    block_id?: number;
+    unit_id?: number;
+    client_id?: number;
+    deal_id?: number;
+    payment_no?: number;
+    planned_date?: string | null;
+    planned_amount?: number;
+    paid_amount?: number;
+    remaining_amount?: number;
+    status?: number;
+    paid_at?: string | null;
+    overdue_days?: number;
+    comment?: string | null;
+    created_by?: number;
+    updated_by?: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted?: boolean;
+    status_ref?: StatusInfo | null;
+    links?: SalesPaymentScheduleLink[];
 }
 
-export interface PassportClientBrief {
-    id: number;
-    full_name: string;
-    phone: string;
-    email: string | null;
-    passport_number: string | null;
-    pin: string | null;
-    manager_user_id: number | null;
-}
+export const fetchSalesUnitPassport = createAsyncThunk<
+    SalesUnitPassportData,
+    number,
+    { rejectValue: string }
+>(
+    'salesUnitPassport/fetchSalesUnitPassport',
+    async (unitId, { rejectWithValue }) => {
+        try {
+            const res = await apiRequest<SalesUnitPassportData>(`/sales/units/${unitId}/passport`, 'GET');
 
-export interface PassportReservationBrief {
-    id: number;
-    project_id: number;
-    block_id: number;
-    unit_id: number;
-    client_id: number;
-    status: number | null;
-    manager_user_id: number;
-    start_at: string;
-    expires_at: string;
-    confirmed_at: string | null;
-    canceled_at: string | null;
-    closed_at: string | null;
-    reservation_amount: number;
-    currency: string;
-    comment: string | null;
-    cancel_reason: string | null;
-    notify_3_days: boolean;
-    notify_2_days: boolean;
-    notify_1_day: boolean;
-    created_by: number;
-    updated_by: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
-    manager_user: UserInfo | null;
-}
+            return res.data;
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : 'Ошибка загрузки паспорта квартиры',
+            );
+        }
+    },
+);
 
-// БРОНИ (ПОЛНАЯ ВЕРСИЯ)
-export interface PassportReservation extends PassportReservationBrief {
-    lead: unknown | null;
-    currency_info: CurrencyInfo | null;
-    status_ref: StatusInfo | null;
-    manager_user: UserInfo | null;
-    created_by_user: UserInfo | null;
-    updated_by_user: UserInfo | null;
-    payments?: PassportPayment[];
-}
-
-// ДОГОВОРЫ (ПОЛНАЯ ВЕРСИЯ)
-export interface PassportDeal {
-    id: number;
-    project_id: number;
-    block_id: number;
-    unit_id: number;
-    client_id: number;
-    reservation_id: number | null;
-    deal_type_id: number;
-    status: number | null;
-    manager_user_id: number;
-    deal_number: string | null;
-    contract_number: string;
-    contract_date: string;
-    payment_type: number | null;
-    total_amount: number;
-    currency: string;
-    note: string;
-    canceled_reason: string | null;
-    signed_at: string | null;
-    closed_at: string | null;
-    created_by: number;
-    updated_by: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
-    client?: PassportClientBrief;
-    currency_info: CurrencyInfo | null;
-    deal_type: DealTypeInfo | null;
-    payment_type_ref: PaymentTypeInfo | null;
-    status_ref: StatusInfo | null;
-    reservation?: PassportReservationBrief | null;
-    manager_user: UserInfo | null;
-    created_by_user: UserInfo | null;
-    updated_by_user: UserInfo | null;
-    payments?: PassportPayment[];
-    payment_schedules?: PassportPaymentSchedule[];
-}
-
-// КЛИЕНТЫ (ПОЛНАЯ ВЕРСИЯ С ВЛОЖЕННЫМИ ДАННЫМИ)
-export interface PassportClient extends PassportClientBrief {
-    reservations: PassportReservation[];
-    deals: PassportDeal[];
-    payment_schedules: PassportPaymentSchedule[];
-}
-
-// ЛОТ (UNIT)
-export interface PassportUnit {
-    id: number;
-    project_id: number;
-    block_id: number;
-    floor_id: number;
-    unit_number: string;
-    lot_type: string;
-    plan_code: string;
-    external_code: string;
-    rooms: number;
-    area_total: number;
-    price_total: number;
-    price_per_m2: number | null;
-    currency: number;
-    status_id: number;
-    finish_type: number | null;
-    cadastral_number: string | null;
-    description: string | null;
-    comment: string | null;
-    created_by: number;
-    updated_by: number;
-    created_at: string;
-    updated_at: string;
-    deleted: boolean;
-    floor: FloorInfo | null;
-    status: StatusInfo | null;
-    currency_info: CurrencyInfo | null;
-    clients: PassportClient[];
-}
-
-// КОРНЕВОЙ ОБЪЕКТ: ПАСПОРТ ЛОТА
-export interface UnitPassport {
-    unit: PassportUnit;
-    reservations: PassportReservation[];
-    deals: PassportDeal[];
-    payments: PassportPayment[];
-    payment_schedules: PassportPaymentSchedule[];
-    latest_at?: string;
-}
-
-// СОСТОЯНИЕ SLICE
 interface SalesUnitPassportState {
-    passport: UnitPassport | null;
+    data: SalesUnitPassportData | null;
+    unit: SalesUnitPassport | null;
+    clients: SalesClient[];
+    reservations: SalesReservation[];
+    deals: SalesDeal[];
+    payments: SalesPayment[];
+    paymentSchedules: SalesPaymentSchedule[];
     loading: boolean;
     error: string | null;
 }
 
 const initialState: SalesUnitPassportState = {
-    passport: null,
+    data: null,
+    unit: null,
+    clients: [],
+    reservations: [],
+    deals: [],
+    payments: [],
+    paymentSchedules: [],
     loading: false,
     error: null,
 };
 
-// ASYNC THUNK
-export const fetchSalesUnitPassport = createAsyncThunk<
-    UnitPassport,
-    number,
-    { rejectValue: string }
->('salesUnitPassport/fetchSalesUnitPassport', async (unitId, { rejectWithValue }) => {
-    try {
-        // apiRequest возвращает { data: T, success?: boolean, ... }
-        // Благодаря нормализации в apiRequest, res.data уже содержит UnitPassport
-        const res = await apiRequest<UnitPassport>(`/sales/units/${unitId}/passport`, 'GET');
+const uniqueById = <T extends { id: number }>(items: T[]) => {
+    const map = new Map<number, T>();
+    items.forEach((item) => {
+        map.set(Number(item.id), item);
+    });
+    return Array.from(map.values());
+};
 
-        // res.data уже нормализован благодаря apiRequest
-        return res.data;
-    } catch (err) {
-        return rejectWithValue(
-            err instanceof Error ? err.message : 'Не удалось загрузить паспорт лота',
-        );
-    }
-});
+const flattenPassport = (passport: SalesUnitPassportData | null) => {
+    const unit = passport?.unit ?? null;
+    const clients = Array.isArray(unit?.clients) ? unit.clients : [];
 
-// SLICE
+    const reservations = uniqueById(
+        clients.flatMap((client) => client.reservations || []).filter(Boolean),
+    );
+
+    const deals = uniqueById(clients.flatMap((client) => client.deals || []).filter(Boolean));
+
+    const payments = uniqueById(
+        clients.flatMap((client) => [
+            ...(client.reservations || []).flatMap((reservation) => reservation.payments || []),
+            ...(client.deals || []).flatMap((deal) => deal.payments || []),
+        ]),
+    );
+
+    const paymentSchedules = uniqueById(
+        clients.flatMap((client) => [
+            ...(client.payment_schedules || []),
+            ...(client.deals || []).flatMap((deal) => deal.payment_schedules || []),
+        ]),
+    );
+
+    return {
+        unit,
+        clients,
+        reservations,
+        deals,
+        payments,
+        paymentSchedules,
+    };
+};
+
 const salesUnitPassportSlice = createSlice({
     name: 'salesUnitPassport',
     initialState,
     reducers: {
-        clearPassport(state) {
-            state.passport = null;
-            state.error = null;
-            state.loading = false;
-        },
-        clearPassportError(state) {
+        clearSalesUnitPassport: () => initialState,
+        clearSalesUnitPassportError: (state) => {
             state.error = null;
         },
     },
@@ -352,49 +386,63 @@ const salesUnitPassportSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchSalesUnitPassport.fulfilled,
-                (state, action: PayloadAction<UnitPassport>) => {
-                    state.loading = false;
-                    state.passport = action.payload;
-                    state.error = null;
-                },
-            )
+            .addCase(fetchSalesUnitPassport.fulfilled, (state, action) => {
+                const passport = action.payload;
+                const normalized = flattenPassport(passport);
+
+                state.data = passport;
+                state.unit = normalized.unit;
+                state.clients = normalized.clients;
+                state.reservations = normalized.reservations;
+                state.deals = normalized.deals;
+                state.payments = normalized.payments;
+                state.paymentSchedules = normalized.paymentSchedules;
+                state.loading = false;
+            })
             .addCase(fetchSalesUnitPassport.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload ?? 'Неизвестная ошибка';
+                state.error = String(action.payload || 'Ошибка загрузки паспорта квартиры');
             });
     },
 });
 
-export const { clearPassport, clearPassportError } = salesUnitPassportSlice.actions;
+export const { clearSalesUnitPassport, clearSalesUnitPassportError } =
+    salesUnitPassportSlice.actions;
 
-// SELECTORS
-export const selectPassport = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport;
+export const selectSalesUnitPassportData = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.data;
 
-export const selectPassportLoading = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.loading;
+export const selectSalesUnitPassportUnit = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.unit;
 
-export const selectPassportError = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.error;
+export const selectSalesUnitPassportClients = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.clients;
 
-export const selectPassportUnit = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport?.unit ?? null;
+export const selectSalesUnitPassportReservations = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.reservations;
 
-export const selectPassportClients = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport?.unit?.clients ?? [];
+export const selectSalesUnitPassportDeals = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.deals;
 
-export const selectPassportReservations = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport?.reservations ?? [];
+export const selectSalesUnitPassportPayments = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.payments;
 
-export const selectPassportDeals = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport?.deals ?? [];
+export const selectSalesUnitPassportPaymentSchedules = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.paymentSchedules;
 
-export const selectPassportPayments = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport?.payments ?? [];
+export const selectSalesUnitPassportLoading = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.loading;
 
-export const selectPassportSchedules = (state: { salesUnitPassport: SalesUnitPassportState }) =>
-    state.salesUnitPassport.passport?.payment_schedules ?? [];
+export const selectSalesUnitPassportError = (state: {
+    salesUnitPassport: SalesUnitPassportState;
+}) => state.salesUnitPassport.error;
 
 export default salesUnitPassportSlice.reducer;

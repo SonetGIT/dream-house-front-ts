@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -6,7 +6,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { deleteWorkPerformed, fetchWorkPerformed } from './workPerformedSlice';
 import { deleteWorkPerformedItem } from './workPerformedItems/workPerformedItemsSlice';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import WorkPerformedTable from './WorkPerformedTable';
 import { useReference } from '@/features/reference/useReference';
 import { TablePagination } from '@/components/ui/TablePagination';
@@ -17,6 +17,8 @@ import WorkPerformedFlow from './creatAVR/WorkPerformedFlow';
 /**********************************************************************************************************/
 export default function WorkPerformedPage() {
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const navigate = useNavigate();
     const { projectId, prjBlockId } = useParams();
     const blockId = prjBlockId ? Number(prjBlockId) : null;
     const { data, pagination, loading } = useAppSelector((state) => state.workPerformed);
@@ -29,6 +31,25 @@ export default function WorkPerformedPage() {
         type: 'avr' | 'avrItem';
         id: number;
     } | null>(null);
+    const focusId = useMemo(() => {
+        const value = Number(new URLSearchParams(location.search).get('focus'));
+        return Number.isInteger(value) && value > 0 ? value : null;
+    }, [location.search]);
+
+    const clearFocusFromUrl = useCallback(() => {
+        const searchParams = new URLSearchParams(location.search);
+
+        if (!searchParams.has('focus')) return;
+
+        searchParams.delete('focus');
+        navigate(
+            {
+                pathname: location.pathname,
+                search: searchParams.toString() ? `?${searchParams.toString()}` : '',
+            },
+            { replace: true },
+        );
+    }, [location.pathname, location.search, navigate]);
 
     const prjBlocks = useReference('projectBlocks');
     const users = useReference('users');
@@ -59,13 +80,22 @@ export default function WorkPerformedPage() {
         if (!blockId) return;
 
         dispatch(
-            fetchWorkPerformed({
-                block_id: blockId,
-                page,
-                size,
-            }),
+            fetchWorkPerformed(
+                focusId
+                    ? {
+                          id: focusId,
+                          block_id: blockId,
+                          page: 1,
+                          size,
+                      }
+                    : {
+                          block_id: blockId,
+                          page,
+                          size,
+                      },
+            ),
         );
-    }, [blockId, page, size, dispatch]);
+    }, [blockId, page, size, focusId, dispatch]);
 
     //LOAD ESTIMATE ITEMS
     // useEffect(() => {
@@ -84,20 +114,31 @@ export default function WorkPerformedPage() {
                 await dispatch(deleteWorkPerformed(deleteState.id)).unwrap();
                 toast.success('АВР успешно удален');
 
-                dispatch(
-                    fetchWorkPerformed({
-                        block_id: blockId,
-                        page,
-                        size,
-                    }),
-                );
+                if (blockId) {
+                    dispatch(
+                        fetchWorkPerformed(
+                            focusId
+                                ? {
+                                      id: focusId,
+                                      block_id: blockId,
+                                      page: 1,
+                                      size,
+                                  }
+                                : {
+                                      block_id: blockId,
+                                      page,
+                                      size,
+                                  },
+                        ),
+                    );
+                }
             }
         } catch {
             toast.error(`Ошибка удаления или у вас недостаточно прав на удаление`);
         } finally {
             setDeleteState(null);
         }
-    }, [deleteState, dispatch, blockId, page, size]);
+    }, [deleteState, dispatch, blockId, focusId, page, size]);
 
     //CREATE
     const handleCreate = () => {
@@ -127,6 +168,7 @@ export default function WorkPerformedPage() {
                         blockId={Number(blockId)}
                         data={data}
                         refs={refs}
+                        focusedWorkPerformedId={focusId}
                         onDeleteWorkPerformedId={(id) => setDeleteState({ type: 'avr', id })} // удалить АВР
                         onDeleteWorkPerformedItemId={(itemId: number) =>
                             setDeleteState({ type: 'avrItem', id: itemId })
@@ -135,8 +177,12 @@ export default function WorkPerformedPage() {
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
-                            onPageChange={(newPage) => setPage(newPage)}
+                            onPageChange={(newPage) => {
+                                clearFocusFromUrl();
+                                setPage(newPage);
+                            }}
                             onSizeChange={(newSize) => {
+                                clearFocusFromUrl();
                                 setPage(1);
                                 setSize(newSize);
                             }}

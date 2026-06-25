@@ -1,6 +1,6 @@
 import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
 import {
@@ -22,10 +22,16 @@ import { calcRowTotal } from '@/utils/calcRowTotal';
 /*************************************************************************************************************************/
 export default function MaterialRequestsPage() {
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const navigate = useNavigate();
     const { projectId, prjBlockId } = useParams();
     const blockId = prjBlockId ? Number(prjBlockId) : null;
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
+    const focusId = useMemo(() => {
+        const value = Number(new URLSearchParams(location.search).get('focus'));
+        return Number.isInteger(value) && value > 0 ? value : null;
+    }, [location.search]);
 
     const { currentProject: project, loading: projectLoading } = useAppSelector(
         (state) => state.projects,
@@ -44,6 +50,21 @@ export default function MaterialRequestsPage() {
         type: 'matReq' | 'matReqItem';
         id: number;
     } | null>(null);
+
+    const clearFocusFromUrl = useCallback(() => {
+        const searchParams = new URLSearchParams(location.search);
+
+        if (!searchParams.has('focus')) return;
+
+        searchParams.delete('focus');
+        navigate(
+            {
+                pathname: location.pathname,
+                search: searchParams.toString() ? `?${searchParams.toString()}` : '',
+            },
+            { replace: true },
+        );
+    }, [location.pathname, location.search, navigate]);
 
     // hooks всегда вызываются одинаково
     const projectTypes = useReference('projectTypes');
@@ -92,13 +113,13 @@ export default function MaterialRequestsPage() {
 
             dispatch(
                 fetchSearchMaterialReq({
-                    page,
-                    size,
+                    ...(focusId ? { id: focusId, page: 1, size } : { page, size }),
                     project_id: project.id,
+                    ...(blockId ? { block_id: blockId } : {}),
                 }),
             );
         }
-    }, [project?.id, dispatch]);
+    }, [project?.id, blockId, page, size, focusId, dispatch]);
 
     //HANDLERS
     const handleCreate = () => {
@@ -117,7 +138,13 @@ export default function MaterialRequestsPage() {
                 toast.success('Позиция удалена');
 
                 if (Number(projectId)) {
-                    dispatch(fetchSearchMaterialReq({ project_id: Number(projectId) }));
+                    dispatch(
+                        fetchSearchMaterialReq({
+                            project_id: Number(projectId),
+                            ...(blockId ? { block_id: blockId } : {}),
+                            ...(focusId ? { id: focusId, page: 1, size } : { page, size }),
+                        }),
+                    );
                 }
             }
         } catch {
@@ -125,7 +152,7 @@ export default function MaterialRequestsPage() {
         } finally {
             setDeleteState(null);
         }
-    }, [deleteState, dispatch, Number(projectId)]);
+    }, [deleteState, dispatch, projectId, blockId, focusId, page, size]);
 
     //SAFE RETURNS
     if (!Number(projectId)) {
@@ -162,6 +189,7 @@ export default function MaterialRequestsPage() {
                     <MaterialRequestsTable
                         data={materialRequests.filter((req) => req.project_id === project.id)}
                         refs={refs}
+                        focusedRequestId={focusId}
                         onDeleteMatReqId={(id) => setDeleteState({ type: 'matReq', id })}
                         onDeleteMatReqItemId={(itemId) =>
                             setDeleteState({ type: 'matReqItem', id: itemId })
@@ -171,8 +199,12 @@ export default function MaterialRequestsPage() {
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
-                            onPageChange={(newPage) => setPage(newPage)}
+                            onPageChange={(newPage) => {
+                                clearFocusFromUrl();
+                                setPage(newPage);
+                            }}
                             onSizeChange={(newSize) => {
+                                clearFocusFromUrl();
                                 setPage(1);
                                 setSize(newSize);
                             }}

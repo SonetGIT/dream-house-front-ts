@@ -1,6 +1,6 @@
 import { Box, Button, CircularProgress, Paper } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
 import { TablePagination } from '@/components/ui/TablePagination';
@@ -29,9 +29,15 @@ import MatReqItemsSelectTable, { type EditableItem } from './MatReqItemsSelectTa
 /*************************************************************************************************************************/
 export default function PurchaseOrdersPage() {
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const navigate = useNavigate();
     const { projectId, prjBlockId } = useParams();
     const projectIdNum = projectId ? Number(projectId) : null;
     const blockId = prjBlockId ? Number(prjBlockId) : null;
+    const focusId = useMemo(() => {
+        const value = Number(new URLSearchParams(location.search).get('focus'));
+        return Number.isInteger(value) && value > 0 ? value : null;
+    }, [location.search]);
     const {
         data: purchaseOrders,
         loading: purchaseOrdersLoading,
@@ -50,6 +56,21 @@ export default function PurchaseOrdersPage() {
         type: 'matReqOrder' | 'matReqOrderItem';
         id: number;
     } | null>(null);
+
+    const clearFocusFromUrl = useCallback(() => {
+        const searchParams = new URLSearchParams(location.search);
+
+        if (!searchParams.has('focus')) return;
+
+        searchParams.delete('focus');
+        navigate(
+            {
+                pathname: location.pathname,
+                search: searchParams.toString() ? `?${searchParams.toString()}` : '',
+            },
+            { replace: true },
+        );
+    }, [location.pathname, location.search, navigate]);
 
     // hooks всегда вызываются одинаково
     const purchaseOrderStatuses = useReference('purchaseOrderStatuses');
@@ -74,10 +95,20 @@ export default function PurchaseOrdersPage() {
     useEffect(() => {
         if (projectIdNum && blockId) {
             dispatch(
-                fetchPurchaseOrders({ project_id: projectIdNum, block_id: blockId, page, size }),
+                fetchPurchaseOrders(
+                    focusId
+                        ? {
+                              id: focusId,
+                              project_id: projectIdNum,
+                              block_id: blockId,
+                              page: 1,
+                              size,
+                          }
+                        : { project_id: projectIdNum, block_id: blockId, page, size },
+                ),
             );
         }
-    }, [projectIdNum, blockId, page, size]);
+    }, [projectIdNum, blockId, page, size, focusId, dispatch]);
 
     //загрузка заявок на материалы для селектора при создании заявки на закупку
     useEffect(() => {
@@ -131,12 +162,22 @@ export default function PurchaseOrdersPage() {
 
             if (projectIdNum && blockId) {
                 dispatch(
-                    fetchPurchaseOrders({
-                        project_id: projectIdNum,
-                        block_id: blockId,
-                        page,
-                        size,
-                    }),
+                    fetchPurchaseOrders(
+                        focusId
+                            ? {
+                                  id: focusId,
+                                  project_id: projectIdNum,
+                                  block_id: blockId,
+                                  page: 1,
+                                  size,
+                              }
+                            : {
+                                  project_id: projectIdNum,
+                                  block_id: blockId,
+                                  page,
+                                  size,
+                              },
+                    ),
                 );
             }
         } catch (e) {
@@ -162,12 +203,22 @@ export default function PurchaseOrdersPage() {
 
             if (projectIdNum && blockId) {
                 dispatch(
-                    fetchPurchaseOrders({
-                        project_id: projectIdNum,
-                        block_id: blockId,
-                        page,
-                        size,
-                    }),
+                    fetchPurchaseOrders(
+                        focusId
+                            ? {
+                                  id: focusId,
+                                  project_id: projectIdNum,
+                                  block_id: blockId,
+                                  page: 1,
+                                  size,
+                              }
+                            : {
+                                  project_id: projectIdNum,
+                                  block_id: blockId,
+                                  page,
+                                  size,
+                              },
+                    ),
                 );
             }
         } catch (e) {
@@ -190,14 +241,24 @@ export default function PurchaseOrdersPage() {
                 await dispatch(deletePurchaseOrderItem(deleteState.id)).unwrap();
                 toast.success('Позиция заявки на закупку удалена');
 
-                if (projectIdNum) {
+                if (projectIdNum && blockId) {
                     dispatch(
-                        fetchPurchaseOrders({
-                            project_id: projectIdNum,
-                            block_id: blockId,
-                            page,
-                            size,
-                        }),
+                        fetchPurchaseOrders(
+                            focusId
+                                ? {
+                                      id: focusId,
+                                      project_id: projectIdNum,
+                                      block_id: blockId,
+                                      page: 1,
+                                      size,
+                                  }
+                                : {
+                                      project_id: projectIdNum,
+                                      block_id: blockId,
+                                      page,
+                                      size,
+                                  },
+                        ),
                     );
                 }
             }
@@ -206,7 +267,7 @@ export default function PurchaseOrdersPage() {
         } finally {
             setDeleteState(null);
         }
-    }, [deleteState, dispatch, projectIdNum]);
+    }, [deleteState, dispatch, projectIdNum, blockId, focusId, page, size]);
 
     /***************************************************************************************************************/
     return (
@@ -238,6 +299,7 @@ export default function PurchaseOrdersPage() {
                     <PurchaseOrdersTable
                         data={purchaseOrders}
                         refs={refs}
+                        openOrderId={focusId}
                         onDeleteMatReqOrderId={(id) => setDeleteState({ type: 'matReqOrder', id })}
                         onDeleteMatReqOrderItemId={(itemId) =>
                             setDeleteState({ type: 'matReqOrderItem', id: itemId })
@@ -248,8 +310,12 @@ export default function PurchaseOrdersPage() {
                     {purchaseOrdersPagination && (
                         <TablePagination
                             pagination={purchaseOrdersPagination}
-                            onPageChange={(newPage) => setPage(newPage)}
+                            onPageChange={(newPage) => {
+                                clearFocusFromUrl();
+                                setPage(newPage);
+                            }}
                             onSizeChange={(newSize) => {
+                                clearFocusFromUrl();
                                 setPage(1);
                                 setSize(newSize);
                             }}

@@ -1,8 +1,7 @@
 import { CalendarClock, FileText, Pencil, Phone, Plus, Trash2, User2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
-import type { PassportDeal, PassportReservationBrief } from '../slices/salesUnitPassportSlice';
-import { HeaderIconAction } from './SalesUnitPassportUI';
+import type { PassportDeal, PassportReservationBrief } from '../slices/salesUnitPassportSlice copy';
 import { SalesUnitPassportDeal } from './SalesUnitPassportDeal';
 
 export const ClientAccordionItem = ({
@@ -99,26 +98,29 @@ export const ClientAccordionItem = ({
                                 Брони
                             </div>
                             {!hasActiveReservation ? (
-                                <HeaderIconAction
+                                <button
+                                    type="button"
                                     title="Создать бронь"
-                                    icon={<Plus size={15} />}
-                                    className="bg-orange-400 hover:bg-orange-500"
                                     onClick={() =>
                                         onCreateReservation?.({ client_id: group.client_id })
                                     }
-                                />
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-orange-500 px-3 text-xs font-semibold text-white transition hover:bg-orange-600"
+                                >
+                                    <Plus size={14} />
+                                    Бронь
+                                </button>
                             ) : null}
                         </div>
                         {group.reservations.length > 0 ? (
                             <div className="overflow-hidden border border-orange-100 rounded-md">
-                                <div className="grid grid-cols-[1.2fr_100px_100px_110px_130px_110px_72px] bg-orange-50 p-1.5 font-semibold uppercase tracking-wide text-orange-500">
+                                <div className="grid grid-cols-[1.2fr_100px_100px_110px_130px_110px_180px] bg-orange-50 p-1.5 font-semibold uppercase tracking-wide text-orange-500">
                                     <div className="text-[12px]">Статус</div>
                                     <div className="text-[11px]">с</div>
                                     <div className="text-[11px]">по</div>
                                     <div className="text-[11px]">Сумма</div>
                                     <div className="text-[11px]">Менеджер</div>
                                     <div className="text-[11px]">Дата закрытия</div>
-                                    <div />
+                                    <div className="text-[11px] text-right">Действия</div>
                                 </div>
 
                                 {group.reservations.map((reservation: PassportReservationBrief) => {
@@ -126,8 +128,11 @@ export const ClientAccordionItem = ({
                                         getSingleReservationPayments?.(reservation) || [];
 
                                     return (
-                                        <div key={reservation.id} className="border-t border-stone-100">
-                                            <div className="grid grid-cols-[1.2fr_100px_100px_110px_130px_110px_112px] items-center px-3 py-2.5 text-sm text-slate-700">
+                                        <div
+                                            key={reservation.id}
+                                            className="border-t border-stone-100"
+                                        >
+                                            <div className="grid grid-cols-[1.2fr_100px_100px_110px_130px_110px_180px] items-center px-3 py-2.5 text-sm text-slate-700">
                                                 <div className="text-xs font-medium text-blue-800">
                                                     {getReservationStatusName(reservation)}
                                                 </div>
@@ -156,34 +161,38 @@ export const ClientAccordionItem = ({
                                                         <>
                                                             <button
                                                                 type="button"
+                                                                title="Добавить платеж по брони"
                                                                 onClick={() =>
                                                                     onPaymentClick?.({
                                                                         reservation,
                                                                         reservation_id:
                                                                             reservation.id,
-                                                                        client_id:
-                                                                            group.client_id,
+                                                                        client_id: group.client_id,
                                                                     })
                                                                 }
-                                                                className="inline-flex h-8 items-center rounded-lg bg-blue-600 px-2 text-[11px] font-semibold text-white transition hover:bg-blue-500"
+                                                                className="inline-flex h-8 items-center rounded-lg bg-blue-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-blue-500"
                                                             >
-                                                                Платеж
+                                                                +Платеж по брони
                                                             </button>
                                                             <button
                                                                 type="button"
+                                                                title="Редактировать бронь"
                                                                 onClick={() =>
                                                                     onEditReservation?.(reservation)
                                                                 }
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                                                                className="flex items-center justify-center w-8 h-8 transition rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
                                                             >
                                                                 <Pencil size={14} />
                                                             </button>
                                                             <button
                                                                 type="button"
+                                                                title="Снять бронь"
                                                                 onClick={() =>
-                                                                    onCancelReservation?.(reservation)
+                                                                    onCancelReservation?.(
+                                                                        reservation,
+                                                                    )
                                                                 }
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 transition hover:bg-red-100"
+                                                                className="flex items-center justify-center w-8 h-8 text-red-600 transition rounded-lg bg-red-50 hover:bg-red-100"
                                                             >
                                                                 <Trash2 size={14} />
                                                             </button>
@@ -192,7 +201,7 @@ export const ClientAccordionItem = ({
                                                 </div>
                                             </div>
 
-                                            <div className="border-t border-stone-100 bg-orange-50/40 px-3 py-2">
+                                            <div className="px-3 py-2 border-t border-stone-100 bg-orange-50/40">
                                                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-orange-600">
                                                     Платежи по брони
                                                 </div>
@@ -204,25 +213,27 @@ export const ClientAccordionItem = ({
                                                                 className="flex items-start justify-between gap-2 rounded-lg border border-orange-100 bg-white px-2.5 py-2"
                                                             >
                                                                 <div className="min-w-0">
-                                                                    <div className="truncate text-xs font-semibold text-slate-700">
+                                                                    <div className="text-xs font-semibold truncate text-slate-700">
                                                                         {payment.title || 'Платеж'}
                                                                     </div>
                                                                     <div className="mt-0.5 text-[11px] text-slate-500">
-                                                                        {payment.status_ref?.name || 'Статус'} ·{' '}
+                                                                        {payment.status_ref?.name ||
+                                                                            'Статус'}{' '}
+                                                                        ·{' '}
                                                                         {formatDate(
                                                                             payment.paid_date ||
                                                                                 payment.planned_date,
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                                <div className="shrink-0 text-xs font-semibold text-emerald-700">
+                                                                <div className="text-xs font-semibold shrink-0 text-emerald-700">
                                                                     {formatCurrency(payment.amount)}
                                                                 </div>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <div className="rounded-lg border border-dashed border-orange-200 bg-white px-3 py-3 text-center text-xs text-slate-500">
+                                                    <div className="px-3 py-3 text-xs text-center bg-white border border-orange-200 border-dashed rounded-lg text-slate-500">
                                                         Платежей по этой брони пока нет
                                                     </div>
                                                 )}
@@ -244,17 +255,20 @@ export const ClientAccordionItem = ({
                                 <FileText size={14} className="text-violet-700" />
                                 Сделки
                             </div>
-                            <HeaderIconAction
+                            <button
+                                type="button"
                                 title="Выкуп"
-                                icon={<Plus size={15} />}
-                                className="bg-violet-500 hover:bg-violet-600"
                                 onClick={() =>
                                     onCreateDeal?.({
                                         client_id: group.client_id,
                                         reservation_id: activeGroupReservation?.id || null,
                                     })
                                 }
-                            />
+                                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white transition hover:bg-violet-700"
+                            >
+                                <Plus size={14} />
+                                Выкуп
+                            </button>
                         </div>
 
                         {group.deals.length > 0 ? (

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Collapse, Button } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
@@ -19,6 +19,7 @@ import { useParams } from 'react-router-dom';
 interface PropsType {
     data: MaterialRequest[];
     refs: Record<string, ReferenceResult>;
+    focusedRequestId?: number | null;
     onDeleteMatReqId: (id: number) => void;
     onDeleteMatReqItemId: (id: number) => void;
 }
@@ -53,6 +54,35 @@ export default function MaterialRequestsTable(props: PropsType) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
+
+    useEffect(() => {
+        const focusedRequestId = props.focusedRequestId;
+        if (!focusedRequestId) return;
+
+        const exists = props.data?.some((req) => Number(req.id) === Number(focusedRequestId));
+        if (!exists) return;
+
+        setOpenRows((prev) => ({
+            ...prev,
+            [focusedRequestId]: true,
+        }));
+
+        dispatch(
+            fetchMaterialRequestItems({
+                material_request_id: focusedRequestId,
+                page: 1,
+                size: 10,
+            }),
+        );
+
+        const timeoutId = window.setTimeout(() => {
+            document
+                .getElementById(`material-request-row-${focusedRequestId}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [dispatch, props.data, props.focusedRequestId]);
     /*TOGGLE*/
     const toggleRow = (id: number) => {
         const isOpening = !openRows[id];
@@ -354,13 +384,26 @@ export default function MaterialRequestsTable(props: PropsType) {
                                     },
                                 ];
                                 const statusInfo = getStatusConfig(req.status);
+                                const isFocused =
+                                    props.focusedRequestId != null &&
+                                    Number(props.focusedRequestId) === Number(req.id);
 
                                 return (
                                     <React.Fragment key={req.id}>
                                         {/* MATERIALREQEST_TABBLE */}
                                         <tr
+                                            id={`material-request-row-${req.id}`}
                                             className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(req.id)}
+                                            style={
+                                                isFocused
+                                                    ? {
+                                                          backgroundColor: '#eff6ff',
+                                                          boxShadow:
+                                                              'inset 3px 0 0 #2563eb, inset 0 0 0 1px rgba(37,99,235,0.15)',
+                                                      }
+                                                    : undefined
+                                            }
                                         >
                                             {/* toggle */}
                                             <td className="px-2 py-2">

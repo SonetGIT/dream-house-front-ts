@@ -18,9 +18,9 @@ import type {
     PassportPaymentSchedule,
     PassportReservation,
     PassportReservationBrief,
-} from '../slices/salesUnitPassportSlice';
+    PassportUnit,
+} from '../slices/salesUnitPassportSlice copy';
 import { ClientAccordionItem } from './ClientAccordionItem';
-import { HeaderIconAction, PrimaryButton, SecondaryButton } from './SalesUnitPassportUI';
 
 export type ClientHistoryGroup = {
     key: string;
@@ -70,12 +70,8 @@ function InlineMetric({
 }
 
 export function SalesUnitPassportSidebarHeader({
-    unitNumber,
-    areaTotal,
-    rooms,
-    floorNumber,
-    priceTotal,
-    statusName,
+    unit,
+    currentUnitStatus,
     statusToneClass,
     summary,
     isUnitOffSale,
@@ -84,12 +80,8 @@ export function SalesUnitPassportSidebarHeader({
     onEditUnit,
     onClose,
 }: {
-    unitNumber: string | number;
-    areaTotal: string | number | null | undefined;
-    rooms: string | number | null | undefined;
-    floorNumber: string | number | null | undefined;
-    priceTotal: string | number | null | undefined;
-    statusName?: string | null;
+    unit: PassportUnit;
+    currentUnitStatus?: { name?: string | null } | null;
     statusToneClass: string;
     summary: {
         reservationCount: number;
@@ -110,53 +102,61 @@ export function SalesUnitPassportSidebarHeader({
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 mt-2">
                             <Home size={16} className="text-blue-500" />
-                            <h2 className="font-semibold text-slate-800">Квартира {unitNumber}</h2>
+                            <h2 className="font-semibold text-slate-800">
+                                Квартира {unit.unit_number}
+                            </h2>
                             <span
                                 className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusToneClass}`}
                             >
-                                {statusName || 'Статус'}
+                                {currentUnitStatus?.name || 'Статус'}
                             </span>
                         </div>
 
                         <div className="flex flex-wrap gap-5 mt-2 text-sm text-slate-500">
                             <span className="inline-flex items-center gap-1.5">
                                 <Ruler size={14} className="text-blue-500" />
-                                {areaTotal} м2
+                                {unit.area_total} м2
                             </span>
                             <span className="inline-flex items-center gap-1.5">
                                 <Layers3 size={14} className="text-emerald-500" />
-                                {rooms} комн. • {floorNumber} этаж
+                                {unit.rooms} комн. • {unit.floor?.floor_number} этаж
                             </span>
                             <span className="inline-flex items-center gap-1.5">
                                 <CircleDollarSign size={14} className="text-orange-500" />
-                                {formatCurrency(priceTotal)}
+                                {formatCurrency(unit.price_total)}
                             </span>
                         </div>
                     </div>
 
                     <div className="flex items-start gap-2">
                         {isUnitOffSale ? (
-                            <HeaderIconAction
+                            <button
+                                type="button"
                                 title="Вернуть в свободные"
-                                icon={<Home size={14} />}
-                                className="bg-emerald-500 hover:bg-emerald-600"
                                 onClick={onReturnToFree}
                                 disabled={actionLoading}
-                            />
+                                className="flex items-center justify-center w-8 h-8 text-white transition rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                <Home size={14} />
+                            </button>
                         ) : null}
-                        <HeaderIconAction
+                        <button
+                            type="button"
                             title="Редактировать квартиру"
-                            icon={<Pencil size={14} />}
-                            className="bg-sky-500 hover:bg-sky-600"
                             onClick={onEditUnit}
                             disabled={actionLoading}
-                        />
-                        <HeaderIconAction
+                            className="flex items-center justify-center w-8 h-8 text-white transition rounded-lg bg-sky-500 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <Pencil size={14} />
+                        </button>
+                        <button
+                            type="button"
                             title="Закрыть"
-                            icon={<X size={16} />}
-                            className="bg-red-500 hover:bg-red-600"
                             onClick={onClose}
-                        />
+                            className="flex items-center justify-center w-8 h-8 text-white transition bg-red-500 rounded-lg hover:bg-red-600"
+                        >
+                            <X size={16} />
+                        </button>
                     </div>
                 </div>
 

@@ -240,10 +240,19 @@ function FragmentRow({
     onRead: () => void;
     onOpen: () => void;
 }) {
+    const handleRowClick = () => {
+        if (canOpen) {
+            onOpen();
+            return;
+        }
+
+        onToggle();
+    };
+
     return (
         <>
             <tr
-                onClick={onToggle}
+                onClick={handleRowClick}
                 className={`group cursor-pointer border-b border-gray-50 transition-colors ${
                     isUnread
                         ? 'bg-blue-50/30 hover:bg-blue-50/60'
@@ -324,7 +333,10 @@ function FragmentRow({
                         )}
 
                         <button
-                            onClick={onToggle}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggle();
+                            }}
                             title="Подробнее"
                             className={`flex h-6 w-6 items-center justify-center rounded text-gray-400 transition hover:bg-gray-100 ${
                                 isExpanded ? 'rotate-180' : ''
