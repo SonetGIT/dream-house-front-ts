@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import {
     BadgeCheck,
     Ban,
@@ -12,12 +12,36 @@ import {
     Wallet,
 } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
-import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
-import { HeaderIconAction } from '../unitPassport/SalesUnitPassportUI';
-import type { SalesPayment } from '../slices/salesUnitPassportSlice';
+import type {
+    SalesDeal,
+    SalesPayment,
+    SalesPaymentSchedule,
+} from '../slices/salesUnitPassportSlice';
 
-export const UnitPassportDeal = ({ deal }: any) => {
+type UnitPassportDealProps = {
+    deal: SalesDeal;
+    onEditDeal: (deal: SalesDeal) => void;
+    canEdit: boolean;
+    onSignDeal: (deal: SalesDeal) => void;
+    onCancelDeal: (deal: SalesDeal) => void;
+    onDealFiles: (deal: SalesDeal) => void;
+    onAddDealPayment: (deal: SalesDeal) => void;
+    onOpenDealSchedule: (deal: SalesDeal) => void;
+    onDownloadDealSchedule: (deal: SalesDeal) => void;
+};
+
+export const UnitPassportDeal = ({
+    deal,
+    onEditDeal,
+    canEdit,
+    onSignDeal,
+    onCancelDeal,
+    onDealFiles,
+    onAddDealPayment,
+    onOpenDealSchedule,
+    onDownloadDealSchedule,
+}: UnitPassportDealProps) => {
     const [activeTab, setActiveTab] = useState<'payments' | 'schedule'>('payments');
     const [expandedScheduleIds, setExpandedScheduleIds] = useState<number[]>([]);
 
@@ -29,26 +53,31 @@ export const UnitPassportDeal = ({ deal }: any) => {
         );
     };
 
-    // const totals = schedules.reduce(
-    //     (acc: any, item: any) => {
-    //         acc.planned += Number(item.planned_amount || 0);
-    //         acc.paid += Number(item.paid_amount || 0);
-    //         acc.remaining += Number(item.remaining_amount || 0);
-    //         return acc;
-    //     },
-    //     { planned: 0, paid: 0, remaining: 0 },
-    // );
+    const schedules = useMemo(() => deal.payment_schedules ?? [], [deal.payment_schedules]);
+    const payments = useMemo(() => deal.payments ?? [], [deal.payments]);
 
-    // const isDownloading = Number(downloadingScheduleDealId) === Number(deal.id);
+    const totals = useMemo(
+        () =>
+            schedules.reduce(
+                (acc, item) => {
+                    acc.planned += Number(item.planned_amount || 0);
+                    acc.paid += Number(item.paid_amount || 0);
+                    acc.remaining += Number(item.remaining_amount || 0);
+                    return acc;
+                },
+                { planned: 0, paid: 0, remaining: 0 },
+            ),
+        [schedules],
+    );
 
     return (
         <div className="overflow-hidden border rounded-md border-violet-200">
             <div>
                 <div className="grid grid-cols-[1fr_120px_140px_100px_80px] border-b border-violet-200 bg-violet-50 font-semibold uppercase tracking-wide text-violet-500">
                     <div className="px-2.5 py-1.5 text-[12px]">Договор</div>
-                    <div className="px-2.5 py-1.5 text-[12px]">Дата</div>
                     <div className="px-2.5 py-1.5 text-[12px]">Сумма</div>
                     <div className="px-2.5 py-1.5 text-[12px]">Сделка</div>
+                    <div className="px-2.5 py-1.5 text-[12px]">Дата</div>
                     <div className="px-2.5 py-1.5 text-[12px]">Действия</div>
                 </div>
 
@@ -57,43 +86,27 @@ export const UnitPassportDeal = ({ deal }: any) => {
                         <div className="text-xs font-semibold truncate text-slate-800">
                             №{deal.contract_number || deal.id}
                         </div>
+                        <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                deal.status_ref?.code === 'draft'
+                                    ? 'bg-slate-100 text-slate-700'
+                                    : deal.status_ref?.code === 'signed'
+                                      ? 'bg-emerald-100 text-emerald-700'
+                                      : 'bg-amber-100 text-amber-700'
+                            }`}
+                        >
+                            {deal.status_ref?.name || 'Статус'}
+                        </span>
                         <div className="truncate text-[12px] text-lime-600">
-                            {/* {deal} ·{' '} */}
+                            Менеджер:{' '}
                             {deal.manager_user
                                 ? [deal.manager_user.last_name, deal.manager_user.first_name]
                                       .filter(Boolean)
                                       .join(' ')
                                 : '—'}
                         </div>
-                        canSign
-                        {/* {canSign || canCancel ? (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                                {canSign ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => onSignClick?.(deal)}
-                                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                                    >
-                                        <BadgeCheck size={13} />
-                                        Подписать
-                                    </button>
-                                ) : null}
-                                {canCancel ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => onCancelClick?.(deal)}
-                                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-red-50 px-2.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
-                                    >
-                                        <Ban size={13} />
-                                        Отменить
-                                    </button>
-                                ) : null}
-                            </div>
-                        ) : null} */}
                     </div>
-                    <div className="text-xs font-medium text-slate-700">
-                        {formatDate(deal.contract_date)}
-                    </div>
+
                     <div>
                         <div className="text-sm font-bold text-green-700">
                             {Number(deal.total_amount || 0).toLocaleString('ru-RU')}
@@ -102,27 +115,58 @@ export const UnitPassportDeal = ({ deal }: any) => {
                             {deal.currency_info?.code || '—'} · {deal.payment_type_ref?.name || '—'}
                         </div>
                     </div>
-                    <div className="text-xs text-slate-600">{deal.deal_type?.name || '—'}</div>
 
+                    <div className="text-xs text-slate-600">{deal.deal_type?.name || '—'}</div>
+                    <div className="text-xs font-medium text-slate-700">
+                        {formatDate(deal.contract_date)}
+                    </div>
                     <div className="flex justify-end gap-1">
-                        <HeaderIconAction
+                        <button
+                            type="button"
+                            onClick={() => onDealFiles(deal)}
+                            className="flex items-center justify-center text-white transition rounded-lg h-7 w-7 bg-violet-500 hover:bg-violet-600"
                             title="Файлы договора"
-                            icon={<Paperclip size={13} />}
-                            className="bg-violet-500 hover:bg-violet-600"
-                            // onClick={() => onFileClick?.(deal)}
-                        />
-                        <HeaderIconAction
-                            title="Редактировать договор"
-                            icon={<Pencil size={13} />}
-                            className="bg-blue-500 hover:bg-blue-600"
-                            // onClick={() => onEditClick?.(deal)}
-                        />
+                        >
+                            <Paperclip size={13} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onEditDeal(deal)}
+                            disabled={!canEdit}
+                            className="flex items-center justify-center text-white transition bg-blue-500 rounded-lg h-7 w-7 hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            title={
+                                canEdit
+                                    ? 'Редактировать договор'
+                                    : 'Редактировать можно только черновик'
+                            }
+                        >
+                            <Pencil size={13} />
+                        </button>
                     </div>
                 </div>
 
-                {deal.note && (
-                    <div className="px-2 py-1.5 text-[12px] italic text-slate-500">{deal.note}</div>
-                )}
+                <div className="mt-2 flex flex-wrap justify-center gap-1.5 px-3 pb-2">
+                    <button
+                        type="button"
+                        onClick={() => onSignDeal(deal)}
+                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                        <BadgeCheck size={13} />
+                        Подписать
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onCancelDeal(deal)}
+                        className="inline-flex h-7 items-center gap-1 rounded-lg bg-red-50 px-2.5 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
+                    >
+                        <Ban size={13} />
+                        Отменить
+                    </button>
+                </div>
+
+                {deal.note ? (
+                    <div className="px-3 py-1.5 text-[12px] italic text-slate-500">{deal.note}</div>
+                ) : null}
             </div>
 
             <div className="inline-flex bg-white rounded-lg shadow-sm ring-1 ring-stone-200">
@@ -156,53 +200,42 @@ export const UnitPassportDeal = ({ deal }: any) => {
                 {activeTab === 'payments' ? (
                     <div className="space-y-2">
                         <div className="flex items-center justify-end">
-                            <HeaderIconAction
-                                title="Добавить платеж"
-                                icon={<Wallet size={14} />}
-                                className="bg-emerald-500 hover:bg-emerald-600"
-                                // onClick={() => onPaymentClick?.(deal)}
-                            />
+                            <StyledTooltip title="Добавить платеж по сделке">
+                                <button
+                                    type="button"
+                                    onClick={() => onAddDealPayment(deal)}
+                                    className="flex items-center justify-center text-white transition rounded-lg h-7 w-7 bg-emerald-500 hover:bg-emerald-600"
+                                >
+                                    <Wallet size={14} />
+                                </button>
+                            </StyledTooltip>
                         </div>
 
-                        {deal.payments.length > 0 ? (
+                        {payments.length > 0 ? (
                             <div className="overflow-hidden border border-green-200 rounded-lg">
                                 <div className="flex items-center justify-between px-2 py-1 border-b border-green-200 bg-green-50">
                                     <div className="grid w-full grid-cols-[1fr_200px_130px] font-semibold uppercase tracking-wide text-green-700">
-                                        <div className="text-left text-[12px]">Платёж</div>
-                                        <div className="text-left text-[12px]">Статус</div>
+                                        <div className="text-left text-[12px]">Платеж</div>
+                                        <div className="text-left text-[12px]">Дата</div>
                                         <div className="text-left text-[12px]">Сумма</div>
                                     </div>
                                 </div>
 
-                                {deal.payments.map((payment: SalesPayment) => (
+                                {payments.map((payment: SalesPayment) => (
                                     <div
                                         key={payment.id}
                                         className="grid grid-cols-[1fr_220px_150px] border-t border-stone-100 px-3 py-2.5 text-sm"
                                     >
                                         <div className="text-sm font-medium text-left truncate text-slate-700">
-                                            {payment.title || 'Платёж'}
+                                            {payment.title || 'Платеж'}
                                         </div>
-
-                                        <div className="flex justify-left gap-1.5 text-xs text-slate-600">
-                                            <span
-                                                className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                                    payment.status_ref?.code === 'paid'
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : payment.status_ref?.code === 'draft'
-                                                          ? 'bg-slate-100 text-slate-600'
-                                                          : 'bg-amber-100 text-amber-700'
-                                                }`}
-                                            >
-                                                {payment.status_ref?.name || 'Статус'}
-                                            </span>
-                                            <span className="text-slate-400">·</span>
+                                        <div className="flex gap-1.5 text-xs text-slate-600">
                                             <span className="text-[11px]">
                                                 {formatDate(
                                                     payment.paid_date || payment.planned_date,
                                                 )}
                                             </span>
                                         </div>
-
                                         <div className="text-sm font-semibold text-left text-green-800">
                                             {Number(payment.amount || 0).toLocaleString('ru-RU')}
                                             <span className="ml-1 text-xs font-normal text-green-600">
@@ -220,28 +253,25 @@ export const UnitPassportDeal = ({ deal }: any) => {
                             </div>
                         )}
                     </div>
-                ) : deal.payment_schedules.length > 0 ? (
+                ) : schedules.length > 0 ? (
                     <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-2">
                             <div className="px-3 py-2 rounded-lg bg-slate-50">
                                 <div className="text-[12px] text-slate-500">План</div>
                                 <div className="text-sm font-semibold text-slate-800">
-                                    {/* {formatCurrency(totals.planned)} */}
-                                    totals.planned
+                                    {totals.planned.toLocaleString('ru-RU')}
                                 </div>
                             </div>
                             <div className="px-3 py-2 rounded-lg bg-emerald-50">
                                 <div className="text-[12px] text-emerald-500">Оплачено</div>
                                 <div className="text-sm font-semibold text-emerald-700">
-                                    {/* {formatCurrency(totals.paid)} */}
-                                    totals.paid
+                                    {totals.paid.toLocaleString('ru-RU')}
                                 </div>
                             </div>
                             <div className="px-3 py-2 rounded-lg bg-orange-50">
                                 <div className="text-[12px] text-rose-500">Остаток</div>
                                 <div className="text-sm font-semibold text-rose-600">
-                                    {/* {formatCurrency(totals.remaining)} */}
-                                    totals.remaining
+                                    {totals.remaining.toLocaleString('ru-RU')}
                                 </div>
                             </div>
                         </div>
@@ -260,9 +290,8 @@ export const UnitPassportDeal = ({ deal }: any) => {
                                     <StyledTooltip title="Выгрузка в Excel">
                                         <button
                                             type="button"
-                                            // onClick={() => onDownloadScheduleClick?.(deal)}
-                                            // disabled={isDownloading}
-                                            className="flex items-center justify-center w-6 h-6 text-white transition bg-blue-500 rounded-lg hover:bg-blue-600 disabled:opacity-60"
+                                            onClick={() => onDownloadDealSchedule(deal)}
+                                            className="flex items-center justify-center w-6 h-6 text-white transition bg-blue-500 rounded-lg hover:bg-blue-600"
                                         >
                                             <Download size={13} />
                                         </button>
@@ -270,7 +299,7 @@ export const UnitPassportDeal = ({ deal }: any) => {
                                     <StyledTooltip title="Пересчитать">
                                         <button
                                             type="button"
-                                            // onClick={() => onScheduleClick?.(deal)}
+                                            onClick={() => onOpenDealSchedule(deal)}
                                             className="flex items-center justify-center w-6 h-6 text-white transition rounded-lg bg-rose-500 hover:bg-rose-600"
                                         >
                                             <ListChecks size={13} />
@@ -279,9 +308,9 @@ export const UnitPassportDeal = ({ deal }: any) => {
                                 </div>
                             </div>
 
-                            {deal.payment_schedules.map((schedule: any) => {
+                            {schedules.map((schedule: SalesPaymentSchedule) => {
                                 const isExpanded = expandedScheduleIds.includes(schedule.id);
-                                const hasLinks = schedule.links?.length > 0;
+                                const hasLinks = (schedule.links?.length || 0) > 0;
 
                                 return (
                                     <div key={schedule.id}>
@@ -301,8 +330,8 @@ export const UnitPassportDeal = ({ deal }: any) => {
                                             </div>
                                             <div className="text-xs text-slate-600">
                                                 {schedule.status_ref?.name || 'Запланировано'}
-                                                {schedule.overdue_days > 0
-                                                    ? ` • ${schedule.overdue_days} дн. просрочки`
+                                                {schedule.overdue_days && schedule.overdue_days > 0
+                                                    ? ` · ${schedule.overdue_days} дн. просрочки`
                                                     : ''}
                                             </div>
                                             <div className="text-xs font-medium text-slate-800">
@@ -321,24 +350,22 @@ export const UnitPassportDeal = ({ deal }: any) => {
                                                 ).toLocaleString('ru-RU')}
                                             </div>
                                             <div className="flex justify-center">
-                                                {hasLinks && (
+                                                {hasLinks ? (
                                                     <ChevronDown
                                                         size={14}
-                                                        className={`text-slate-400 transition-transform ${
-                                                            isExpanded ? 'rotate-180' : ''
-                                                        }`}
+                                                        className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                                                     />
-                                                )}
+                                                ) : null}
                                             </div>
                                         </div>
 
-                                        {isExpanded && hasLinks && (
+                                        {isExpanded && hasLinks ? (
                                             <div className="border-t border-stone-100 bg-slate-50/50">
                                                 <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-rose-500">
                                                     Привязанные платежи
                                                 </div>
                                                 <div className="divide-y divide-stone-100">
-                                                    {schedule.links.map((link: any) => (
+                                                    {schedule.links?.map((link) => (
                                                         <div
                                                             key={link.id}
                                                             className="grid grid-cols-[1fr_120px_120px] px-3 py-2"
@@ -366,7 +393,7 @@ export const UnitPassportDeal = ({ deal }: any) => {
                                                     ))}
                                                 </div>
                                             </div>
-                                        )}
+                                        ) : null}
                                     </div>
                                 );
                             })}
@@ -375,15 +402,17 @@ export const UnitPassportDeal = ({ deal }: any) => {
                 ) : (
                     <div className="space-y-2">
                         <div className="flex items-center justify-end">
-                            <HeaderIconAction
+                            <button
+                                type="button"
+                                onClick={() => onOpenDealSchedule(deal)}
+                                className="flex items-center justify-center text-white transition rounded-lg h-7 w-7 bg-rose-500 hover:bg-rose-600"
                                 title="Сформировать график"
-                                icon={<ListChecks size={14} />}
-                                className="bg-rose-500 hover:bg-rose-600"
-                                // onClick={() => onScheduleClick?.(deal)}
-                            />
+                            >
+                                <ListChecks size={14} />
+                            </button>
                         </div>
                         <div className="px-4 py-5 text-sm text-center border border-dashed rounded-xl border-stone-200 bg-slate-50 text-slate-500">
-                            График ещё не сформирован
+                            График еще не сформирован
                         </div>
                     </div>
                 )}

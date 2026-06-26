@@ -10,23 +10,25 @@ import {
     Wallet,
     X,
 } from 'lucide-react';
-import { InlineMetric } from '../unitsPassport/SalesUnitPassportPage';
+import { InlineMetric } from './UnitPassportPage';
 import { formatCurrency } from '@/utils/formatCurrency';
 import type { SalesUnitPassport } from '../slices/salesUnitPassportSlice';
 
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 
-type SalesUnitPassportHeaderProps = {
+type UnitPassportHeaderProps = {
     unit: SalesUnitPassport;
     refs: Record<string, ReferenceResult>;
+    onEditUnit: () => void;
     onClose?: () => void;
 };
-export default function SalesUnitPassportHeader({
+export default function UnitPassportHeader({
     unit,
     refs,
+    onEditUnit,
     onClose,
-}: SalesUnitPassportHeaderProps) {
+}: UnitPassportHeaderProps) {
     return (
         <div className="bg-white ">
             <div className="px-2 pt-1 mb-2">
@@ -92,8 +94,7 @@ export default function SalesUnitPassportHeader({
                         <StyledTooltip title="Редактировать лот">
                             <button
                                 type="button"
-                                // onClick={onEditUnit}
-                                // disabled={actionLoading}
+                                onClick={onEditUnit}
                                 className="flex items-center justify-center text-white transition rounded-lg w-7 h-7 bg-sky-500 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <Pencil size={14} />
