@@ -1,14 +1,13 @@
-import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+﻿import { type ChangeEvent, type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
     createDocument,
-    fetchDocuments,
+    type Document,
 } from '@/features/projects/documents/documentsSlice';
 import {
     deleteDocumentFile,
     downloadDocumentFile,
-    fetchDocumentFiles,
     uploadDocumentFile,
     type DocumentFile,
 } from '@/features/projects/legal_department/files/documentFilesSlice';
@@ -56,6 +55,117 @@ type ReservationClientOption = {
     id: number;
     full_name?: string | null;
     phone?: string | null;
+};
+
+const UNIT_DOCUMENT_ENTITY_TYPE = 'salesUnit';
+const UNIT_FILE_TYPES = ['2d', '3d'] as const;
+
+type UnitFileType = (typeof UNIT_FILE_TYPES)[number];
+type UnitPreviewTab = UnitFileType | 'files';
+type UnitFilesState = Record<
+    UnitFileType,
+    {
+        documentId: number | null;
+        files: DocumentFile[];
+    }
+>;
+type UnitPreviewAsset = {
+    file: DocumentFile;
+    url: string;
+};
+type UnitPreviewGroups = Record<UnitFileType, UnitPreviewAsset[]>;
+
+const EMPTY_UNIT_FILES: UnitFilesState = {
+    '2d': {
+        documentId: null,
+        files: [],
+    },
+    '3d': {
+        documentId: null,
+        files: [],
+    },
+};
+const EMPTY_UNIT_PREVIEW_GROUPS: UnitPreviewGroups = {
+    '2d': [],
+    '3d': [],
+};
+
+const getUnitFileDocumentMeta = (
+    kind: UnitFileType,
+    unitNumber: string | number | undefined,
+    unitId: number,
+) => {
+    const title = kind === '2d' ? '2D План' : '3D План';
+    const marker = `unit-file:${kind}`;
+
+    return {
+        title,
+        marker,
+        name: `${title} квартиры №${unitNumber || unitId}`,
+        description: `${marker}; Материалы квартиры №${unitNumber || unitId}`,
+    };
+};
+
+const isMatchingUnitFileDocument = (doc: Document, kind: UnitFileType) => {
+    const marker = `unit-file:${kind}`;
+    const docName = String(doc.name || '').toLowerCase();
+    const docDescription = String(doc.description || '').toLowerCase();
+    const aliases =
+        kind === '2d'
+            ? ['2d', '2d файл', '2d-файл', '2d план', '2d-план', '2d plan']
+            : ['3d', '3d файл', '3d-файл', '3d план', '3d-план', '3d plan'];
+
+    return (
+        docDescription.includes(marker) ||
+        aliases.some((alias) => docName.includes(alias) || docDescription.includes(alias))
+    );
+};
+
+const isLegacyUnitFilesDocument = (doc: Document) => {
+    const docName = String(doc.name || '').toLowerCase();
+    const docDescription = String(doc.description || '').toLowerCase();
+
+    return (
+        docName.includes('файлы лота') ||
+        docName.includes('файлы квартиры') ||
+        docDescription.includes('планы и визуализации квартиры') ||
+        docDescription.includes('материалы квартиры')
+    );
+};
+
+const isImageFile = (file: DocumentFile) => {
+    const mimeType = String(file.mime_type || '').toLowerCase();
+    const fileName = String(file.name || '').toLowerCase();
+
+    return (
+        mimeType.startsWith('image/') ||
+        /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(fileName)
+    );
+};
+
+const getUnitFileKind = (file: DocumentFile): UnitFileType => {
+    const name = String(file.name || '').toLowerCase();
+
+    if (name.includes('3d') || name.includes('render') || name.includes('рендер')) {
+        return '3d';
+    }
+
+    return '2d';
+};
+
+const fetchDocumentFilesDirect = async (documentId: number) => {
+    const response = await apiRequest<DocumentFile[]>(`/documentFiles/files/${documentId}`, 'GET');
+    return response.data || [];
+};
+
+const searchDocumentsDirect = async (params: {
+    entity_type: string;
+    entity_id: number;
+    page?: number;
+    size?: number;
+}) => {
+    const response = await apiRequest<Document[]>('/documents/search', 'POST', params);
+    return response.data || [];
 };
 
 const EMPTY_RESERVATION_FORM: ReservationFormState = {
@@ -181,7 +291,7 @@ const isReservationActiveOrConfirmed = (
     if (reservation.confirmed_at) return true;
     if (Number(reservation.status) === Number(activeStatusId)) return true;
 
-    return statusTextHas(reservation, ['active', 'confirm', 'confirmed', 'актив', 'подтверж']);
+    return statusTextHas(reservation, ['active', 'confirm', 'confirmed', 'Р°РєС‚РёРІ', 'РїРѕРґС‚РІРµСЂР¶']);
 };
 
 const isReservationActiveOnly = (
@@ -191,7 +301,7 @@ const isReservationActiveOnly = (
     if (reservation.confirmed_at) return false;
     if (Number(reservation.status) === Number(activeStatusId)) return true;
 
-    return statusTextHas(reservation, ['active', 'актив']);
+    return statusTextHas(reservation, ['active', 'Р°РєС‚РёРІ']);
 };
 const statusTextHasDeal = (deal: SalesDeal | null | undefined, parts: string[]) => {
     const values = [deal?.status_ref?.name, deal?.status_ref?.code].map((value) =>
@@ -286,6 +396,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const [dealFilesOpen, setDealFilesOpen] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [filesLoading, setFilesLoading] = useState(false);
+    const [unitFilesLoading, setUnitFilesLoading] = useState(false);
+    const [unitFiles, setUnitFiles] = useState<UnitFilesState>(EMPTY_UNIT_FILES);
+    const [unitPreviewLoading, setUnitPreviewLoading] = useState(false);
+    const [unitPreviewTab, setUnitPreviewTab] = useState<UnitPreviewTab>('2d');
+    const [unitPreviewOpen, setUnitPreviewOpen] = useState(false);
+    const [unitPreviewGroups, setUnitPreviewGroups] =
+        useState<UnitPreviewGroups>(EMPTY_UNIT_PREVIEW_GROUPS);
     const [resForm, setResForm] = useState<ReservationFormState>(EMPTY_RESERVATION_FORM);
     const [dealForm, setDealForm] = useState<DealFormState>(EMPTY_DEAL_FORM);
     const [paymentForm, setPaymentForm] = useState<PaymentFormState>(EMPTY_PAYMENT_FORM);
@@ -316,7 +433,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             return (
                 code.includes('active') ||
                 name.includes('active') ||
-                name.includes('актив')
+                name.includes('Р°РєС‚РёРІ')
             );
         });
 
@@ -330,8 +447,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             return (
                 code.includes('cancel') ||
                 code.includes('canceled') ||
-                name.includes('отмен') ||
-                name.includes('снят')
+                name.includes('РѕС‚РјРµРЅ') ||
+                name.includes('СЃРЅСЏС‚')
             );
         });
 
@@ -364,11 +481,11 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     );
     const getDealStatusIdByKey = (key: 'draft' | 'active' | 'signed' | 'closed' | 'canceled') => {
         const keywords = {
-            draft: ['draft', 'чернов'],
-            active: ['active', 'актив'],
-            signed: ['signed', 'подпис'],
-            closed: ['closed', 'закры'],
-            canceled: ['cancel', 'отмен'],
+            draft: ['draft', 'С‡РµСЂРЅРѕРІ'],
+            active: ['active', 'Р°РєС‚РёРІ'],
+            signed: ['signed', 'РїРѕРґРїРёСЃ'],
+            closed: ['closed', 'Р·Р°РєСЂС‹'],
+            canceled: ['cancel', 'РѕС‚РјРµРЅ'],
         };
         const match = dealStatuses.find((item) => {
             const values = [item?.name, item?.code].map((value) =>
@@ -382,11 +499,11 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const getDealStatusKey = (deal: SalesDeal | null | undefined) => {
         if (!deal) return '';
         const id = Number(deal.status || 0);
-        if (statusTextHasDeal(deal, ['draft', 'чернов']) || id === 1) return 'draft';
-        if (statusTextHasDeal(deal, ['active', 'актив']) || id === 2) return 'active';
-        if (statusTextHasDeal(deal, ['signed', 'подпис']) || id === 3) return 'signed';
-        if (statusTextHasDeal(deal, ['closed', 'закры']) || id === 4) return 'closed';
-        if (statusTextHasDeal(deal, ['canceled', 'cancel', 'отмен']) || id === 5)
+        if (statusTextHasDeal(deal, ['draft', 'С‡РµСЂРЅРѕРІ']) || id === 1) return 'draft';
+        if (statusTextHasDeal(deal, ['active', 'Р°РєС‚РёРІ']) || id === 2) return 'active';
+        if (statusTextHasDeal(deal, ['signed', 'РїРѕРґРїРёСЃ']) || id === 3) return 'signed';
+        if (statusTextHasDeal(deal, ['closed', 'Р·Р°РєСЂС‹']) || id === 4) return 'closed';
+        if (statusTextHasDeal(deal, ['canceled', 'cancel', 'РѕС‚РјРµРЅ']) || id === 5)
             return 'canceled';
         return '';
     };
@@ -397,7 +514,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             const name = String(type.name || '').toLowerCase();
             return (
                 ['buyout', 'sale', 'regular'].includes(code) ||
-                ['выкуп', 'обыч', 'продаж'].some((part) => name.includes(part))
+                ['РІС‹РєСѓРї', 'РѕР±С‹С‡', 'РїСЂРѕРґР°Р¶'].some((part) => name.includes(part))
             );
         });
         return String(match?.id || dealTypes[0]?.id || '');
@@ -405,12 +522,12 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const getPreferredDealPaymentTypeId = () => {
         const match = dealPaymentTypes.find((type) => {
             const name = String(type.name || '').toLowerCase();
-            return ['пол', 'выкуп', 'един', 'нал'].some((part) => name.includes(part));
+            return ['РїРѕР»', 'РІС‹РєСѓРї', 'РµРґРёРЅ', 'РЅР°Р»'].some((part) => name.includes(part));
         });
         return String(match?.id || dealPaymentTypes[0]?.id || '');
     };
     const getReservationStatusName = (reservation: SalesReservation) =>
-        reservation.status_ref?.name || 'Бронь';
+        reservation.status_ref?.name || 'Р‘СЂРѕРЅСЊ';
     const dealReservationOptions = useMemo(() => {
         const selectedClientId = Number(dealForm.client_id || 0);
         const selectedReservationId = Number(
@@ -464,16 +581,278 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     }, [clients, salesClients]);
     const getClientName = (clientId: number | string | null | undefined) => {
         const client = clientOptions.find((item) => Number(item.id) === Number(clientId));
-        return client?.full_name || client?.phone || 'Клиент';
+        return client?.full_name || client?.phone || 'РљР»РёРµРЅС‚';
     };
     const getDealSchedules = (dealId: number) =>
         deals.find((deal) => Number(deal.id) === Number(dealId))?.payment_schedules ?? [];
+    const loadUnitFiles = useCallback(async () => {
+        if (!unit?.id) {
+            setUnitFiles(EMPTY_UNIT_FILES);
+            return;
+        }
+
+        setUnitFilesLoading(true);
+        try {
+            const docs = await searchDocumentsDirect({
+                entity_type: UNIT_DOCUMENT_ENTITY_TYPE,
+                entity_id: unit.id,
+                page: 1,
+                size: 50,
+            });
+            const nextState: UnitFilesState = {
+                '2d': { documentId: null, files: [] },
+                '3d': { documentId: null, files: [] },
+            };
+            const filesByKind = {
+                '2d': new Map<number, DocumentFile>(),
+                '3d': new Map<number, DocumentFile>(),
+            };
+            const matchedKindDocs: Partial<Record<UnitFileType, Document | null>> = {
+                '2d': null,
+                '3d': null,
+            };
+
+            for (const kind of UNIT_FILE_TYPES) {
+                const matchedDoc = docs.find((doc) => isMatchingUnitFileDocument(doc, kind));
+                matchedKindDocs[kind] = matchedDoc || null;
+
+                if (matchedDoc?.id) {
+                    const files = await fetchDocumentFilesDirect(matchedDoc.id);
+
+                    nextState[kind].documentId = matchedDoc.id;
+                    files.forEach((file) => filesByKind[kind].set(file.id, file));
+                }
+            }
+
+            const legacyDocs = docs.filter(
+                (doc) =>
+                    isLegacyUnitFilesDocument(doc) &&
+                    !UNIT_FILE_TYPES.some(
+                        (kind) => Number(matchedKindDocs[kind]?.id) === Number(doc.id),
+                    ),
+            );
+
+            for (const legacyDoc of legacyDocs) {
+                if (!legacyDoc.id) continue;
+
+                const files = await fetchDocumentFilesDirect(legacyDoc.id);
+
+                files.forEach((file) => {
+                    filesByKind[getUnitFileKind(file)].set(file.id, file);
+                });
+            }
+
+            nextState['2d'].files = Array.from(filesByKind['2d'].values());
+            nextState['3d'].files = Array.from(filesByKind['3d'].values());
+            setUnitFiles(nextState);
+        } catch (loadError) {
+            toast.error(
+                loadError instanceof Error
+                    ? loadError.message
+                    : 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ 2D/3D С„Р°Р№Р»С‹ РєРІР°СЂС‚РёСЂС‹',
+            );
+        } finally {
+            setUnitFilesLoading(false);
+        }
+    }, [unit?.id]);
+    const getOrCreateUnitFileDocument = useCallback(
+        async (kind: UnitFileType) => {
+            if (!unit?.id) {
+                throw new Error('РљРІР°СЂС‚РёСЂР° РЅРµ РЅР°Р№РґРµРЅР°');
+            }
+
+            const docs = await searchDocumentsDirect({
+                entity_type: UNIT_DOCUMENT_ENTITY_TYPE,
+                entity_id: unit.id,
+                page: 1,
+                size: 50,
+            });
+
+            const existingDocument = docs.find((doc) =>
+                isMatchingUnitFileDocument(doc, kind),
+            );
+            if (existingDocument?.id) {
+                return existingDocument;
+            }
+
+            const meta = getUnitFileDocumentMeta(kind, unit.unit_number, unit.id);
+            return await dispatch(
+                createDocument({
+                    entity_type: UNIT_DOCUMENT_ENTITY_TYPE,
+                    entity_id: unit.id,
+                    name: meta.name,
+                    description: meta.description,
+                    status: 1,
+                }),
+            ).unwrap();
+        },
+        [dispatch, unit?.id, unit?.unit_number],
+    );
+
+    useEffect(() => {
+        if (!unit?.id) {
+            setUnitFiles(EMPTY_UNIT_FILES);
+            return;
+        }
+
+        void loadUnitFiles();
+    }, [loadUnitFiles, unit?.id]);
+
+    useEffect(() => {
+        let disposed = false;
+        const objectUrls: string[] = [];
+
+        const loadUnitPreviews = async () => {
+            const imageFilesExist = UNIT_FILE_TYPES.some((kind) =>
+                unitFiles[kind].files.some(isImageFile),
+            );
+
+            if (!imageFilesExist) {
+                setUnitPreviewGroups(EMPTY_UNIT_PREVIEW_GROUPS);
+                setUnitPreviewLoading(false);
+                setUnitPreviewOpen(false);
+                setUnitPreviewTab('files');
+                return;
+            }
+
+            setUnitPreviewLoading(true);
+            try {
+                const nextGroups: UnitPreviewGroups = {
+                    '2d': [],
+                    '3d': [],
+                };
+
+                for (const kind of UNIT_FILE_TYPES) {
+                    const imageFiles = unitFiles[kind].files.filter(isImageFile);
+
+                    for (const file of imageFiles) {
+                        const response = await apiRequest<Blob>(
+                            `/documentFiles/download/${file.id}`,
+                            'GET',
+                        );
+                        const url = window.URL.createObjectURL(response.data);
+                        objectUrls.push(url);
+                        nextGroups[kind].push({ file, url });
+                    }
+                }
+
+                if (disposed) return;
+
+                setUnitPreviewGroups(nextGroups);
+                setUnitPreviewTab((prev) => {
+                    if (prev === 'files') return prev;
+                    if (nextGroups[prev].length > 0) return prev;
+                    if (nextGroups['2d'].length > 0) return '2d';
+                    if (nextGroups['3d'].length > 0) return '3d';
+                    return 'files';
+                });
+            } catch (previewError) {
+                if (disposed) return;
+
+                setUnitPreviewGroups(EMPTY_UNIT_PREVIEW_GROUPS);
+                toast.error(
+                    previewError instanceof Error
+                        ? previewError.message
+                        : 'Не удалось загрузить превью 2D/3D файла',
+                );
+            } finally {
+                if (!disposed) {
+                    setUnitPreviewLoading(false);
+                }
+            }
+        };
+
+        void loadUnitPreviews();
+
+        return () => {
+            disposed = true;
+            objectUrls.forEach((url) => window.URL.revokeObjectURL(url));
+        };
+    }, [unitFiles]);
+
+    const handleUploadUnitFile = async (
+        kind: UnitFileType,
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+
+        if (!file) return;
+
+        setUnitFilesLoading(true);
+        try {
+            const document = await getOrCreateUnitFileDocument(kind);
+            await dispatch(
+                uploadDocumentFile({
+                    documentId: document.id,
+                    file,
+                }),
+            ).unwrap();
+
+            await loadUnitFiles();
+            setUnitPreviewTab(kind);
+            setUnitPreviewOpen(true);
+            const meta = getUnitFileDocumentMeta(kind, unit?.unit_number, unit?.id || unitId);
+            toast.success(`${meta.title} Р·Р°РіСЂСѓР¶РµРЅ`);
+        } catch (uploadError) {
+            toast.error(
+                uploadError instanceof Error
+                    ? uploadError.message
+                    : 'РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё С„Р°Р№Р»Р° РєРІР°СЂС‚РёСЂС‹',
+            );
+        } finally {
+            setUnitFilesLoading(false);
+        }
+    };
+    const handleDownloadUnitFile = async (file: DocumentFile) => {
+        try {
+            await dispatch(
+                downloadDocumentFile({
+                    file_id: file.id,
+                    filename: file.name || `file-${file.id}`,
+                }),
+            ).unwrap();
+        } catch (downloadError) {
+            toast.error(
+                downloadError instanceof Error
+                    ? downloadError.message
+                    : 'РћС€РёР±РєР° СЃРєР°С‡РёРІР°РЅРёСЏ С„Р°Р№Р»Р°',
+            );
+        }
+    };
+    const handleDeleteUnitFile = async (kind: UnitFileType, fileId: number) => {
+        if (!window.confirm('РЈРґР°Р»РёС‚СЊ С„Р°Р№Р»?')) return;
+
+        setUnitFilesLoading(true);
+        try {
+            await dispatch(deleteDocumentFile(fileId)).unwrap();
+            await loadUnitFiles();
+
+            const meta = getUnitFileDocumentMeta(kind, unit?.unit_number, unit?.id || unitId);
+            toast.success(`${meta.title} СѓРґР°Р»РµРЅ`);
+        } catch (deleteError) {
+            toast.error(
+                deleteError instanceof Error
+                    ? deleteError.message
+                    : 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р°',
+            );
+        } finally {
+            setUnitFilesLoading(false);
+        }
+    };
+    const currentPreviewKind: UnitFileType = unitPreviewTab === '3d' ? '3d' : '2d';
+    const currentPreviewAssets = unitPreviewGroups[currentPreviewKind] ?? [];
+    const currentPreviewAsset = currentPreviewAssets[0] ?? null;
+    const handleUnitPreviewTabChange = (tab: UnitPreviewTab) => {
+        setUnitPreviewTab(tab);
+        setUnitPreviewOpen(tab !== 'files');
+    };
     const refreshPassport = async () => {
         await dispatch(fetchSalesUnitPassport(unitId));
     };
     const openCreateReservation = (payload?: { client_id?: number | null }) => {
         if (blockingReservation) {
-            toast.error('По этому лоту уже есть активная или подтвержденная бронь');
+            toast.error('РџРѕ СЌС‚РѕРјСѓ Р»РѕС‚Сѓ СѓР¶Рµ РµСЃС‚СЊ Р°РєС‚РёРІРЅР°СЏ РёР»Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРЅР°СЏ Р±СЂРѕРЅСЊ');
             return;
         }
 
@@ -488,7 +867,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const openEditReservation = (reservation: SalesReservation) => {
         if (!isReservationActiveOnly(reservation, activeReservationStatusId)) {
-            toast.error('Редактировать бронь можно только когда статус активный');
+            toast.error('Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р±СЂРѕРЅСЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЃС‚Р°С‚СѓСЃ Р°РєС‚РёРІРЅС‹Р№');
             return;
         }
 
@@ -677,7 +1056,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 status: getDealStatusIdByKey(nextStatus),
                 canceled_reason:
                     nextStatus === 'canceled'
-                        ? deal.canceled_reason || 'Отменено из паспорта лота'
+                        ? deal.canceled_reason || 'РћС‚РјРµРЅРµРЅРѕ РёР· РїР°СЃРїРѕСЂС‚Р° Р»РѕС‚Р°'
                         : null,
             });
 
@@ -698,24 +1077,22 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 error instanceof Error
                     ? error.message
                     : nextStatus === 'signed'
-                      ? 'Не удалось подписать договор'
-                      : 'Не удалось отменить договор',
+                      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕРґРїРёСЃР°С‚СЊ РґРѕРіРѕРІРѕСЂ'
+                      : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РјРµРЅРёС‚СЊ РґРѕРіРѕРІРѕСЂ',
             );
         } finally {
             setActionLoading(false);
         }
     };
     const getOrCreateDealDocument = async (deal: SalesDeal) => {
-        const docsResult = await dispatch(
-            fetchDocuments({
-                entity_type: 'salesDeal',
-                entity_id: deal.id,
-                page: 1,
-                size: 1,
-            }),
-        ).unwrap();
+        const docs = await searchDocumentsDirect({
+            entity_type: 'salesDeal',
+            entity_id: deal.id,
+            page: 1,
+            size: 1,
+        });
 
-        const existingDocument = docsResult.data?.[0];
+        const existingDocument = docs[0];
         if (existingDocument?.id) {
             return existingDocument;
         }
@@ -724,8 +1101,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             createDocument({
                 entity_type: 'salesDeal',
                 entity_id: deal.id,
-                name: `Файлы договора №${deal.contract_number || deal.id}`,
-                description: `Документы по лоту ${unit?.unit_number || unitId}`,
+                name: `Р¤Р°Р№Р»С‹ РґРѕРіРѕРІРѕСЂР° в„–${deal.contract_number || deal.id}`,
+                description: `Р”РѕРєСѓРјРµРЅС‚С‹ РїРѕ Р»РѕС‚Сѓ ${unit?.unit_number || unitId}`,
                 status: 1,
             }),
         ).unwrap();
@@ -734,17 +1111,17 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         setFilesLoading(true);
         try {
             const document = await getOrCreateDealDocument(deal);
-            const filesRes = await dispatch(fetchDocumentFiles(document.id)).unwrap();
+            const files = await fetchDocumentFilesDirect(document.id);
 
             setDealFilesContext({
                 deal,
                 documentId: document.id,
-                files: filesRes.data || [],
+                files,
             });
             setDealFilesOpen(true);
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : 'Не удалось открыть файлы договора',
+                error instanceof Error ? error.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р»С‹ РґРѕРіРѕРІРѕСЂР°',
             );
         } finally {
             setFilesLoading(false);
@@ -765,14 +1142,14 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ).unwrap();
             }
 
-            const filesRes = await dispatch(fetchDocumentFiles(dealFilesContext.documentId)).unwrap();
+            const nextFiles = await fetchDocumentFilesDirect(dealFilesContext.documentId);
             setDealFilesContext((prev) => ({
                 ...prev,
-                files: filesRes.data || [],
+                files: nextFiles,
             }));
-            toast.success('Файлы загружены');
+            toast.success('Р¤Р°Р№Р»С‹ Р·Р°РіСЂСѓР¶РµРЅС‹');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Ошибка загрузки файлов');
+            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё С„Р°Р№Р»РѕРІ');
         } finally {
             event.target.value = '';
             setFilesLoading(false);
@@ -787,29 +1164,27 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Ошибка скачивания файла');
+            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° СЃРєР°С‡РёРІР°РЅРёСЏ С„Р°Р№Р»Р°');
         }
     };
     const handleDeleteDealFile = async (fileId: number) => {
-        if (!window.confirm('Удалить файл?')) return;
+        if (!window.confirm('РЈРґР°Р»РёС‚СЊ С„Р°Р№Р»?')) return;
 
         setFilesLoading(true);
         try {
             await dispatch(deleteDocumentFile(fileId)).unwrap();
 
             if (dealFilesContext.documentId) {
-                const filesRes = await dispatch(
-                    fetchDocumentFiles(dealFilesContext.documentId),
-                ).unwrap();
+                const nextFiles = await fetchDocumentFilesDirect(dealFilesContext.documentId);
                 setDealFilesContext((prev) => ({
                     ...prev,
-                    files: filesRes.data || [],
+                    files: nextFiles,
                 }));
             }
 
-            toast.success('Файл удален');
+            toast.success('Р¤Р°Р№Р» СѓРґР°Р»РµРЅ');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Ошибка удаления файла');
+            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р°');
         } finally {
             setFilesLoading(false);
         }
@@ -822,21 +1197,21 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         setActionLoading(true);
         try {
             if (!resForm.client_id) {
-                throw new Error('Выберите клиента');
+                throw new Error('Р’С‹Р±РµСЂРёС‚Рµ РєР»РёРµРЅС‚Р°');
             }
 
             if (
                 !editingReservation &&
                 blockingReservation
             ) {
-                throw new Error('По этому лоту уже есть активная или подтвержденная бронь');
+                throw new Error('РџРѕ СЌС‚РѕРјСѓ Р»РѕС‚Сѓ СѓР¶Рµ РµСЃС‚СЊ Р°РєС‚РёРІРЅР°СЏ РёР»Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРЅР°СЏ Р±СЂРѕРЅСЊ');
             }
 
             if (
                 editingReservation &&
                 !isReservationActiveOnly(editingReservation, activeReservationStatusId)
             ) {
-                throw new Error('Редактировать бронь можно только когда статус активный');
+                throw new Error('Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р±СЂРѕРЅСЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЃС‚Р°С‚СѓСЃ Р°РєС‚РёРІРЅС‹Р№');
             }
 
             const payload = {
@@ -863,14 +1238,14 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 await apiRequest('/sales/reservations/create', 'POST', payload);
             }
 
-            toast.success(editingReservation ? 'Бронь обновлена' : 'Бронь создана');
+            toast.success(editingReservation ? 'Р‘СЂРѕРЅСЊ РѕР±РЅРѕРІР»РµРЅР°' : 'Р‘СЂРѕРЅСЊ СЃРѕР·РґР°РЅР°');
             setReservationModalOpen(false);
             setEditingReservation(null);
             setResForm(EMPTY_RESERVATION_FORM);
             await refreshPassport();
         } catch (saveError) {
             toast.error(
-                saveError instanceof Error ? saveError.message : 'Ошибка сохранения брони',
+                saveError instanceof Error ? saveError.message : 'РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ Р±СЂРѕРЅРё',
             );
         } finally {
             setActionLoading(false);
@@ -880,7 +1255,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         if (!reservation?.id) return;
 
         if (!isReservationActiveOnly(reservation, activeReservationStatusId)) {
-            toast.error('Снять бронь можно только когда статус активный');
+            toast.error('РЎРЅСЏС‚СЊ Р±СЂРѕРЅСЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЃС‚Р°С‚СѓСЃ Р°РєС‚РёРІРЅС‹Р№');
             return;
         }
 
@@ -888,14 +1263,14 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         try {
             await apiRequest(`/sales/reservations/update/${reservation.id}`, 'PUT', {
                 status: canceledReservationStatusId,
-                cancel_reason: 'Бронь снята из паспорта лота',
+                cancel_reason: 'Р‘СЂРѕРЅСЊ СЃРЅСЏС‚Р° РёР· РїР°СЃРїРѕСЂС‚Р° Р»РѕС‚Р°',
             });
 
-            toast.success('Бронь снята');
+            toast.success('Р‘СЂРѕРЅСЊ СЃРЅСЏС‚Р°');
             await refreshPassport();
         } catch (cancelError) {
             toast.error(
-                cancelError instanceof Error ? cancelError.message : 'Ошибка снятия брони',
+                cancelError instanceof Error ? cancelError.message : 'РћС€РёР±РєР° СЃРЅСЏС‚РёСЏ Р±СЂРѕРЅРё',
             );
         } finally {
             setActionLoading(false);
@@ -903,7 +1278,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const openReservationPaymentModal = (reservation: SalesReservation, clientId: number) => {
         if (!isReservationActiveOnly(reservation, activeReservationStatusId)) {
-            toast.error('Платеж по брони можно добавить только для активной брони');
+            toast.error('РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё');
             return;
         }
 
@@ -911,7 +1286,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             ...EMPTY_PAYMENT_FORM,
             reservation_id: String(reservation.id),
             client_id: String(clientId || reservation.client_id || ''),
-            title: `Платеж по брони №${reservation.id}`,
+            title: `РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё в„–${reservation.id}`,
             currency: reservation.currency
                 ? String(reservation.currency)
                 : defaultCurrencyId,
@@ -938,24 +1313,24 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ) || null;
 
             if (!selectedReservation?.id) {
-                throw new Error('Платеж можно создать только по выбранной брони');
+                throw new Error('РџР»Р°С‚РµР¶ РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕ РІС‹Р±СЂР°РЅРЅРѕР№ Р±СЂРѕРЅРё');
             }
 
             if (!isReservationActiveOnly(selectedReservation, activeReservationStatusId)) {
-                throw new Error('Платеж по брони можно добавить только для активной брони');
+                throw new Error('РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё');
             }
 
             const amount = toNullableNumber(paymentForm.amount);
             if (!amount || amount <= 0) {
-                throw new Error('Укажите сумму платежа');
+                throw new Error('РЈРєР°Р¶РёС‚Рµ СЃСѓРјРјСѓ РїР»Р°С‚РµР¶Р°');
             }
 
             if (!incomePaymentType?.id) {
-                throw new Error('Не найден тип платежа "приход"');
+                throw new Error('РќРµ РЅР°Р№РґРµРЅ С‚РёРї РїР»Р°С‚РµР¶Р° "РїСЂРёС…РѕРґ"');
             }
 
             if (!salePaymentArticle?.id) {
-                throw new Error('Не найдена статья платежа для продажи квартиры');
+                throw new Error('РќРµ РЅР°Р№РґРµРЅР° СЃС‚Р°С‚СЊСЏ РїР»Р°С‚РµР¶Р° РґР»СЏ РїСЂРѕРґР°Р¶Рё РєРІР°СЂС‚РёСЂС‹');
             }
 
             await dispatch(
@@ -968,7 +1343,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                     entity_id: Number(selectedReservation.id),
                     title:
                         paymentForm.title.trim() ||
-                        `Платеж по брони №${selectedReservation.id}`,
+                        `РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё в„–${selectedReservation.id}`,
                     amount,
                     currency: Number(
                         paymentForm.currency || selectedReservation.currency || defaultCurrencyId,
@@ -986,13 +1361,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
 
-            toast.success('Платеж создан');
+            toast.success('РџР»Р°С‚РµР¶ СЃРѕР·РґР°РЅ');
             setPaymentModalOpen(false);
             setPaymentForm(EMPTY_PAYMENT_FORM);
             await refreshPassport();
         } catch (paymentError) {
             toast.error(
-                paymentError instanceof Error ? paymentError.message : 'Ошибка создания платежа',
+                paymentError instanceof Error ? paymentError.message : 'РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ РїР»Р°С‚РµР¶Р°',
             );
         } finally {
             setActionLoading(false);
@@ -1004,7 +1379,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             deal_id: String(deal.id),
             reservation_id: deal.reservation_id ? String(deal.reservation_id) : '',
             client_id: deal.client_id ? String(deal.client_id) : '',
-            title: `Платеж по договору №${deal.contract_number || deal.id}`,
+            title: `РџР»Р°С‚РµР¶ РїРѕ РґРѕРіРѕРІРѕСЂСѓ в„–${deal.contract_number || deal.id}`,
             currency: deal.currency ? String(deal.currency) : defaultCurrencyId,
             planned_date: toDateInput(new Date()),
         });
@@ -1027,7 +1402,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             deal_id: String(selectedDeal.id),
             reservation_id: selectedDeal.reservation_id ? String(selectedDeal.reservation_id) : '',
             client_id: selectedDeal.client_id ? String(selectedDeal.client_id) : prev.client_id,
-            title: `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`,
+            title: `РџР»Р°С‚РµР¶ РїРѕ РґРѕРіРѕРІРѕСЂСѓ в„–${selectedDeal.contract_number || selectedDeal.id}`,
             currency: selectedDeal.currency ? String(selectedDeal.currency) : prev.currency,
         }));
     };
@@ -1046,7 +1421,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ) || null;
 
             if (!selectedDeal?.id && !selectedReservation?.id) {
-                throw new Error('Платеж можно создать только по активной брони или договору');
+                throw new Error('РџР»Р°С‚РµР¶ РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё РёР»Рё РґРѕРіРѕРІРѕСЂСѓ');
             }
 
             if (
@@ -1054,20 +1429,20 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 selectedReservation &&
                 !isReservationActiveOnly(selectedReservation, activeReservationStatusId)
             ) {
-                throw new Error('Платеж по брони можно добавить только для активной брони');
+                throw new Error('РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё');
             }
 
             const amount = toNullableNumber(paymentForm.amount);
             if (!amount || amount <= 0) {
-                throw new Error('Укажите сумму платежа');
+                throw new Error('РЈРєР°Р¶РёС‚Рµ СЃСѓРјРјСѓ РїР»Р°С‚РµР¶Р°');
             }
 
             if (!incomePaymentType?.id) {
-                throw new Error('Не найден тип платежа "приход"');
+                throw new Error('РќРµ РЅР°Р№РґРµРЅ С‚РёРї РїР»Р°С‚РµР¶Р° "РїСЂРёС…РѕРґ"');
             }
 
             if (!salePaymentArticle?.id) {
-                throw new Error('Не найдена статья платежа для продажи квартиры');
+                throw new Error('РќРµ РЅР°Р№РґРµРЅР° СЃС‚Р°С‚СЊСЏ РїР»Р°С‚РµР¶Р° РґР»СЏ РїСЂРѕРґР°Р¶Рё РєРІР°СЂС‚РёСЂС‹');
             }
 
             await dispatch(
@@ -1081,8 +1456,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                     title:
                         paymentForm.title.trim() ||
                         (selectedDeal?.id
-                            ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
-                            : `Платеж по брони №${selectedReservation?.id}`),
+                            ? `РџР»Р°С‚РµР¶ РїРѕ РґРѕРіРѕРІРѕСЂСѓ в„–${selectedDeal.contract_number || selectedDeal.id}`
+                            : `РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё в„–${selectedReservation?.id}`),
                     amount,
                     currency: Number(
                         paymentForm.currency ||
@@ -1109,13 +1484,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
 
-            toast.success('Платеж создан');
+            toast.success('РџР»Р°С‚РµР¶ СЃРѕР·РґР°РЅ');
             setPaymentModalOpen(false);
             setPaymentForm(EMPTY_PAYMENT_FORM);
             await refreshPassport();
         } catch (paymentError) {
             toast.error(
-                paymentError instanceof Error ? paymentError.message : 'Ошибка создания платежа',
+                paymentError instanceof Error ? paymentError.message : 'РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ РїР»Р°С‚РµР¶Р°',
             );
         } finally {
             setActionLoading(false);
@@ -1165,10 +1540,10 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             const paymentsCount = Number(scheduleForm.payments_count || 0);
 
             if (!dealId) {
-                throw new Error('Выберите договор');
+                throw new Error('Р’С‹Р±РµСЂРёС‚Рµ РґРѕРіРѕРІРѕСЂ');
             }
             if (!paymentsCount || paymentsCount < 1) {
-                throw new Error('Укажите количество платежей');
+                throw new Error('РЈРєР°Р¶РёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїР»Р°С‚РµР¶РµР№');
             }
 
             await dispatch(
@@ -1184,13 +1559,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
 
-            toast.success('График сформирован');
+            toast.success('Р“СЂР°С„РёРє СЃС„РѕСЂРјРёСЂРѕРІР°РЅ');
             setScheduleModalOpen(false);
             setScheduleForm(EMPTY_SCHEDULE_FORM);
             await refreshPassport();
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : 'Ошибка формирования графика',
+                error instanceof Error ? error.message : 'РћС€РёР±РєР° С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РіСЂР°С„РёРєР°',
             );
         } finally {
             setActionLoading(false);
@@ -1198,7 +1573,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const downloadScheduleReport = async (deal: SalesDeal) => {
         const token = getToken();
-        const fallbackName = `График платежей договор №${deal.contract_number || deal.id}.xlsx`;
+        const fallbackName = `Р“СЂР°С„РёРє РїР»Р°С‚РµР¶РµР№ РґРѕРіРѕРІРѕСЂ в„–${deal.contract_number || deal.id}.xlsx`;
 
         try {
             const [baseUrl] = getSalesReportBaseUrls();
@@ -1212,7 +1587,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
 
             const contentType = response.headers.get('Content-Type');
             if (!response.ok) {
-                let message = 'Не удалось скачать график платежей';
+                let message = 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРєР°С‡Р°С‚СЊ РіСЂР°С„РёРє РїР»Р°С‚РµР¶РµР№';
 
                 if (contentType?.includes('application/json')) {
                     const json = await response.json();
@@ -1237,9 +1612,9 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            toast.success('Excel выгружен');
+            toast.success('Excel РІС‹РіСЂСѓР¶РµРЅ');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Ошибка выгрузки Excel');
+            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° РІС‹РіСЂСѓР·РєРё Excel');
         } finally {
             // no-op
         }
@@ -1249,7 +1624,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     if (loading) {
         return (
             <div className="flex min-h-[400px] items-center justify-center text-sm text-slate-500">
-                Загрузка паспорта квартиры...
+                Р—Р°РіСЂСѓР·РєР° РїР°СЃРїРѕСЂС‚Р° РєРІР°СЂС‚РёСЂС‹...
             </div>
         );
     }
@@ -1265,7 +1640,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     if (!unit) {
         return (
             <div className="p-6 text-sm border border-dashed rounded-xl border-slate-300 text-slate-500">
-                Данные по квартире не найдены
+                Р”Р°РЅРЅС‹Рµ РїРѕ РєРІР°СЂС‚РёСЂРµ РЅРµ РЅР°Р№РґРµРЅС‹
             </div>
         );
     }
@@ -1274,7 +1649,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     return (
         <div>
             <div>
-                {/* ИНФОРМАЦИЯ О ЛЕТЕ */}
+                {/* UNIT HEADER */}
                 <UnitPassportHeader
                     unit={unit}
                     refs={refs}
@@ -1283,94 +1658,206 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 />
             </div>
             {/* ЗАГРУЗКА 2D и 3D */}
-            <div className="px-2 py-3 bg-white border-b border-stone-200">
-                <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="border-b border-stone-200 bg-white px-2 py-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
                     <div>
                         <div className="text-sm font-semibold text-slate-800">Файлы квартиры</div>
                         <p className="text-xs text-slate-500">
                             Загрузка 2D и 3D файлов по этой квартире
                         </p>
                     </div>
-                    {/* {unitFilesLoading ? (
+                    {unitFilesLoading ? (
                         <span className="text-xs font-medium text-slate-500">Загрузка...</span>
-                    ) : null} */}
+                    ) : null}
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                    2D3D
-                    {/* {UNIT_FILE_TYPES.map((kind) => {
-                        const meta = getUnitFileDocumentMeta(
-                            kind,
-                            passportUnit.unit_number,
-                            passportUnit.id,
-                        );
-                        const files = unitFiles[kind].files;
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-1.5">
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handleUnitPreviewTabChange('2d')}
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                unitPreviewTab === '2d'
+                                    ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
+                                    : 'bg-white text-slate-600 ring-1 ring-stone-200 hover:bg-stone-100'
+                            }`}
+                        >
+                            2D План
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleUnitPreviewTabChange('3d')}
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                unitPreviewTab === '3d'
+                                    ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
+                                    : 'bg-white text-slate-600 ring-1 ring-stone-200 hover:bg-stone-100'
+                            }`}
+                        >
+                            3D План
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleUnitPreviewTabChange('files')}
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                unitPreviewTab === 'files'
+                                    ? 'bg-sky-100 text-sky-700 ring-1 ring-sky-200'
+                                    : 'bg-white text-slate-600 ring-1 ring-stone-200 hover:bg-stone-100'
+                            }`}
+                        >
+                            Файлы
+                        </button>
+                    </div>
+                </div>
 
-                        return (
-                            <div
-                                key={kind}
-                                className="p-3 border rounded-xl border-stone-200 bg-slate-50"
-                            >
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                    <div className="text-sm font-semibold text-slate-700">
-                                        {meta.title}
+                {unitPreviewTab === 'files' ? (
+                    <div className="grid gap-3 pt-3 md:grid-cols-2">
+                        {UNIT_FILE_TYPES.map((kind) => {
+                            const meta = getUnitFileDocumentMeta(
+                                kind,
+                                unit.unit_number,
+                                unit.id,
+                            );
+                            const files = unitFiles[kind].files;
+
+                            return (
+                                <div
+                                    key={kind}
+                                    className="rounded-xl border border-stone-200 bg-slate-50 p-3"
+                                >
+                                    <div className="mb-2 flex items-center justify-between gap-2">
+                                        <div className="text-sm font-semibold text-slate-700">
+                                            {meta.title}
+                                        </div>
+                                        <label className="inline-flex cursor-pointer items-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700">
+                                            Загрузить
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={(event) =>
+                                                    void handleUploadUnitFile(kind, event)
+                                                }
+                                            />
+                                        </label>
                                     </div>
-                                    <label className="inline-flex cursor-pointer items-center rounded-lg bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700">
-                                        Загрузить
-                                        <input
-                                            type="file"
-                                            className="hidden"
-                                            onChange={(event) =>
-                                                void handleUploadUnitFile(kind, event)
-                                            }
-                                        />
-                                    </label>
-                                </div>
 
-                                {files.length ? (
-                                    <div className="space-y-2">
-                                        {files.map((file) => (
-                                            <div
-                                                key={file.id}
-                                                className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2"
-                                            >
-                                                <div className="min-w-0 text-xs font-medium truncate text-slate-700">
-                                                    {file.name || `Файл #${file.id}`}
+                                    {files.length ? (
+                                        <div className="space-y-2">
+                                            {files.map((file) => (
+                                                <div
+                                                    key={file.id}
+                                                    className="flex items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2"
+                                                >
+                                                    <div className="min-w-0 truncate text-xs font-medium text-slate-700">
+                                                        {file.name || `Файл #${file.id}`}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            title="Скачать файл"
+                                                            onClick={() =>
+                                                                void handleDownloadUnitFile(file)
+                                                            }
+                                                            className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200"
+                                                        >
+                                                            Скачать
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            title="Удалить файл"
+                                                            onClick={() =>
+                                                                void handleDeleteUnitFile(
+                                                                    kind,
+                                                                    file.id,
+                                                                )
+                                                            }
+                                                            className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
+                                                        >
+                                                            Удалить
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <button
-                                                        type="button"
-                                                        title="Скачать файл"
-                                                        onClick={() =>
-                                                            void handleDownloadUnitFile(file)
-                                                        }
-                                                        className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200"
-                                                    >
-                                                        Скачать
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        title="Удалить файл"
-                                                        onClick={() =>
-                                                            void handleDeleteUnitFile(kind, file.id)
-                                                        }
-                                                        className="rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-100"
-                                                    >
-                                                        Удалить
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-lg border border-dashed border-stone-300 bg-white px-3 py-4 text-center text-xs text-slate-500">
+                                            Файл пока не загружен
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : !unitPreviewOpen ? (
+                    <div className="pt-3">
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2">
+                            <div className="text-xs text-slate-500">
+                                {unitPreviewTab === '3d'
+                                    ? 'Предпросмотр 3D плана скрыт'
+                                    : 'Предпросмотр 2D плана скрыт'}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setUnitPreviewOpen(true)}
+                                className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-stone-200 transition hover:bg-stone-100"
+                            >
+                                Открыть
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="pt-3">
+                        <div className="rounded-xl border border-stone-200 bg-stone-50 p-2">
+                            <div className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 ring-1 ring-stone-100">
+                                <div className="text-xs font-medium text-slate-600">
+                                    {unitPreviewTab === '3d' ? '3D План' : '2D План'}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setUnitPreviewOpen(false)}
+                                    className="rounded-md px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-stone-200 transition hover:bg-stone-100"
+                                >
+                                    Скрыть
+                                </button>
+                            </div>
+
+                            <div className="min-h-[260px] rounded-lg bg-white p-3 sm:min-h-[320px] sm:p-4">
+                                {unitPreviewLoading ? (
+                                    <div className="flex min-h-[220px] items-center justify-center text-sm text-slate-500 sm:min-h-[280px]">
+                                        Загружаем {unitPreviewTab === '3d' ? '3D план' : '2D план'}...
+                                    </div>
+                                ) : currentPreviewAsset ? (
+                                    <div className="flex min-h-[220px] items-center justify-center sm:min-h-[280px]">
+                                        <img
+                                            src={currentPreviewAsset.url}
+                                            alt={
+                                                currentPreviewAsset.file.name ||
+                                                (unitPreviewTab === '3d'
+                                                    ? '3D план'
+                                                    : '2D план')
+                                            }
+                                            className="max-h-[420px] w-auto max-w-full object-contain sm:max-h-[520px]"
+                                        />
                                     </div>
                                 ) : (
-                                    <div className="px-3 py-4 text-xs text-center bg-white border border-dashed rounded-lg border-stone-300 text-slate-500">
-                                        Файл пока не загружен
+                                    <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-center text-slate-500 sm:min-h-[280px]">
+                                        <div className="text-sm font-medium">
+                                            {unitPreviewTab === '3d'
+                                                ? '3D план пока не загружен'
+                                                : '2D план пока не загружен'}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUnitPreviewTabChange('files')}
+                                            className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-700"
+                                        >
+                                            Перейти к файлам
+                                        </button>
                                     </div>
                                 )}
                             </div>
-                        );
-                    })} */}
-                </div>
+                        </div>
+                    </div>
+                )}
             </div>
             <div>
                 <UnitPassportHistoryPanel
@@ -1450,8 +1937,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 paymentForm={paymentForm}
                 reservationOptionLabel={
                     paymentForm.reservation_id
-                        ? `Бронь №${paymentForm.reservation_id}`
-                        : 'Выберите бронь'
+                        ? `Р‘СЂРѕРЅСЊ в„–${paymentForm.reservation_id}`
+                        : 'Р’С‹Р±РµСЂРёС‚Рµ Р±СЂРѕРЅСЊ'
                 }
                 currencies={currencies}
                 actionLoading={actionLoading}

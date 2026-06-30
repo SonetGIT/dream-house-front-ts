@@ -1,5 +1,6 @@
 ﻿import {
     CalendarClock,
+    ChevronDown,
     FileText,
     Mail,
     Pencil,
@@ -9,6 +10,7 @@
     User,
     Wallet,
 } from 'lucide-react';
+import { useState } from 'react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatData';
@@ -57,6 +59,7 @@ export const UnitPassportClientAccardion = ({
     onOpenDealSchedule,
     onDownloadDealSchedule,
 }: UnitPassportClientAccardionProps) => {
+    const [expanded, setExpanded] = useState(false);
     const reservations = client.reservations ?? [];
     const deals = client.deals ?? [];
     const activeClientReservation =
@@ -69,6 +72,7 @@ export const UnitPassportClientAccardion = ({
         <div className="overflow-hidden bg-white border rounded-md border-stone-200">
             <button
                 type="button"
+                onClick={() => setExpanded((prev) => !prev)}
                 className="w-full px-2 py-2 text-left transition hover:bg-slate-50"
             >
                 <div className="flex items-center justify-between gap-3">
@@ -101,10 +105,16 @@ export const UnitPassportClientAccardion = ({
                             </div>
                         </div>
                     </div>
+                    <div className="pr-4 shrink-0 text-slate-400">
+                        <ChevronDown
+                            size={20}
+                            className={`transition-transform ${expanded ? 'rotate-180' : ''}`}
+                        />
+                    </div>
                 </div>
             </button>
 
-            <div className="px-2 py-3 space-y-4 border-t border-stone-200">
+            {expanded ? <div className="px-2 py-3 space-y-4 border-t border-stone-200">
                 <section>
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-600">
@@ -308,7 +318,7 @@ export const UnitPassportClientAccardion = ({
                         </div>
                     )}
                 </section>
-            </div>
+            </div> : null}
         </div>
     );
 };
