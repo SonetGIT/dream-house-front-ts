@@ -136,17 +136,17 @@ export default function BlockStageRow({
                 </td>
 
                 {/* Name */}
-                <td className="text-[14px] text-gray-900 border-l border-gray-200 pl-2 pr-3 py-2.5">
+                <td className="text-[14px] text-gray-900 border-l text-left border-gray-200 pl-2 pr-3 py-2.5">
                     {stage.name}
                 </td>
 
                 {/* Start */}
-                <td className="w-[200px] text-[14px] text-gray-700 border-l border-gray-200 px-3 py-2.5">
+                <td className="w-[200px] text-[14px] text-gray-700 text-left border-l border-gray-200 px-3 py-2.5">
                     {formatDateTime(stage.start_date)}
                 </td>
 
                 {/* End */}
-                <td className="w-[200px] text-[14px] text-gray-700 border-l border-gray-200 px-3 py-2.5">
+                <td className="w-[200px] text-[14px] text-gray-700 text-left border-l border-gray-200 px-3 py-2.5">
                     {formatDateTime(stage.end_date)}
                 </td>
 

@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useAppDispatch } from '@/app/store';
+import { useMemo } from 'react';
 
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
@@ -52,6 +53,12 @@ export default function MatReqItemsCreateEditForm({
     const currencies = refs.currencies?.data || [];
     const blockStages = refs.blockStages?.data || [];
     const stageSubsections = refs.stageSubsections?.data || [];
+
+    const filteredStages = useMemo(() => {
+        if (!blockId) return [];
+
+        return blockStages.filter((stage: any) => Number(stage.block_id) === Number(blockId));
+    }, [blockId, blockStages]);
 
     const calcSum = (row: MaterialRow) => {
         const total =
@@ -172,11 +179,15 @@ export default function MatReqItemsCreateEditForm({
                                   )
                                 : [];
 
-                            const filteredSubStages = row.stage_id
-                                ? stageSubsections.filter(
-                                      (s: any) => Number(s.stage_id) === Number(row.stage_id),
-                                  )
-                                : [];
+                            const filteredSubStages =
+                                row.stage_id &&
+                                filteredStages.some(
+                                    (stage: any) => Number(stage.id) === Number(row.stage_id),
+                                )
+                                    ? stageSubsections.filter(
+                                          (s: any) => Number(s.stage_id) === Number(row.stage_id),
+                                      )
+                                    : [];
 
                             return (
                                 <tr key={row.id} className="hover:bg-gray-50">
@@ -184,7 +195,7 @@ export default function MatReqItemsCreateEditForm({
                                     {/* Этап */}
                                     <td className="px-3 py-2 border">
                                         <ReferencesSelect
-                                            options={blockStages}
+                                            options={filteredStages}
                                             value={row.stage_id}
                                             disabled={isReadonly}
                                             onChange={(v) => updateRow(row.id, 'stage_id', v)}

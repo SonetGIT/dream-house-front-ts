@@ -63,7 +63,7 @@ export default function Header(props: HeaderProps) {
                             whiteSpace: 'nowrap',
                         }}
                     >
-                        АИС «DREAM HOUSE»
+                        Система управления строительным объектом «DREAM HOUSE»
                     </Typography>
 
                     <Box

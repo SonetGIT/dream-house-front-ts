@@ -128,6 +128,7 @@ export default function EstimateDetails({
                             </div>
 
                             <MaterialsTable
+                                blockId={blockId}
                                 items={items}
                                 refs={refs}
                                 calcRowTotal={calcRowTotal}
@@ -152,6 +153,7 @@ export default function EstimateDetails({
                             </div>
 
                             <ServicesTable
+                                blockId={blockId}
                                 items={items}
                                 refs={refs}
                                 calcRowTotal={calcRowTotal}

@@ -1,4 +1,4 @@
-﻿import { type ChangeEvent, type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
@@ -30,6 +30,7 @@ import {
 import { REPORT_BASE_URL } from '@/features/projects/pto/workPerformed/workPerformedTs/downloadWorkPerformedReport';
 import { getToken } from '@/features/auth/getToken';
 import { generateSalesPaymentSchedule } from '@/features/sales/slices/salesPaymentSchedulesSlice';
+import { useCurrencyRates } from '@/utils/useCurrencyRates';
 import UnitPassportHeader from './UnitPassportHeader';
 import { UnitPassportHistoryPanel } from './UnitPassportHistoryPanel';
 import { ObjectsOverviewUnitForm } from '../objectsOverviewUnits/ObjectsOverviewUnitForm';
@@ -184,6 +185,7 @@ const EMPTY_PAYMENT_FORM: PaymentFormState = {
     title: '',
     amount: '',
     currency: '',
+    currency_rate: '',
     planned_date: '',
     paid_date: '',
 };
@@ -197,6 +199,7 @@ const EMPTY_DEAL_FORM: DealFormState = {
     payment_type: '',
     total_amount: '',
     currency: '',
+    currency_rate: '',
     note: '',
 };
 
@@ -291,7 +294,7 @@ const isReservationActiveOrConfirmed = (
     if (reservation.confirmed_at) return true;
     if (Number(reservation.status) === Number(activeStatusId)) return true;
 
-    return statusTextHas(reservation, ['active', 'confirm', 'confirmed', 'Р°РєС‚РёРІ', 'РїРѕРґС‚РІРµСЂР¶']);
+    return statusTextHas(reservation, ['active', 'confirm', 'confirmed', 'актив', 'подтверж']);
 };
 
 const isReservationActiveOnly = (
@@ -301,7 +304,7 @@ const isReservationActiveOnly = (
     if (reservation.confirmed_at) return false;
     if (Number(reservation.status) === Number(activeStatusId)) return true;
 
-    return statusTextHas(reservation, ['active', 'Р°РєС‚РёРІ']);
+    return statusTextHas(reservation, ['active', 'актив']);
 };
 const statusTextHasDeal = (deal: SalesDeal | null | undefined, parts: string[]) => {
     const values = [deal?.status_ref?.name, deal?.status_ref?.code].map((value) =>
@@ -363,6 +366,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const reservationStatusesRef = useReference('reservationStatuses');
     const dealStatusesRef = useReference('dealStatuses');
     const dealPaymentTypesRef = useReference('dealPaymentTypes');
+    const currencyRates = useCurrencyRates();
     const currencies = useMemo(() => currenciesRef.data ?? [], [currenciesRef.data]);
     const reservationStatuses = useMemo(
         () => reservationStatusesRef.data ?? [],
@@ -425,6 +429,18 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         const kgs = currencies.find((item) => String(item.name || '').toUpperCase() === 'KGS');
         return String(kgs?.id || currencies[0]?.id || '');
     }, [currencies]);
+    const getCurrencyRateValue = useCallback(
+        (currencyId?: string | number | null, fallback = '') => {
+            if (!currencyId) return fallback;
+
+            const selectedRate = currencyRates.find(
+                (rate) => Number(rate.currency_id) === Number(currencyId),
+            );
+
+            return selectedRate?.rate != null ? String(selectedRate.rate) : fallback;
+        },
+        [currencyRates],
+    );
     const activeReservationStatusId = useMemo(() => {
         const match = reservationStatuses.find((item) => {
             const name = String(item.name || '').toLowerCase();
@@ -433,12 +449,44 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             return (
                 code.includes('active') ||
                 name.includes('active') ||
-                name.includes('Р°РєС‚РёРІ')
+                name.includes('актив')
             );
         });
 
         return Number(match?.id || 2);
     }, [reservationStatuses]);
+    useEffect(() => {
+        if (!dealModalOpen || !dealForm.currency || !currencyRates.length) return;
+
+        setDealForm((prev) => {
+            if (!prev.currency || String(prev.currency) !== String(dealForm.currency)) return prev;
+            if (String(prev.currency_rate || '').trim()) return prev;
+
+            const nextRate = getCurrencyRateValue(prev.currency, '');
+            return nextRate ? { ...prev, currency_rate: nextRate } : prev;
+        });
+    }, [
+        currencyRates.length,
+        dealForm.currency,
+        dealModalOpen,
+        getCurrencyRateValue,
+    ]);
+    useEffect(() => {
+        if (!paymentModalOpen || !paymentForm.currency || !currencyRates.length) return;
+
+        setPaymentForm((prev) => {
+            if (!prev.currency || String(prev.currency) !== String(paymentForm.currency)) return prev;
+            if (String(prev.currency_rate || '').trim()) return prev;
+
+            const nextRate = getCurrencyRateValue(prev.currency, '');
+            return nextRate ? { ...prev, currency_rate: nextRate } : prev;
+        });
+    }, [
+        currencyRates.length,
+        paymentForm.currency,
+        paymentModalOpen,
+        getCurrencyRateValue,
+    ]);
     const canceledReservationStatusId = useMemo(() => {
         const match = reservationStatuses.find((item) => {
             const name = String(item.name || '').toLowerCase();
@@ -447,8 +495,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             return (
                 code.includes('cancel') ||
                 code.includes('canceled') ||
-                name.includes('РѕС‚РјРµРЅ') ||
-                name.includes('СЃРЅСЏС‚')
+                name.includes('отмен') ||
+                name.includes('снят')
             );
         });
 
@@ -481,11 +529,11 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     );
     const getDealStatusIdByKey = (key: 'draft' | 'active' | 'signed' | 'closed' | 'canceled') => {
         const keywords = {
-            draft: ['draft', 'С‡РµСЂРЅРѕРІ'],
-            active: ['active', 'Р°РєС‚РёРІ'],
-            signed: ['signed', 'РїРѕРґРїРёСЃ'],
-            closed: ['closed', 'Р·Р°РєСЂС‹'],
-            canceled: ['cancel', 'РѕС‚РјРµРЅ'],
+            draft: ['draft', 'чернов'],
+            active: ['active', 'актив'],
+            signed: ['signed', 'подпис'],
+            closed: ['closed', 'закры'],
+            canceled: ['cancel', 'отмен'],
         };
         const match = dealStatuses.find((item) => {
             const values = [item?.name, item?.code].map((value) =>
@@ -499,11 +547,11 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const getDealStatusKey = (deal: SalesDeal | null | undefined) => {
         if (!deal) return '';
         const id = Number(deal.status || 0);
-        if (statusTextHasDeal(deal, ['draft', 'С‡РµСЂРЅРѕРІ']) || id === 1) return 'draft';
-        if (statusTextHasDeal(deal, ['active', 'Р°РєС‚РёРІ']) || id === 2) return 'active';
-        if (statusTextHasDeal(deal, ['signed', 'РїРѕРґРїРёСЃ']) || id === 3) return 'signed';
-        if (statusTextHasDeal(deal, ['closed', 'Р·Р°РєСЂС‹']) || id === 4) return 'closed';
-        if (statusTextHasDeal(deal, ['canceled', 'cancel', 'РѕС‚РјРµРЅ']) || id === 5)
+        if (statusTextHasDeal(deal, ['draft', 'чернов']) || id === 1) return 'draft';
+        if (statusTextHasDeal(deal, ['active', 'актив']) || id === 2) return 'active';
+        if (statusTextHasDeal(deal, ['signed', 'подпис']) || id === 3) return 'signed';
+        if (statusTextHasDeal(deal, ['closed', 'закры']) || id === 4) return 'closed';
+        if (statusTextHasDeal(deal, ['canceled', 'cancel', 'отмен']) || id === 5)
             return 'canceled';
         return '';
     };
@@ -514,7 +562,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             const name = String(type.name || '').toLowerCase();
             return (
                 ['buyout', 'sale', 'regular'].includes(code) ||
-                ['РІС‹РєСѓРї', 'РѕР±С‹С‡', 'РїСЂРѕРґР°Р¶'].some((part) => name.includes(part))
+                ['выкуп', 'обыч', 'продаж'].some((part) => name.includes(part))
             );
         });
         return String(match?.id || dealTypes[0]?.id || '');
@@ -522,12 +570,12 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const getPreferredDealPaymentTypeId = () => {
         const match = dealPaymentTypes.find((type) => {
             const name = String(type.name || '').toLowerCase();
-            return ['РїРѕР»', 'РІС‹РєСѓРї', 'РµРґРёРЅ', 'РЅР°Р»'].some((part) => name.includes(part));
+            return ['пол', 'выкуп', 'един', 'нал'].some((part) => name.includes(part));
         });
         return String(match?.id || dealPaymentTypes[0]?.id || '');
     };
     const getReservationStatusName = (reservation: SalesReservation) =>
-        reservation.status_ref?.name || 'Р‘СЂРѕРЅСЊ';
+        reservation.status_ref?.name || 'Бронь';
     const dealReservationOptions = useMemo(() => {
         const selectedClientId = Number(dealForm.client_id || 0);
         const selectedReservationId = Number(
@@ -581,7 +629,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     }, [clients, salesClients]);
     const getClientName = (clientId: number | string | null | undefined) => {
         const client = clientOptions.find((item) => Number(item.id) === Number(clientId));
-        return client?.full_name || client?.phone || 'РљР»РёРµРЅС‚';
+        return client?.full_name || client?.phone || 'Клиент';
     };
     const getDealSchedules = (dealId: number) =>
         deals.find((deal) => Number(deal.id) === Number(dealId))?.payment_schedules ?? [];
@@ -649,7 +697,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             toast.error(
                 loadError instanceof Error
                     ? loadError.message
-                    : 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ 2D/3D С„Р°Р№Р»С‹ РєРІР°СЂС‚РёСЂС‹',
+                    : 'Не удалось загрузить 2D/3D файлы квартиры',
             );
         } finally {
             setUnitFilesLoading(false);
@@ -658,7 +706,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     const getOrCreateUnitFileDocument = useCallback(
         async (kind: UnitFileType) => {
             if (!unit?.id) {
-                throw new Error('РљРІР°СЂС‚РёСЂР° РЅРµ РЅР°Р№РґРµРЅР°');
+                throw new Error('Квартира не найдена');
             }
 
             const docs = await searchDocumentsDirect({
@@ -793,12 +841,12 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             setUnitPreviewTab(kind);
             setUnitPreviewOpen(true);
             const meta = getUnitFileDocumentMeta(kind, unit?.unit_number, unit?.id || unitId);
-            toast.success(`${meta.title} Р·Р°РіСЂСѓР¶РµРЅ`);
+            toast.success(`${meta.title} загружен`);
         } catch (uploadError) {
             toast.error(
                 uploadError instanceof Error
                     ? uploadError.message
-                    : 'РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё С„Р°Р№Р»Р° РєРІР°СЂС‚РёСЂС‹',
+                    : 'Ошибка загрузки файла квартиры',
             );
         } finally {
             setUnitFilesLoading(false);
@@ -816,12 +864,12 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             toast.error(
                 downloadError instanceof Error
                     ? downloadError.message
-                    : 'РћС€РёР±РєР° СЃРєР°С‡РёРІР°РЅРёСЏ С„Р°Р№Р»Р°',
+                    : 'Ошибка скачивания файла',
             );
         }
     };
     const handleDeleteUnitFile = async (kind: UnitFileType, fileId: number) => {
-        if (!window.confirm('РЈРґР°Р»РёС‚СЊ С„Р°Р№Р»?')) return;
+        if (!window.confirm('Удалить файл?')) return;
 
         setUnitFilesLoading(true);
         try {
@@ -829,12 +877,12 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             await loadUnitFiles();
 
             const meta = getUnitFileDocumentMeta(kind, unit?.unit_number, unit?.id || unitId);
-            toast.success(`${meta.title} СѓРґР°Р»РµРЅ`);
+            toast.success(`${meta.title} удален`);
         } catch (deleteError) {
             toast.error(
                 deleteError instanceof Error
                     ? deleteError.message
-                    : 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р°',
+                    : 'Ошибка удаления файла',
             );
         } finally {
             setUnitFilesLoading(false);
@@ -852,7 +900,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const openCreateReservation = (payload?: { client_id?: number | null }) => {
         if (blockingReservation) {
-            toast.error('РџРѕ СЌС‚РѕРјСѓ Р»РѕС‚Сѓ СѓР¶Рµ РµСЃС‚СЊ Р°РєС‚РёРІРЅР°СЏ РёР»Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРЅР°СЏ Р±СЂРѕРЅСЊ');
+            toast.error('По этому лоту уже есть активная или подтвержденная бронь');
             return;
         }
 
@@ -867,7 +915,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const openEditReservation = (reservation: SalesReservation) => {
         if (!isReservationActiveOnly(reservation, activeReservationStatusId)) {
-            toast.error('Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р±СЂРѕРЅСЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЃС‚Р°С‚СѓСЃ Р°РєС‚РёРІРЅС‹Р№');
+            toast.error('Редактировать бронь можно только когда статус активный');
             return;
         }
 
@@ -899,6 +947,11 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
               null
             : null;
         const nextClientId = payload?.client_id ?? selectedReservation?.client_id ?? null;
+        const nextCurrency = selectedReservation?.currency
+            ? String(selectedReservation.currency)
+            : unit?.currency
+              ? String(unit.currency)
+              : defaultCurrencyId;
 
         setEditingDeal(null);
         setDealForm({
@@ -912,7 +965,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 unit?.price_total === null || unit?.price_total === undefined
                     ? ''
                     : String(unit.price_total),
-            currency: unit?.currency ? String(unit.currency) : defaultCurrencyId,
+            currency: nextCurrency,
+            currency_rate: getCurrencyRateValue(nextCurrency, ''),
             note: '\u0412\u044b\u043a\u0443\u043f \u043a\u0432\u0430\u0440\u0442\u0438\u0440\u044b',
         });
         setDealModalOpen(true);
@@ -938,6 +992,10 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                     ? ''
                     : String(deal.total_amount),
             currency: deal.currency ? String(deal.currency) : defaultCurrencyId,
+            currency_rate:
+                deal.currency_rate === null || deal.currency_rate === undefined
+                    ? getCurrencyRateValue(deal.currency ? String(deal.currency) : defaultCurrencyId, '')
+                    : String(deal.currency_rate),
             note: deal.note || '',
         });
         setDealModalOpen(true);
@@ -959,6 +1017,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ) {
                     next.reservation_id = '';
                 }
+            }
+
+            if (
+                Object.prototype.hasOwnProperty.call(patch, 'currency') &&
+                String(next.currency || '') !== String(prev.currency || '')
+            ) {
+                next.currency_rate = getCurrencyRateValue(next.currency, '');
             }
 
             return next;
@@ -1011,6 +1076,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 payment_type: dealForm.payment_type ? Number(dealForm.payment_type) : null,
                 total_amount: toNullableNumber(dealForm.total_amount),
                 currency: dealForm.currency ? Number(dealForm.currency) : null,
+                currency_rate: toNullableNumber(dealForm.currency_rate),
                 note: dealForm.note.trim() || null,
                 canceled_reason: editingDeal?.canceled_reason || null,
             };
@@ -1056,7 +1122,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 status: getDealStatusIdByKey(nextStatus),
                 canceled_reason:
                     nextStatus === 'canceled'
-                        ? deal.canceled_reason || 'РћС‚РјРµРЅРµРЅРѕ РёР· РїР°СЃРїРѕСЂС‚Р° Р»РѕС‚Р°'
+                        ? deal.canceled_reason || 'Отменено из паспорта лота'
                         : null,
             });
 
@@ -1077,8 +1143,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 error instanceof Error
                     ? error.message
                     : nextStatus === 'signed'
-                      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕРґРїРёСЃР°С‚СЊ РґРѕРіРѕРІРѕСЂ'
-                      : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РјРµРЅРёС‚СЊ РґРѕРіРѕРІРѕСЂ',
+                      ? 'Не удалось подписать договор'
+                      : 'Не удалось отменить договор',
             );
         } finally {
             setActionLoading(false);
@@ -1101,8 +1167,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             createDocument({
                 entity_type: 'salesDeal',
                 entity_id: deal.id,
-                name: `Р¤Р°Р№Р»С‹ РґРѕРіРѕРІРѕСЂР° в„–${deal.contract_number || deal.id}`,
-                description: `Р”РѕРєСѓРјРµРЅС‚С‹ РїРѕ Р»РѕС‚Сѓ ${unit?.unit_number || unitId}`,
+                name: `Файлы договора №${deal.contract_number || deal.id}`,
+                description: `Документы по лоту ${unit?.unit_number || unitId}`,
                 status: 1,
             }),
         ).unwrap();
@@ -1121,7 +1187,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             setDealFilesOpen(true);
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р»С‹ РґРѕРіРѕРІРѕСЂР°',
+                error instanceof Error ? error.message : 'Не удалось открыть файлы договора',
             );
         } finally {
             setFilesLoading(false);
@@ -1147,9 +1213,9 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ...prev,
                 files: nextFiles,
             }));
-            toast.success('Р¤Р°Р№Р»С‹ Р·Р°РіСЂСѓР¶РµРЅС‹');
+            toast.success('Файлы загружены');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё С„Р°Р№Р»РѕРІ');
+            toast.error(error instanceof Error ? error.message : 'Ошибка загрузки файлов');
         } finally {
             event.target.value = '';
             setFilesLoading(false);
@@ -1164,11 +1230,11 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° СЃРєР°С‡РёРІР°РЅРёСЏ С„Р°Р№Р»Р°');
+            toast.error(error instanceof Error ? error.message : 'Ошибка скачивания файла');
         }
     };
     const handleDeleteDealFile = async (fileId: number) => {
-        if (!window.confirm('РЈРґР°Р»РёС‚СЊ С„Р°Р№Р»?')) return;
+        if (!window.confirm('Удалить файл?')) return;
 
         setFilesLoading(true);
         try {
@@ -1182,9 +1248,9 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }));
             }
 
-            toast.success('Р¤Р°Р№Р» СѓРґР°Р»РµРЅ');
+            toast.success('Файл удален');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р°');
+            toast.error(error instanceof Error ? error.message : 'Ошибка удаления файла');
         } finally {
             setFilesLoading(false);
         }
@@ -1197,21 +1263,21 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         setActionLoading(true);
         try {
             if (!resForm.client_id) {
-                throw new Error('Р’С‹Р±РµСЂРёС‚Рµ РєР»РёРµРЅС‚Р°');
+                throw new Error('Выберите клиента');
             }
 
             if (
                 !editingReservation &&
                 blockingReservation
             ) {
-                throw new Error('РџРѕ СЌС‚РѕРјСѓ Р»РѕС‚Сѓ СѓР¶Рµ РµСЃС‚СЊ Р°РєС‚РёРІРЅР°СЏ РёР»Рё РїРѕРґС‚РІРµСЂР¶РґРµРЅРЅР°СЏ Р±СЂРѕРЅСЊ');
+                throw new Error('По этому лоту уже есть активная или подтвержденная бронь');
             }
 
             if (
                 editingReservation &&
                 !isReservationActiveOnly(editingReservation, activeReservationStatusId)
             ) {
-                throw new Error('Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р±СЂРѕРЅСЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЃС‚Р°С‚СѓСЃ Р°РєС‚РёРІРЅС‹Р№');
+                throw new Error('Редактировать бронь можно только когда статус активный');
             }
 
             const payload = {
@@ -1238,14 +1304,14 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 await apiRequest('/sales/reservations/create', 'POST', payload);
             }
 
-            toast.success(editingReservation ? 'Р‘СЂРѕРЅСЊ РѕР±РЅРѕРІР»РµРЅР°' : 'Р‘СЂРѕРЅСЊ СЃРѕР·РґР°РЅР°');
+            toast.success(editingReservation ? 'Бронь обновлена' : 'Бронь создана');
             setReservationModalOpen(false);
             setEditingReservation(null);
             setResForm(EMPTY_RESERVATION_FORM);
             await refreshPassport();
         } catch (saveError) {
             toast.error(
-                saveError instanceof Error ? saveError.message : 'РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ Р±СЂРѕРЅРё',
+                saveError instanceof Error ? saveError.message : 'Ошибка сохранения брони',
             );
         } finally {
             setActionLoading(false);
@@ -1255,7 +1321,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         if (!reservation?.id) return;
 
         if (!isReservationActiveOnly(reservation, activeReservationStatusId)) {
-            toast.error('РЎРЅСЏС‚СЊ Р±СЂРѕРЅСЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РєРѕРіРґР° СЃС‚Р°С‚СѓСЃ Р°РєС‚РёРІРЅС‹Р№');
+            toast.error('Снять бронь можно только когда статус активный');
             return;
         }
 
@@ -1263,14 +1329,14 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
         try {
             await apiRequest(`/sales/reservations/update/${reservation.id}`, 'PUT', {
                 status: canceledReservationStatusId,
-                cancel_reason: 'Р‘СЂРѕРЅСЊ СЃРЅСЏС‚Р° РёР· РїР°СЃРїРѕСЂС‚Р° Р»РѕС‚Р°',
+                cancel_reason: 'Бронь снята из паспорта лота',
             });
 
-            toast.success('Р‘СЂРѕРЅСЊ СЃРЅСЏС‚Р°');
+            toast.success('Бронь снята');
             await refreshPassport();
         } catch (cancelError) {
             toast.error(
-                cancelError instanceof Error ? cancelError.message : 'РћС€РёР±РєР° СЃРЅСЏС‚РёСЏ Р±СЂРѕРЅРё',
+                cancelError instanceof Error ? cancelError.message : 'Ошибка снятия брони',
             );
         } finally {
             setActionLoading(false);
@@ -1278,7 +1344,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const openReservationPaymentModal = (reservation: SalesReservation, clientId: number) => {
         if (!isReservationActiveOnly(reservation, activeReservationStatusId)) {
-            toast.error('РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё');
+            toast.error('Платеж по брони можно добавить только для активной брони');
             return;
         }
 
@@ -1286,16 +1352,31 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             ...EMPTY_PAYMENT_FORM,
             reservation_id: String(reservation.id),
             client_id: String(clientId || reservation.client_id || ''),
-            title: `РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё в„–${reservation.id}`,
+            title: `Платеж по брони №${reservation.id}`,
             currency: reservation.currency
                 ? String(reservation.currency)
                 : defaultCurrencyId,
+            currency_rate: getCurrencyRateValue(
+                reservation.currency ? String(reservation.currency) : defaultCurrencyId,
+                '',
+            ),
             planned_date: toDateInput(new Date()),
         });
         setPaymentModalOpen(true);
     };
     const handlePaymentChange = (patch: Partial<PaymentFormState>) => {
-        setPaymentForm((prev) => ({ ...prev, ...patch }));
+        setPaymentForm((prev) => {
+            const next = { ...prev, ...patch };
+
+            if (
+                Object.prototype.hasOwnProperty.call(patch, 'currency') &&
+                String(next.currency || '') !== String(prev.currency || '')
+            ) {
+                next.currency_rate = getCurrencyRateValue(next.currency, '');
+            }
+
+            return next;
+        });
     };
     const handlePaymentDealChange = (dealId: string) => {
         setPaymentForm((prev) => ({ ...prev, deal_id: dealId }));
@@ -1313,24 +1394,24 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ) || null;
 
             if (!selectedReservation?.id) {
-                throw new Error('РџР»Р°С‚РµР¶ РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕ РІС‹Р±СЂР°РЅРЅРѕР№ Р±СЂРѕРЅРё');
+                throw new Error('Платеж можно создать только по выбранной брони');
             }
 
             if (!isReservationActiveOnly(selectedReservation, activeReservationStatusId)) {
-                throw new Error('РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё');
+                throw new Error('Платеж по брони можно добавить только для активной брони');
             }
 
             const amount = toNullableNumber(paymentForm.amount);
             if (!amount || amount <= 0) {
-                throw new Error('РЈРєР°Р¶РёС‚Рµ СЃСѓРјРјСѓ РїР»Р°С‚РµР¶Р°');
+                throw new Error('Укажите сумму платежа');
             }
 
             if (!incomePaymentType?.id) {
-                throw new Error('РќРµ РЅР°Р№РґРµРЅ С‚РёРї РїР»Р°С‚РµР¶Р° "РїСЂРёС…РѕРґ"');
+                throw new Error('Не найден тип платежа "приход"');
             }
 
             if (!salePaymentArticle?.id) {
-                throw new Error('РќРµ РЅР°Р№РґРµРЅР° СЃС‚Р°С‚СЊСЏ РїР»Р°С‚РµР¶Р° РґР»СЏ РїСЂРѕРґР°Р¶Рё РєРІР°СЂС‚РёСЂС‹');
+                throw new Error('Не найдена статья платежа для продажи квартиры');
             }
 
             await dispatch(
@@ -1343,11 +1424,12 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                     entity_id: Number(selectedReservation.id),
                     title:
                         paymentForm.title.trim() ||
-                        `РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё в„–${selectedReservation.id}`,
+                        `Платеж по брони №${selectedReservation.id}`,
                     amount,
                     currency: Number(
                         paymentForm.currency || selectedReservation.currency || defaultCurrencyId,
                     ),
+                    currency_rate: toNullableNumber(paymentForm.currency_rate) ?? 1,
                     planned_date: paymentForm.planned_date || null,
                     paid_date: paymentForm.paid_date || null,
                     counterparty_type: clientCounterpartyType?.id
@@ -1361,13 +1443,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
 
-            toast.success('РџР»Р°С‚РµР¶ СЃРѕР·РґР°РЅ');
+            toast.success('Платеж создан');
             setPaymentModalOpen(false);
             setPaymentForm(EMPTY_PAYMENT_FORM);
             await refreshPassport();
         } catch (paymentError) {
             toast.error(
-                paymentError instanceof Error ? paymentError.message : 'РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ РїР»Р°С‚РµР¶Р°',
+                paymentError instanceof Error ? paymentError.message : 'Ошибка создания платежа',
             );
         } finally {
             setActionLoading(false);
@@ -1379,8 +1461,15 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             deal_id: String(deal.id),
             reservation_id: deal.reservation_id ? String(deal.reservation_id) : '',
             client_id: deal.client_id ? String(deal.client_id) : '',
-            title: `РџР»Р°С‚РµР¶ РїРѕ РґРѕРіРѕРІРѕСЂСѓ в„–${deal.contract_number || deal.id}`,
+            title: `Платеж по договору №${deal.contract_number || deal.id}`,
             currency: deal.currency ? String(deal.currency) : defaultCurrencyId,
+            currency_rate:
+                deal.currency_rate === null || deal.currency_rate === undefined
+                    ? getCurrencyRateValue(
+                          deal.currency ? String(deal.currency) : defaultCurrencyId,
+                          '',
+                      )
+                    : String(deal.currency_rate),
             planned_date: toDateInput(new Date()),
         });
         setPaymentModalOpen(true);
@@ -1402,8 +1491,15 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             deal_id: String(selectedDeal.id),
             reservation_id: selectedDeal.reservation_id ? String(selectedDeal.reservation_id) : '',
             client_id: selectedDeal.client_id ? String(selectedDeal.client_id) : prev.client_id,
-            title: `РџР»Р°С‚РµР¶ РїРѕ РґРѕРіРѕРІРѕСЂСѓ в„–${selectedDeal.contract_number || selectedDeal.id}`,
+            title: `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`,
             currency: selectedDeal.currency ? String(selectedDeal.currency) : prev.currency,
+            currency_rate:
+                selectedDeal.currency_rate === null || selectedDeal.currency_rate === undefined
+                    ? getCurrencyRateValue(
+                          selectedDeal.currency ? String(selectedDeal.currency) : prev.currency,
+                          '',
+                      )
+                    : String(selectedDeal.currency_rate),
         }));
     };
     const savePayment = async (event: FormEvent<HTMLFormElement>) => {
@@ -1421,7 +1517,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 ) || null;
 
             if (!selectedDeal?.id && !selectedReservation?.id) {
-                throw new Error('РџР»Р°С‚РµР¶ РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ С‚РѕР»СЊРєРѕ РїРѕ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё РёР»Рё РґРѕРіРѕРІРѕСЂСѓ');
+                throw new Error('Платеж можно создать только по активной брони или договору');
             }
 
             if (
@@ -1429,20 +1525,20 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 selectedReservation &&
                 !isReservationActiveOnly(selectedReservation, activeReservationStatusId)
             ) {
-                throw new Error('РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ Р°РєС‚РёРІРЅРѕР№ Р±СЂРѕРЅРё');
+                throw new Error('Платеж по брони можно добавить только для активной брони');
             }
 
             const amount = toNullableNumber(paymentForm.amount);
             if (!amount || amount <= 0) {
-                throw new Error('РЈРєР°Р¶РёС‚Рµ СЃСѓРјРјСѓ РїР»Р°С‚РµР¶Р°');
+                throw new Error('Укажите сумму платежа');
             }
 
             if (!incomePaymentType?.id) {
-                throw new Error('РќРµ РЅР°Р№РґРµРЅ С‚РёРї РїР»Р°С‚РµР¶Р° "РїСЂРёС…РѕРґ"');
+                throw new Error('Не найден тип платежа "приход"');
             }
 
             if (!salePaymentArticle?.id) {
-                throw new Error('РќРµ РЅР°Р№РґРµРЅР° СЃС‚Р°С‚СЊСЏ РїР»Р°С‚РµР¶Р° РґР»СЏ РїСЂРѕРґР°Р¶Рё РєРІР°СЂС‚РёСЂС‹');
+                throw new Error('Не найдена статья платежа для продажи квартиры');
             }
 
             await dispatch(
@@ -1456,8 +1552,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                     title:
                         paymentForm.title.trim() ||
                         (selectedDeal?.id
-                            ? `РџР»Р°С‚РµР¶ РїРѕ РґРѕРіРѕРІРѕСЂСѓ в„–${selectedDeal.contract_number || selectedDeal.id}`
-                            : `РџР»Р°С‚РµР¶ РїРѕ Р±СЂРѕРЅРё в„–${selectedReservation?.id}`),
+                            ? `Платеж по договору №${selectedDeal.contract_number || selectedDeal.id}`
+                            : `Платеж по брони №${selectedReservation?.id}`),
                     amount,
                     currency: Number(
                         paymentForm.currency ||
@@ -1465,6 +1561,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                             selectedReservation?.currency ||
                             defaultCurrencyId,
                     ),
+                    currency_rate: toNullableNumber(paymentForm.currency_rate) ?? 1,
                     planned_date: paymentForm.planned_date || null,
                     paid_date: paymentForm.paid_date || null,
                     counterparty_type: clientCounterpartyType?.id
@@ -1484,13 +1581,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
 
-            toast.success('РџР»Р°С‚РµР¶ СЃРѕР·РґР°РЅ');
+            toast.success('Платеж создан');
             setPaymentModalOpen(false);
             setPaymentForm(EMPTY_PAYMENT_FORM);
             await refreshPassport();
         } catch (paymentError) {
             toast.error(
-                paymentError instanceof Error ? paymentError.message : 'РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ РїР»Р°С‚РµР¶Р°',
+                paymentError instanceof Error ? paymentError.message : 'Ошибка создания платежа',
             );
         } finally {
             setActionLoading(false);
@@ -1540,10 +1637,10 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             const paymentsCount = Number(scheduleForm.payments_count || 0);
 
             if (!dealId) {
-                throw new Error('Р’С‹Р±РµСЂРёС‚Рµ РґРѕРіРѕРІРѕСЂ');
+                throw new Error('Выберите договор');
             }
             if (!paymentsCount || paymentsCount < 1) {
-                throw new Error('РЈРєР°Р¶РёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїР»Р°С‚РµР¶РµР№');
+                throw new Error('Укажите количество платежей');
             }
 
             await dispatch(
@@ -1559,13 +1656,13 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 }),
             ).unwrap();
 
-            toast.success('Р“СЂР°С„РёРє СЃС„РѕСЂРјРёСЂРѕРІР°РЅ');
+            toast.success('График сформирован');
             setScheduleModalOpen(false);
             setScheduleForm(EMPTY_SCHEDULE_FORM);
             await refreshPassport();
         } catch (error) {
             toast.error(
-                error instanceof Error ? error.message : 'РћС€РёР±РєР° С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РіСЂР°С„РёРєР°',
+                error instanceof Error ? error.message : 'Ошибка формирования графика',
             );
         } finally {
             setActionLoading(false);
@@ -1573,7 +1670,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const downloadScheduleReport = async (deal: SalesDeal) => {
         const token = getToken();
-        const fallbackName = `Р“СЂР°С„РёРє РїР»Р°С‚РµР¶РµР№ РґРѕРіРѕРІРѕСЂ в„–${deal.contract_number || deal.id}.xlsx`;
+        const fallbackName = `График платежей договор №${deal.contract_number || deal.id}.xlsx`;
 
         try {
             const [baseUrl] = getSalesReportBaseUrls();
@@ -1587,7 +1684,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
 
             const contentType = response.headers.get('Content-Type');
             if (!response.ok) {
-                let message = 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРєР°С‡Р°С‚СЊ РіСЂР°С„РёРє РїР»Р°С‚РµР¶РµР№';
+                let message = 'Не удалось скачать график платежей';
 
                 if (contentType?.includes('application/json')) {
                     const json = await response.json();
@@ -1612,9 +1709,9 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            toast.success('Excel РІС‹РіСЂСѓР¶РµРЅ');
+            toast.success('Excel выгружен');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'РћС€РёР±РєР° РІС‹РіСЂСѓР·РєРё Excel');
+            toast.error(error instanceof Error ? error.message : 'Ошибка выгрузки Excel');
         } finally {
             // no-op
         }
@@ -1624,7 +1721,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     if (loading) {
         return (
             <div className="flex min-h-[400px] items-center justify-center text-sm text-slate-500">
-                Р—Р°РіСЂСѓР·РєР° РїР°СЃРїРѕСЂС‚Р° РєРІР°СЂС‚РёСЂС‹...
+                Загрузка паспорта квартиры...
             </div>
         );
     }
@@ -1640,7 +1737,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     if (!unit) {
         return (
             <div className="p-6 text-sm border border-dashed rounded-xl border-slate-300 text-slate-500">
-                Р”Р°РЅРЅС‹Рµ РїРѕ РєРІР°СЂС‚РёСЂРµ РЅРµ РЅР°Р№РґРµРЅС‹
+                Данные по квартире не найдены
             </div>
         );
     }
@@ -1937,8 +2034,8 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
                 paymentForm={paymentForm}
                 reservationOptionLabel={
                     paymentForm.reservation_id
-                        ? `Р‘СЂРѕРЅСЊ в„–${paymentForm.reservation_id}`
-                        : 'Р’С‹Р±РµСЂРёС‚Рµ Р±СЂРѕРЅСЊ'
+                        ? `Бронь №${paymentForm.reservation_id}`
+                        : 'Выберите бронь'
                 }
                 currencies={currencies}
                 actionLoading={actionLoading}

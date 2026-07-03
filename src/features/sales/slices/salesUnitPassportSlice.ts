@@ -190,6 +190,7 @@ export interface SalesDeal {
     payment_type?: number | null;
     total_amount?: number | null;
     currency?: number | string | null;
+    currency_rate?: number | null;
     note?: string | null;
     canceled_reason?: string | null;
     signed_at?: string | null;
@@ -290,20 +291,20 @@ export const fetchSalesUnitPassport = createAsyncThunk<
     SalesUnitPassportData,
     number,
     { rejectValue: string }
->(
-    'salesUnitPassport/fetchSalesUnitPassport',
-    async (unitId, { rejectWithValue }) => {
-        try {
-            const res = await apiRequest<SalesUnitPassportData>(`/sales/units/${unitId}/passport`, 'GET');
+>('salesUnitPassport/fetchSalesUnitPassport', async (unitId, { rejectWithValue }) => {
+    try {
+        const res = await apiRequest<SalesUnitPassportData>(
+            `/sales/units/${unitId}/passport`,
+            'GET',
+        );
 
-            return res.data;
-        } catch (error) {
-            return rejectWithValue(
-                error instanceof Error ? error.message : 'Ошибка загрузки паспорта квартиры',
-            );
-        }
-    },
-);
+        return res.data;
+    } catch (error) {
+        return rejectWithValue(
+            error instanceof Error ? error.message : 'Ошибка загрузки паспорта квартиры',
+        );
+    }
+});
 
 interface SalesUnitPassportState {
     data: SalesUnitPassportData | null;
@@ -409,13 +410,11 @@ const salesUnitPassportSlice = createSlice({
 export const { clearSalesUnitPassport, clearSalesUnitPassportError } =
     salesUnitPassportSlice.actions;
 
-export const selectSalesUnitPassportData = (state: {
-    salesUnitPassport: SalesUnitPassportState;
-}) => state.salesUnitPassport.data;
+export const selectSalesUnitPassportData = (state: { salesUnitPassport: SalesUnitPassportState }) =>
+    state.salesUnitPassport.data;
 
-export const selectSalesUnitPassportUnit = (state: {
-    salesUnitPassport: SalesUnitPassportState;
-}) => state.salesUnitPassport.unit;
+export const selectSalesUnitPassportUnit = (state: { salesUnitPassport: SalesUnitPassportState }) =>
+    state.salesUnitPassport.unit;
 
 export const selectSalesUnitPassportClients = (state: {
     salesUnitPassport: SalesUnitPassportState;

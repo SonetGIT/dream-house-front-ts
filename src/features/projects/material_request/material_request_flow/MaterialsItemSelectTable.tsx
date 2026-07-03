@@ -18,12 +18,30 @@ export default function MaterialsItemSelectTable({
     loading,
     refs,
     calcRowTotal,
+    blockId,
     onNext,
 }: MaterialsSelectTableProps) {
     //STATE
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-    const materialItems = items.filter((i) => i.item_type === 1);
+    const blockStages = refs.blockStages?.data || [];
+
+    const currentBlockStageIds = useMemo(() => {
+        return new Set(
+            blockStages
+                .filter((stage: any) => Number(stage.block_id) === Number(blockId))
+                .map((stage: any) => Number(stage.id)),
+        );
+    }, [blockId, blockStages]);
+
+    const materialItems = useMemo(() => {
+        return items.filter((item) => {
+            if (item.item_type !== 1) return false;
+            if (item.stage_id == null) return true;
+
+            return currentBlockStageIds.has(Number(item.stage_id));
+        });
+    }, [items, currentBlockStageIds]);
 
     //SELECT
     const isAllSelected = useMemo(() => {

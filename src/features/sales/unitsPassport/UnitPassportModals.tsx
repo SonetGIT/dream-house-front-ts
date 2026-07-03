@@ -29,6 +29,7 @@ export type DealFormState = {
     payment_type: string;
     total_amount: string;
     currency: string;
+    currency_rate: string;
     note: string;
 };
 
@@ -39,6 +40,7 @@ export type PaymentFormState = {
     title: string;
     amount: string;
     currency: string;
+    currency_rate: string;
     planned_date: string;
     paid_date: string;
 };
@@ -402,7 +404,7 @@ export function DealModal({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-3">
                         <div>
                             <FieldLabel label="Валюта" />
                             <select
@@ -424,6 +426,18 @@ export function DealModal({
                             <input
                                 value={dealForm.total_amount}
                                 onChange={(e) => onChange({ total_amount: e.target.value })}
+                                className="w-full px-3 py-2 text-sm transition bg-white border rounded-lg outline-none border-slate-300 focus:border-blue-500"
+                            />
+                        </div>
+
+                        <div>
+                            <FieldLabel label="Курс валюты" />
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.0001"
+                                value={dealForm.currency_rate}
+                                onChange={(e) => onChange({ currency_rate: e.target.value })}
                                 className="w-full px-3 py-2 text-sm transition bg-white border rounded-lg outline-none border-slate-300 focus:border-blue-500"
                             />
                         </div>
@@ -512,7 +526,7 @@ export function PaymentModal({
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
                                 <FieldLabel label="Сумма" />
                                 <input
@@ -536,6 +550,18 @@ export function PaymentModal({
                                         </option>
                                     ))}
                                 </select>
+                            </div>
+
+                            <div>
+                                <FieldLabel label="Курс валюты" />
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.0001"
+                                    value={paymentForm.currency_rate}
+                                    onChange={(e) => onChange({ currency_rate: e.target.value })}
+                                    className="w-full px-3 py-2 text-sm transition bg-white border rounded-lg outline-none border-slate-300 focus:border-blue-500"
+                                />
                             </div>
                         </div>
 

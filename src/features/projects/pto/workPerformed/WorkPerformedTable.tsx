@@ -312,12 +312,6 @@ export default function WorkPerformedTable(props: PropsType) {
                             {props.data?.map((workPerf) => {
                                 const signatures = [
                                     {
-                                        label: 'Прораб',
-                                        userId: workPerf.foreman_user_id,
-                                        approved: workPerf.signed_by_foreman,
-                                        approvedTime: workPerf.signed_by_foreman_time,
-                                    },
-                                    {
                                         label: 'Инженер ПТО',
                                         userId: workPerf.planning_engineer_user_id,
                                         approved: workPerf.signed_by_planning_engineer,
@@ -328,6 +322,12 @@ export default function WorkPerformedTable(props: PropsType) {
                                         userId: workPerf.main_engineer_user_id,
                                         approved: workPerf.signed_by_main_engineer,
                                         approvedTime: workPerf.signed_by_main_engineer_time,
+                                    },
+                                    {
+                                        label: 'Прораб',
+                                        userId: workPerf.foreman_user_id,
+                                        approved: workPerf.signed_by_foreman,
+                                        approvedTime: workPerf.signed_by_foreman_time,
                                     },
                                 ];
                                 const statusInfo = getStatusConfig(workPerf.status);

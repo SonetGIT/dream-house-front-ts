@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -7,20 +7,17 @@ import {
     type SalesOverviewFloor,
     type SalesOverviewUnit,
 } from '@/features/sales/slices/salesObjOverviewSlice';
-import { createDocument, fetchDocuments } from '@/features/projects/documents/documentsSlice';
 import {
-    clearDocumentFiles,
-    deleteDocumentFile,
     downloadDocumentFile,
-    fetchDocumentFiles,
-    uploadDocumentFile,
     type DocumentFile,
 } from '@/features/projects/legal_department/files/documentFilesSlice';
+import type { Document } from '@/features/projects/documents/documentsSlice';
 import SalesMatrixHeader from './SalesMatrixHeader';
 import SalesMatrixPlanManagerModal from './SalesMatrixPlanManagerModal';
 import { fetchFileContent } from '@/features/projects/legal_department/files/downloadFile';
 import { Paper } from '@mui/material';
 import { UnitPassportPage } from '../unitsPassport/UnitPassportPage';
+import { apiRequest } from '@/utils/apiRequest';
 
 interface MatrixUnitStatus {
     id: number;
@@ -37,8 +34,43 @@ const isSvgFile = (file: DocumentFile) =>
     file.mime_type === 'image/svg+xml' || /.svg$/i.test(file.name || '');
 
 const getFloorLabel = (floor: SalesOverviewFloor | null) => {
-    if (!floor) return '—';
-    return String(floor.name || '').trim() || `${floor.floor_number} этаж`;
+    if (!floor) return 'вЂ”';
+    return String(floor.name || '').trim() || `${floor.floor_number} СЌС‚Р°Р¶`;
+};
+
+const searchDocumentsDirect = async (params: {
+    entity_type: string;
+    entity_id: number;
+    page?: number;
+    size?: number;
+}) => {
+    const response = await apiRequest<Document[]>('/documents/search', 'POST', params);
+    return response.data || [];
+};
+
+const createDocumentDirect = async (payload: {
+    name: string;
+    status: number;
+    entity_type: string;
+    entity_id: number;
+}) => {
+    const response = await apiRequest<Document>('/documents/create', 'POST', payload);
+    return response.data;
+};
+
+const fetchDocumentFilesDirect = async (documentId: number) => {
+    const response = await apiRequest<DocumentFile[]>(`/documentFiles/files/${documentId}`, 'GET');
+    return response.data || [];
+};
+
+const uploadDocumentFileDirect = async (documentId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('files', file);
+    await apiRequest(`/documentFiles/upload/${documentId}`, 'POST', formData);
+};
+
+const deleteDocumentFileDirect = async (fileId: number) => {
+    await apiRequest(`/documentFiles/${fileId}`, 'DELETE');
 };
 
 const buildStatusMap = (units: SalesOverviewUnit[]) => {
@@ -66,13 +98,6 @@ export default function SalesMatrixPage() {
         error: overviewError,
     } = useAppSelector((state) => state.salesObjOverview);
 
-    const { items: documents, loading: documentsLoading } = useAppSelector(
-        (state) => state.documents,
-    );
-    const { data: documentFiles, loading: documentFilesLoading } = useAppSelector(
-        (state) => state.documentFiles,
-    );
-
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
     const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
     const [selectedFloorId, setSelectedFloorId] = useState<number | null>(null);
@@ -80,9 +105,13 @@ export default function SalesMatrixPage() {
 
     const [planManagerOpen, setPlanManagerOpen] = useState(false);
     const [planFilesSaving, setPlanFilesSaving] = useState(false);
+    const [floorDocumentsLoading, setFloorDocumentsLoading] = useState(false);
+    const [floorFilesLoading, setFloorFilesLoading] = useState(false);
     const [loadingFloorPlan, setLoadingFloorPlan] = useState(false);
     const [floorPlanSvgRaw, setFloorPlanSvgRaw] = useState('');
     const [floorPlanZoom, setFloorPlanZoom] = useState(0.7);
+    const [selectedFloorDocument, setSelectedFloorDocument] = useState<Document | null>(null);
+    const [selectedFloorFiles, setSelectedFloorFiles] = useState<DocumentFile[]>([]);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
@@ -168,49 +197,62 @@ export default function SalesMatrixPage() {
         setSelectedUnitId(null);
     }, [selectedFloorId]);
 
-    useEffect(() => {
+    const reloadSelectedFloorPlanResources = useCallback(async () => {
         if (!selectedFloorId) {
-            dispatch(clearDocumentFiles());
+            setSelectedFloorDocument(null);
+            setSelectedFloorFiles([]);
             setFloorPlanSvgRaw('');
             setLoadingFloorPlan(false);
+            setFloorDocumentsLoading(false);
+            setFloorFilesLoading(false);
             return;
         }
-        dispatch(
-            fetchDocuments({
+
+        setFloorDocumentsLoading(true);
+        try {
+            const docs = await searchDocumentsDirect({
                 entity_type: 'salesFloorPlan',
                 entity_id: selectedFloorId,
                 page: 1,
                 size: 20,
-            }),
-        );
-    }, [dispatch, selectedFloorId]);
+            });
+            const floorDocument =
+                docs.find(
+                    (doc) =>
+                        doc.entity_type === 'salesFloorPlan' &&
+                        Number(doc.entity_id) === Number(selectedFloorId),
+                ) ?? null;
 
-    const selectedFloorDocument = useMemo(
-        () =>
-            documents.find(
-                (doc) => doc.entity_type === 'salesFloorPlan' && doc.entity_id === selectedFloorId,
-            ) ?? null,
-        [documents, selectedFloorId],
-    );
+            setSelectedFloorDocument(floorDocument);
 
-    const selectedFloorFiles = useMemo(
-        () =>
-            selectedFloorDocument?.id
-                ? documentFiles.filter((file) => file.document_id === selectedFloorDocument.id)
-                : [],
-        [documentFiles, selectedFloorDocument?.id],
-    );
+            if (!floorDocument?.id) {
+                setSelectedFloorFiles([]);
+                setFloorPlanSvgRaw('');
+                setLoadingFloorPlan(false);
+                return;
+            }
 
-    useEffect(() => {
-        if (!selectedFloorDocument?.id) {
-            dispatch(clearDocumentFiles());
+            setFloorFilesLoading(true);
+            try {
+                const files = await fetchDocumentFilesDirect(floorDocument.id);
+                setSelectedFloorFiles(files);
+            } finally {
+                setFloorFilesLoading(false);
+            }
+        } catch (error) {
+            setSelectedFloorDocument(null);
+            setSelectedFloorFiles([]);
             setFloorPlanSvgRaw('');
             setLoadingFloorPlan(false);
-            return;
+            toast.error(error instanceof Error ? error.message : `${error}`);
+        } finally {
+            setFloorDocumentsLoading(false);
         }
-        setFloorPlanSvgRaw('');
-        dispatch(fetchDocumentFiles(selectedFloorDocument.id));
-    }, [dispatch, selectedFloorDocument?.id]);
+    }, [selectedFloorId]);
+
+    useEffect(() => {
+        void reloadSelectedFloorPlanResources();
+    }, [reloadSelectedFloorPlanResources]);
 
     useEffect(() => {
         let cancelled = false;
@@ -227,7 +269,7 @@ export default function SalesMatrixPage() {
             try {
                 setLoadingFloorPlan(true);
 
-                // ИСПРАВЛЕНИЕ 1: Используем fetchFileContent вместо apiRequest
+                // Load SVG content directly as blob text.
                 const blob = await fetchFileContent(
                     `/documentFiles/download/${svgFile.id}`,
                     localStorage.getItem('token') || undefined,
@@ -235,7 +277,7 @@ export default function SalesMatrixPage() {
 
                 if (cancelled) return;
 
-                // Конвертируем Blob в текст
+                // Convert blob to raw SVG text.
                 const text = await blob.text();
                 setFloorPlanSvgRaw(text.includes('<svg') ? text : '');
             } catch (error) {
@@ -263,8 +305,8 @@ export default function SalesMatrixPage() {
             const code = String(status?.code || '').toLowerCase();
             const label = String(status?.name || '').toLowerCase();
 
-            // БРОНЬ - желтый
-            if (code === 'reserved' || label.includes('брон')) {
+            // Reserved units are yellow.
+            if (code === 'reserved' || label.includes('Р±СЂРѕРЅ')) {
                 return {
                     svgFill: '#facc15',
                     svgFillOpacity: '0.6',
@@ -273,12 +315,12 @@ export default function SalesMatrixPage() {
                 };
             }
 
-            // ПРОДАНО - темно-серый
+            // Sold units are dark gray.
             if (
                 code === 'sold' ||
                 code === 'buyout' ||
-                label.includes('продан') ||
-                label.includes('выкуп')
+                label.includes('РїСЂРѕРґР°РЅ') ||
+                label.includes('РІС‹РєСѓРї')
             ) {
                 return {
                     svgFill: '#4b5563',
@@ -288,7 +330,7 @@ export default function SalesMatrixPage() {
                 };
             }
 
-            // СНЯТО С ПРОДАЖИ - серый
+            // Off-market units are gray.
             if (
                 [
                     'offmarket',
@@ -299,8 +341,8 @@ export default function SalesMatrixPage() {
                     'withdrawn',
                     'inactive',
                 ].includes(code) ||
-                label.includes('снят') ||
-                label.includes('продаж')
+                label.includes('СЃРЅСЏС‚') ||
+                label.includes('РїСЂРѕРґР°Р¶')
             ) {
                 return {
                     svgFill: '#9ca3af',
@@ -310,8 +352,8 @@ export default function SalesMatrixPage() {
                 };
             }
 
-            // ИСПРАВЛЕНИЕ 2: СВОБОДНО - зеленый (был прозрачный)
-            if (code === 'free' || label.includes('свобод')) {
+            // Free units are green.
+            if (code === 'free' || label.includes('СЃРІРѕР±РѕРґ')) {
                 return {
                     svgFill: '#22c55e',
                     svgFillOpacity: '0.5',
@@ -320,7 +362,7 @@ export default function SalesMatrixPage() {
                 };
             }
 
-            // БЕЗ СТАТУСА - светло-серый
+            // Р‘Р•Р— РЎРўРђРўРЈРЎРђ - СЃРІРµС‚Р»Рѕ-СЃРµСЂС‹Р№
             return {
                 svgFill: '#e2e8f0',
                 svgFillOpacity: '0.3',
@@ -463,7 +505,7 @@ export default function SalesMatrixPage() {
             console.error('svg render error', error);
             return '';
         }
-    }, [filteredUnits, floorPlanSvgRaw, getStatusMeta, selectedUnitId, statusMap]);
+    }, [filteredUnits, floorPlanSvgRaw, getStatusMeta, selectedUnitId]);
 
     const applyFloorPlanZoomToNode = (zoom: number) => {
         const node = contentRef.current;
@@ -548,30 +590,20 @@ export default function SalesMatrixPage() {
         if (!selectedFloor?.id) return null;
         if (selectedFloorDocument) return selectedFloorDocument;
 
-        const created = await dispatch(
-            createDocument({
-                name: `План этажа ${getFloorLabel(selectedFloor)}`,
-                status: 1,
-                entity_type: 'salesFloorPlan',
-                entity_id: selectedFloor.id,
-            }),
-        ).unwrap();
+        const created = await createDocumentDirect({
+            name: `РџР»Р°РЅ СЌС‚Р°Р¶Р° ${getFloorLabel(selectedFloor)}`,
+            status: 1,
+            entity_type: 'salesFloorPlan',
+            entity_id: selectedFloor.id,
+        });
 
-        await dispatch(
-            fetchDocuments({
-                entity_type: 'salesFloorPlan',
-                entity_id: selectedFloor.id,
-                page: 1,
-                size: 20,
-            }),
-        );
-
+        setSelectedFloorDocument(created);
         return created;
-    }, [dispatch, selectedFloor, selectedFloorDocument]);
+    }, [selectedFloor, selectedFloorDocument]);
 
     const openPlanManager = async () => {
         if (!selectedFloor?.id) {
-            toast.error('Сначала выберите этаж');
+            toast.error('РЎРЅР°С‡Р°Р»Р° РІС‹Р±РµСЂРёС‚Рµ СЌС‚Р°Р¶');
             return;
         }
 
@@ -590,7 +622,7 @@ export default function SalesMatrixPage() {
         if (!file || !selectedFloor?.id) return;
 
         if (!/\.svg$/i.test(file.name) && file.type !== 'image/svg+xml') {
-            toast.error('Допускается только SVG-файл плана этажа');
+            toast.error('Р”РѕРїСѓСЃРєР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ SVG-С„Р°Р№Р» РїР»Р°РЅР° СЌС‚Р°Р¶Р°');
             return;
         }
 
@@ -598,12 +630,12 @@ export default function SalesMatrixPage() {
             setPlanFilesSaving(true);
 
             const doc = await ensureFloorDocument();
-            if (!doc?.id) throw new Error('Документ этажа не создан');
+            if (!doc?.id) throw new Error('Р”РѕРєСѓРјРµРЅС‚ СЌС‚Р°Р¶Р° РЅРµ СЃРѕР·РґР°РЅ');
 
-            await dispatch(uploadDocumentFile({ documentId: doc.id, file })).unwrap();
-            await dispatch(fetchDocumentFiles(doc.id));
+            await uploadDocumentFileDirect(doc.id, file);
+            await reloadSelectedFloorPlanResources();
 
-            toast.success('SVG-план загружен');
+            toast.success('SVG-РїР»Р°РЅ Р·Р°РіСЂСѓР¶РµРЅ');
         } catch (error) {
             toast.error(error instanceof Error ? error.message : `${error}`);
         } finally {
@@ -612,16 +644,13 @@ export default function SalesMatrixPage() {
     };
 
     const handleDeletePlanFile = async (fileId: number) => {
-        if (!window.confirm('Удалить SVG-план этажа?')) return;
+        if (!window.confirm('РЈРґР°Р»РёС‚СЊ SVG-РїР»Р°РЅ СЌС‚Р°Р¶Р°?')) return;
 
         try {
-            await dispatch(deleteDocumentFile(fileId)).unwrap();
+            await deleteDocumentFileDirect(fileId);
+            await reloadSelectedFloorPlanResources();
 
-            if (selectedFloorDocument?.id) {
-                await dispatch(fetchDocumentFiles(selectedFloorDocument.id));
-            }
-
-            toast.success('План удалён');
+            toast.success('РџР»Р°РЅ СѓРґР°Р»С‘РЅ');
         } catch (error) {
             toast.error(error instanceof Error ? error.message : `${error}`);
         }
@@ -636,7 +665,7 @@ export default function SalesMatrixPage() {
     if (overviewLoading && !projects.length) {
         return (
             <div className="flex items-center justify-center h-screen text-sm bg-white text-slate-500">
-                Загружаем матрицу продаж...
+                Загружаем шахматку продаж...
             </div>
         );
     }
@@ -662,7 +691,7 @@ export default function SalesMatrixPage() {
                 onBlockChange={setSelectedBlockId}
                 onFloorChange={setSelectedFloorId}
                 onOpenPlanManager={() => void openPlanManager()}
-                planLoading={documentsLoading || documentFilesLoading}
+                planLoading={floorDocumentsLoading || floorFilesLoading}
                 planDisabled={!selectedFloor}
             />
 
@@ -674,14 +703,17 @@ export default function SalesMatrixPage() {
                                 <span className="w-3 h-3 border rounded-full border-slate-600 bg-slate-500/80" />
                                 <span>Продано</span>
                             </div>
+
                             <div className="flex items-center gap-1.5">
                                 <span className="w-3 h-3 border border-yellow-500 rounded-full bg-yellow-300/80" />
                                 <span>Бронь</span>
                             </div>
+
                             <div className="flex items-center gap-1.5">
                                 <span className="w-3 h-3 border rounded-full border-slate-400 bg-slate-300/80" />
                                 <span>Снято</span>
                             </div>
+
                             <div className="flex items-center gap-1.5">
                                 <span className="w-3 h-3 border border-green-500 rounded-full bg-green-500/60" />
                                 <span>Свободно</span>
@@ -739,15 +771,17 @@ export default function SalesMatrixPage() {
                                     <div className="text-lg font-semibold text-slate-700">
                                         SVG-план не найден
                                     </div>
+
                                     <div className="text-sm">
                                         По выбранному этажу еще нет SVG-файла. Поиск идет так:
                                         <br />
-                                        `documents/search` по `entity_type = salesFloorPlan` и
-                                        `entity_id = floorId`
+                                        <code>documents/search</code> по{' '}
+                                        <code>entity_type = salesFloorPlan</code> и{' '}
+                                        <code>entity_id = floorId</code>
                                         <br />
-                                        потом `documentFiles/files/{'documentId'}`
+                                        затем <code>documentFiles/files/{'{documentId}'}</code>
                                         <br />
-                                        потом `documentFiles/download/{'fileId'}`
+                                        затем <code>documentFiles/download/{'{fileId}'}</code>
                                     </div>
                                 </div>
                             </div>
@@ -765,10 +799,10 @@ export default function SalesMatrixPage() {
             <SalesMatrixPlanManagerModal
                 open={planManagerOpen}
                 onClose={() => setPlanManagerOpen(false)}
-                blockName={selectedBlock?.name || 'Блок'}
+                blockName={selectedBlock?.name || 'Р‘Р»РѕРє'}
                 floorLabel={getFloorLabel(selectedFloor)}
                 files={selectedFloorFiles}
-                loading={documentsLoading || documentFilesLoading}
+                loading={floorDocumentsLoading || floorFilesLoading}
                 saving={planFilesSaving}
                 limitReached={floorPlanLimitReached}
                 onUpload={handleUploadPlan}

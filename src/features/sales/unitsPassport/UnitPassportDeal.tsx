@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
     BadgeCheck,
     Ban,
@@ -114,6 +114,14 @@ export const UnitPassportDeal = ({
                         <div className="text-[12px] text-slate-500">
                             {deal.currency_info?.code || '—'} · {deal.payment_type_ref?.name || '—'}
                         </div>
+                        <div className="text-[11px] text-slate-400">
+                            Курс:{' '}
+                            {deal.currency_rate == null
+                                ? '—'
+                                : Number(deal.currency_rate).toLocaleString('ru-RU', {
+                                      maximumFractionDigits: 4,
+                                  })}
+                        </div>
                     </div>
 
                     <div className="text-xs text-slate-600">{deal.deal_type?.name || '—'}</div>
@@ -214,34 +222,41 @@ export const UnitPassportDeal = ({
                         {payments.length > 0 ? (
                             <div className="overflow-hidden border border-green-200 rounded-lg">
                                 <div className="flex items-center justify-between px-2 py-1 border-b border-green-200 bg-green-50">
-                                    <div className="grid w-full grid-cols-[1fr_200px_130px] font-semibold uppercase tracking-wide text-green-700">
+                                    <div className="grid w-full grid-cols-[1fr_200px_150px_150px] font-semibold uppercase tracking-wide text-green-700">
                                         <div className="text-left text-[12px]">Платеж</div>
-                                        <div className="text-left text-[12px]">Дата</div>
                                         <div className="text-left text-[12px]">Сумма</div>
+                                        <div className="text-left text-[12px]">Курс</div>
+                                        <div className="text-left text-[12px]">Дата</div>
                                     </div>
                                 </div>
 
                                 {payments.map((payment: SalesPayment) => (
                                     <div
                                         key={payment.id}
-                                        className="grid grid-cols-[1fr_220px_150px] border-t border-stone-100 px-3 py-2.5 text-sm"
+                                        className="grid grid-cols-[1fr_200px_150px_150px] border-t border-stone-100 px-3 py-2.5 text-sm"
                                     >
                                         <div className="text-sm font-medium text-left truncate text-slate-700">
                                             {payment.title || 'Платеж'}
                                         </div>
-                                        <div className="flex gap-1.5 text-xs text-slate-600">
-                                            <span className="text-[11px]">
-                                                {formatDate(
-                                                    payment.paid_date || payment.planned_date,
-                                                )}
-                                            </span>
-                                        </div>
+
                                         <div className="text-sm font-semibold text-left text-green-800">
                                             {Number(payment.amount || 0).toLocaleString('ru-RU')}
                                             <span className="ml-1 text-xs font-normal text-green-600">
                                                 {payment.currency_ref?.code ||
                                                     payment.currency_ref?.name ||
                                                     'KGS'}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm font-semibold text-left text-green-800">
+                                            <span className="ml-1 text-xs font-normal text-green-600">
+                                                {payment.currency_rate || 'Сом'}
+                                            </span>
+                                        </div>
+                                        <div className="flex gap-1.5 text-xs text-slate-600">
+                                            <span className="text-[11px]">
+                                                {formatDate(
+                                                    payment.paid_date || payment.planned_date,
+                                                )}
                                             </span>
                                         </div>
                                     </div>

@@ -12,6 +12,7 @@ import {
 } from '@/features/projects/material_request_items/MatReqItemsTable';
 
 interface MaterialsTableProps {
+    blockId: number;
     items: EstimateItem[];
     refs: Record<string, ReferenceResult>;
     calcRowTotal: (row: any) => number;
@@ -20,6 +21,7 @@ interface MaterialsTableProps {
 }
 
 export default function MaterialsTable({
+    blockId,
     items,
     refs,
     calcRowTotal,
@@ -52,6 +54,12 @@ export default function MaterialsTable({
 
         return map;
     }, [materials]);
+
+    const filteredStages = useMemo(() => {
+        if (!blockId) return [];
+
+        return blockStages.filter((stage: any) => Number(stage.block_id) === Number(blockId));
+    }, [blockId, blockStages]);
 
     const subsectionsByStage = useMemo(() => {
         const map: Record<number, any[]> = {};
@@ -145,9 +153,13 @@ export default function MaterialsTable({
                                 ? materialsByType[Number(data.material_type)] || []
                                 : [];
 
-                            const filteredSubStages = data.stage_id
-                                ? subsectionsByStage[Number(data.stage_id)] || []
-                                : [];
+                            const filteredSubStages =
+                                data.stage_id &&
+                                filteredStages.some(
+                                    (stage: any) => Number(stage.id) === Number(data.stage_id),
+                                )
+                                    ? subsectionsByStage[Number(data.stage_id)] || []
+                                    : [];
 
                             return (
                                 <tr
@@ -177,7 +189,7 @@ export default function MaterialsTable({
                                     <td className="px-3 py-3 text-sm text-gray-600">
                                         {isEditing ? (
                                             <ReferencesSelect
-                                                options={blockStages}
+                                                options={filteredStages}
                                                 value={data.stage_id}
                                                 onChange={(v) => handleChange('stage_id', v)}
                                             />

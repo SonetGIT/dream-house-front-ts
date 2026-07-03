@@ -244,7 +244,7 @@ export default function ServicesEstimateItemsCreate({
 
                                             <td className="px-3 py-2 border">
                                                 <ReferencesSelect
-                                                    options={blockStages}
+                                                    options={filteredStages}
                                                     value={row.stage_id}
                                                     onChange={(v) => {
                                                         updateRow(row.id, 'stage_id', v);
