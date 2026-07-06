@@ -85,6 +85,21 @@ export default function WorkPerformedItemCreateEditForm({
         }
 
         try {
+            const itemsPayload = rows.map((r) => ({
+                item_type: r.isFromEstimate ? 1 : 2,
+                material_estimate_item_id: r.isFromEstimate ? Number(r.id) : null,
+                stage_id: r.stage_id,
+                subsection_id: r.subsection_id,
+                service_type: r.service_type,
+                service_id: r.service_id,
+                unit_of_measure: r.unit_of_measure,
+                quantity: r.quantity,
+                currency: r.currency,
+                currency_rate: r.currency_rate,
+                price: r.price,
+                comment: r.comment,
+            }));
+
             const res = await dispatch(
                 createWorkPerformed({
                     project_id: projectId,
@@ -92,19 +107,7 @@ export default function WorkPerformedItemCreateEditForm({
                     status: 1,
                     performed_person_name: performedPersonName,
                     advance_payment: advancePayment,
-                    items: rows.map((r) => ({
-                        item_type: r.isFromEstimate ? 1 : 2,
-                        stage_id: r.stage_id,
-                        subsection_id: r.subsection_id,
-                        service_type: r.service_type,
-                        service_id: r.service_id,
-                        unit_of_measure: r.unit_of_measure,
-                        quantity: r.quantity,
-                        currency: r.currency,
-                        currency_rate: r.currency_rate,
-                        price: r.price,
-                        comment: r.comment,
-                    })),
+                    items: itemsPayload as any,
                 }),
             ).unwrap();
 

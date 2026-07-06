@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 
-// ================= TYPES =================
+//  TYPES
 
 export interface Material {
     id: number;
@@ -43,9 +43,9 @@ export interface MaterialRequestItemsSearchPayload {
     size?: number;
 }
 
-// ================= THUNKS =================
+//THUNKS
 
-// 🔍 SEARCH
+//SEARCH
 export const fetchMaterialRequestItems = createAsyncThunk(
     'materialRequestItems/fetch',
     async (payload: MaterialRequestItemsSearchPayload, { rejectWithValue }) => {
@@ -66,7 +66,7 @@ export const fetchMaterialRequestItems = createAsyncThunk(
     },
 );
 
-// ➕ CREATE
+//CREATE
 export const createMaterialRequestItem = createAsyncThunk(
     'materialRequestItems/create',
     async (payload: Partial<MaterialRequestItem>, { rejectWithValue }) => {
@@ -84,7 +84,7 @@ export const createMaterialRequestItem = createAsyncThunk(
     },
 );
 
-// ✏️ UPDATE
+//UPDATE
 export const updateMaterialRequestItem = createAsyncThunk(
     'materialRequestItems/update',
     async (
@@ -105,7 +105,7 @@ export const updateMaterialRequestItem = createAsyncThunk(
     },
 );
 
-// ❌ DELETE
+//DELETE
 export const deleteMaterialRequestItem = createAsyncThunk(
     'materialRequestItems/delete',
     async (id: number, { rejectWithValue }) => {
@@ -119,7 +119,7 @@ export const deleteMaterialRequestItem = createAsyncThunk(
     },
 );
 
-// ================= SLICE =================
+//  SLICE
 
 interface MaterialRequestItemsState {
     items: MaterialRequestItem[];
@@ -147,7 +147,7 @@ const materialRequestItemsSlice = createSlice({
     extraReducers: (builder) => {
         builder
 
-            // ===== FETCH =====
+            // FETCH
             .addCase(fetchMaterialRequestItems.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -162,12 +162,12 @@ const materialRequestItemsSlice = createSlice({
                 state.error = action.payload as string;
             })
 
-            // ===== CREATE =====
+            // CREATE
             .addCase(createMaterialRequestItem.fulfilled, (state, action) => {
                 state.items.unshift(action.payload);
             })
 
-            // ===== UPDATE =====
+            // UPDATE
             .addCase(updateMaterialRequestItem.fulfilled, (state, action) => {
                 const index = state.items.findIndex((i) => i.id === action.payload.id);
                 if (index !== -1) {
@@ -175,7 +175,7 @@ const materialRequestItemsSlice = createSlice({
                 }
             })
 
-            // ===== DELETE =====
+            // DELETE
             .addCase(deleteMaterialRequestItem.fulfilled, (state, action) => {
                 state.items = state.items.filter((i) => i.id !== action.payload);
             });

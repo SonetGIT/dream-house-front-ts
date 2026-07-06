@@ -14,7 +14,7 @@ import type { SalesUnitFinishTypes, SalesUnitStatus } from '../slices/salesDicti
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { EnumItem } from '@/features/reference/referenceService';
 
-// ==================== ГЕНЕРАЦИЯ ПЛАНОВОГО КОДА ====================
+// === ГЕНЕРАЦИЯ ПЛАНОВОГО КОДА ===
 const LOT_TYPE_CODE_MAP: Record<string, string> = {
     apartment: 'FLA',
     parking: 'PAR',

@@ -62,7 +62,7 @@ export default function ContractorFiltersPanel({ onSearch, onReset, onCreate }: 
                         </div>
                     </div>
 
-                    {/* Кнопки */}
+                    {/* Кнопки ВОЗМОЖНО НА БУДУЩЕЕ */}
                     {/* <StyledTooltip title="Фильтры">
                         <button
                             onClick={() => setShowFilters(!showFilters)}
@@ -113,7 +113,7 @@ export default function ContractorFiltersPanel({ onSearch, onReset, onCreate }: 
                 </div>
             </div>
 
-            {/* Расширенные фильтры */}
+            {/* Расширенные фильтры на будущее */}
             {/* {showFilters && (
                 <div
                     className="px-4 pb-4 border-t border-gray-200 bg-gray-50"

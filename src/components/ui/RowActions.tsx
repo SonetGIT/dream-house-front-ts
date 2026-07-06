@@ -17,7 +17,6 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
-    // ✅ правильный outside click
     useEffect(() => {
         const handleClick = (e: MouseEvent) => {
             if (!ref.current?.contains(e.target as Node)) {
@@ -32,10 +31,9 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
     return (
         <div ref={ref} className="relative px-2 py-2">
             <div className="flex items-center justify-end">
-                {/* Кнопка */}
                 <button
                     onClick={(e) => {
-                        e.stopPropagation(); //важно
+                        e.stopPropagation();
                         setOpen((prev) => !prev);
                     }}
                     aria-label="Действия"
@@ -48,7 +46,7 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
                 {/* Dropdown */}
                 {open && (
                     <div
-                        onClick={(e) => e.stopPropagation()} //защита от закрытия строки
+                        onClick={(e) => e.stopPropagation()}
                         className="
                             absolute right-0 top-full mt-1 z-50
                             min-w-[11rem]
@@ -63,9 +61,9 @@ export function RowActions<T>({ row, actions }: RowActionsProps<T>) {
 
                             return (
                                 <button
-                                    key={action.label} // ✅ стабильный key
+                                    key={action.label}
                                     onClick={(e) => {
-                                        e.stopPropagation(); //фикс collapse бага
+                                        e.stopPropagation();
                                         action.onClick(row);
                                         setOpen(false);
                                     }}

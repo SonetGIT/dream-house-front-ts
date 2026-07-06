@@ -73,7 +73,7 @@ export default function MaterialMovementsTable({
                         <th className="px-3 py-2 text-sm text-left">Откуда</th>
                         <th className="px-3 py-2 text-sm text-left">Куда</th>
                         <th className="px-3 py-2 text-sm text-right">Кол-во</th>
-                        <th className="px-3 py-2 text-sm text-left">Пользователь</th>
+                        <th className="px-3 py-2 text-sm text-center">Принял</th>
                         <th className="px-3 py-2 text-sm text-left">Комментарий</th>
                     </tr>
                 </thead>

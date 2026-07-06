@@ -72,7 +72,7 @@ export default function ClientPage() {
                     size: size,
                 }),
             ),
-        [dispatch, filterProject, filterSearch],
+        [dispatch, filterProject, filterSearch, page, size],
     );
 
     useEffect(() => {
@@ -127,8 +127,11 @@ export default function ClientPage() {
             const updated = await dispatch(
                 updateSalesClient({ id, payload: data as SalesClientUpdatePayload }),
             ).unwrap();
+            const refreshed = await loadClients().unwrap();
+            const refreshedClient =
+                refreshed.data.find((client) => Number(client.id) === Number(id)) ?? updated;
             toast.success('Клиент обновлён');
-            setModal({ type: 'detail', client: updated });
+            setModal({ type: 'detail', client: refreshedClient });
         } catch (e) {
             toast.error(e as string);
         } finally {
@@ -271,6 +274,7 @@ export default function ClientPage() {
                         <div className="p-6">
                             <ClientDetail
                                 client={modal.client}
+                                managers={managers}
                                 onEdit={() => setModal({ type: 'edit', client: modal.client })}
                                 onClose={() => setModal(null)}
                             />
@@ -302,6 +306,11 @@ export default function ClientPage() {
                             </div>
                             <div className="p-6">
                                 <ClientForm
+                                    key={
+                                        modal.type === 'edit'
+                                            ? `edit-${modal.client.id}`
+                                            : 'create-client'
+                                    }
                                     mode={modal.type}
                                     client={modal.type === 'edit' ? modal.client : null}
                                     projects={projects}

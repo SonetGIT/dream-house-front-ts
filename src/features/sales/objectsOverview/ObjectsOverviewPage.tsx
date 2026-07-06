@@ -16,7 +16,7 @@ export default function ObjectsOverviewPage() {
         (state) => state.salesObjOverview,
     );
     // const currentProject = projects.filter((p) => p.id === )
-    //Первичная загрузка =====
+    //Первичная загрузка
     useEffect(() => {
         dispatch(fetchSalesOverview());
     }, [dispatch, page, size]);

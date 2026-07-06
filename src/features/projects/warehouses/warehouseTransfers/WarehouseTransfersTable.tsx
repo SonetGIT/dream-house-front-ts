@@ -218,7 +218,9 @@ export default function WarehouseTransfersTable({
                                                 </span>
                                             </td>
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {formatDate(whTr.posted_at)}
+                                                {formatDate(
+                                                    whTr.write_off_date || whTr.posted_at || '',
+                                                )}
                                             </td>
                                             <td className="px-2 py-2 text-center text-gray-900">
                                                 <span

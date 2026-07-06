@@ -49,7 +49,7 @@ export default function MbpWriteOffModal({
 }: MbpWriteOffModalProps) {
     const [formData, setFormData] = useState<CreateMbpWriteOffPayload>({
         warehouse_id: warehouseId,
-        posted_at: new Date().toISOString().slice(0, 10),
+        write_off_date: new Date().toISOString().slice(0, 10),
         note: '',
         items: [{ ...emptyItem }],
     });
@@ -61,7 +61,7 @@ export default function MbpWriteOffModal({
 
         setFormData({
             warehouse_id: warehouseId,
-            posted_at: new Date().toISOString().slice(0, 10),
+            write_off_date: new Date().toISOString().slice(0, 10),
             note: '',
             items: [{ ...emptyItem }],
         });
@@ -137,8 +137,8 @@ export default function MbpWriteOffModal({
             nextErrors.warehouse_id = 'Выберите склад';
         }
 
-        if (!formData.posted_at) {
-            nextErrors.posted_at = 'Укажите дату списания';
+        if (!formData.write_off_date) {
+            nextErrors.write_off_date = 'Укажите дату списания';
         }
 
         const hasValidItem = formData.items.some(
@@ -158,7 +158,7 @@ export default function MbpWriteOffModal({
 
         const payload: CreateMbpWriteOffPayload = {
             warehouse_id: warehouseId,
-            posted_at: formData.posted_at,
+            write_off_date: formData.write_off_date,
             note: formData.note || null,
             items: formData.items
                 .filter((item) => item.material_id && Number(item.quantity) > 0)
@@ -198,22 +198,22 @@ export default function MbpWriteOffModal({
                         />
                     </div>
 
-                    {/* <div>
+                    <div>
                         <label className="block mb-1.5 text-sm font-medium text-gray-700">
                             Дата списания
                         </label>
                         <input
                             type="date"
-                            value={formData.posted_at}
-                            onChange={(e) => handleChange('posted_at', e.target.value)}
+                            value={formData.write_off_date}
+                            onChange={(e) => handleChange('write_off_date', e.target.value)}
                             className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                                errors.posted_at ? 'border-blue-300' : 'border-gray-300'
+                                errors.write_off_date ? 'border-blue-300' : 'border-gray-300'
                             }`}
                         />
-                        {errors.posted_at && (
-                            <p className="mt-1 text-xs text-blue-600">{errors.posted_at}</p>
+                        {errors.write_off_date && (
+                            <p className="mt-1 text-xs text-blue-600">{errors.write_off_date}</p>
                         )}
-                    </div> */}
+                    </div>
 
                     <div className="sm:col-span-2">
                         <label className="block mb-1.5 text-sm font-medium text-gray-700">
@@ -222,7 +222,7 @@ export default function MbpWriteOffModal({
                         <textarea
                             value={formData.note ?? ''}
                             onChange={(e) => handleChange('note', e.target.value)}
-                            rows={3}
+                            rows={2}
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                             placeholder="Комментарий к списанию"
                         />

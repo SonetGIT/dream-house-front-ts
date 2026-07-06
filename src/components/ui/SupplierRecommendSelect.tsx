@@ -58,7 +58,6 @@ export default function SupplierRecommendSelect({
                 )}
             </div>
 
-            {/* Dropdown */}
             {open && (
                 <div className="absolute z-20 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded shadow max-h-60">
                     {suppliers.map((s) => (
@@ -70,15 +69,9 @@ export default function SupplierRecommendSelect({
                                 setOpen(false);
                             }}
                         >
-                            {/* <div className="flex flex-col"> */}
                             <div className="flex items-center gap-1">
                                 <span className="truncate">{s.name}</span>
                                 <Rating value={s.avg_rating} size="sm" />
-                                {/* {s.best_price != null && (
-                                    <span className="text-xs font-medium text-green-600">
-                                        {s.best_price}
-                                    </span>
-                                )} */}
                             </div>
                         </div>
                     ))}

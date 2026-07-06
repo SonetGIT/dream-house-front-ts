@@ -8,11 +8,11 @@ import {
     updateStageSubsection,
     type StageSubsection,
 } from './subStages/stageSubsectionsSlice';
-import { formatDateTime } from '@/utils/formatDateTime';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { BlockStage } from './blockStagesSlice';
 import toast from 'react-hot-toast';
 import { fetchEnum } from '@/features/reference/referenceSlice';
+import { formatDate } from '@/utils/formatData';
 
 interface BlockStageRowProps {
     stage: BlockStage;
@@ -141,13 +141,13 @@ export default function BlockStageRow({
                 </td>
 
                 {/* Start */}
-                <td className="w-[200px] text-[14px] text-gray-700 text-left border-l border-gray-200 px-3 py-2.5">
-                    {formatDateTime(stage.start_date)}
+                <td className="w-[200px] text-[14px] text-gray-700 text-center border-l border-gray-200 px-3 py-2.5">
+                    {formatDate(stage.start_date)}
                 </td>
 
                 {/* End */}
-                <td className="w-[200px] text-[14px] text-gray-700 text-left border-l border-gray-200 px-3 py-2.5">
-                    {formatDateTime(stage.end_date)}
+                <td className="w-[200px] text-[14px] text-gray-700 text-center border-l border-gray-200 px-3 py-2.5">
+                    {formatDate(stage.end_date)}
                 </td>
 
                 {/* Duration */}

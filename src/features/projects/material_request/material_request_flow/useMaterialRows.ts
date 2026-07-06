@@ -51,7 +51,7 @@ export function useMaterialRows({ initialItems, refs }: UseMaterialRowsParams) {
             material_id: i.material_id,
             unit_of_measure: i.unit_of_measure,
 
-            quantity: i.quantity_planned || 0,
+            quantity: i.remaining ?? i.quantity_planned ?? 0,
             coefficient: i.coefficient || 1,
 
             currency: i.currency || 1,

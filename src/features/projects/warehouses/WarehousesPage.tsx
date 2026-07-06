@@ -46,7 +46,7 @@ export default function WarehousesPage() {
         warehouseTransferStatuses: useReference('warehouseTransferStatuses'),
     };
 
-    //Первичная загрузка =====
+    //Первичная загрузка
     useEffect(() => {
         dispatch(fetchWarehouses({ page: 1, size: 10, project_id: projectId }));
     }, [projectId, 1, 10]);

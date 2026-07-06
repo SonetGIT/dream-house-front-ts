@@ -34,7 +34,8 @@ export interface MbpWriteOff {
     id: number;
     project_id: number;
     warehouse_id: number;
-    posted_at: string;
+    write_off_date: string;
+    posted_at?: string;
     status: number;
     note: string | null;
     created_user_id: number;
@@ -86,13 +87,14 @@ export interface CreateMbpWriteOffItemPayload {
 
 export interface CreateMbpWriteOffPayload {
     warehouse_id: number;
-    posted_at: string;
+    write_off_date: string;
     note?: string | null;
     items: CreateMbpWriteOffItemPayload[];
 }
 
 export interface UpdateMbpWriteOffPayload {
     warehouse_id?: number;
+    write_off_date?: string;
     posted_at?: string;
     note?: string | null;
     items?: CreateMbpWriteOffItemPayload[];

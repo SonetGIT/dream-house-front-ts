@@ -50,7 +50,7 @@ export function useServiceRows({ initialItems, refs }: UseServiceRowsParams) {
 
             unit_of_measure: i.unit_of_measure,
 
-            quantity: i.quantity_planned || 0,
+            quantity: i.remaining ?? i.quantity_planned ?? 0,
 
             currency: i.currency || 1,
             currency_rate: i.currency_rate || 1,

@@ -5,11 +5,7 @@ import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import { formatDate } from '@/utils/formatData';
 import { taskPriorities, taskStatuses } from '@/utils/getStatusColor';
-import {
-    getTaskAssigneeIds,
-    type Task,
-    type TaskAssignee,
-} from './tasksSlice';
+import { getTaskAssigneeIds, type Task, type TaskAssignee } from './tasksSlice';
 import {
     TASK_STATUS_ACKNOWLEDGED,
     TASK_STATUS_CANCELED,
@@ -92,8 +88,7 @@ export default function TasksTable({
         );
     };
 
-    const getDisplayedStatus = (task: Task) =>
-        getCurrentAssignee(task)?.status ?? task.status;
+    const getDisplayedStatus = (task: Task) => getCurrentAssignee(task)?.status ?? task.status;
 
     const getAssigneeNames = (task: Task) => {
         const assigneeIds = getTaskAssigneeIds(task);
@@ -108,39 +103,39 @@ export default function TasksTable({
 
     return (
         <div className="space-y-4">
-            <div className="overflow-hidden rounded-lg border bg-white">
+            <div className="overflow-hidden bg-white border rounded-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 z-10 bg-gray-50">
                             <tr className="border-b">
-                                <th className="w-12 bg-blue-50 px-4 py-3 text-left"></th>
-                                <th className="bg-blue-50 px-4 py-3 text-left">
-                                    <div className="text-xs font-semibold uppercase text-blue-700">
+                                <th className="w-12 px-4 py-3 text-left bg-blue-50"></th>
+                                <th className="px-4 py-3 text-left bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Название задачи
                                     </div>
                                 </th>
-                                <th className="border-l bg-blue-50 px-4 py-3 text-center">
-                                    <div className="text-xs font-semibold uppercase text-blue-700">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Статус
                                     </div>
                                 </th>
-                                <th className="border-l bg-blue-50 px-4 py-3 text-center">
-                                    <div className="text-xs font-semibold uppercase text-blue-700">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Приоритет
                                     </div>
                                 </th>
-                                <th className="border-l bg-blue-50 px-4 py-3 text-center">
-                                    <div className="text-xs font-semibold uppercase text-blue-700">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дедлайн
                                     </div>
                                 </th>
-                                <th className="border-l bg-blue-50 px-4 py-3 text-center">
-                                    <div className="text-left text-xs font-semibold uppercase text-blue-700">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
+                                    <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Исполнители
                                     </div>
                                 </th>
-                                <th className="w-24 border-l bg-gray-50 px-4 py-3 text-center">
-                                    <div className="text-xs uppercase text-gray-600">Действия</div>
+                                <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
+                                    <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
                             </tr>
                         </thead>
@@ -150,7 +145,9 @@ export default function TasksTable({
                                 const displayedStatus = getDisplayedStatus(task);
                                 const taskStatus = taskStatuses[displayedStatus];
                                 const priority =
-                                    task.priority != null ? taskPriorities[task.priority] : undefined;
+                                    task.priority != null
+                                        ? taskPriorities[task.priority]
+                                        : undefined;
                                 const taskAssigneeIds = getTaskAssigneeIds(task);
                                 const isTaskOverdue = isOverdue(task.deadline, displayedStatus);
                                 const isAssignee =
@@ -163,13 +160,15 @@ export default function TasksTable({
                                     Number(currentUserId) === Number(task.created_user_id);
                                 const canCancel =
                                     isCreator &&
-                                    ![TASK_STATUS_COMPLETED, TASK_STATUS_CANCELED].includes(task.status);
+                                    ![TASK_STATUS_COMPLETED, TASK_STATUS_CANCELED].includes(
+                                        task.status,
+                                    );
 
                                 return (
                                     <React.Fragment key={task.id}>
                                         <tr
                                             id={`task-row-${task.id}`}
-                                            className="border-b transition-colors hover:bg-gray-50"
+                                            className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(task.id)}
                                             data-focused={
                                                 focusedTaskId &&
@@ -197,9 +196,9 @@ export default function TasksTable({
                                                     className="text-gray-400 transition-colors hover:text-gray-600"
                                                 >
                                                     {openRows[task.id] ? (
-                                                        <ChevronDown className="h-4 w-4" />
+                                                        <ChevronDown className="w-4 h-4" />
                                                     ) : (
-                                                        <ChevronRight className="h-4 w-4" />
+                                                        <ChevronRight className="w-4 h-4" />
                                                     )}
                                                 </button>
                                             </td>
@@ -231,7 +230,9 @@ export default function TasksTable({
                                                         }`}
                                                     >
                                                         {priority?.label ||
-                                                            refs.taskPriorities.lookup(task.priority)}
+                                                            refs.taskPriorities.lookup(
+                                                                task.priority,
+                                                            )}
                                                     </span>
                                                 ) : (
                                                     '_'
@@ -241,7 +242,9 @@ export default function TasksTable({
                                             <td className="px-3 py-2 text-center">
                                                 <span
                                                     className={`text-sm ${
-                                                        isTaskOverdue ? 'text-red-700' : 'text-sky-700'
+                                                        isTaskOverdue
+                                                            ? 'text-red-700'
+                                                            : 'text-sky-700'
                                                     }`}
                                                 >
                                                     {formatDate(task.deadline)}
@@ -254,12 +257,12 @@ export default function TasksTable({
                                             </td>
 
                                             <td className="px-3 py-2">
-                                                <span className="line-clamp-2 text-sm">
+                                                <span className="text-sm line-clamp-2">
                                                     {getAssigneeNames(task)}
                                                 </span>
                                             </td>
 
-                                            <td className="border-l px-3 py-2">
+                                            <td className="px-3 py-2 border-l">
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <StyledTooltip title="Редактировать">
                                                         <button
@@ -291,14 +294,14 @@ export default function TasksTable({
                                         <tr>
                                             <td colSpan={7}>
                                                 <Collapse in={openRows[task.id]} unmountOnExit>
-                                                    <div className="rounded-lg border-blue-100 bg-white px-4 py-3 shadow-sm">
+                                                    <div className="px-4 py-3 bg-white border-blue-100 rounded-lg shadow-sm">
                                                         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="mb-2 text-sm tracking-wide text-sky-600 underline">
+                                                            <div className="flex-1 min-w-0 text-left ">
+                                                                <p className="mb-2 text-sm tracking-wideunderline text-sky-600">
                                                                     Описание задачи
                                                                 </p>
 
-                                                                <p className="ml-8 whitespace-pre-wrap text-sm leading-6 text-gray-700">
+                                                                <p className="ml-8 text-sm leading-6 text-gray-700 whitespace-pre-wrap">
                                                                     {task.description?.trim() ||
                                                                         'Описание отсутствует'}
                                                                 </p>
@@ -306,7 +309,7 @@ export default function TasksTable({
 
                                                             <div className="w-full lg:w-[420px] lg:shrink-0">
                                                                 <div className="space-y-2">
-                                                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-700">
+                                                                    <div className="flex flex-wrap items-center text-sm text-gray-700 gap-x-6 gap-y-1">
                                                                         <div className="text-sm">
                                                                             <span className="text-xs font-medium text-violet-600">
                                                                                 Автор:
@@ -323,12 +326,14 @@ export default function TasksTable({
                                                                                 Дата создания:
                                                                             </span>{' '}
                                                                             {task.created_at
-                                                                                ? formatDate(task.created_at)
+                                                                                ? formatDate(
+                                                                                      task.created_at,
+                                                                                  )
                                                                                 : '—'}
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-700">
+                                                                    <div className="flex flex-wrap items-center text-sm text-gray-700 gap-x-6 gap-y-1">
                                                                         <div className="text-sm">
                                                                             <span className="text-xs font-medium text-violet-800">
                                                                                 Исполнители:
@@ -341,13 +346,15 @@ export default function TasksTable({
                                                                                 Дедлайн:
                                                                             </span>{' '}
                                                                             {task.deadline
-                                                                                ? formatDate(task.deadline)
+                                                                                ? formatDate(
+                                                                                      task.deadline,
+                                                                                  )
                                                                                 : '—'}
                                                                         </div>
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+                                                                <div className="flex flex-wrap items-center justify-end gap-2 mt-6">
                                                                     {isAssignee &&
                                                                         displayedStatus ===
                                                                             TASK_STATUS_CREATED && (
@@ -355,7 +362,9 @@ export default function TasksTable({
                                                                                 type="button"
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
-                                                                                    onAcknowledgeTask(task.id);
+                                                                                    onAcknowledgeTask(
+                                                                                        task.id,
+                                                                                    );
                                                                                 }}
                                                                                 className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                                                                             >
@@ -370,7 +379,9 @@ export default function TasksTable({
                                                                                 type="button"
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
-                                                                                    onStartTask(task.id);
+                                                                                    onStartTask(
+                                                                                        task.id,
+                                                                                    );
                                                                                 }}
                                                                                 className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100"
                                                                             >
@@ -385,7 +396,9 @@ export default function TasksTable({
                                                                                 type="button"
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
-                                                                                    onCompleteTask(task.id);
+                                                                                    onCompleteTask(
+                                                                                        task.id,
+                                                                                    );
                                                                                 }}
                                                                                 className="rounded-md border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition-colors hover:bg-green-100"
                                                                             >
@@ -398,7 +411,9 @@ export default function TasksTable({
                                                                             type="button"
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                onCancelTask(task.id);
+                                                                                onCancelTask(
+                                                                                    task.id,
+                                                                                );
                                                                             }}
                                                                             className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
                                                                         >

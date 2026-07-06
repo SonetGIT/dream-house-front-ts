@@ -65,13 +65,6 @@ export function MaterialsTableMenu(props: Props) {
                     ))}
                 </TableBody>
             </Table>
-
-            {/*Пагинация***********************************************************************************************************/}
-            {/* <TablePagination
-                pagination={props.pagination}
-                onPrev={props.onPrevPage}
-                onNext={props.onNextPage}
-            /> */}
         </div>
     );
 }

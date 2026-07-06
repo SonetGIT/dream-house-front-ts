@@ -72,7 +72,7 @@ export function TablePagination({
         <div
             className={`flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white ${className}`}
         >
-            {/* Left side: Rows per page selector and displayed rows */}
+            {/* Левая часть: выбор количества строк на странице */}
             <div className="flex items-center gap-4">
                 {onSizeChange && sizeOptions.length > 1 && (
                     <div className="flex items-center gap-2">
@@ -93,11 +93,11 @@ export function TablePagination({
                     </div>
                 )}
 
-                {/* Displayed rows */}
+                {/* Отображаемые записи */}
                 <span className="text-sm font-medium text-gray-600">{displayedRowsText}</span>
             </div>
 
-            {/* Right side: Navigation */}
+            {/* Правая часть: навигация */}
             <div className="flex items-center gap-3">
                 {showFirstButton && (
                     <StyledTooltip title="Первая страница">
@@ -128,7 +128,7 @@ export function TablePagination({
                     </span>
                 </StyledTooltip>
 
-                {/* Page info */}
+                {/* Информация о странице */}
                 <span className="text-sm text-gray-600 min-w-[100px] text-center">
                     стр. <span className="font-semibold text-gray-900">{page}</span> -{' '}
                     <span className="text-gray-700">{pages}</span>

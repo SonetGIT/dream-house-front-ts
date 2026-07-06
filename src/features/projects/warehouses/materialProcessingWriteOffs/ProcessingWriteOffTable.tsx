@@ -203,7 +203,11 @@ export default function ProcessingWriteOffTable({
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {formatDate(writeOff.posted_at)}
+                                                {formatDate(
+                                                    writeOff.write_off_date ||
+                                                        writeOff.posted_at ||
+                                                        '',
+                                                )}
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">

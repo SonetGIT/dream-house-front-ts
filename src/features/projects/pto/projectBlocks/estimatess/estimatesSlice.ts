@@ -3,7 +3,7 @@ import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 import type { EstimateItem } from './estimateItems/estimateItemsSlice';
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 export interface Estimate {
     id: number;
     block_id: number;
@@ -39,7 +39,7 @@ export interface EstimateSearchResponse {
     pagination?: Pagination;
 }
 
-/* ================= SEARCH PARAMS ================= */
+/*  SEARCH PARAMS  */
 interface FetchEstimatesParams {
     block_id: number;
     status?: number;
@@ -47,7 +47,7 @@ interface FetchEstimatesParams {
     size: number;
 }
 
-/* ================= STATE ================= */
+/*  STATE  */
 
 interface EstimatesState {
     data: Estimate[];
@@ -94,7 +94,7 @@ const upsertItem = (state: EstimatesState, item: Estimate) => {
     }
 };
 
-/* ================= SEARCH ================= */
+/*  SEARCH  */
 
 export const fetchEstimates = createAsyncThunk<
     EstimateSearchResponse,
@@ -113,7 +113,7 @@ export const fetchEstimates = createAsyncThunk<
     }
 });
 
-/* ================= CREATE ================= */
+/*  CREATE  */
 export const createEstimate = createAsyncThunk<Estimate, EstimateFormData, { rejectValue: string }>(
     'estimates/create',
     async (data, { rejectWithValue }) => {
@@ -126,7 +126,7 @@ export const createEstimate = createAsyncThunk<Estimate, EstimateFormData, { rej
     },
 );
 
-/* ================= UPDATE ================= */
+/*  UPDATE  */
 export const updateEstimate = createAsyncThunk<
     Estimate,
     { id: number; data: EstimateFormData },
@@ -140,7 +140,7 @@ export const updateEstimate = createAsyncThunk<
     }
 });
 
-/* ================= DELETE ================= */
+/*  DELETE  */
 export const deleteEstimate = createAsyncThunk<number, number, { rejectValue: string }>(
     'estimates/delete',
     async (id, { rejectWithValue }) => {
@@ -153,7 +153,7 @@ export const deleteEstimate = createAsyncThunk<number, number, { rejectValue: st
     },
 );
 
-/* ================= SIGN ================= */
+/*  SIGN  */
 export const signEstimate = createAsyncThunk<
     Estimate,
     { id: number; stage: 'planning_engineer' | 'main_engineer' | 'general_director' },
@@ -176,7 +176,7 @@ export const signEstimate = createAsyncThunk<
     }
 });
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 const estimatesSlice = createSlice({
     name: 'estimates',
     initialState,

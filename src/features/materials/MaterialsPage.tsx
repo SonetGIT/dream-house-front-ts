@@ -171,7 +171,7 @@ export default function MaterialsPage() {
     /************************************************************************************************************/
     return (
         <>
-            {/* ===== FILTER BAR ===== */}
+            {/* FILTER BAR */}
             <div className="filter-container">
                 <div className="filter-search">
                     <InputSearch

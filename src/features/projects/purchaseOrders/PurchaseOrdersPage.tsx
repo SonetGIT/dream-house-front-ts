@@ -46,7 +46,11 @@ export default function PurchaseOrdersPage() {
 
     const { data } = useAppSelector((state) => state.materialRequests);
     const user = useAppSelector((state) => state.auth.user);
-    const filteredItems = data?.filter((req) => req.status === 2).flatMap((req) => req.items) || [];
+    const filteredItems =
+        data
+            ?.filter((req) => req.status === 2 || req.status === 3)
+            .flatMap((req) => req.items)
+            .filter((item) => Number(item.remaining_quantity ?? item.quantity ?? 0) > 0) || [];
 
     const [page, setPage] = useState(1);
     const [size, setSize] = useState(10);
@@ -71,6 +75,19 @@ export default function PurchaseOrdersPage() {
             { replace: true },
         );
     }, [location.pathname, location.search, navigate]);
+
+    const refetchMaterialRequests = useCallback(() => {
+        if (!projectIdNum || !blockId) return Promise.resolve();
+
+        return dispatch(
+            fetchSearchMaterialReq({
+                page,
+                size,
+                block_id: blockId,
+                project_id: projectIdNum,
+            }),
+        ).unwrap();
+    }, [dispatch, projectIdNum, blockId, page, size]);
 
     // hooks всегда вызываются одинаково
     const purchaseOrderStatuses = useReference('purchaseOrderStatuses');
@@ -152,10 +169,11 @@ export default function PurchaseOrdersPage() {
                         (Number(item.quantity) || 0) *
                         (Number(item.price) || 0) *
                         (Number(item.currency_rate) || 1),
-                    supplier_id: item.supplier_id ?? item.supplier_id,
+                    supplier_id: item.supplier_id,
                 })),
             };
             await dispatch(createPurchaseOrder(payload)).unwrap();
+            await refetchMaterialRequests();
 
             toast.success('Заявка на закупку создана');
             setModal(null);
@@ -236,9 +254,11 @@ export default function PurchaseOrdersPage() {
         try {
             if (deleteState.type === 'matReqOrder') {
                 await dispatch(deletePurchaseOrder(deleteState.id)).unwrap();
+                await refetchMaterialRequests();
                 toast.success('Заявка на закупку удалена');
             } else {
                 await dispatch(deletePurchaseOrderItem(deleteState.id)).unwrap();
+                await refetchMaterialRequests();
                 toast.success('Позиция заявки на закупку удалена');
 
                 if (projectIdNum && blockId) {
@@ -267,7 +287,7 @@ export default function PurchaseOrdersPage() {
         } finally {
             setDeleteState(null);
         }
-    }, [deleteState, dispatch, projectIdNum, blockId, focusId, page, size]);
+    }, [deleteState, dispatch, projectIdNum, blockId, focusId, page, size, refetchMaterialRequests]);
 
     /***************************************************************************************************************/
     return (

@@ -114,7 +114,7 @@ const materialsSlice = createSlice({
     extraReducers: (builder) => {
         builder
 
-            /* ===== FETCH ===== */
+            /* FETCH */
             .addCase(fetchMaterials.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -129,12 +129,12 @@ const materialsSlice = createSlice({
                 state.error = action.payload ?? 'Ошибка загрузки';
             })
 
-            /* ===== CREATE ===== */
+            /* CREATE */
             .addCase(createMaterial.fulfilled, (state, action) => {
                 state.data.unshift(action.payload);
             })
 
-            /* ===== UPDATE ===== */
+            /* UPDATE */
             .addCase(updateMaterial.fulfilled, (state, action) => {
                 const index = state.data.findIndex((m) => m.id === action.payload.id);
                 if (index !== -1) {
@@ -142,7 +142,7 @@ const materialsSlice = createSlice({
                 }
             })
 
-            /* ===== DELETE ===== */
+            /* DELETE */
             .addCase(deleteMaterial.fulfilled, (state, action) => {
                 state.data = state.data.filter((m) => m.id !== action.payload);
             });

@@ -87,7 +87,7 @@ export default function EstimatesTable({
 
     return (
         <div className="space-y-4">
-            <div className="overflow-hidden rounded-lg border bg-white">
+            <div className="overflow-hidden bg-white border rounded-lg">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="sticky top-0 z-10 bg-gray-50">
@@ -130,10 +130,10 @@ export default function EstimatesTable({
                             {data.map((item) => {
                                 const signatures = [
                                     {
-                                        label: 'Инженер ПТО',
-                                        userId: item.planning_engineer_user_id,
-                                        approved: item.signed_by_planning_engineer,
-                                        approvedTime: item.signed_by_planning_engineer_time,
+                                        label: 'Ген. директор',
+                                        userId: item.general_director_user_id,
+                                        approved: item.signed_by_general_director,
+                                        approvedTime: item.signed_by_general_director_time,
                                     },
                                     {
                                         label: 'Гл. инженер',
@@ -142,10 +142,10 @@ export default function EstimatesTable({
                                         approvedTime: item.signed_by_main_engineer_time,
                                     },
                                     {
-                                        label: 'Ген. директор',
-                                        userId: item.general_director_user_id,
-                                        approved: item.signed_by_general_director,
-                                        approvedTime: item.signed_by_general_director_time,
+                                        label: 'Инженер ПТО',
+                                        userId: item.planning_engineer_user_id,
+                                        approved: item.signed_by_planning_engineer,
+                                        approvedTime: item.signed_by_planning_engineer_time,
                                     },
                                 ];
 
@@ -163,7 +163,7 @@ export default function EstimatesTable({
                                 return (
                                     <Fragment key={item.id}>
                                         <tr
-                                            className="border-b transition-colors hover:bg-gray-50"
+                                            className="transition-colors border-b hover:bg-gray-50"
                                             onClick={() => toggleRow(item.id)}
                                         >
                                             <td className="px-4 py-3">
@@ -176,9 +176,9 @@ export default function EstimatesTable({
                                                     className="text-gray-400 transition-colors hover:text-gray-600"
                                                 >
                                                     {isExpanded ? (
-                                                        <ChevronDown className="h-4 w-4" />
+                                                        <ChevronDown className="w-4 h-4" />
                                                     ) : (
-                                                        <ChevronRight className="h-4 w-4" />
+                                                        <ChevronRight className="w-4 h-4" />
                                                     )}
                                                 </button>
                                             </td>
@@ -194,7 +194,7 @@ export default function EstimatesTable({
                                             />
 
                                             <td className="px-2 py-2 pl-2 text-sm text-center text-gray-900 border-l">
-                                                <div className="grid grid-cols-3 gap-3 text-xs items-start">
+                                                <div className="grid items-start grid-cols-3 gap-3 text-xs">
                                                     {signatures.map((signature) => (
                                                         <div
                                                             key={signature.label}
@@ -238,7 +238,7 @@ export default function EstimatesTable({
                                                             }}
                                                             className="rounded p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </StyledTooltip>
                                                 </div>
@@ -249,7 +249,7 @@ export default function EstimatesTable({
                                             <td colSpan={8} className="px-4 py-3">
                                                 <Collapse in={isExpanded} unmountOnExit>
                                                     <div
-                                                        className="space-y-3 px-2 py-2"
+                                                        className="px-2 py-2 space-y-3"
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         {showSignButton ? (

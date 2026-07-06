@@ -72,7 +72,8 @@ export interface MaterialWriteOff {
     signed_by_general_director: boolean | null;
     signed_by_general_director_time: string | null;
 
-    posted_at: string | null;
+    write_off_date: string | null;
+    posted_at?: string | null;
     created_at: string;
     updated_at: string;
     deleted: boolean;
@@ -110,6 +111,7 @@ export interface CreateMaterialWriteOffItemPayload {
 export interface CreateMaterialWriteOffPayload {
     warehouse_id: number;
     work_performed_item_id: number;
+    write_off_date: string;
     note?: string | null;
     items: CreateMaterialWriteOffItemPayload[];
 }
@@ -132,6 +134,7 @@ export interface UpdateMaterialWriteOffPayload {
     signed_by_general_director?: boolean | null;
     signed_by_general_director_time?: string | null;
 
+    write_off_date?: string | null;
     posted_at?: string | null;
 }
 

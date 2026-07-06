@@ -28,7 +28,8 @@ export interface WarehouseTransferItem {
 
 export interface WarehouseTransfer {
     id: number;
-    posted_at: string;
+    write_off_date: string;
+    posted_at?: string;
     from_warehouse_id: number;
     to_warehouse_id: number;
     created_user_id: number;
@@ -72,6 +73,7 @@ export interface CreateWarehouseTransferItemPayload {
 export interface CreateWarehouseTransferPayload {
     from_warehouse_id: number;
     to_warehouse_id: number;
+    write_off_date: string;
     posted_at?: string;
     comment?: string | null;
     items: CreateWarehouseTransferItemPayload[];

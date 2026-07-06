@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '../users/userSlice';
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 export type AuditEntityType = 'document' | 'project' | 'user' | 'material' | string;
 
@@ -76,7 +76,7 @@ export const fetchAuditLog = createAsyncThunk<
     }
 });
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const auditLogSlice = createSlice({
     name: 'auditLog',

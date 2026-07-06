@@ -123,15 +123,16 @@ export default function ObjectsOverviewUnitsTable(props: PropsType) {
                                     </div>
                                 </th>
                                 <th className="px-4 py-3 text-center border-l bg-green-50">
-                                    <div className="text-xs font-semibold text-green-700 uppercase">
-                                        Валюта
-                                    </div>
-                                </th>
-                                <th className="px-4 py-3 text-center border-l bg-green-50">
                                     <div className="text-xs font-semibold text-green-700 uppercase whitespace-nowrap">
                                         Цена за м²
                                     </div>
                                 </th>
+                                <th className="px-4 py-3 text-center border-l bg-green-50">
+                                    <div className="text-xs font-semibold text-green-700 uppercase">
+                                        Валюта
+                                    </div>
+                                </th>
+
                                 {/* Статус */}
                                 <th className="px-4 py-3 text-center border-l bg-purple-50">
                                     <div className="text-xs font-semibold text-purple-700 uppercase">

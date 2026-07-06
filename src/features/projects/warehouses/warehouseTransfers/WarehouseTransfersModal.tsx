@@ -46,6 +46,7 @@ export interface CreateTransferItemPayload {
 export interface CreateTransferPayload {
     from_warehouse_id: number;
     to_warehouse_id: number;
+    write_off_date: string;
     comment?: string | null;
     items: CreateTransferItemPayload[];
 }
@@ -71,6 +72,7 @@ export default function WarehouseTransferModal({
     const [formData, setFormData] = useState<CreateTransferPayload>({
         from_warehouse_id: fromWarehouseId,
         to_warehouse_id: 0,
+        write_off_date: new Date().toISOString().slice(0, 10),
         comment: '',
         items: [{ ...emptyItem }],
     });
@@ -84,6 +86,7 @@ export default function WarehouseTransferModal({
         setFormData({
             from_warehouse_id: fromWarehouseId,
             to_warehouse_id: 0,
+            write_off_date: new Date().toISOString().slice(0, 10),
             comment: '',
             items: [{ ...emptyItem }],
         });
@@ -163,6 +166,10 @@ export default function WarehouseTransferModal({
             nextErrors.to_warehouse_id = 'Склад назначения не может совпадать с исходным';
         }
 
+        if (!formData.write_off_date) {
+            nextErrors.write_off_date = 'Укажите дату списания';
+        }
+
         const hasValidItem = formData.items.some(
             (item) => item.material_id && Number(item.quantity) > 0,
         );
@@ -181,6 +188,7 @@ export default function WarehouseTransferModal({
         const payload: CreateTransferPayload = {
             from_warehouse_id: fromWarehouseId,
             to_warehouse_id: formData.to_warehouse_id,
+            write_off_date: formData.write_off_date,
             comment: formData.comment || null,
             items: formData.items
                 .filter((item) => item.material_id && Number(item.quantity) > 0)
@@ -210,7 +218,7 @@ export default function WarehouseTransferModal({
             </div>
 
             <DialogContent dividers className="p-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {/* Откуда */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -251,8 +259,25 @@ export default function WarehouseTransferModal({
                         )}
                     </div>
 
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Дата списания <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="date"
+                            value={formData.write_off_date}
+                            onChange={(e) => handleChange('write_off_date', e.target.value)}
+                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 ${
+                                errors.write_off_date ? 'border-red-300' : 'border-gray-300'
+                            }`}
+                        />
+                        {errors.write_off_date && (
+                            <p className="mt-1 text-xs text-red-600">{errors.write_off_date}</p>
+                        )}
+                    </div>
+
                     {/* Комментарий */}
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-3">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Комментарий
                         </label>

@@ -11,7 +11,7 @@ type CardsProps = {
     icon?: ReactNode;
 };
 
-export function Cards({ title, label, value, color, bgColor, to, icon }: CardsProps) {
+export function Cards({ title, color, bgColor, to, icon }: CardsProps) {
     const navigate = useNavigate();
 
     return (
@@ -36,7 +36,7 @@ export function Cards({ title, label, value, color, bgColor, to, icon }: CardsPr
                     <h4>{title}</h4>
                 </div>
             )}
-
+            {/*  ВОЗМОЖНО НА БУДУЩЕЕ ДЛЯ ДО ИНФУ */}
             {/* <div className="cards-row">
                 <div>
                     <span>{label}</span>

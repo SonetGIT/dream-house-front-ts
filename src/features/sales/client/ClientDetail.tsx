@@ -20,9 +20,12 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { lotTypeMap } from './ClientPage';
 import { formatDate } from '@/utils/formatData';
 import { formatDateTime } from '@/utils/formatDateTime';
+import type { EnumItem } from '@/features/reference/referenceService';
+import { getManagerLabel } from '../leads/LeadCard';
 
 interface ClientDetailProps {
     client: SalesClient;
+    managers: EnumItem[];
     onEdit: () => void;
     onClose: () => void;
 }
@@ -39,9 +42,10 @@ const DetailCard = ({ icon, label, value }: { icon: ReactNode; label: string; va
 export function getLotTypeLabel(type: string): string {
     return lotTypeMap[type] ?? type;
 }
-export default function ClientDetail({ client, onEdit, onClose }: ClientDetailProps) {
+export default function ClientDetail({ client, managers, onEdit, onClose }: ClientDetailProps) {
     const phoneDigits = formatPhoneDisplay(client.phone);
     const unit = client.sales_unit;
+    const currentManager = managers.find((m) => Number(m.id) === Number(client.manager_user_id));
 
     const lotLabel = unit ? `${getLotTypeLabel(unit.lot_type)} №${unit.unit_number}` : '—';
     const unitStatusLabel = unit?.status?.name ?? '—';
@@ -232,7 +236,10 @@ export default function ClientDetail({ client, onEdit, onClose }: ClientDetailPr
                                 <span>Ответственный</span>
                             </dt>
                             <dd className="font-medium text-right text-gray-900">
-                                {client.manager_user_id ? `ID: ${client.manager_user_id}` : '—'}
+                                {client.manager_user_id
+                                    ? getManagerLabel(currentManager) ||
+                                      `ID: ${client.manager_user_id}`
+                                    : '—'}
                             </dd>
                         </div>
                         <div className="flex items-start justify-between gap-4">

@@ -136,7 +136,7 @@ const materialMovementsSlice = createSlice({
     extraReducers: (builder) => {
         builder
 
-            // ===== FETCH =====
+            // FETCH
             .addCase(fetchMaterialMovements.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -155,7 +155,7 @@ const materialMovementsSlice = createSlice({
                 state.error = action.payload as string;
             })
 
-            // ===== CREATE =====
+            // CREATE
             .addCase(createMovement.fulfilled, (state, action) => {
                 const item = action.payload.data;
 
@@ -163,7 +163,7 @@ const materialMovementsSlice = createSlice({
                 state.map[item.id] = item;
             })
 
-            // ===== UPDATE =====
+            // UPDATE
             .addCase(updateMovement.fulfilled, (state, action) => {
                 const updated = action.payload.data;
 
@@ -171,7 +171,7 @@ const materialMovementsSlice = createSlice({
                 state.items = state.items.map((i) => (i.id === updated.id ? updated : i));
             })
 
-            // ===== DELETE =====
+            // DELETE
             .addCase(deleteMovement.fulfilled, (state, action) => {
                 const id = action.payload;
 

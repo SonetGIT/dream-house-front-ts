@@ -12,7 +12,12 @@ interface ClientTableProps {
     refs: Record<string, ReferenceResult>;
     loading?: boolean;
     selectedId?: number | null;
-    setModal: (modal: { type: 'detail'; client: SalesClient } | null) => void;
+    setModal: (
+        modal:
+            | { type: 'detail'; client: SalesClient }
+            | { type: 'edit'; client: SalesClient }
+            | null,
+    ) => void;
     // onView: (client: SalesClient) => void;
     // onEdit: (client: SalesClient) => void;
     // onDelete: (client: SalesClient) => void;
@@ -258,7 +263,7 @@ export default function ClientTable({
                                         <StyledTooltip title="Редактировать">
                                             <button
                                                 type="button"
-                                                onClick={() => setModal({ type: 'detail', client })}
+                                                onClick={() => setModal({ type: 'edit', client })}
                                                 className="rounded p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />

@@ -62,7 +62,6 @@ export function ConfirmDialogNew({
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-6">
-                    {/* Icon */}
                     <div
                         className={`
                         w-12 h-12 rounded-full ${styles.iconBg}

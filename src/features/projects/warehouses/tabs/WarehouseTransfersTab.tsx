@@ -278,13 +278,12 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
     };
 
     /*ОТКЛОНИТЬ*/
-    // ✅ Проверка: можно ли отклонить документ (глобально)
     const canBeRejected = (whT: WarehouseTransfer): boolean => {
         // Нельзя отклонить, если ОБЕ стороны уже подписаны
         return !(whT.sender_signed && whT.receiver_signed);
     };
 
-    // 🔐 Проверка: может ли пользователь отклонить ЭТУ сторону
+    //Проверка: может ли пользователь отклонить ЭТУ сторону
     const canReject = (
         whT: WarehouseTransfer,
         user?: User | null,
@@ -301,7 +300,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
         const userId = Number(user.id);
         const roleId = Number(user.role_id);
 
-        // 👑 Админ (роль 1): может отклонить любую неподписанную сторону
+        //Админ (роль 1): может отклонить любую неподписанную сторону
         if (roleId === 1) {
             if (preferredSide) {
                 const isNotSigned =
@@ -312,7 +311,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
             return !whT.sender_signed || !whT.receiver_signed;
         }
 
-        // 📦 Кладовщик (роль 5): отклоняет ТОЛЬКО свою сторону по складу
+        //Кладовщик (роль 5): отклоняет ТОЛЬКО свою сторону по складу
         if (roleId === 5) {
             if (currentWarehouseId === whT.from_warehouse_id) {
                 return !whT.sender_signed; // Может отклонить отправителя, если не подписан
@@ -323,7 +322,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
             return false;
         }
 
-        // 🔧 Мастер (роль 15): отклоняет ТОЛЬКО сторону из ЕГО проекта
+        //Мастер (роль 15): отклоняет ТОЛЬКО сторону из ЕГО проекта
         if (roleId === 15) {
             // Проверяем, что пользователь — назначенный мастер
             if (currentMasterId != null && userId !== currentMasterId) {
@@ -350,7 +349,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
         return false;
     };
 
-    // 🎯 Определение: какую сторону должен отклонить пользователь
+    //Определение: какую сторону должен отклонить пользователь
     const getRejectStage = (
         user: User | null | undefined,
         whT: WarehouseTransfer,
@@ -365,7 +364,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
         const roleId = Number(user.role_id);
         const userId = Number(user.id);
 
-        // 👑 Админ
+        //Админ
         if (roleId === 1) {
             if (preferredSide && !whT[`${preferredSide}_signed` as keyof WarehouseTransfer]) {
                 return preferredSide;
@@ -375,7 +374,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
             return null;
         }
 
-        // 📦 Кладовщик
+        //Кладовщик
         if (roleId === 5) {
             if (currentWarehouseId === whT.from_warehouse_id && !whT.sender_signed) return 'sender';
             if (currentWarehouseId === whT.to_warehouse_id && !whT.receiver_signed)
@@ -383,7 +382,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
             return null;
         }
 
-        // 🔧 Мастер
+        //Мастер
         if (roleId === 15) {
             if (currentMasterId != null && userId !== currentMasterId) return null;
 

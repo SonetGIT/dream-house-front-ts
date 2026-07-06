@@ -17,7 +17,7 @@ export default function ProjectBlocksTabs() {
             <Tabs
                 value={getTab()}
                 onChange={(_, value) => {
-                    // 👇 Добавляем { replace: true } — табы не засоряют историю
+                    //Добавляем { replace: true } — табы не засоряют историю
                     if (value === 0) navigate('', { replace: true });
                     if (value === 1) navigate('materialRequests', { replace: true });
                     if (value === 2) navigate('purchaseOrders', { replace: true });

@@ -9,7 +9,9 @@ interface TaskFormProps {
     projectId: number;
     task: Task | null;
     refs: Record<string, ReferenceResult>;
-    onSubmit: (data: CreateTaskPayload | UpdateTaskPayload & { assignee_user_ids: number[] }) => Promise<void> | void;
+    onSubmit: (
+        data: CreateTaskPayload | (UpdateTaskPayload & { assignee_user_ids: number[] }),
+    ) => Promise<void> | void;
 }
 
 type TaskFormData = {
@@ -34,7 +36,11 @@ export default function TaskForm({
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     const existingAssigneeIds = useMemo(
-        () => new Set(task?.assignee_user_ids ?? (task?.responsible_user_id ? [task.responsible_user_id] : [])),
+        () =>
+            new Set(
+                task?.assignee_user_ids ??
+                    (task?.responsible_user_id ? [task.responsible_user_id] : []),
+            ),
         [task],
     );
 
@@ -45,7 +51,8 @@ export default function TaskForm({
         priority: task?.priority ?? null,
         deadline: task?.deadline ? task.deadline.slice(0, 10) : '',
         assignee_user_ids:
-            task?.assignee_user_ids ?? (task?.responsible_user_id ? [task.responsible_user_id] : []),
+            task?.assignee_user_ids ??
+            (task?.responsible_user_id ? [task.responsible_user_id] : []),
     });
 
     const [errors, setErrors] = useState<TaskFormErrors>({});
@@ -199,17 +206,17 @@ export default function TaskForm({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
         >
             <div
                 className="w-full max-w-[700px] rounded-lg bg-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                     <div className="flex items-center gap-2.5">
-                        <div className="rounded-lg bg-blue-600 p-2">
-                            <Building2 className="h-4 w-4 text-white" />
+                        <div className="p-2 bg-blue-600 rounded-lg">
+                            <Building2 className="w-4 h-4 text-white" />
                         </div>
                         <h2 className="text-base font-semibold text-gray-800">
                             {task ? 'Редактировать задачу' : 'Добавить новую задачу'}
@@ -221,12 +228,12 @@ export default function TaskForm({
                         className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                         title="Закрыть"
                     >
-                        <X className="h-5 w-5 text-red-500" />
+                        <X className="w-5 h-5 text-red-500" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="space-y-5 px-6 py-5">
+                    <div className="px-6 py-5 space-y-5">
                         <div className="space-y-1.5">
                             <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
                                 Название задачи <span className="text-red-500">*</span>
@@ -310,15 +317,17 @@ export default function TaskForm({
                             </label>
                             {task ? (
                                 <p className="text-xs text-amber-700">
-                                    Для существующей задачи можно добавлять новых исполнителей.
-                                    Уже назначенные пользователи заблокированы.
+                                    Для существующей задачи можно добавлять новых исполнителей. Уже
+                                    назначенные пользователи заблокированы.
                                 </p>
                             ) : null}
-                            <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3">
+                            <div className="p-3 space-y-2 overflow-y-auto border border-gray-200 rounded-md max-h-64 bg-gray-50">
                                 {refs.users.data?.map((user) => {
                                     const userId = Number(user.id);
                                     const checked = formData.assignee_user_ids.includes(userId);
-                                    const disabled = Boolean(task && existingAssigneeIds.has(userId));
+                                    const disabled = Boolean(
+                                        task && existingAssigneeIds.has(userId),
+                                    );
 
                                     return (
                                         <label
@@ -334,7 +343,7 @@ export default function TaskForm({
                                                 checked={checked}
                                                 disabled={disabled}
                                                 onChange={() => toggleAssignee(userId)}
-                                                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600"
+                                                className="w-4 h-4 mt-1 text-blue-600 border-gray-300 rounded"
                                             />
                                             <div className="min-w-0">
                                                 <div className="text-sm font-medium text-gray-800">
@@ -351,12 +360,12 @@ export default function TaskForm({
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+                    <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={isSubmitting}
-                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
                         >
                             Отмена
                         </button>
@@ -364,7 +373,7 @@ export default function TaskForm({
                         <button
                             type="submit"
                             disabled={isSubmitting || !formData.title.trim()}
-                            className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-300"
+                            className="px-5 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-300"
                         >
                             {isSubmitting
                                 ? task

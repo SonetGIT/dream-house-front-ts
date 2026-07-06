@@ -166,7 +166,7 @@ export default function ProjectsPage() {
 
             toast.success(`Объект удалён: ${selectedProject.name}`);
 
-            // 👇 если удалили последний элемент на странице — откат на предыдущую
+            //если удалили последний элемент на странице — откат на предыдущую
             const isLastItem = items.length === 1 && (pagination?.page ?? 1) > 1;
 
             refetchProjects(isLastItem ? pagination!.page - 1 : pagination?.page);

@@ -34,15 +34,6 @@ const buildStatusStyle = (status?: PaymentStatusRef | null) => {
     };
 };
 
-const formatMoney = (amount: number, currencyCode?: string | null) => {
-    const value = new Intl.NumberFormat('ru-RU', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
-
-    return currencyCode ? `${value} ${currencyCode}` : value;
-};
-
 const isIncome = (payment: Payment) => {
     const code = payment.payment_type_ref?.code?.toLowerCase() ?? '';
     return code.includes('income') || code.includes('in') || payment.payment_type === 1;
@@ -159,12 +150,12 @@ export default function PaymentsTable({
                                 id={`payment-row-${payment.id}`}
                                 key={payment.id}
                                 className={`transition-colors cursor-pointer group ${
-                                    isFocused ? 'bg-amber-50 hover:bg-amber-100/70' : 'hover:bg-sky-50/50'
+                                    isFocused
+                                        ? 'bg-amber-50 hover:bg-amber-100/70'
+                                        : 'hover:bg-sky-50/50'
                                 }`}
                                 style={
-                                    isFocused
-                                        ? { boxShadow: 'inset 3px 0 0 #f59e0b' }
-                                        : undefined
+                                    isFocused ? { boxShadow: 'inset 3px 0 0 #f59e0b' } : undefined
                                 }
                                 onClick={() => onView(payment)}
                             >

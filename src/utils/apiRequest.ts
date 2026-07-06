@@ -64,7 +64,7 @@ export async function apiRequest<T = any>(
         // ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ
         return {
             ...json,
-            data: json.data ?? json, // ✅ нормализация
+            data: json.data ?? json,
         };
     } catch (error) {
         if (error instanceof TypeError) {

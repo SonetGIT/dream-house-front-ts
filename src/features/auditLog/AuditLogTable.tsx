@@ -17,7 +17,7 @@ import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '../reference/useReference';
 import { AuditLogMetadataList } from './AuditLogMetadataList';
 
-/* ===================== types ===================== */
+/* ==== types ==== */
 
 interface FormField {
     type: string;
@@ -103,7 +103,7 @@ export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsTyp
                 const isOpen = openRowId === log.id;
                 return (
                     <Fragment key={log.id}>
-                        {/* ===== ROW TABLE ===== */}
+                        {/* ROW TABLE */}
                         <Paper variant="outlined" sx={{ mb: isOpen ? 0 : 1 }}>
                             <Table size="small">
                                 <TableBody>

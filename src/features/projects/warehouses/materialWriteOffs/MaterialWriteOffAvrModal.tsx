@@ -71,6 +71,7 @@ export default function MaterialWriteOffAvrModal({
     const [formData, setFormData] = useState<CreateMaterialWriteOffPayload>({
         warehouse_id: warehouseId,
         work_performed_item_id: 0,
+        write_off_date: new Date().toISOString().slice(0, 10),
         note: '',
         items: [{ ...emptyItem }],
     });
@@ -84,6 +85,7 @@ export default function MaterialWriteOffAvrModal({
         setFormData({
             warehouse_id: warehouseId,
             work_performed_item_id: 0,
+            write_off_date: new Date().toISOString().slice(0, 10),
             note: '',
             items: [{ ...emptyItem }],
         });
@@ -199,6 +201,10 @@ export default function MaterialWriteOffAvrModal({
             nextErrors.work_performed_item_id = 'Выберите работу из АВР';
         }
 
+        if (!formData.write_off_date) {
+            nextErrors.write_off_date = 'Укажите дату списания';
+        }
+
         const hasValidItem = formData.items.some(
             (item) => item.material_id && Number(item.quantity) > 0,
         );
@@ -217,6 +223,7 @@ export default function MaterialWriteOffAvrModal({
         const payload: CreateMaterialWriteOffPayload = {
             warehouse_id: warehouseId,
             work_performed_item_id: formData.work_performed_item_id,
+            write_off_date: formData.write_off_date,
             note: formData.note || null,
             items: formData.items
                 .filter((item) => item.material_id && Number(item.quantity) > 0)
@@ -241,7 +248,8 @@ export default function MaterialWriteOffAvrModal({
             </div>
 
             <DialogContent dividers className="p-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                    {/* Склад */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Склад
@@ -257,6 +265,7 @@ export default function MaterialWriteOffAvrModal({
                         )}
                     </div>
 
+                    {/* АВР */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             АВР <span className="text-red-500">*</span>
@@ -264,7 +273,7 @@ export default function MaterialWriteOffAvrModal({
                         <select
                             value={selectedWorkPerformedId || ''}
                             onChange={(e) => handleWorkPerformedChange(Number(e.target.value))}
-                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 ${
+                            className={`w-full h-10 px-3 text-sm border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 ${
                                 errors.work_performed_id ? 'border-red-300' : 'border-gray-300'
                             }`}
                         >
@@ -280,6 +289,7 @@ export default function MaterialWriteOffAvrModal({
                         )}
                     </div>
 
+                    {/* Работа из АВР */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Работа из АВР <span className="text-red-500">*</span>
@@ -290,7 +300,7 @@ export default function MaterialWriteOffAvrModal({
                                 handleChange('work_performed_item_id', Number(e.target.value))
                             }
                             disabled={!selectedWorkPerformedId}
-                            className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-50 disabled:text-gray-400 ${
+                            className={`w-full h-10 px-3 text-sm border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-50 disabled:text-gray-400 ${
                                 errors.work_performed_item_id ? 'border-red-300' : 'border-gray-300'
                             }`}
                         >
@@ -308,14 +318,32 @@ export default function MaterialWriteOffAvrModal({
                         )}
                     </div>
 
-                    <div className="sm:col-span-2">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Дата списания <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="date"
+                            value={formData.write_off_date}
+                            onChange={(e) => handleChange('write_off_date', e.target.value)}
+                            className={`w-full h-10 px-3 text-sm border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 ${
+                                errors.write_off_date ? 'border-red-300' : 'border-gray-300'
+                            }`}
+                        />
+                        {errors.write_off_date && (
+                            <p className="mt-1 text-xs text-red-600">{errors.write_off_date}</p>
+                        )}
+                    </div>
+
+                    {/* Комментарий — на всю ширину */}
+                    <div className="sm:col-span-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Комментарий
                         </label>
                         <textarea
                             value={formData.note ?? ''}
                             onChange={(e) => handleChange('note', e.target.value)}
-                            rows={3}
+                            rows={2}
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500"
                             placeholder="Комментарий к списанию"
                         />

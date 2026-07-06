@@ -87,7 +87,7 @@ export default function UsersForm({
             newErrors.role_id = 'Выберите роль';
         }
 
-        // 👇 логика контрагентов
+        //логика контрагентов
         if (formData.role_id === SUPPLIER_ROLE_ID && !formData.supplier_id) {
             newErrors.supplier_id = 'Выберите поставщика';
         }

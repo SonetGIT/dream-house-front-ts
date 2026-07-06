@@ -107,9 +107,7 @@ export function ProjectForm({
         }
     };
 
-    const rowClass = 'grid grid-cols-[220px_minmax(0,1fr)] items-start';
-    const labelClass = 'pt-1 text-sm font-medium text-gray-700 text-left';
-
+    /*********************************************************************************************************************************/
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -117,21 +115,22 @@ export function ProjectForm({
                     Основная информация
                 </h3>
                 <div className="space-y-3">
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Название объекта <span className="text-red-500">*</span>
-                        </label>
+                    {/*Название + Код */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
+                            <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                                Название объекта <span className="text-red-500">*</span>
+                            </label>
                             <input
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.name ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all placeholder:text-gray-400
-                                `}
+                        w-full px-3 py-2 text-sm text-gray-900 bg-white
+                        border ${errors.name ? 'border-red-300' : 'border-gray-300'}
+                        rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                        transition-all placeholder:text-gray-400
+                    `}
                                 placeholder="Введите название объекта"
                                 disabled={loading}
                             />
@@ -139,22 +138,22 @@ export function ProjectForm({
                                 <p className="mt-1 text-xs text-red-600">{errors.name}</p>
                             )}
                         </div>
-                    </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>Код объекта</label>
                         <div>
+                            <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                                Код объекта
+                            </label>
                             <input
                                 type="text"
                                 value={formData.code}
                                 onChange={(e) => handleChange('code', e.target.value)}
                                 className={`
-                                    w-full h-9 px-3 py-1.5 text-sm font-bold text-blue-600 bg-white
-                                    border ${errors.code ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all placeholder:text-gray-400
-                                `}
-                                placeholder="Код будет сгенерирован автоматически"
+                        w-full h-9 px-3 py-1.5 text-sm font-bold text-blue-600 bg-white
+                        border ${errors.code ? 'border-red-300' : 'border-gray-300'}
+                        rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                        transition-all placeholder:text-gray-400
+                    `}
+                                placeholder="Будет сгенерирован автоматически"
                                 disabled={loading}
                             />
                             {errors.code && (
@@ -163,11 +162,12 @@ export function ProjectForm({
                         </div>
                     </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Тип объекта <span className="text-red-500">*</span>
-                        </label>
+                    {/*Тип + Статус */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
+                            <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                                Тип объекта <span className="text-red-500">*</span>
+                            </label>
                             <select
                                 value={formData.type || ''}
                                 onChange={(e) =>
@@ -177,11 +177,11 @@ export function ProjectForm({
                                     )
                                 }
                                 className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.type ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all cursor-pointer
-                                `}
+                        w-full px-3 py-2 text-sm text-gray-900 bg-white
+                        border ${errors.type ? 'border-red-300' : 'border-gray-300'}
+                        rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                        transition-all cursor-pointer
+                    `}
                                 disabled={loading}
                             >
                                 <option value="">Выберите тип</option>
@@ -195,37 +195,11 @@ export function ProjectForm({
                                 <p className="mt-1 text-xs text-red-600">{errors.type}</p>
                             )}
                         </div>
-                    </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Заказчик <span className="text-red-500">*</span>
-                        </label>
                         <div>
-                            <textarea
-                                value={formData.customer_name}
-                                onChange={(e) => handleChange('customer_name', e.target.value)}
-                                rows={2}
-                                className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.customer_name ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all placeholder:text-gray-400 resize-none
-                                `}
-                                placeholder="Название, ИНН, адрес и т. д."
-                                disabled={loading}
-                            />
-                            {errors.customer_name && (
-                                <p className="mt-1 text-xs text-red-600">{errors.customer_name}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Статус <span className="text-red-500">*</span>
-                        </label>
-                        <div>
+                            <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                                Статус <span className="text-red-500">*</span>
+                            </label>
                             <select
                                 value={formData.status || ''}
                                 onChange={(e) =>
@@ -235,11 +209,11 @@ export function ProjectForm({
                                     )
                                 }
                                 className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.status ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all cursor-pointer
-                                `}
+                        w-full px-3 py-2 text-sm text-gray-900 bg-white
+                        border ${errors.status ? 'border-red-300' : 'border-gray-300'}
+                        rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                        transition-all cursor-pointer
+                    `}
                                 disabled={loading}
                             >
                                 <option value="">Выберите статус</option>
@@ -255,21 +229,44 @@ export function ProjectForm({
                         </div>
                     </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Адрес <span className="text-red-500">*</span>
-                        </label>
+                    {/*Заказчик + Адрес */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
+                            <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                                Заказчик <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={formData.customer_name}
+                                onChange={(e) => handleChange('customer_name', e.target.value)}
+                                rows={2}
+                                className={`
+                        w-full px-3 py-2 text-sm text-gray-900 bg-white
+                        border ${errors.customer_name ? 'border-red-300' : 'border-gray-300'}
+                        rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                        transition-all placeholder:text-gray-400 resize-none
+                    `}
+                                placeholder="Название, ИНН, адрес и т. д."
+                                disabled={loading}
+                            />
+                            {errors.customer_name && (
+                                <p className="mt-1 text-xs text-red-600">{errors.customer_name}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                                Адрес <span className="text-red-500">*</span>
+                            </label>
                             <textarea
                                 value={formData.address}
                                 onChange={(e) => handleChange('address', e.target.value)}
                                 rows={2}
                                 className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.address ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all placeholder:text-gray-400 resize-none
-                                `}
+                        w-full px-3 py-2 text-sm text-gray-900 bg-white
+                        border ${errors.address ? 'border-red-300' : 'border-gray-300'}
+                        rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                        transition-all placeholder:text-gray-400 resize-none
+                    `}
                                 placeholder="Введите адрес объекта"
                                 disabled={loading}
                             />
@@ -279,8 +276,11 @@ export function ProjectForm({
                         </div>
                     </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>Описание</label>
+                    {/*Описание*/}
+                    <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                            Описание
+                        </label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => handleChange('description', e.target.value)}
@@ -295,138 +295,47 @@ export function ProjectForm({
 
             <div>
                 <h3 className="pb-1.5 mb-2 text-sm font-semibold text-gray-900 border-b border-gray-200">
-                    Даты и бюджет
-                </h3>
-                <div className="space-y-3">
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Дата начала <span className="text-red-500">*</span>
-                        </label>
-                        <div>
-                            <input
-                                type="date"
-                                value={formData.start_date}
-                                onChange={(e) => handleChange('start_date', e.target.value)}
-                                className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.start_date ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all
-                                `}
-                                disabled={loading}
-                            />
-                            {errors.start_date && (
-                                <p className="mt-1 text-xs text-red-600">{errors.start_date}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Дата окончания <span className="text-red-500">*</span>
-                        </label>
-                        <div>
-                            <input
-                                type="date"
-                                value={formData.end_date}
-                                onChange={(e) => handleChange('end_date', e.target.value)}
-                                className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.end_date ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all
-                                `}
-                                disabled={loading}
-                            />
-                            {errors.end_date && (
-                                <p className="mt-1 text-xs text-red-600">{errors.end_date}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Плановый бюджет (KGS) <span className="text-red-500">*</span>
-                        </label>
-                        <div>
-                            <input
-                                type="number"
-                                value={formData.planned_budget || ''}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'planned_budget',
-                                        e.target.value ? Number(e.target.value) : null,
-                                    )
-                                }
-                                className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.planned_budget ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all placeholder:text-gray-400
-                                `}
-                                placeholder="0"
-                                min="0"
-                                disabled={loading}
-                            />
-                            {errors.planned_budget && (
-                                <p className="mt-1 text-xs text-red-600">{errors.planned_budget}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={rowClass}>
-                        <label className={labelClass}>Фактический бюджет (KGS)</label>
-                        <input
-                            type="number"
-                            value={formData.actual_budget ?? ''}
-                            readOnly
-                            className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-100 border border-gray-200 rounded-lg cursor-default"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <h3 className="pb-1.5 mb-2 text-sm font-semibold text-gray-900 border-b border-gray-200">
                     Ответственные лица
                 </h3>
-                <div className="space-y-3">
-                    <div className={rowClass}>
-                        <label className={labelClass}>
-                            Инженер объекта <span className="text-red-500">*</span>
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Менеджер */}
+                    <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                            Менеджер <span className="text-red-500">*</span>
                         </label>
-                        <div>
-                            <select
-                                value={formData.manager_id || ''}
-                                onChange={(e) =>
-                                    handleChange(
-                                        'manager_id',
-                                        e.target.value ? Number(e.target.value) : null,
-                                    )
-                                }
-                                className={`
-                                    w-full px-3 py-2 text-sm text-gray-900 bg-white
-                                    border ${errors.manager_id ? 'border-red-300' : 'border-gray-300'}
-                                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
-                                    transition-all cursor-pointer
-                                `}
-                                disabled={loading}
-                            >
-                                <option value="">Выберите инженера</option>
-                                {refs.users.data?.map((manager) => (
-                                    <option key={manager.id} value={manager.id}>
-                                        {manager.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.manager_id && (
-                                <p className="mt-1 text-xs text-red-600">{errors.manager_id}</p>
-                            )}
-                        </div>
+                        <select
+                            value={formData.manager_id || ''}
+                            onChange={(e) =>
+                                handleChange(
+                                    'manager_id',
+                                    e.target.value ? Number(e.target.value) : null,
+                                )
+                            }
+                            className={`
+                    w-full px-3 py-2 text-sm text-gray-900 bg-white
+                    border ${errors.manager_id ? 'border-red-300' : 'border-gray-300'}
+                    rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent
+                    transition-all cursor-pointer
+                `}
+                            disabled={loading}
+                        >
+                            <option value="">Выберите инженера</option>
+                            {refs.users.data?.map((manager) => (
+                                <option key={manager.id} value={manager.id}>
+                                    {manager.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.manager_id && (
+                            <p className="mt-1 text-xs text-red-600">{errors.manager_id}</p>
+                        )}
                     </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>Прораб</label>
+                    {/* Прораб */}
+                    <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                            Прораб <span className="text-red-500">*</span>
+                        </label>
                         <select
                             value={formData.foreman_id || ''}
                             onChange={(e) =>
@@ -447,8 +356,11 @@ export function ProjectForm({
                         </select>
                     </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>Мастер</label>
+                    {/* Мастер */}
+                    <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                            Мастер <span className="text-red-500">*</span>
+                        </label>
                         <select
                             value={formData.master_id || ''}
                             onChange={(e) =>
@@ -469,8 +381,11 @@ export function ProjectForm({
                         </select>
                     </div>
 
-                    <div className={rowClass}>
-                        <label className={labelClass}>Заведующий складом</label>
+                    {/* Заведующий складом */}
+                    <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-1.5">
+                            Заведующий складом <span className="text-red-500">*</span>
+                        </label>
                         <select
                             value={formData.warehouse_manager_id || ''}
                             onChange={(e) =>

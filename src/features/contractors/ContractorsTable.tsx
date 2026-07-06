@@ -1,6 +1,5 @@
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import type { Contractor } from './contractorsSlice';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 
@@ -18,11 +17,6 @@ export default function ContractorsTable({
     onDelete,
     loading,
 }: ContractorsTableProps) {
-    const navigate = useNavigate();
-    const handleRowClick = (contractor: Contractor) => {
-        navigate(`/contractors/${contractor.id}`, { state: { contractor } });
-    };
-
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">

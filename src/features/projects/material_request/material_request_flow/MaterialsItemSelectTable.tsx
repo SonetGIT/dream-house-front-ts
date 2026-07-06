@@ -89,7 +89,6 @@ export default function MaterialsItemSelectTable({
                         <th className="px-3 py-2 text-xs">
                             <input type="checkbox" checked={isAllSelected} onChange={toggleAll} />
                         </th>
-                        <th className="px-3 py-2 text-xs text-left">К заказу</th>
                         <th className="px-3 py-2 text-xs text-left">Этап</th>
                         <th className="px-3 py-2 text-xs text-left">Подэтап</th>
                         <th className="px-3 py-2 text-xs text-left">Тип</th>
@@ -122,42 +121,41 @@ export default function MaterialsItemSelectTable({
                                         onChange={() => toggleOne(sub.id)}
                                     />
                                 </td>
-                                <td className="px-3 py-3 text-sm">
+
+                                <td className="px-3 py-3 text-sm text-left">
+                                    {refs.blockStages.lookup(Number(sub.stage_id))}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-left">
+                                    {refs.stageSubsections.lookup(Number(sub.subsection_id))}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-left">
+                                    {refs.materialTypes.lookup(Number(sub.material_type))}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-left">
+                                    {refs.materials.lookup(Number(sub.material_id))}
+                                </td>
+
+                                <td className="px-3 py-3 text-sm text-left">
+                                    {refs.unitsOfMeasure.lookup(Number(sub.unit_of_measure))}
+                                </td>
+                                <td className="px-3 py-3 text-sm text-right whitespace-nowrap">
                                     <span
                                         className={
                                             sub.remaining > 0
-                                                ? 'text-green-400'
+                                                ? 'font-medium text-green-600'
                                                 : sub.remaining === 0
-                                                  ? 'text-yellow-400'
+                                                  ? 'text-yellow-500'
                                                   : 'text-red-400'
                                         }
                                     >
                                         {sub.remaining}
                                     </span>
+                                    <span className="mx-1 text-gray-400">/</span>
+                                    <span className="text-gray-700">{sub.quantity_planned}</span>
                                 </td>
-
-                                <td className="px-3 py-3 text-sm">
-                                    {refs.blockStages.lookup(Number(sub.stage_id))}
-                                </td>
-
-                                <td className="px-3 py-3 text-sm">
-                                    {refs.stageSubsections.lookup(Number(sub.subsection_id))}
-                                </td>
-
-                                <td className="px-3 py-3 text-sm">
-                                    {refs.materialTypes.lookup(Number(sub.material_type))}
-                                </td>
-
-                                <td className="px-3 py-3 text-sm">
-                                    {refs.materials.lookup(Number(sub.material_id))}
-                                </td>
-
-                                <td className="px-3 py-3 text-sm">
-                                    {refs.unitsOfMeasure.lookup(Number(sub.unit_of_measure))}
-                                </td>
-
-                                <td className="px-3 py-3 text-right">{sub.quantity_planned}</td>
-
                                 <td className="px-3 py-3 text-right">{Number(sub.coefficient)}</td>
 
                                 <td className="px-3 py-3 text-right text-blue-700">

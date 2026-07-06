@@ -105,12 +105,31 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 type RawTask = Record<string, unknown> & {
     id: number | string;
     project_id: number | string;
+    title?: string | null;
+    description?: string | null;
     created_user_id: number | string;
     responsible_user_id?: number | string | null;
     assignee_user_ids?: Array<number | string>;
     assignees?: Array<Record<string, unknown>>;
+    deadline?: string | null;
     status: number | string;
     priority?: number | string | null;
+    notify_3_days?: boolean | number | string | null;
+    notify_1_day?: boolean | number | string | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+    deleted?: boolean | number | string | null;
+};
+
+const normalizeBoolean = (value: unknown) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        return normalized === '1' || normalized === 'true';
+    }
+
+    return false;
 };
 
 const normalizeTaskAssignees = (task: RawTask): TaskAssignee[] => {
@@ -171,9 +190,10 @@ const normalizeTask = (task: RawTask): Task => {
     const assignee_user_ids = assignees.map((item) => Number(item.user_id)).filter(Boolean);
 
     return {
-        ...task,
         id: Number(task.id),
         project_id: Number(task.project_id),
+        title: String(task.title ?? ''),
+        description: String(task.description ?? ''),
         created_user_id: Number(task.created_user_id),
         responsible_user_id:
             task?.responsible_user_id != null
@@ -181,8 +201,14 @@ const normalizeTask = (task: RawTask): Task => {
                 : assignee_user_ids[0] || null,
         assignee_user_ids,
         assignees,
+        deadline: String(task.deadline ?? ''),
         status: Number(task.status),
         priority: task?.priority == null ? null : Number(task.priority),
+        notify_3_days: normalizeBoolean(task.notify_3_days),
+        notify_1_day: normalizeBoolean(task.notify_1_day),
+        created_at: String(task.created_at ?? ''),
+        updated_at: String(task.updated_at ?? ''),
+        deleted: normalizeBoolean(task.deleted),
     };
 };
 
@@ -221,7 +247,7 @@ export const createTask = createAsyncThunk<
     { rejectValue: string }
 >('tasks/createTask', async (payload, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<Task>('/tasks/create', 'POST', payload);
+        const res = await apiRequest<RawTask>('/tasks/create', 'POST', payload);
         return normalizeTask(res.data);
     } catch (error: unknown) {
         return rejectWithValue(getErrorMessage(error, 'Ошибка создания задачи'));
@@ -234,7 +260,7 @@ export const updateTask = createAsyncThunk<
     { rejectValue: string }
 >('tasks/updateTask', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<Task>(`/tasks/update/${id}`, 'PUT', data);
+        const res = await apiRequest<RawTask>(`/tasks/update/${id}`, 'PUT', data);
         return normalizeTask(res.data);
     } catch (error: unknown) {
         return rejectWithValue(getErrorMessage(error, 'Ошибка обновления задачи'));

@@ -13,6 +13,14 @@ export type EditableItem = MaterialRequestItem & {
     best_price?: number;
 };
 
+const normalizeEditableItem = (item: MaterialRequestItem): EditableItem => ({
+    ...item,
+    quantity: Number(item.remaining_quantity ?? item.quantity ?? 0),
+});
+
+const getMaxOrderQuantity = (item: MaterialRequestItem) =>
+    Number(item.remaining_quantity ?? item.quantity ?? 0);
+
 interface MatReqItemsSelectTableProps {
     items: MaterialRequestItem[];
     refs: Record<string, ReferenceResult>;
@@ -30,13 +38,15 @@ export default function MatReqItemsSelectTable({
 
     // STATE
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [editedItems, setEditedItems] = useState<EditableItem[]>(items);
+    const [editedItems, setEditedItems] = useState<EditableItem[]>(() =>
+        items.map(normalizeEditableItem),
+    );
     const [suppliersMap, setSuppliersMap] = useState<Record<number, SupplierRecommend[]>>({});
 
     const currencies = refs.currencies?.data ?? [];
 
     useEffect(() => {
-        setEditedItems(items);
+        setEditedItems(items.map(normalizeEditableItem));
     }, [items]);
 
     // LOAD SUPPLIERS
@@ -123,7 +133,21 @@ export default function MatReqItemsSelectTable({
     // EDIT
     const updateRow = (id: number, field: keyof EditableItem, value: any) => {
         setEditedItems((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+            prev.map((item) => {
+                if (item.id !== id) return item;
+
+                if (field === 'quantity') {
+                    const maxQuantity = getMaxOrderQuantity(item);
+                    const nextQuantity = Math.min(Math.max(Number(value) || 0, 0), maxQuantity);
+
+                    return {
+                        ...item,
+                        quantity: nextQuantity,
+                    };
+                }
+
+                return { ...item, [field]: value };
+            }),
         );
     };
 
@@ -202,6 +226,7 @@ export default function MatReqItemsSelectTable({
                                                 parseNumber(e.target.value),
                                             )
                                         }
+                                        onBlur={() => updateRow(sub.id, 'quantity', sub.quantity)}
                                         className={`w-full px-2 py-1.5 border rounded text-right ${
                                             isSelected ? 'bg-white' : 'bg-blue-50/40'
                                         }`}
@@ -337,7 +362,17 @@ export default function MatReqItemsSelectTable({
                     Отмена
                 </button>
                 <button
-                    onClick={() => onSubmit(selectedItems)}
+                    onClick={() =>
+                        onSubmit(
+                            selectedItems.map((item) => ({
+                                ...item,
+                                quantity: Math.min(
+                                    Math.max(Number(item.quantity) || 0, 0),
+                                    getMaxOrderQuantity(item),
+                                ),
+                            })),
+                        )
+                    }
                     className="flex items-center gap-2 px-4 py-2 text-white border rounded-lg bg-sky-600 hover:bg-sky-700 disabled:opacity-50"
                     disabled={!selectedItems.length}
                 >

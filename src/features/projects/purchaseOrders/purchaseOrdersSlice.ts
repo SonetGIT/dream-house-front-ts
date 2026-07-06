@@ -4,28 +4,6 @@ import type { Pagination } from '@/features/users/userSlice';
 import type { PurchaseOrderItem } from '../purchaseOrderItems/purchaseOrderItemsSlice';
 
 /* TYPES */
-
-// export interface PurchaseOrderItem {
-//     id: number;
-//     purchase_order_id: number;
-//     material_request_item_id: number;
-//     material_type: number;
-//     material_id: number;
-//     quantity: number;
-//     unit_of_measure: number;
-//     currency: number;
-//     currency_rate: number;
-//     price: number;
-//     summ: number;
-//     status: number;
-//     delivered_quantity: number;
-//     supplier_id: number;
-//     material?: {
-//         id: number;
-//         name: string;
-//     };
-// }
-
 export interface PurchaseOrder {
     id: number;
     project_id: number;
@@ -98,7 +76,7 @@ export interface FetchPurchaseOrdersParams {
     search?: string;
 }
 
-/* ================== THUNKS ================== */
+/* = THUNKS = */
 
 /* FETCH */
 export const fetchPurchaseOrders = createAsyncThunk<
@@ -159,7 +137,7 @@ export const deletePurchaseOrder = createAsyncThunk<number, number, { rejectValu
     },
 );
 
-/* ================== SLICE ================== */
+/* = SLICE = */
 
 const purchaseOrdersSlice = createSlice({
     name: 'purchaseOrders',

@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Loader2, Save } from 'lucide-react';
 import type {
     SalesClient,
@@ -47,6 +47,7 @@ interface FormState {
     manager_user_id: string | null;
     comment: string;
 }
+
 const canAssignManager = true; // TODO: replace with real permission check
 const toDateInput = (value?: string | null) => (value ? value.slice(0, 10) : '');
 
@@ -88,7 +89,13 @@ export default function ClientForm({
 }: ClientFormProps) {
     const [form, setForm] = useState<FormState>(() => getInitialState(client));
     const [error, setError] = useState<string | null>(null);
-    const currentManager = managers.find((m) => Number(m.id) === Number(client?.manager_user_id));
+    const currentManager = managers.find((m) => Number(m.id) === Number(form.manager_user_id));
+
+    useEffect(() => {
+        setForm(getInitialState(client));
+        setError(null);
+    }, [client, mode]);
+
     const filteredBlocks = useMemo(
         () =>
             blocks.filter(
@@ -189,7 +196,9 @@ export default function ClientForm({
             address: normalize(form.address),
             project_id: form.project_id ? Number(form.project_id) : null,
             block_id: form.block_id ? Number(form.block_id) : null,
+            floor_id: form.floor_id ? Number(form.floor_id) : null,
             unit_id: form.unit_id ? Number(form.unit_id) : null,
+            manager_user_id: form.manager_user_id ? Number(form.manager_user_id) : null,
             comment: normalize(form.comment),
         };
 
@@ -475,8 +484,10 @@ export default function ClientForm({
                             </label>
                             {canAssignManager ? (
                                 <select
-                                    value={String(form.manager_user_id)}
-                                    onChange={(e) => set('manager_user_id')(e.target.value)}
+                                    value={form.manager_user_id ?? ''}
+                                    onChange={(e) =>
+                                        set('manager_user_id')(e.target.value || null)
+                                    }
                                     disabled={loading}
                                     className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                                 >

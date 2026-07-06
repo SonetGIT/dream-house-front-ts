@@ -34,14 +34,14 @@ export default function BlockStagesTable({
                                 </th>
 
                                 {/* Start */}
-                                <th className="px-4 py-3 text-left border-l bg-blue-50">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата начала
                                     </div>
                                 </th>
 
                                 {/* End */}
-                                <th className="px-4 py-3 text-left border-l bg-blue-50">
+                                <th className="px-4 py-3 text-center border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата окончания
                                     </div>

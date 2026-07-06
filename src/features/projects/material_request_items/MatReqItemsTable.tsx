@@ -164,7 +164,6 @@ export default function MatReqItemsTable({
                 <thead className="text-gray-700 bg-gray-50">
                     <tr className="border-b">
                         <th className="w-12 px-3 py-3 text-sm font-semibold text-left">№</th>
-                        <th className="px-3 py-2 text-sm text-left">Заказано</th>
                         <th className="px-3 py-2 text-sm text-left">Тип заявки</th>
                         <th className="px-3 py-2 text-sm text-left">Этап</th>
                         <th className="px-3 py-2 text-sm text-left">Подэтап</th>
@@ -178,6 +177,7 @@ export default function MatReqItemsTable({
                         <th className="px-3 py-2 text-sm text-right">Цена</th>
                         <th className="px-3 py-2 text-sm text-right">Сумма</th>
                         <th className="px-3 py-2 text-sm text-right">Примечание</th>
+                        <th className="px-3 py-2 text-sm text-left">Заказано</th>
                         <th className="px-3 py-2 text-sm text-center">Статус</th>
                         <th className="px-3 py-2 text-sm text-center">Действия</th>
                     </tr>
@@ -195,9 +195,6 @@ export default function MatReqItemsTable({
                             <tr key={item.id}>
                                 <td className="px-2 py-2 text-xs font-medium text-gray-700">
                                     {index + 1}
-                                </td>
-                                <td className="px-2 py-2 text-sm text-right text-gray-900">
-                                    {item.total_ordered}
                                 </td>
                                 <td className="px-2 py-2 text-center text-gray-900">
                                     <span
@@ -355,7 +352,9 @@ export default function MatReqItemsTable({
                                 <td className="px-2 py-2 text-xs text-center text-gray-600">
                                     {item.comment || '—'}
                                 </td>
-
+                                <td className="px-2 py-2 text-sm text-right text-gray-900">
+                                    {item.total_ordered}
+                                </td>
                                 <td className="px-3 py-2.5">
                                     <span
                                         className={`inline-flex text-center px-2 py-0.5 text-xs font-semibold border rounded-full ${statusInfo.className}`}
