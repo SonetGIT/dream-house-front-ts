@@ -10,8 +10,8 @@ export default defineConfig({
         },
     },
     server: {
-        // host: '0.0.0.0',
-        host: 'localhost',
+        host: '0.0.0.0',
+        // host: 'localhost',
         port: 5173,
     },
 });
