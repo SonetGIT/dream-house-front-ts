@@ -68,17 +68,21 @@ export default function BlockStageRow({
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     }
 
-    const handleAddSubstage = () => {
-        if (newSubstageName.trim()) {
-            dispatch(
+    const handleAddSubstage = async () => {
+        if (!newSubstageName.trim()) return;
+
+        try {
+            await dispatch(
                 createStageSubsection({
                     name: newSubstageName.trim(),
                     stage_id: stage.id,
                 }),
             ).unwrap();
-            dispatch(fetchEnum('stageSubsections'));
+            await dispatch(fetchEnum('stageSubsections')).unwrap();
             setNewSubstageName('');
             setIsAddingSubstage(false);
+        } catch {
+            toast.error('РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ');
         }
     };
 
@@ -105,6 +109,7 @@ export default function BlockStageRow({
                 }),
             ).unwrap();
 
+            await dispatch(fetchEnum('stageSubsections')).unwrap();
             toast.success('Подэтап обновлен');
 
             setEditingSubstageId(null);

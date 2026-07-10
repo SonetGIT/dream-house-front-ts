@@ -7,12 +7,12 @@ interface WarehouseTabsProps {
 
 const tabs: { key: WarehouseTabType; label: string }[] = [
     { key: 'materials', label: 'Материалы' },
-    { key: 'movements', label: 'Движение материалов' },
+    { key: 'warehouseReceiptInvoices', label: 'Накладные' },
     { key: 'writeOffAvr', label: 'Списание по АВР' },
     { key: 'writeOffMbp', label: 'Списание МБП' },
     { key: 'writeOffprocess', label: 'Переработка' },
     { key: 'warehouseTransfers', label: 'Перемещения' },
-    { key: 'warehouseReceiptInvoices', label: 'Накладные' },
+    { key: 'movements', label: 'Движение материалов' },
 ];
 
 /*******************************************************************************************************/

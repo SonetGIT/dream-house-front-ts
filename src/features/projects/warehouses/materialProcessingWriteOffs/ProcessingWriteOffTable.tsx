@@ -295,7 +295,7 @@ export default function ProcessingWriteOffTable({
                                                                             <th className="w-32 px-3 py-2 text-sm text-right">
                                                                                 Кол-во
                                                                             </th>
-                                                                            <th className="px-3 py-2 text-sm text-left">
+                                                                            <th className="px-3 py-2 text-sm text-center">
                                                                                 Примечание
                                                                             </th>
                                                                         </tr>
@@ -311,7 +311,7 @@ export default function ProcessingWriteOffTable({
                                                                                     <td className="px-2 py-2 text-xs font-medium text-gray-600">
                                                                                         {index + 1}
                                                                                     </td>
-                                                                                    <td className="px-2 py-2 text-sm text-gray-800">
+                                                                                    <td className="px-2 py-2 text-sm text-left text-gray-800">
                                                                                         {item.material_id
                                                                                             ? refs.materials.lookup(
                                                                                                   item.material_id,

@@ -121,11 +121,11 @@ export default function WarehouseStocksTable({
                                 key={whItem.id}
                                 className={`transition-colors border-b ${isEditing ? 'bg-blue-50/30' : 'hover:bg-gray-50'}`}
                             >
-                                <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">
+                                <td className="px-3 py-2.5 text-xs text-left text-gray-700 font-medium">
                                     {whItem.id}
                                 </td>
                                 {/* Тип материала */}
-                                <td className="px-3 py-3 text-sm text-gray-600">
+                                <td className="px-3 py-3 text-sm text-left text-gray-600">
                                     {isEditing ? (
                                         <ReferencesSelect
                                             options={materialTypes}
@@ -140,7 +140,7 @@ export default function WarehouseStocksTable({
                                 </td>
 
                                 {/* Материал */}
-                                <td className="px-3 py-3 text-sm text-gray-600">
+                                <td className="px-3 py-3 text-sm text-left text-gray-600">
                                     {isEditing ? (
                                         <ReferencesSelect
                                             options={filteredMaterials}
@@ -156,7 +156,7 @@ export default function WarehouseStocksTable({
                                 </td>
 
                                 {/* Единица измерения */}
-                                <td className="px-3 py-3 text-sm text-gray-600">
+                                <td className="px-3 py-3 text-sm text-left text-gray-600">
                                     {isEditing ? (
                                         <ReferencesSelect
                                             options={units}

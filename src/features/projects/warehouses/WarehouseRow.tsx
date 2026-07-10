@@ -10,7 +10,7 @@ import type { Warehouse } from './warehousesSlice';
 import WarehouseTabs from './WarehouseTabs';
 import WarehouseMaterialsTab from './tabs/WarehouseMaterialsTab';
 import WarehouseMovementsTab from './tabs/WarehouseMovementsTab';
-import WarehouseWriteOffAvrTab from './tabs/WarehouseWriteOffAVRTab';
+import WarehouseWriteOffAvrTab from './tabs/WarehouseWriteOffAvrTab';
 import WarehouseWriteOffMbpTab from './tabs/WarehouseWriteOffMBPTab';
 import WarehouseWriteOffProcessTab from './tabs/WarehouseWriteOffProcessTab';
 import { ActionButton, ACTIONS } from '@/components/ui/ActionButton';

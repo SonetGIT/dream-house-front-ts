@@ -1,7 +1,7 @@
 export default function Footer() {
     return (
         <footer style={{ textAlign: 'center' }}>
-            <small>&copy; {new Date().getFullYear()} «Sonet»</small>
+            <small>&copy; {new Date().getFullYear()} «ОсОО»</small>
         </footer>
     );
 }

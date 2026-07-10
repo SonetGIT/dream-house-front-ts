@@ -124,6 +124,8 @@ export default function WorkPerformedItemSelectTable({
                                     {refs.unitsOfMeasure.lookup(Number(sub.unit_of_measure))}
                                 </td>
                                 <td className="px-3 py-3 text-sm text-right whitespace-nowrap">
+                                    <span className="text-gray-700">{sub.quantity_planned}</span>
+                                    <span className="mx-1 text-gray-400">/</span>
                                     <span
                                         className={
                                             sub.remaining > 0
@@ -135,8 +137,6 @@ export default function WorkPerformedItemSelectTable({
                                     >
                                         {sub.remaining}
                                     </span>
-                                    <span className="mx-1 text-gray-400">/</span>
-                                    <span className="text-gray-700">{sub.quantity_planned}</span>
                                 </td>
                                 <td className="px-3 py-3 text-right text-blue-700">
                                     {refs.currencies.lookup(Number(sub.currency))}

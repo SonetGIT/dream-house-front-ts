@@ -3,7 +3,19 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import type { User } from '@/features/users/userSlice';
 import type { WorkPerformed, WorkPerformedItem } from '../workPerformedSlice';
 
-const WORK_PERFORMED_STATUS_SIGNED = 2; // если у вас другой статус "подписан", поменяйте
+const WORK_PERFORMED_STATUS_SIGNED = 2;
+const SERVICE_ITEM_TYPE = 2;
+const ADDITIONAL_ENTRY_TYPE = 2;
+
+type EstimateSearchItem = {
+    id: number;
+    block_id: number;
+};
+
+type EstimateItemCreateResponse = {
+    id: number;
+    material_estimate_id: number;
+};
 
 export const submitWorkPerformedFlow = createAsyncThunk<
     void,
@@ -112,6 +124,81 @@ export const submitWorkPerformedFlow = createAsyncThunk<
 
         if (willBeFullySigned) {
             update.status = WORK_PERFORMED_STATUS_SIGNED;
+
+            const manualItems = items.filter(
+                (item) =>
+                    !item.material_estimate_item_id &&
+                    Number(item.item_type) === SERVICE_ITEM_TYPE &&
+                    Number(item.service_id) > 0,
+            );
+
+            if (manualItems.length > 0) {
+                const estimateResponse = await apiRequest<EstimateSearchItem[]>(
+                    '/materialEstimates/search',
+                    'POST',
+                    {
+                        block_id: workPerf.block_id,
+                        page: 1,
+                        size: 10,
+                    },
+                );
+
+                const estimates = Array.isArray(estimateResponse.data)
+                    ? estimateResponse.data
+                    : [];
+                const targetEstimate = estimates.find(
+                    (estimate) => Number(estimate.block_id) === Number(workPerf.block_id),
+                );
+
+                if (targetEstimate) {
+                    const createdEstimateItemsResponse = await apiRequest<
+                        EstimateItemCreateResponse[]
+                    >(
+                        '/materialEstimateItems/create',
+                        'POST',
+                        manualItems.map((item) => ({
+                            material_estimate_id: targetEstimate.id,
+                            stage_id: item.stage_id,
+                            subsection_id: item.subsection_id,
+                            item_type: SERVICE_ITEM_TYPE,
+                            entry_type: ADDITIONAL_ENTRY_TYPE,
+                            service_type: item.service_type,
+                            service_id: item.service_id,
+                            unit_of_measure: item.unit_of_measure,
+                            quantity_planned: item.quantity,
+                            coefficient: 1,
+                            currency: item.currency,
+                            currency_rate: item.currency_rate ?? 1,
+                            price: item.price,
+                            comment: '',
+                        })),
+                    );
+
+                    const createdEstimateItems = Array.isArray(createdEstimateItemsResponse.data)
+                        ? createdEstimateItemsResponse.data
+                        : [];
+
+                    for (const [index, item] of manualItems.entries()) {
+                        const createdEstimateItem = createdEstimateItems[index];
+
+                        if (!createdEstimateItem?.id) continue;
+
+                        await apiRequest(`/workPerformedItems/update/${item.id}`, 'PUT', {
+                            service_type: item.service_type,
+                            service_id: item.service_id,
+                            stage_id: item.stage_id,
+                            subsection_id: item.subsection_id,
+                            item_type: item.item_type,
+                            unit_of_measure: item.unit_of_measure,
+                            quantity: item.quantity,
+                            currency: item.currency,
+                            currency_rate: item.currency_rate ?? 1,
+                            price: item.price,
+                            material_estimate_item_id: createdEstimateItem.id,
+                        });
+                    }
+                }
+            }
         }
 
         await apiRequest(`/workPerformed/update/${workPerf.id}`, 'PUT', update);

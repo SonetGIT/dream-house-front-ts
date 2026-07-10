@@ -65,36 +65,36 @@ export default function MaterialMovementsTable({
             <table className="min-w-full text-sm">
                 <thead className="sticky top-0 z-10 bg-blue-50/30">
                     <tr className="text-gray-700">
-                        <th className="px-3 py-2 text-sm text-left">№</th>
+                        <th className="px-3 py-2 text-sm ">№</th>
 
-                        <th className="px-3 py-2 text-sm text-left">Дата</th>
+                        <th className="px-3 py-2 text-sm">Дата</th>
                         <th className="px-3 py-2 text-sm text-left">Материал</th>
-                        <th className="px-3 py-2 text-sm text-left">Операция</th>
-                        <th className="px-3 py-2 text-sm text-left">Откуда</th>
-                        <th className="px-3 py-2 text-sm text-left">Куда</th>
+                        <th className="px-3 py-2 text-sm text-center">Операция</th>
+                        <th className="px-3 py-2 text-sm text-center">Откуда</th>
+                        <th className="px-3 py-2 text-sm text-center">Куда</th>
                         <th className="px-3 py-2 text-sm text-right">Кол-во</th>
                         <th className="px-3 py-2 text-sm text-center">Принял</th>
-                        <th className="px-3 py-2 text-sm text-left">Комментарий</th>
+                        <th className="px-3 py-2 text-sm text-center">Комментарий</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     {items.map((t) => (
                         <tr key={t.id} className="transition border-t hover:bg-gray-50">
-                            <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">
+                            <td className="px-3 py-2.5 text-xs text-left text-gray-700 font-medium">
                                 {t.id}
                             </td>
                             <td className="px-3 py-3 text-sm text-blue-900 whitespace-nowrap">
                                 {formatDateTime(t.date)}
                             </td>
 
-                            <td className="px-3 py-3 text-sm text-gray-600">
+                            <td className="px-3 py-3 text-sm text-left text-gray-600">
                                 {t.material_id ? materials.lookup(t.material_id) : '—'}
                             </td>
 
                             <td className="px-3 py-3">
                                 <span
-                                    className={`px-2 py-1 rounded text-xs font-medium ${getOperationClassName(
+                                    className={`px-2 py-1 rounded text-xs text-left font-medium ${getOperationClassName(
                                         t.operation,
                                     )}`}
                                 >

@@ -175,8 +175,7 @@ export default function ContractorsPage() {
             <div className="mx-auto max-w-[1800px] px-6 py-8">
                 {/* Header */}
                 <div className="mb-6">
-                    <h1 className="mb-2 text-3xl font-bold text-sky-800">Подрядчики</h1>
-                    <p className="text-sm text-sky-700">Панель управления по подрядчиком</p>
+                    <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Подрядчики</h1>
                 </div>
 
                 {/* Фильтры */}

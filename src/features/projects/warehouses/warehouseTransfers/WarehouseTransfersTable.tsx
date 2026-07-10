@@ -74,6 +74,15 @@ export default function WarehouseTransfersTable({
         return '⏳ Ожидает';
     };
 
+    const getWarehouseName = (
+        warehouseId: number | null | undefined,
+        warehouse?: { id: number; name: string } | null,
+    ) => {
+        if (warehouse?.name) return warehouse.name;
+        if (warehouseId == null) return '-';
+        return refs.warehouses?.lookup?.(Number(warehouseId)) || '-';
+    };
+
     if (loading) {
         return (
             <div className="w-full p-4 overflow-hidden text-sm text-gray-500 bg-white border rounded-xl">
@@ -226,18 +235,20 @@ export default function WarehouseTransfersTable({
                                                 <span
                                                     className={`inline-flex px-2 py-0.5 text-xs text-yellow-700 rounded-full`}
                                                 >
-                                                    {refs.warehouses?.lookup?.(
-                                                        Number(whTr.from_warehouse_id),
-                                                    ) || '-'}
+                                                    {getWarehouseName(
+                                                        whTr.from_warehouse_id,
+                                                        whTr.from_warehouse,
+                                                    )}
                                                 </span>
                                             </td>
                                             <td className="px-2 py-2 text-center text-gray-900">
                                                 <span
                                                     className={`inline-flex px-2 py-0.5 text-xs text-violet-700 rounded-full`}
                                                 >
-                                                    {refs.warehouses?.lookup?.(
-                                                        Number(whTr.to_warehouse_id),
-                                                    ) || '-'}
+                                                    {getWarehouseName(
+                                                        whTr.to_warehouse_id,
+                                                        whTr.to_warehouse,
+                                                    )}
                                                 </span>
                                             </td>
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
@@ -333,15 +344,12 @@ export default function WarehouseTransfersTable({
                                                                                 №
                                                                             </th>
                                                                             <th className="px-3 py-2 text-sm text-left">
-                                                                                Склад
-                                                                            </th>
-                                                                            <th className="px-3 py-2 text-sm text-left">
                                                                                 Материал
                                                                             </th>
-                                                                            <th className="w-32 px-3 py-2 text-sm text-center">
+                                                                            <th className="px-3 py-2 text-sm text-center">
                                                                                 Ед. изм
                                                                             </th>
-                                                                            <th className="w-32 px-3 py-2 text-sm text-right">
+                                                                            <th className="px-3 py-2 text-sm text-center">
                                                                                 Кол-во
                                                                             </th>
                                                                         </tr>
@@ -357,15 +365,8 @@ export default function WarehouseTransfersTable({
                                                                                     <td className="px-2 py-2 text-xs font-medium text-gray-600">
                                                                                         {index + 1}
                                                                                     </td>
-                                                                                    <td className="px-2 py-2 text-sm text-gray-600">
-                                                                                        {refs.warehouses?.lookup?.(
-                                                                                            Number(
-                                                                                                item.warehouse_transfer_id,
-                                                                                            ),
-                                                                                        ) ||
-                                                                                            statusInfo.label}
-                                                                                    </td>
-                                                                                    <td className="px-2 py-2 text-sm text-gray-800">
+
+                                                                                    <td className="px-2 py-2 text-sm text-left text-gray-800">
                                                                                         {item.material_id
                                                                                             ? refs.materials.lookup(
                                                                                                   item.material_id,
@@ -379,7 +380,7 @@ export default function WarehouseTransfersTable({
                                                                                               )
                                                                                             : '—'}
                                                                                     </td>
-                                                                                    <td className="px-2 py-2 font-bold text-right text-green-700">
+                                                                                    <td className="px-2 py-2 text-green-700 font-bolds">
                                                                                         {
                                                                                             item.quantity
                                                                                         }

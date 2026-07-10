@@ -313,7 +313,7 @@ export default function PaymentsPage() {
                 <div className="p-4 mb-6 bg-white border border-gray-200 shadow-sm rounded-2xl">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-8">
                         <div className="xl:col-span-2">
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            <label className="mb-1.5 block text-sm text-left font-medium text-blue-600">
                                 Поиск
                             </label>
                             <div className="relative">
@@ -331,7 +331,7 @@ export default function PaymentsPage() {
                         </div>
 
                         <div className="w-[180px] shrink-0">
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            <label className="mb-1.5 text-left block text-sm font-medium text-blue-600">
                                 Тип платежа
                             </label>
                             <select
@@ -353,8 +353,8 @@ export default function PaymentsPage() {
                             </select>
                         </div>
 
-                        <div className="w-[180px] shrink-0">
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        <div className="w-[180px] text-left shrink-0">
+                            <label className="mb-1.5 block text-sm font-medium text-blue-600">
                                 Статус
                             </label>
                             <select
@@ -377,7 +377,7 @@ export default function PaymentsPage() {
                         </div>
 
                         <div className="w-[180px] shrink-0">
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            <label className="mb-1.5 block text-sm text-left font-medium text-blue-600">
                                 Тип дохода-расхода
                             </label>
                             <select
@@ -400,7 +400,7 @@ export default function PaymentsPage() {
                         </div>
 
                         <div className="w-[160px] shrink-0">
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            <label className="mb-1.5 block text-sm font-medium text-left text-blue-600">
                                 Дата с
                             </label>
                             <input
@@ -414,7 +414,7 @@ export default function PaymentsPage() {
                         </div>
 
                         <div className="w-[160px] shrink-0">
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            <label className="mb-1.5 block text-sm font-medium text-left text-blue-600">
                                 Дата по
                             </label>
                             <input

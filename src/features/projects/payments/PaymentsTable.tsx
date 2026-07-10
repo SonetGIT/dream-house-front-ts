@@ -114,7 +114,7 @@ export default function PaymentsTable({
                             </div>
                         </th>
                         <th className="px-4 py-3 text-left border-l bg-blue-50">
-                            <div className="text-xs font-semibold text-blue-700 uppercase">
+                            <div className="text-xs font-semibold text-center text-blue-700 uppercase">
                                 Тип платежа / Тип дохода-расхода
                             </div>
                         </th>
@@ -123,12 +123,12 @@ export default function PaymentsTable({
                                 Сумма
                             </div>
                         </th>
-                        <th className="px-4 py-3 text-left border-l bg-blue-50">
+                        <th className="px-4 py-3 text-center border-l bg-blue-50">
                             <div className="text-xs font-semibold text-blue-700 uppercase">
                                 Сроки
                             </div>
                         </th>
-                        <th className="px-4 py-3 text-left border-l bg-blue-50">
+                        <th className="px-4 py-3 text-center border-l bg-blue-50">
                             <div className="text-xs font-semibold text-blue-700 uppercase">
                                 Статус
                             </div>
@@ -164,17 +164,17 @@ export default function PaymentsTable({
                                 </td>
 
                                 <td className="px-3 py-2.5">
-                                    <div className="text-xs font-medium text-gray-800 truncate max-w-[120px]">
+                                    <div className="text-xs text-left font-medium text-gray-800 truncate max-w-[155px]">
                                         {payment.title}
                                     </div>
                                 </td>
                                 <td className="px-3 py-2.5">
-                                    <div className="text-xs font-medium text-gray-800 truncate max-w-[120px]">
+                                    <div className="text-xs text-left font-medium text-gray-800 truncate max-w-[120px]">
                                         {payment.block?.name ?? '—'}
                                     </div>
                                 </td>
                                 <td className="px-3 py-3">
-                                    <div className="space-y-1 text-sm">
+                                    <div className="space-y-1 text-sm text-left">
                                         <p className="font-medium text-gray-900">
                                             {payment.counterparty_name || '—'}
                                         </p>

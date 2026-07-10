@@ -21,7 +21,7 @@ export default function WarehouseTransfersTab({ warehouseId, refs }: WarehouseTr
     const dispatch = useAppDispatch();
     const { data, pagination, loading } = useAppSelector((state) => state.warehouseTransfers);
     const { items: projects } = useAppSelector((state) => state.projects);
-    const { map: warehousesMap } = useAppSelector((state) => state.warehouses); // карта складов по ID
+    const { map: warehousesMap } = useAppSelector((state) => state.warehouses);
     const currentUser = useAppSelector((state) => state.auth.user);
 
     // Получаем master_id текущего проекта

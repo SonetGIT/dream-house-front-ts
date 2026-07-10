@@ -15,7 +15,9 @@ interface ServicesTableProps {
     onDeleteEstimateItemId: (id: number) => void;
     onUpdateEstimateItem?: (id: number, data: Partial<EstimateItem>) => void;
 }
-
+export const estimateTypeId = 1;
+export const addTypeId = 2;
+/*******************************************************************************************************************************/
 export default function ServicesTable({
     blockId,
     items,
@@ -121,6 +123,7 @@ export default function ServicesTable({
             <table className="w-full">
                 <thead className="text-gray-700 bg-gray-50">
                     <tr className="border-b">
+                        <th className="px-3 py-2 text-xs text-left">Создан</th>
                         <th className="px-3 py-2 text-xs text-left">Этап</th>
                         <th className="px-3 py-2 text-xs text-left">Подэтап</th>
                         <th className="px-3 py-2 text-xs text-left">Тип сервиса</th>
@@ -161,6 +164,25 @@ export default function ServicesTable({
                                     key={sub.id}
                                     className={`transition-colors border-b ${isEditing ? 'bg-blue-50/30' : 'hover:bg-gray-50'}`}
                                 >
+                                    <td className="px-3 py-3 text-sm text-gray-600">
+                                        <span
+                                            className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold border rounded
+                                                ${
+                                                    sub.entry_type === estimateTypeId
+                                                        ? 'text-pink-800 bg-pink-100 border-pink-200'
+                                                        : sub.entry_type === addTypeId
+                                                          ? 'text-orange-800 bg-orange-100 border-orange-200'
+                                                          : 'text-gray-800 bg-gray-100 border-gray-200'
+                                                }
+                                            `}
+                                        >
+                                            {sub.entry_type != null
+                                                ? refs.materialRequestItemTypes.lookup(
+                                                      Number(sub.entry_type),
+                                                  )
+                                                : '—'}
+                                        </span>
+                                    </td>
                                     {/* Этап */}
                                     <td className="px-3 py-3 text-sm text-gray-600">
                                         {isEditing ? (

@@ -51,8 +51,6 @@ export const router = createBrowserRouter([
                     { path: 'paymentSchedules', element: <WorkPerformedPage /> },
                 ],
             },
-            // { path: 'sales/blocks/:blockId', element: <SalesBlockPage /> },
-
             {
                 path: 'projects',
                 children: [
