@@ -72,7 +72,6 @@ export default function PaymentsPage() {
         current,
         counterpartyTypes,
     } = useAppSelector((state) => state.payments);
-
     const currencies = useReference('currencies');
     const projectBlocks = useReference('projectBlocks');
     const suppliers = useReference('suppliers');

@@ -107,21 +107,27 @@ export default function ClientForm({
         () => floors.filter((f) => !form.block_id || Number(f.block_id) === Number(form.block_id)),
         [floors, form.block_id],
     );
+    const filteredFloorIds = useMemo(
+        () => new Set(filteredFloors.map((floor) => Number(floor.id))),
+        [filteredFloors],
+    );
 
     const filteredUnits = useMemo(
         () =>
             units.filter((u) => {
-                if (form.block_id && Number(u.block_id) !== Number(form.block_id)) {
+                const unitFloorId = Number(u.floor_id);
+
+                if (form.block_id && !filteredFloorIds.has(unitFloorId)) {
                     return false;
                 }
 
-                if (form.floor_id && Number(u.floor_id) !== Number(form.floor_id)) {
+                if (form.floor_id && unitFloorId !== Number(form.floor_id)) {
                     return false;
                 }
 
                 return true;
             }),
-        [units, form.block_id, form.floor_id],
+        [units, filteredFloorIds, form.block_id, form.floor_id],
     );
 
     const set =
@@ -255,6 +261,20 @@ export default function ClientForm({
                             />
                         </div>
                     </div>
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                        <div>
+                            <label className="block mb-1.5 text-sm font-medium text-gray-700">
+                                Дата рождения
+                            </label>
+                            <input
+                                type="date"
+                                value={form.birth_date}
+                                onChange={(e) => set('birth_date')(e.target.value)}
+                                disabled={loading}
+                                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -264,7 +284,7 @@ export default function ClientForm({
                     Контакты
                 </h3>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_1fr_1fr]">
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                         <div>
                             <label className="block mb-1.5 text-sm font-medium text-gray-700">
                                 Телефон
@@ -290,18 +310,6 @@ export default function ClientForm({
                                 disabled={loading}
                                 inputMode="tel"
                                 placeholder="+996 700 000-00-00"
-                                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
-                            />
-                        </div>
-                        <div>
-                            <label className="block mb-1.5 text-sm font-medium text-gray-700">
-                                Дата рождения
-                            </label>
-                            <input
-                                type="date"
-                                value={form.birth_date}
-                                onChange={(e) => set('birth_date')(e.target.value)}
-                                disabled={loading}
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             />
                         </div>
@@ -466,7 +474,7 @@ export default function ClientForm({
                             <select
                                 value={form.unit_id}
                                 onChange={(e) => set('unit_id')(e.target.value)}
-                                disabled={loading || !form.floor_id}
+                                disabled={loading || !form.block_id}
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             >
                                 <option value="">Не выбрана</option>

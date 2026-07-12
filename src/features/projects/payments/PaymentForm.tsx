@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Loader2, Save } from 'lucide-react';
-import { useAppSelector } from '@/app/store';
+import { useAppDispatch, useAppSelector } from '@/app/store';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
 import type { Payment, PaymentCreatePayload, PaymentUpdatePayload } from './paymentSlice';
+import { fetchSalesClients } from '@/features/sales/slices/salesClientsSlice';
 import { useCurrencyRates } from '@/utils/useCurrencyRates';
 
 const MANUAL_COUNTERPARTY_VALUE = '__manual__';
@@ -49,6 +50,9 @@ type RefItem = {
     id: string | number;
     name?: string | null;
     inn?: string | null;
+    full_name?: string | null;
+    pin?: string | null;
+    project_id?: string | number | null;
     [key: string]: string | number | boolean | null | undefined;
 };
 
@@ -59,7 +63,17 @@ const normalizeOptionalText = (value: string) => {
     return normalized ? normalized : null;
 };
 
-const getItemInn = (item: RefItem) => String(item.inn ?? '').trim();
+const getItemInn = (item: RefItem) => String(item.inn ?? item.pin ?? '').trim();
+
+const normalizeCounterpartyTypeValue = (value?: string | number | null) =>
+    String(value ?? '')
+        .trim()
+        .toLowerCase();
+
+const normalizeComparableText = (value?: string | number | null) =>
+    String(value ?? '')
+        .trim()
+        .toLowerCase();
 
 const getInitialState = (
     payment: Payment | null | undefined,
@@ -103,9 +117,11 @@ export default function PaymentForm({
     onSubmit,
     onCancel,
 }: PaymentFormProps) {
+    const dispatch = useAppDispatch();
     const { types, statuses, articles, methods, counterpartyTypes } = useAppSelector(
         (state) => state.payments,
     );
+    const salesClients = useAppSelector((state) => state.salesClients.items);
     const rates = useCurrencyRates();
 
     const [form, setForm] = useState<FormState>(() =>
@@ -119,31 +135,136 @@ export default function PaymentForm({
         }),
     );
     const [error, setError] = useState<string | null>(null);
+    const resolvedProjectId = payment?.project_id ?? projectId ?? null;
 
     const visibleArticles = useMemo(() => {
         if (!form.paymentType) return articles;
         return articles.filter((article) => article.payment_type === Number(form.paymentType));
     }, [articles, form.paymentType]);
 
+    const filteredProjectBlocks = useMemo(() => {
+        const projectBlocks = refs.projectBlocks.data as RefItem[] | undefined;
+
+        if (!projectBlocks) return [];
+        if (!resolvedProjectId) return projectBlocks;
+
+        return projectBlocks.filter((item) => Number(item.project_id) === resolvedProjectId);
+    }, [refs.projectBlocks.data, resolvedProjectId]);
+
     const selectedCounterpartyType = useMemo(
         () => counterpartyTypes.find((item) => String(item.id) === form.counterpartyTypeId) ?? null,
         [counterpartyTypes, form.counterpartyTypeId],
     );
 
+    const inferredCounterpartyType = useMemo(() => {
+        if (!payment) return null;
+
+        const savedCounterpartyType = normalizeCounterpartyTypeValue(payment.counterparty_type);
+        if (savedCounterpartyType) {
+            const directMatch = counterpartyTypes.find((item) =>
+                [
+                    normalizeCounterpartyTypeValue(item.id),
+                    normalizeCounterpartyTypeValue(item.code),
+                    normalizeCounterpartyTypeValue(item.name),
+                ].includes(savedCounterpartyType),
+            );
+
+            if (directMatch) return directMatch;
+        }
+
+        const counterpartyId = Number(payment.counterparty_id ?? 0);
+        const counterpartyInn = normalizeComparableText(payment.counterparty_inn);
+        const counterpartyName = normalizeComparableText(payment.counterparty_name);
+        const matchesRefItem = (item: RefItem) => {
+            const itemId = Number(item.id ?? 0);
+            const itemInn = normalizeComparableText(getItemInn(item));
+            const itemName = normalizeComparableText(item.name ?? item.full_name);
+
+            if (counterpartyId && itemId === counterpartyId) return true;
+            if (counterpartyInn && itemInn && counterpartyInn === itemInn) return true;
+            if (counterpartyName && itemName && counterpartyName === itemName) return true;
+
+            return false;
+        };
+
+        const suppliers = (refs.suppliers.data as RefItem[] | undefined) ?? [];
+        if (suppliers.some(matchesRefItem)) {
+            return counterpartyTypes.find(
+                (item) => normalizeCounterpartyTypeValue(item.code) === 'supplier',
+            );
+        }
+
+        const contractors = (refs.contractors.data as RefItem[] | undefined) ?? [];
+        if (contractors.some(matchesRefItem)) {
+            return counterpartyTypes.find(
+                (item) => normalizeCounterpartyTypeValue(item.code) === 'contractor',
+            );
+        }
+
+        if (
+            salesClients.some((client) => {
+                const clientId = Number(client.id ?? 0);
+                const clientInn = normalizeComparableText(client.pin);
+                const clientName = normalizeComparableText(client.full_name);
+
+                if (counterpartyId && clientId === counterpartyId) return true;
+                if (counterpartyInn && clientInn && counterpartyInn === clientInn) return true;
+                if (counterpartyName && clientName && counterpartyName === clientName) return true;
+
+                return false;
+            })
+        ) {
+            return counterpartyTypes.find((item) => normalizeCounterpartyTypeValue(item.code) === 'client');
+        }
+
+        return null;
+    }, [
+        payment,
+        counterpartyTypes,
+        refs.suppliers.data,
+        refs.contractors.data,
+        salesClients,
+    ]);
+
     const isManualCounterparty = form.counterpartyTypeId === MANUAL_COUNTERPARTY_VALUE;
     const counterpartyCode = selectedCounterpartyType?.code?.toLowerCase() ?? '';
     const isSupplierCounterparty = counterpartyCode === 'supplier';
     const isContractorCounterparty = counterpartyCode === 'contractor';
+    const isClientCounterparty = counterpartyCode === 'client';
+
+    useEffect(() => {
+        if (!isClientCounterparty) return;
+
+        void dispatch(
+            fetchSalesClients({
+                project_id: resolvedProjectId ?? undefined,
+                page: 1,
+                size: 200,
+            }),
+        );
+    }, [dispatch, isClientCounterparty, resolvedProjectId]);
 
     const counterpartySource = useMemo<RefItem[] | undefined>(() => {
         if (isSupplierCounterparty) return refs.suppliers.data as RefItem[] | undefined;
         if (isContractorCounterparty) return refs.contractors.data as RefItem[] | undefined;
+        if (isClientCounterparty) {
+            return salesClients.map((client) => ({
+                id: client.id,
+                name: client.full_name,
+                full_name: client.full_name,
+                inn: client.pin,
+                pin: client.pin,
+                project_id: client.project_id,
+            }));
+        }
         return undefined;
     }, [
         isSupplierCounterparty,
         isContractorCounterparty,
+        isClientCounterparty,
         refs.suppliers.data,
         refs.contractors.data,
+        salesClients,
     ]);
 
     const filteredCounterpartyOptions = useMemo(() => {
@@ -194,6 +315,14 @@ export default function PaymentForm({
                 next.blockId = String(blockId);
             }
 
+            if (
+                next.blockId &&
+                filteredProjectBlocks.length > 0 &&
+                !filteredProjectBlocks.some((item) => String(item.id) === next.blockId)
+            ) {
+                next.blockId = '';
+            }
+
             if (!next.paymentMethod && methods[0]?.id) {
                 next.paymentMethod = String(methods[0].id);
             }
@@ -211,13 +340,8 @@ export default function PaymentForm({
             }
 
             if (!next.counterpartyTypeId) {
-                if (payment?.counterparty_type) {
-                    const matchedType = counterpartyTypes.find(
-                        (item) => item.code === payment.counterparty_type,
-                    );
-                    next.counterpartyTypeId = matchedType
-                        ? String(matchedType.id)
-                        : MANUAL_COUNTERPARTY_VALUE;
+                if (inferredCounterpartyType) {
+                    next.counterpartyTypeId = String(inferredCounterpartyType.id);
                 } else {
                     next.counterpartyTypeId = MANUAL_COUNTERPARTY_VALUE;
                 }
@@ -226,18 +350,18 @@ export default function PaymentForm({
             return next;
         });
     }, [
-        payment?.counterparty_type,
+        inferredCounterpartyType,
         types,
         statuses,
         methods,
         refs.currencies.data,
         blockId,
+        filteredProjectBlocks,
         visibleArticles,
         counterpartyTypes,
     ]);
 
     const lockedBlock = Boolean(blockId);
-    const resolvedProjectId = payment?.project_id ?? projectId ?? null;
 
     const updateField =
         <K extends keyof FormState>(field: K) =>
@@ -261,7 +385,7 @@ export default function PaymentForm({
             ...prev,
             counterpartyId: value,
             counterpartyName: selected?.name ? String(selected.name) : '',
-            counterpartyInn: selected?.inn ? String(selected.inn) : prev.counterpartyInn,
+            counterpartyInn: selected ? getItemInn(selected) : prev.counterpartyInn,
         }));
     };
 
@@ -394,7 +518,7 @@ export default function PaymentForm({
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                             >
                                 <option value="">Выберите блок</option>
-                                {refs.projectBlocks.data?.map((item) => (
+                                {filteredProjectBlocks.map((item) => (
                                     <option key={item.id} value={item.id}>
                                         {item.name}
                                     </option>
@@ -450,7 +574,7 @@ export default function PaymentForm({
                             value={form.title}
                             onChange={(event) => updateField('title')(event.target.value)}
                             disabled={loading}
-                            placeholder="Например: Аванс поставщику по договору"
+                            // placeholder="Например: Аванс поставщику по договору"
                             className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                         />
                     </div>
@@ -463,7 +587,7 @@ export default function PaymentForm({
                             value={form.description}
                             onChange={(event) => updateField('description')(event.target.value)}
                             disabled={loading}
-                            rows={3}
+                            rows={2}
                             className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg resize-none focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                         />
                     </div>
@@ -716,7 +840,7 @@ export default function PaymentForm({
                             value={form.comment}
                             onChange={(event) => updateField('comment')(event.target.value)}
                             disabled={loading}
-                            rows={3}
+                            rows={2}
                             className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg resize-none focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                         />
                     </div>

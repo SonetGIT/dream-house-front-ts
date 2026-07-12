@@ -84,14 +84,16 @@
     "suppliers": {
         "data": {
             "id": "id",
-            "name": ["name"]
+            "name": ["name"],
+            "inn": "inn"
         },
         "apiName": "/suppliers/gets"
     },
     "contractors": {
         "data": {
             "id": "id",
-            "name": ["name"]
+            "name": ["name"],
+            "inn": "inn"
         },
         "apiName": "/contractors/gets"
     },

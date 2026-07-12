@@ -206,10 +206,7 @@ export default function PaymentsTable({
                                             }`}
                                         >
                                             {income ? '+' : '−'}
-                                            {formatCurrency(
-                                                payment.amount,
-                                                // payment.currency_ref?.code,
-                                            )}
+                                            {`${payment.amount} ${payment.currency_ref?.code ?? ''}`}
                                         </p>
                                         <p className="text-xs text-gray-500">
                                             курс: {payment.currency_rate || 1}

@@ -75,19 +75,19 @@ export default function ContractorsTable({
                                 className="transition-colors hover:bg-sky-50/50 group"
                             >
                                 {/* Номер */}
-                                <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">
+                                <td className="px-3 py-2.5 text-xs text-left text-gray-700 font-medium">
                                     {index + 1}
                                 </td>
 
                                 {/* Название */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                                         {contractor.name}
                                     </div>
                                 </td>
 
                                 {/* ИНН */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {contractor.inn ? (
                                         <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                             {contractor.inn}
@@ -97,7 +97,7 @@ export default function ContractorsTable({
                                     )}
                                 </td>
                                 {/* КПП */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {contractor.kpp ? (
                                         <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                             {contractor.kpp?.trim() ? contractor.kpp : '-'}
@@ -107,7 +107,7 @@ export default function ContractorsTable({
                                     )}
                                 </td>
                                 {/* ОГРН */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {contractor.ogrn ? (
                                         <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                             {contractor.ogrn}
@@ -117,14 +117,14 @@ export default function ContractorsTable({
                                     )}
                                 </td>
                                 {/* Адрес */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                                         {contractor.address}
                                     </div>
                                 </td>
 
                                 {/* Контакты */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="space-y-1 text-sm">
                                         <div className="flex items-center gap-1.5 text-gray-700">
                                             <Mail className="w-3.5 h-3.5 text-gray-400" />
@@ -151,7 +151,7 @@ export default function ContractorsTable({
                                 </td>
 
                                 {/* Контактное лицо */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                                         {contractor.contact_person}
                                     </div>

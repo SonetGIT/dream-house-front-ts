@@ -110,14 +110,14 @@ function StatusColumn({
                             </button>
                         </StyledTooltip>
 
-                        <StyledTooltip title="Статусы">
+                        {/* <StyledTooltip title="Статусы">
                             <button
                                 onClick={onManageStatuses}
                                 className="flex items-center justify-center w-8 h-8 transition rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                             >
                                 <Pencil className="h-3.5 w-3.5" />
                             </button>
-                        </StyledTooltip>
+                        </StyledTooltip> */}
                     </div>
                 </div>
             </div>
@@ -202,7 +202,7 @@ export default function LeadsPage() {
     const blocks = useMemo(() => blocksRef.data ?? [], [blocksRef.data]);
 
     const managers = useMemo(
-        () => (usersRef.data ?? []).filter((user) => String(user.role_id) === '16'),
+        () => (usersRef.data ?? []).filter((user: any) => String(user.role_id) === '16'),
         [usersRef.data],
     );
 

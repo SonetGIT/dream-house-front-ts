@@ -145,19 +145,19 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                 // onClick={() => handleRowClick(user)}
                             >
                                 {/* Номер */}
-                                <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">
+                                <td className="px-3 py-2.5 text-xs text-left text-gray-700 font-medium">
                                     {index + 1}
                                 </td>
 
                                 {/* Логин */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                         {user.username}
                                     </span>
                                 </td>
 
                                 {/* ФИО */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="space-y-1 text-sm">
                                         {user.first_name && (
                                             <div className="flex items-center gap-1.5 text-gray-700">
@@ -177,7 +177,7 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                 </td>
 
                                 {/* Контакты */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5  text-left">
                                     <div className="space-y-1 text-sm">
                                         {user.phone && (
                                             <div className="flex items-center gap-1.5 text-gray-700 text-sm">
@@ -203,7 +203,7 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                     </div>
                                 </td>
                                 {/* userRole */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <span
                                         className={`
                                             inline-flex items-center px-2 py-0.5
@@ -215,7 +215,7 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                     </span>
                                 </td>
                                 {/* Поставщик */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {user.supplier_id ? (
                                         <span
                                             className={`
@@ -231,7 +231,7 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                 </td>
 
                                 {/* Подрядчик */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {user.contractor_id ? (
                                         <span
                                             className={`

@@ -85,19 +85,19 @@ export default function SuppliersTable({
                                 className="transition-colors hover:bg-blue-50/50 group"
                             >
                                 {/* Номер */}
-                                <td className="px-3 py-2.5 text-xs text-gray-700 font-medium">
+                                <td className="px-3 py-2.5 text-xs text-left text-gray-700 font-medium">
                                     {index + 1}
                                 </td>
 
                                 {/* Название */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[140px]">
                                         {supplier.name}
                                     </div>
                                 </td>
 
                                 {/* ИНН */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {supplier.inn ? (
                                         <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                             {supplier.inn}
@@ -107,7 +107,7 @@ export default function SuppliersTable({
                                     )}
                                 </td>
                                 {/* КПП */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {supplier.kpp ? (
                                         <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                             {supplier.kpp?.trim() ? supplier.kpp : '-'}
@@ -117,7 +117,7 @@ export default function SuppliersTable({
                                     )}
                                 </td>
                                 {/* ОГРН */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {supplier.ogrn ? (
                                         <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded">
                                             {supplier.ogrn}
@@ -127,7 +127,7 @@ export default function SuppliersTable({
                                     )}
                                 </td>
                                 {/* Адрес */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                                         {supplier.address}
                                     </div>
@@ -160,13 +160,13 @@ export default function SuppliersTable({
                                 </td>
 
                                 {/* Контактное лицо */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                                         {supplier.contact_person}
                                     </div>
                                 </td>
                                 {/* Рейтинг */}
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
                                         <Rating value={supplier.avg_rating} size="sm" showValue />
                                     </div>

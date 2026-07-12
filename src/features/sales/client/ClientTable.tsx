@@ -104,7 +104,7 @@ export default function ClientTable({
                         <th className="px-4 py-3 text-left border-l bg-blue-50">
                             <div className="text-xs font-semibold text-blue-700 uppercase">Лот</div>
                         </th>
-                        <th className="px-4 py-3 text-left border-l bg-blue-50">
+                        <th className="px-4 py-3 text-center border-l bg-blue-50">
                             <div className="text-xs font-semibold text-blue-700 uppercase">
                                 Ответственный
                             </div>
@@ -128,12 +128,12 @@ export default function ClientTable({
                                     {client.id}
                                 </td>
 
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-medium text-gray-800 truncate max-w-[120px]">
                                         {client.full_name || '—'}
                                     </div>
                                 </td>
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs font-semibold text-slate-800">
                                         {client.pin || '—'}
                                     </div>
@@ -145,7 +145,7 @@ export default function ClientTable({
                                         </span>
                                     </div>
                                 </td>
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="space-y-1 text-xs">
                                         {client.phone && (
                                             <div className="flex items-center gap-1.5 text-gray-700 text-xs">
@@ -170,7 +170,7 @@ export default function ClientTable({
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     <div className="text-xs text-muted-foreground space-y-0.5">
                                         {client.sales_project && (
                                             <div className="font-medium text-foreground">
@@ -180,7 +180,7 @@ export default function ClientTable({
                                         {client.sales_block && <div>{client.sales_block.name}</div>}
                                     </div>
                                 </td>
-                                <td className="px-3 py-2.5">
+                                <td className="px-3 py-2.5 text-left">
                                     {unit ? (
                                         <div className="space-y-1">
                                             <div className="flex items-center justify-between gap-2">

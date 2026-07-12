@@ -89,10 +89,10 @@ export default function ClientPage() {
             );
         }
         if (floors.length === 0) {
-            dispatch(fetchSalesFloor());
+            dispatch(fetchSalesFloor({ page: 1, size: 1000 }));
         }
         if (units.length === 0) {
-            dispatch(fetchSalesUnits());
+            dispatch(fetchSalesUnits({ page: 1, size: 1000 }));
         }
     }, [dispatch, floors.length, units.length, projects.length]);
 

@@ -19,10 +19,10 @@ import { Add } from '@mui/icons-material';
 import { ObjectsOverviewUnitForm } from './ObjectsOverviewUnitForm';
 
 // ---- Build search payload ----
-export function buildPayload(filters: UnitFilters, page: number) {
+export function buildPayload(filters: UnitFilters, page: number, size: number) {
     const payload: Record<string, unknown> = {
         page,
-        size: 10,
+        size,
         include_units: true,
     };
 
@@ -134,6 +134,7 @@ export function buildPayload(filters: UnitFilters, page: number) {
 export default function ObjectsOverviewUnitsPage() {
     const dispatch = useAppDispatch();
     const { units, loading, unitsPagination } = useAppSelector((state) => state.salesObjOverview);
+    console.log('   🔄 units', unitsPagination);
     const { projects } = useAppSelector((s) => s.salesObjOverview);
     const { unitStatuses, finishTypes } = useAppSelector((s) => s.salesDictionaries);
     const [showFilters, setShowFilters] = useState(true);
@@ -149,15 +150,15 @@ export default function ObjectsOverviewUnitsPage() {
     }, [dispatch]);
 
     const load = useCallback(
-        async (f: UnitFilters, p: number) => {
-            await dispatch(fetchSalesOverview(buildPayload(f, p)));
+        async (f: UnitFilters, p: number, s: number) => {
+            await dispatch(fetchSalesOverview(buildPayload(f, p, s)));
         },
         [dispatch],
     );
 
     useEffect(() => {
-        load(appliedFilters, page);
-    }, [appliedFilters, page, load]);
+        load(appliedFilters, page, size);
+    }, [appliedFilters, page, size, load]);
 
     function handleApply() {
         setPage(1);
@@ -183,17 +184,17 @@ export default function ObjectsOverviewUnitsPage() {
             ).unwrap();
 
             toast.success(`Статус изменён на «${st.name}»`);
-            await load(filters, page);
+            await load(appliedFilters, page, size);
         } catch (e) {
             toast.error(`Ошибка: ${e}`);
-            load(filters, page);
+            load(appliedFilters, page, size);
         }
     }
 
     //
     function handleUnitSuccess() {
         // console.log('🔄 Обновляем таблицу лотов...');
-        load(appliedFilters, page);
+        load(appliedFilters, page, size);
     }
 
     const projectStatuses = useReference('projectStatuses');
@@ -205,7 +206,7 @@ export default function ObjectsOverviewUnitsPage() {
         currencies,
     };
     const managers = useMemo(
-        () => (refs.users.data ?? []).filter((user) => String(user.role_id) === '16'),
+        () => (refs.users.data ?? []).filter((user: any) => String(user.role_id) === '16'),
         [refs.users.data],
     );
 
