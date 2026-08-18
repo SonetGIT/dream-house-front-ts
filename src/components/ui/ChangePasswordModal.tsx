@@ -10,42 +10,33 @@ import type { ChangeEvent } from 'react';
 
 interface PropsType {
     open: boolean;
-    oldPassword: string;
     newPassword: string;
+    repeatPassword: string;
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
     onSave: () => void;
     onClose: () => void;
+    loading?: boolean;
 }
 
 export default function ChangePasswordModal({
     open,
-    oldPassword,
     newPassword,
+    repeatPassword,
     onChange,
     onSave,
     onClose,
+    loading = false,
 }: PropsType) {
     return (
         <Dialog
             open={open}
             onClose={(_, reason) => {
-                // Запрещаем закрытие по клику на фон
                 if (reason !== 'backdropClick') onClose();
             }}
         >
             <DialogTitle>Смена пароля</DialogTitle>
 
             <DialogContent>
-                <TextField
-                    id="oldPassword"
-                    label="Старый пароль"
-                    type="password"
-                    value={oldPassword}
-                    onChange={onChange}
-                    fullWidth
-                    margin="dense"
-                    autoFocus
-                />
                 <TextField
                     id="newPassword"
                     label="Новый пароль"
@@ -54,12 +45,21 @@ export default function ChangePasswordModal({
                     onChange={onChange}
                     fullWidth
                     margin="dense"
+                    autoFocus
+                />
+                <TextField
+                    id="repeatPassword"
+                    label="Повторите пароль"
+                    type="password"
+                    value={repeatPassword}
+                    onChange={onChange}
+                    fullWidth
+                    margin="dense"
                 />
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={onClose}>Отмена</Button>
-                <Button variant="contained" onClick={onSave}>
+                <Button variant="contained" onClick={onSave} disabled={loading}>
                     Сохранить
                 </Button>
             </DialogActions>

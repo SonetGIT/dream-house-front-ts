@@ -398,7 +398,7 @@ export default function PaymentsPage() {
                             </select>
                         </div>
 
-                        <div className="w-[160px] shrink-0">
+                        {/* <div className="w-[160px] shrink-0">
                             <label className="mb-1.5 block text-sm font-medium text-left text-blue-600">
                                 Дата с
                             </label>
@@ -410,9 +410,9 @@ export default function PaymentsPage() {
                                 }
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                             />
-                        </div>
+                        </div> */}
 
-                        <div className="w-[160px] shrink-0">
+                        {/* <div className="w-[160px] shrink-0">
                             <label className="mb-1.5 block text-sm font-medium text-left text-blue-600">
                                 Дата по
                             </label>
@@ -424,7 +424,7 @@ export default function PaymentsPage() {
                                 }
                                 className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                             />
-                        </div>
+                        </div> */}
 
                         <div className="shrink-0">
                             <label className="block mb-1.5 text-sm font-medium text-transparent select-none">

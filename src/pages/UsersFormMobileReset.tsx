@@ -1,7 +1,7 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { UserForm, UserFormData, UserSubmitData } from './userSlice';
+import type { UserForm, UserFormData, UserSubmitData } from '@/features/users/userSlice';
 import { formatPhoneInput, toStoragePhone } from '@/utils/formatPhoneNumber';
 
 interface UserFormProps {
@@ -28,7 +28,42 @@ function getInitialFormData(user?: UserFormData | null): UserForm {
     };
 }
 
-export default function UsersForm({
+const TEXT = {
+    mainInfo: '\u041e\u0441\u043d\u043e\u0432\u043d\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f',
+    username: '\u041b\u043e\u0433\u0438\u043d',
+    emailRequired: 'Email \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u0435\u043d',
+    emailInvalid: '\u041d\u0435\u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0439 email',
+    password: '\u041f\u0430\u0440\u043e\u043b\u044c',
+    newPassword: '\u041d\u043e\u0432\u044b\u0439 \u043f\u0430\u0440\u043e\u043b\u044c',
+    passwordRequired: '\u041f\u0430\u0440\u043e\u043b\u044c \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u0435\u043d',
+    passwordMin:
+        '\u041f\u0430\u0440\u043e\u043b\u044c \u0434\u043e\u043b\u0436\u0435\u043d \u0431\u044b\u0442\u044c \u043d\u0435 \u043c\u0435\u043d\u0435\u0435 6 \u0441\u0438\u043c\u0432\u043e\u043b\u043e\u0432',
+    leavePasswordEmpty:
+        '\u041e\u0441\u0442\u0430\u0432\u044c\u0442\u0435 \u043f\u0443\u0441\u0442\u044b\u043c, \u0435\u0441\u043b\u0438 \u043f\u0435\u0440\u0435\u043d\u0430\u0437\u043d\u0430\u0447\u0430\u0442\u044c \u043f\u0430\u0440\u043e\u043b\u044c \u043d\u0435 \u043d\u0443\u0436\u043d\u043e.',
+    firstName: '\u0418\u043c\u044f',
+    firstNameRequired: '\u0418\u043c\u044f \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e',
+    lastName: '\u0424\u0430\u043c\u0438\u043b\u0438\u044f',
+    lastNameRequired: '\u0424\u0430\u043c\u0438\u043b\u0438\u044f \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u0430',
+    middleName: '\u041e\u0442\u0447\u0435\u0441\u0442\u0432\u043e',
+    phone: '\u0422\u0435\u043b\u0435\u0444\u043e\u043d',
+    role: '\u0420\u043e\u043b\u044c',
+    chooseRole: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u043e\u043b\u044c',
+    roleRequired: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u043e\u043b\u044c',
+    supplier: '\u041f\u043e\u0441\u0442\u0430\u0432\u0449\u0438\u043a',
+    chooseSupplier: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u0441\u0442\u0430\u0432\u0449\u0438\u043a\u0430',
+    supplierRequired: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u0441\u0442\u0430\u0432\u0449\u0438\u043a\u0430',
+    contractor: '\u041f\u043e\u0434\u0440\u044f\u0434\u0447\u0438\u043a',
+    chooseContractor: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u0434\u0440\u044f\u0434\u0447\u0438\u043a\u0430',
+    contractorRequired: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u0434\u0440\u044f\u0434\u0447\u0438\u043a\u0430',
+    requirePasswordReset:
+        '\u0417\u0430\u043f\u0440\u043e\u0441\u0438\u0442\u044c \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u0443\u044e \u0441\u043c\u0435\u043d\u0443 \u043f\u0430\u0440\u043e\u043b\u044f \u043f\u0440\u0438 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0435\u043c \u0432\u0445\u043e\u0434\u0435',
+    save: '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f',
+    create: '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f',
+    cancel: '\u041e\u0442\u043c\u0435\u043d\u0430',
+    usernameRequired: '\u041b\u043e\u0433\u0438\u043d \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u0435\u043d',
+};
+
+export default function UsersFormMobileReset({
     user,
     refs,
     onSubmit,
@@ -48,43 +83,43 @@ export default function UsersForm({
         const newErrors: Record<string, string> = {};
 
         if (!formData.username.trim()) {
-            newErrors.username = 'Логин обязателен';
+            newErrors.username = TEXT.usernameRequired;
         }
 
         if (!formData.email.trim()) {
-            newErrors.email = 'Email обязателен';
+            newErrors.email = TEXT.emailRequired;
         } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-            newErrors.email = 'Некорректный email';
+            newErrors.email = TEXT.emailInvalid;
         }
 
         if (!user) {
             if (!formData.password.trim()) {
-                newErrors.password = 'Пароль обязателен';
+                newErrors.password = TEXT.passwordRequired;
             } else if (formData.password.trim().length < 6) {
-                newErrors.password = 'Пароль должен быть не менее 6 символов';
+                newErrors.password = TEXT.passwordMin;
             }
         } else if (formData.password.trim() && formData.password.trim().length < 6) {
-            newErrors.password = 'Пароль должен быть не менее 6 символов';
+            newErrors.password = TEXT.passwordMin;
         }
 
         if (!formData.first_name.trim()) {
-            newErrors.first_name = 'Имя обязательно';
+            newErrors.first_name = TEXT.firstNameRequired;
         }
 
         if (!formData.last_name.trim()) {
-            newErrors.last_name = 'Фамилия обязательна';
+            newErrors.last_name = TEXT.lastNameRequired;
         }
 
         if (!formData.role_id) {
-            newErrors.role_id = 'Выберите роль';
+            newErrors.role_id = TEXT.roleRequired;
         }
 
         if (formData.role_id === SUPPLIER_ROLE_ID && !formData.supplier_id) {
-            newErrors.supplier_id = 'Выберите поставщика';
+            newErrors.supplier_id = TEXT.supplierRequired;
         }
 
         if (formData.role_id === CONTRACTOR_ROLE_ID && !formData.contractor_id) {
-            newErrors.contractor_id = 'Выберите подрядчика';
+            newErrors.contractor_id = TEXT.contractorRequired;
         }
 
         setErrors(newErrors);
@@ -144,13 +179,13 @@ export default function UsersForm({
         <form onSubmit={handleSubmit} className="space-y-6">
             <div>
                 <h3 className="pb-2 mb-3 text-sm font-semibold text-gray-900 border-b border-gray-200">
-                    Основная информация
+                    {TEXT.mainInfo}
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Логин <span className="text-red-500">*</span>
+                            {TEXT.username} <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -186,7 +221,8 @@ export default function UsersForm({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            {user ? 'Новый пароль' : 'Пароль'} {!user && <span className="text-red-500">*</span>}
+                            {user ? TEXT.newPassword : TEXT.password}{' '}
+                            {!user && <span className="text-red-500">*</span>}
                         </label>
                         <input
                             type="password"
@@ -198,9 +234,7 @@ export default function UsersForm({
                             disabled={loading}
                         />
                         {user && (
-                            <p className="mt-1 text-xs text-gray-500">
-                                Оставьте пустым, если переназначать пароль не нужно.
-                            </p>
+                            <p className="mt-1 text-xs text-gray-500">{TEXT.leavePasswordEmpty}</p>
                         )}
                         {errors.password && (
                             <p className="mt-1 text-xs text-red-600">{errors.password}</p>
@@ -209,7 +243,7 @@ export default function UsersForm({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Имя <span className="text-red-500">*</span>
+                            {TEXT.firstName} <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -224,7 +258,7 @@ export default function UsersForm({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Фамилия <span className="text-red-500">*</span>
+                            {TEXT.lastName} <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -238,7 +272,9 @@ export default function UsersForm({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Отчество</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            {TEXT.middleName}
+                        </label>
                         <input
                             type="text"
                             value={formData.middle_name || ''}
@@ -249,7 +285,9 @@ export default function UsersForm({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Телефон</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            {TEXT.phone}
+                        </label>
                         <input
                             type="text"
                             value={formatPhoneInput(formData.phone)}
@@ -261,7 +299,7 @@ export default function UsersForm({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Роль <span className="text-red-500">*</span>
+                            {TEXT.role} <span className="text-red-500">*</span>
                         </label>
                         <select
                             value={formData.role_id || ''}
@@ -273,7 +311,7 @@ export default function UsersForm({
                             } rounded-lg`}
                             disabled={loading}
                         >
-                            <option value="">Выберите роль</option>
+                            <option value="">{TEXT.chooseRole}</option>
                             {refs.userRoles.data?.map((role) => (
                                 <option key={role.id} value={role.id}>
                                     {role.name}
@@ -292,7 +330,7 @@ export default function UsersForm({
                                 className="mt-1 h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
                             />
                             <span className="text-sm text-gray-700">
-                                Запросить обязательную смену пароля при следующем входе
+                                {TEXT.requirePasswordReset}
                             </span>
                         </label>
                     </div>
@@ -300,21 +338,24 @@ export default function UsersForm({
                     {formData.role_id === SUPPLIER_ROLE_ID && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Поставщик <span className="text-red-500">*</span>
+                                {TEXT.supplier} <span className="text-red-500">*</span>
                             </label>
                             <select
                                 value={formData.supplier_id || ''}
                                 onChange={(e) =>
-                                    handleChange('supplier_id', e.target.value ? Number(e.target.value) : null)
+                                    handleChange(
+                                        'supplier_id',
+                                        e.target.value ? Number(e.target.value) : null,
+                                    )
                                 }
                                 className={`w-full px-3 py-2 text-sm bg-white border ${
                                     errors.supplier_id ? 'border-red-300' : 'border-gray-300'
                                 } rounded-lg`}
                             >
-                                <option value="">Выберите поставщика</option>
-                                {refs.suppliers.data?.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.name}
+                                <option value="">{TEXT.chooseSupplier}</option>
+                                {refs.suppliers.data?.map((supplier) => (
+                                    <option key={supplier.id} value={supplier.id}>
+                                        {supplier.name}
                                     </option>
                                 ))}
                             </select>
@@ -324,21 +365,24 @@ export default function UsersForm({
                     {formData.role_id === CONTRACTOR_ROLE_ID && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Подрядчик <span className="text-red-500">*</span>
+                                {TEXT.contractor} <span className="text-red-500">*</span>
                             </label>
                             <select
                                 value={formData.contractor_id || ''}
                                 onChange={(e) =>
-                                    handleChange('contractor_id', e.target.value ? Number(e.target.value) : null)
+                                    handleChange(
+                                        'contractor_id',
+                                        e.target.value ? Number(e.target.value) : null,
+                                    )
                                 }
                                 className={`w-full px-3 py-2 text-sm bg-white border ${
                                     errors.contractor_id ? 'border-red-300' : 'border-gray-300'
                                 } rounded-lg`}
                             >
-                                <option value="">Выберите подрядчика</option>
-                                {refs.contractors.data?.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name}
+                                <option value="">{TEXT.chooseContractor}</option>
+                                {refs.contractors.data?.map((contractor) => (
+                                    <option key={contractor.id} value={contractor.id}>
+                                        {contractor.name}
                                     </option>
                                 ))}
                             </select>
@@ -351,10 +395,10 @@ export default function UsersForm({
                 <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-4 py-2.5 text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
+                    className="flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg"
                 >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {user ? 'Сохранить изменения' : 'Создать пользователя'}
+                    {user ? TEXT.save : TEXT.create}
                 </button>
 
                 <button
@@ -363,7 +407,7 @@ export default function UsersForm({
                     disabled={loading}
                     className="flex-1 px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg"
                 >
-                    Отмена
+                    {TEXT.cancel}
                 </button>
             </div>
         </form>

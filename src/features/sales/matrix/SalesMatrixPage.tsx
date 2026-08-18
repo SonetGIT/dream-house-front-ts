@@ -117,15 +117,21 @@ export default function SalesMatrixPage() {
     const contentRef = useRef<HTMLDivElement>(null);
     const zoomRef = useRef(1);
 
+    const reloadOverview = useCallback(
+        () =>
+            dispatch(
+                fetchSalesOverview({
+                    include_units: true,
+                    page: 1,
+                    size: 5000,
+                }),
+            ).unwrap(),
+        [dispatch],
+    );
+
     useEffect(() => {
-        dispatch(
-            fetchSalesOverview({
-                include_units: true,
-                page: 1,
-                size: 5000,
-            }),
-        );
-    }, [dispatch]);
+        void reloadOverview();
+    }, [reloadOverview]);
 
     useEffect(() => {
         if (!projects.length || selectedProjectId) return;
@@ -792,6 +798,7 @@ export default function SalesMatrixPage() {
                     <UnitPassportPage
                         unitId={selectedUnitId}
                         onClose={() => setSelectedUnitId(null)}
+                        onDataChanged={reloadOverview}
                     />
                 )}
             </div>

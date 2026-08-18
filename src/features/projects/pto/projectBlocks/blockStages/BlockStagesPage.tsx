@@ -16,7 +16,7 @@ import {
 import BlockStagesTable from './BlockStagesTable';
 import BlockStageModal from './BlockStageModal';
 
-import { deleteStageSubsection } from './subStages/stageSubsectionsSlice';
+import { deleteStageSubsection, fetchStageSubsections } from './subStages/stageSubsectionsSlice';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { Layers, List } from 'lucide-react';
 import { fetchEnum } from '@/features/reference/referenceSlice';
@@ -25,6 +25,7 @@ import { fetchEnum } from '@/features/reference/referenceSlice';
 export default function BlockStagesPage({ blockId }: { blockId: number }) {
     const dispatch = useAppDispatch();
     const allStages = useAppSelector((s) => s.blockStages.data);
+    const stagesPagination = useAppSelector((s) => s.blockStages.pagination);
     const subStagesByStageId = useAppSelector((s) => s.stageSubsections.byStageId);
     const loading = useAppSelector((s) => s.blockStages.loading);
 
@@ -42,11 +43,23 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
     });
 
     const [deleteState, setDeleteState] = useState<
-        { type: 'stage'; id: number } | { type: 'subStage'; id: number; stageId: number } | null
+        { type: 'stage'; id: number }
+        | {
+              type: 'subStage';
+              id: number;
+              stageId: number;
+              page: number;
+              size: number;
+              currentPageItems: number;
+          }
+        | null
     >(null);
 
+    const currentStagePage = stagesPagination?.page ?? 1;
+    const currentStageSize = stagesPagination?.size ?? 10;
+
     /* статистика по этапам и подэтапам */
-    const totalStages = stages.length;
+    const totalStages = stagesPagination?.total ?? stages.length;
 
     const totalSubStages = stages.reduce((sum, stage) => {
         const subStages = subStagesByStageId[stage.id] ?? [];
@@ -65,6 +78,24 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
             }),
         );
     }, [dispatch, blockId]);
+
+    const loadStages = (page: number, size: number) => {
+        return dispatch(
+            fetchBlockStages({
+                block_id: blockId,
+                page,
+                size,
+            }),
+        );
+    };
+
+    const handleStagePageChange = (page: number) => {
+        void loadStages(page, currentStageSize);
+    };
+
+    const handleStageSizeChange = (size: number) => {
+        void loadStages(1, size);
+    };
     /* фильтр поиска */
     const filteredStages = useMemo(() => {
         return stages.filter((stage) => stage.name.toLowerCase().includes(search.toLowerCase()));
@@ -112,6 +143,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                     }),
                 ).unwrap();
                 toast.success('Этап обновлен');
+                await loadStages(currentStagePage, currentStageSize).unwrap();
             } else {
                 await dispatch(
                     createBlockStage({
@@ -120,16 +152,10 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                     }),
                 ).unwrap();
                 toast.success('Этап создан');
+                await loadStages(1, currentStageSize).unwrap();
             }
 
             setModalOpen(false);
-            dispatch(
-                fetchBlockStages({
-                    block_id: blockId,
-                    page: 1,
-                    size: 10,
-                }),
-            );
             dispatch(fetchEnum('blockStages')); //вызов обновление справочника
         } catch {
             toast.error('Ошибка сохранения');
@@ -146,13 +172,12 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
 
                 toast.success('Этап удален');
 
-                dispatch(
-                    fetchBlockStages({
-                        block_id: blockId,
-                        page: 1,
-                        size: 10,
-                    }),
-                );
+                const nextPage =
+                    stages.length === 1 && currentStagePage > 1
+                        ? currentStagePage - 1
+                        : currentStagePage;
+
+                await loadStages(nextPage, currentStageSize).unwrap();
             }
 
             if (deleteState.type === 'subStage') {
@@ -164,6 +189,19 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                 ).unwrap();
 
                 toast.success('Подэтап удален');
+
+                const nextPage =
+                    deleteState.currentPageItems === 1 && deleteState.page > 1
+                        ? deleteState.page - 1
+                        : deleteState.page;
+
+                await dispatch(
+                    fetchStageSubsections({
+                        stage_id: deleteState.stageId,
+                        page: nextPage,
+                        size: deleteState.size,
+                    }),
+                ).unwrap();
             }
         } catch {
             toast.error('Ошибка удаления');
@@ -208,10 +246,13 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
             ) : (
                 <BlockStagesTable
                     stages={filteredStages}
+                    pagination={stagesPagination}
+                    onPageChange={handleStagePageChange}
+                    onSizeChange={handleStageSizeChange}
                     onEditStage={handleEditStage}
                     onDeleteStageId={(id) => setDeleteState({ type: 'stage', id })}
-                    onDeleteSubStageId={(id, stageId) =>
-                        setDeleteState({ type: 'subStage', id, stageId })
+                    onDeleteSubStageId={(payload) =>
+                        setDeleteState({ type: 'subStage', ...payload })
                     }
                 />
             )}

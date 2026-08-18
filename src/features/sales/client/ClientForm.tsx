@@ -150,10 +150,10 @@ export default function ClientForm({
             setError('Укажите телефон');
             return;
         }
-        if (!form.birth_date) {
-            setError('Укажите дату рождения');
-            return;
-        }
+        // if (!form.birth_date) {
+        //     setError('Укажите дату рождения');
+        //     return;
+        // }
 
         if (!form.passport_number) {
             setError('№ паспорта обязателен');
@@ -493,9 +493,7 @@ export default function ClientForm({
                             {canAssignManager ? (
                                 <select
                                     value={form.manager_user_id ?? ''}
-                                    onChange={(e) =>
-                                        set('manager_user_id')(e.target.value || null)
-                                    }
+                                    onChange={(e) => set('manager_user_id')(e.target.value || null)}
                                     disabled={loading}
                                     className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 disabled:bg-gray-100"
                                 >

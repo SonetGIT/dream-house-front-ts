@@ -53,6 +53,7 @@ export interface UserForm {
 }
 
 export type UserFormData = Omit<User, 'id' | 'created_at' | 'updated_at' | 'deleted'>;
+export type UserSubmitData = UserFormData & { password?: string };
 
 interface UsersState {
     items: User[];
@@ -93,7 +94,7 @@ export const fetchUsers = createAsyncThunk(
 // CREATE
 export const createUser = createAsyncThunk(
     'users/createUser',
-    async (data: UserFormData, { rejectWithValue }) => {
+    async (data: UserSubmitData, { rejectWithValue }) => {
         try {
             const res = await apiRequest<User>('/users/createUser', 'POST', data);
             return res.data;
@@ -106,7 +107,7 @@ export const createUser = createAsyncThunk(
 // UPDATE
 export const updateUser = createAsyncThunk(
     'users/update',
-    async ({ id, data }: { id: number; data: Partial<UserFormData> }, { rejectWithValue }) => {
+    async ({ id, data }: { id: number; data: Partial<UserSubmitData> }, { rejectWithValue }) => {
         try {
             const res = await apiRequest<User>(`/users/update/${id}`, 'PUT', data);
             return res.data;

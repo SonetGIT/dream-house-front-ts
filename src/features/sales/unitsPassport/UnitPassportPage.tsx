@@ -50,6 +50,7 @@ import {
 type UnitPassportPageProps = {
     unitId: number;
     onClose?: () => void;
+    onDataChanged?: () => void | Promise<void>;
 };
 
 type ReservationClientOption = {
@@ -349,7 +350,7 @@ export function InlineMetric({
     );
 }
 /******************************************************************************************************************/
-export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
+export function UnitPassportPage({ unitId, onClose, onDataChanged }: UnitPassportPageProps) {
     const dispatch = useAppDispatch();
 
     const { unit, clients, reservations, deals, loading, error } = useAppSelector(
@@ -897,6 +898,7 @@ export function UnitPassportPage({ unitId, onClose }: UnitPassportPageProps) {
     };
     const refreshPassport = async () => {
         await dispatch(fetchSalesUnitPassport(unitId));
+        await onDataChanged?.();
     };
     const openCreateReservation = (payload?: { client_id?: number | null }) => {
         if (blockingReservation) {

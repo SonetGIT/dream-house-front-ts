@@ -9,7 +9,7 @@ import {
     fetchUsers,
     updateUser,
     type User,
-    type UserFormData,
+    type UserSubmitData,
 } from './userSlice';
 import UsersFiltersPanel from './UsersFiltersPanel';
 import UsersTable from './UsersTable';
@@ -67,7 +67,6 @@ export default function UsersPage() {
         return params;
     };
 
-    //Первичная загрузка
     useEffect(() => {
         dispatch(
             fetchUsers({
@@ -77,7 +76,6 @@ export default function UsersPage() {
         );
     }, [dispatch]);
 
-    // Справочники
     const users = useReference('users');
     const userRoles = useReference('userRoles');
     const suppliers = useReference('suppliers');
@@ -90,10 +88,8 @@ export default function UsersPage() {
         contractors,
     };
 
-    //Поиск
     const handleSearch = (newFilters: typeof filters) => {
         setFilters(newFilters);
-
         dispatch(fetchUsers(buildFetchParams(1, pagination?.size ?? 10, newFilters)));
     };
 
@@ -107,7 +103,6 @@ export default function UsersPage() {
         dispatch(fetchUsers(buildFetchParams(1, pagination?.size ?? 10, resetFilters)));
     };
 
-    //CRUD
     const handleCreate = () => {
         setSelectedUser(null);
         setModal('create');
@@ -122,11 +117,12 @@ export default function UsersPage() {
         setSelectedUser(user);
         setModal('delete');
     };
+
     const refetchUsers = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
         dispatch(fetchUsers(buildFetchParams(page, size)));
     };
 
-    const handleCreateUser = async (data: UserFormData) => {
+    const handleCreateUser = async (data: UserSubmitData) => {
         try {
             setFormLoading(true);
 
@@ -134,8 +130,7 @@ export default function UsersPage() {
 
             toast.success(`Пользователь создан: ${data.username}`);
 
-            refetchUsers(1); //всегда на первую страницу
-
+            refetchUsers(1);
             setModal(null);
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, 'Ошибка создания пользователя'));
@@ -144,7 +139,7 @@ export default function UsersPage() {
         }
     };
 
-    const handleUpdateUser = async (data: UserFormData) => {
+    const handleUpdateUser = async (data: UserSubmitData) => {
         if (!selectedUser) return;
 
         try {
@@ -159,8 +154,7 @@ export default function UsersPage() {
 
             toast.success(`Пользователь обновлён: ${data.username}`);
 
-            refetchUsers(); // 👈 остаёмся на текущей странице
-
+            refetchUsers();
             setModal(null);
             setSelectedUser(null);
         } catch (error: unknown) {
@@ -193,16 +187,13 @@ export default function UsersPage() {
         }
     };
 
-    /*******************************************************************************************************************/
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
             <div className="mx-auto max-w-[1800px] px-4 py-6">
-                {/* Header */}
                 <div>
                     <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Пользователи</h1>
                 </div>
 
-                {/* Фильтры */}
                 <UsersFiltersPanel
                     refs={refs}
                     onSearch={handleSearch}
@@ -210,7 +201,6 @@ export default function UsersPage() {
                     onCreate={handleCreate}
                 />
 
-                {/* Таблица */}
                 <div className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
                     <UsersTable
                         users={items}
@@ -220,7 +210,6 @@ export default function UsersPage() {
                         onDelete={handleDelete}
                     />
 
-                    {/* Пагинация */}
                     {pagination && (
                         <TablePagination
                             pagination={pagination}
@@ -238,7 +227,6 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            {/* CREATE */}
             <Modal
                 isOpen={modal === 'create'}
                 onClose={() => setModal(null)}
@@ -252,7 +240,6 @@ export default function UsersPage() {
                 />
             </Modal>
 
-            {/* EDIT */}
             <Modal
                 isOpen={modal === 'edit'}
                 onClose={() => setModal(null)}
@@ -267,7 +254,6 @@ export default function UsersPage() {
                 />
             </Modal>
 
-            {/* DELETE */}
             <ConfirmDialogNew
                 isOpen={modal === 'delete'}
                 onClose={() => setModal(null)}

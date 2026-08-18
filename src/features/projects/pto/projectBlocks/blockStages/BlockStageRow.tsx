@@ -13,12 +13,19 @@ import type { BlockStage } from './blockStagesSlice';
 import toast from 'react-hot-toast';
 import { fetchEnum } from '@/features/reference/referenceSlice';
 import { formatDate } from '@/utils/formatData';
+import { TablePagination } from '@/components/ui/TablePagination';
 
 interface BlockStageRowProps {
     stage: BlockStage;
     onEditStage: (stage: BlockStage) => void;
     onDeleteStageId: (id: number) => void;
-    onDeleteSubStageId: (id: number, stageId: number) => void;
+    onDeleteSubStageId: (payload: {
+        id: number;
+        stageId: number;
+        page: number;
+        size: number;
+        currentPageItems: number;
+    }) => void;
 }
 
 /******************************************************************************************************************************/
@@ -34,6 +41,9 @@ export default function BlockStageRow({
     const selectSubStagesByStageId = (state: RootAppState, stageId: number) =>
         state.stageSubsections.byStageId[stageId] ?? EMPTY;
     const subStages = useAppSelector((s) => selectSubStagesByStageId(s, stage.id));
+    const subStagesPagination = useAppSelector(
+        (s) => s.stageSubsections.paginationByStageId[stage.id] ?? null,
+    );
 
     // const loading = useAppSelector((s) => s.stageSubsections.loadingByStageId[stage.id]);
 
@@ -43,18 +53,26 @@ export default function BlockStageRow({
     const [editingSubstageId, setEditingSubstageId] = useState<number | null>(null);
     const [editingSubstageName, setEditingSubstageName] = useState('');
 
+    const currentSubStagePage = subStagesPagination?.page ?? 1;
+    const currentSubStageSize = subStagesPagination?.size ?? 10;
+    const subStageStartIndex = (currentSubStagePage - 1) * currentSubStageSize;
+
+    const loadSubStages = (page: number, size: number) => {
+        return dispatch(
+            fetchStageSubsections({
+                stage_id: stage.id,
+                page,
+                size,
+            }),
+        );
+    };
+
     useEffect(() => {
-        if (expanded && subStages.length === 0) {
-            dispatch(
-                fetchStageSubsections({
-                    stage_id: stage.id,
-                    page: 1,
-                    size: 10,
-                }),
-            ).unwrap();
-            dispatch(fetchEnum('stageSubsections'));
+        if (expanded && !subStagesPagination) {
+            void loadSubStages(1, 10).unwrap();
+            void dispatch(fetchEnum('stageSubsections'));
         }
-    }, [expanded]);
+    }, [dispatch, expanded, subStagesPagination, stage.id]);
 
     // Функция подсчёта дней между датами/
     function diffDays(start?: string, end?: string) {
@@ -78,11 +96,12 @@ export default function BlockStageRow({
                     stage_id: stage.id,
                 }),
             ).unwrap();
+            await loadSubStages(currentSubStagePage, currentSubStageSize).unwrap();
             await dispatch(fetchEnum('stageSubsections')).unwrap();
             setNewSubstageName('');
             setIsAddingSubstage(false);
         } catch {
-            toast.error('РћС€РёР±РєР° СЃРѕР·РґР°РЅРёСЏ');
+            toast.error('Ошибка создания');
         }
     };
 
@@ -109,6 +128,7 @@ export default function BlockStageRow({
                 }),
             ).unwrap();
 
+            await loadSubStages(currentSubStagePage, currentSubStageSize).unwrap();
             await dispatch(fetchEnum('stageSubsections')).unwrap();
             toast.success('Подэтап обновлен');
 
@@ -122,6 +142,14 @@ export default function BlockStageRow({
     const handleCancelEdit = () => {
         setEditingSubstageId(null);
         setEditingSubstageName('');
+    };
+
+    const handleSubStagePageChange = (page: number) => {
+        void loadSubStages(page, currentSubStageSize);
+    };
+
+    const handleSubStageSizeChange = (size: number) => {
+        void loadSubStages(1, size);
     };
 
     /**************************************************************************************************************************/
@@ -239,7 +267,7 @@ export default function BlockStageRow({
                                             className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-md border-2 border-sky-400 shadow-md text-[13px]"
                                         >
                                             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold flex-shrink-0">
-                                                {idx + 1}
+                                                {subStageStartIndex + idx + 1}
                                             </span>
                                             <input
                                                 type="text"
@@ -281,7 +309,7 @@ export default function BlockStageRow({
                                         >
                                             <div className="flex items-center gap-2.5">
                                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold">
-                                                    {idx + 1}
+                                                    {subStageStartIndex + idx + 1}
                                                 </span>
                                                 <span className="text-gray-700">{sub.name}</span>
                                             </div>
@@ -306,7 +334,13 @@ export default function BlockStageRow({
                                                 <StyledTooltip title="Удалить подэтап">
                                                     <button
                                                         onClick={() =>
-                                                            onDeleteSubStageId(sub.id, stage.id)
+                                                            onDeleteSubStageId({
+                                                                id: sub.id,
+                                                                stageId: stage.id,
+                                                                page: currentSubStagePage,
+                                                                size: currentSubStageSize,
+                                                                currentPageItems: subStages.length,
+                                                            })
                                                         }
                                                         className="
                                                             p-1.5
@@ -336,7 +370,7 @@ export default function BlockStageRow({
                                 {isAddingSubstage && (
                                     <div className="flex items-center gap-2 px-3.5 py-2.5 bg-white rounded-md border-2 border-indigo-300 shadow-sm text-[13px]">
                                         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-semibold flex-shrink-0">
-                                            {subStages.length + 1}
+                                            {subStageStartIndex + subStages.length + 1}
                                         </span>
                                         <input
                                             type="text"
@@ -369,6 +403,19 @@ export default function BlockStageRow({
                                     </div>
                                 )}
                             </div>
+
+                            {subStagesPagination && (
+                                <div className="mt-3 overflow-hidden rounded-lg border border-gray-200">
+                                    <TablePagination
+                                        pagination={subStagesPagination}
+                                        onPageChange={handleSubStagePageChange}
+                                        onSizeChange={handleSubStageSizeChange}
+                                        className="px-4 py-3 bg-gray-50 border-t-0"
+                                        showFirstButton
+                                        showLastButton
+                                    />
+                                </div>
+                            )}
                         </div>
                     </td>
                 </tr>

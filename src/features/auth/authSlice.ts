@@ -35,7 +35,7 @@ interface AuthState {
 /*INITIAL STATE*/
 const initialState: AuthState = {
     user: null,
-    token: typeof window !== 'undefined' ? localStorage.getItem('token') : null, //typeof window !== 'undefined'есть ли объект window т.е. выполняется ли код в браузере
+    token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
     loading: false,
     error: null,
     resetRequired: false,
@@ -129,15 +129,12 @@ const authSlice = createSlice({
         closeResetModal: (state) => {
             state.resetRequired = false;
         },
-
-        //ДОБАВИЛИ
         setAuthChecked: (state) => {
             state.isAuthChecked = true;
         },
     },
     extraReducers: (builder) => {
         builder
-            /*LOGIN*/
             .addCase(authUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -147,24 +144,20 @@ const authSlice = createSlice({
                 state.user = action.payload.data;
                 state.token = action.payload.token;
                 state.isAuthChecked = true;
-
-                if (action.payload.data.required_action === 'RESET_PASSWORD') {
-                    state.resetRequired = true;
-                }
+                state.resetRequired = action.payload.data.required_action === 'RESET_PASSWORD';
             })
             .addCase(authUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка авторизации';
                 state.isAuthChecked = true;
             })
-
-            /*PROFILE*/
             .addCase(fetchProfile.pending, (state) => {
                 state.loading = true;
             })
             .addCase(fetchProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.data;
+                state.resetRequired = action.payload.data.required_action === 'RESET_PASSWORD';
                 state.isAuthChecked = true;
             })
             .addCase(fetchProfile.rejected, (state, action) => {
@@ -174,8 +167,6 @@ const authSlice = createSlice({
                 state.error = action.payload ?? 'Ошибка авторизации';
                 state.isAuthChecked = true;
             })
-
-            /*CHANGE PASSWORD*/
             .addCase(changeOwnPassword.pending, (state) => {
                 state.loading = true;
                 state.error = null;

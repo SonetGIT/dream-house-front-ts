@@ -1,15 +1,29 @@
+import { TablePagination } from '@/components/ui/TablePagination';
+import type { Pagination } from '@/features/users/userSlice';
 import type { BlockStage } from './blockStagesSlice';
 import BlockStageRow from './BlockStageRow';
 
 interface BlockStagesTableProps {
     stages: BlockStage[];
+    pagination: Pagination | null;
+    onPageChange: (page: number) => void;
+    onSizeChange: (size: number) => void;
     onEditStage: (stage: BlockStage) => void;
     onDeleteStageId: (id: number) => void;
-    onDeleteSubStageId: (id: number, stageId: number) => void;
+    onDeleteSubStageId: (payload: {
+        id: number;
+        stageId: number;
+        page: number;
+        size: number;
+        currentPageItems: number;
+    }) => void;
 }
 
 export default function BlockStagesTable({
     stages,
+    pagination,
+    onPageChange,
+    onSizeChange,
     onEditStage,
     onDeleteStageId,
     onDeleteSubStageId,
@@ -73,6 +87,16 @@ export default function BlockStagesTable({
                         </tbody>
                     </table>
                 </div>
+
+                {pagination && (
+                    <TablePagination
+                        pagination={pagination}
+                        onPageChange={onPageChange}
+                        onSizeChange={onSizeChange}
+                        showFirstButton
+                        showLastButton
+                    />
+                )}
             </div>
         </div>
     );
