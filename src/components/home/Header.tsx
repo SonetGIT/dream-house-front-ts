@@ -34,22 +34,37 @@ export default function Header(props: HeaderProps) {
             <AppBar
                 position="static"
                 sx={{
-                    height: 35,
-                    display: 'flex',
-                    justifyContent: 'center',
+                    height: 42,
+                    minHeight: 42,
                     background:
                         'linear-gradient(to right, #2c7ecb 0%, #fded59 50%, #fded59 50%, #2c7ecb 100%)',
+                    boxShadow: 'none',
                 }}
             >
                 <Toolbar
                     sx={{
                         position: 'relative',
-                        minHeight: '35px !important',
-                        px: 1.5,
+                        minHeight: '42px !important',
+                        height: 42,
+                        pl: 1.5,
+                        pr: 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'auto minmax(0, 1fr) auto auto',
+                        alignItems: 'center',
+                        columnGap: 1,
                     }}
                 >
-                    <IconButton edge="start" color="inherit" onClick={props.onMenuClick}>
-                        <RiMenu3Fill />
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        onClick={props.onMenuClick}
+                        sx={{
+                            width: 36,
+                            height: 36,
+                            p: 0.5,
+                        }}
+                    >
+                        <RiMenu3Fill size={24} />
                     </IconButton>
 
                     <Typography
@@ -60,59 +75,76 @@ export default function Header(props: HeaderProps) {
                             transform: 'translateX(-50%)',
                             color: '#2c7ecb',
                             fontWeight: 600,
+                            fontSize: 17,
+                            lineHeight: 1,
+                            textAlign: 'center',
                             whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            px: 1,
+                            display: {
+                                xs: 'none',
+                                md: 'block',
+                            },
                         }}
                     >
                         Система управления строительным объектом «DREAM HOUSE»
                     </Typography>
 
-                    <Box
-                        sx={{
-                            top: '50%',
-                            right: -17,
+                    <div
+                        style={{
                             display: 'flex',
                             alignItems: 'center',
-                            position: 'absolute',
-                            transform: 'translateY(-50%)',
-                            gap: 0.5,
+                            justifySelf: 'end',
                         }}
                     >
                         <USDRate />
                         <AppBell onClick={handleBellClick} />
-                        <UserAvatar />
-                        <LogoutButton />
-                    </Box>
+                    </div>
 
-                    <Popover
-                        open={open}
-                        anchorEl={anchorEl}
-                        onClose={handleClose}
-                        anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'right',
-                        }}
-                        transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'right',
-                        }}
-                        PaperProps={{
-                            sx: {
-                                mt: 1,
-                                borderRadius: 2,
-                                width: {
-                                    xs: '96vw',
-                                    sm: 760,
-                                },
-                                maxWidth: '96vw',
-                                maxHeight: '80vh',
-                                overflow: 'auto',
-                            },
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifySelf: 'end',
+                            gap: 1,
                         }}
                     >
-                        <NotificationsTable onNavigate={handleClose} />
-                    </Popover>
+                        <UserAvatar />
+                        <LogoutButton />
+                    </div>
                 </Toolbar>
             </AppBar>
+
+            {/* открывает таблицу уведомлений */}
+            <Popover
+                open={open}
+                anchorEl={anchorEl}
+                onClose={handleClose}
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+                PaperProps={{
+                    sx: {
+                        mt: 1,
+                        borderRadius: 2,
+                        width: {
+                            xs: '96vw',
+                            sm: 760,
+                        },
+                        maxWidth: '96vw',
+                        maxHeight: '80vh',
+                        overflow: 'auto',
+                    },
+                }}
+            >
+                <NotificationsTable onNavigate={handleClose} />
+            </Popover>
         </Box>
     );
 }

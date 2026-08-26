@@ -63,7 +63,9 @@ export default function UsersForm({
             } else if (formData.password.trim().length < 6) {
                 newErrors.password = 'Пароль должен быть не менее 6 символов';
             }
-        } else if (formData.password.trim() && formData.password.trim().length < 6) {
+        }
+
+        if (formData.password.trim() && formData.password.trim().length < 6) {
             newErrors.password = 'Пароль должен быть не менее 6 символов';
         }
 
@@ -147,27 +149,58 @@ export default function UsersForm({
                     Основная информация
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Логин <span className="text-red-500">*</span>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
+                    <div className="md:col-span-2">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
+                            Фамилия <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
-                            value={formData.username}
-                            onChange={(e) => handleChange('username', e.target.value)}
+                            value={formData.last_name}
+                            onChange={(e) => handleChange('last_name', e.target.value)}
                             className={`w-full px-3 py-2 text-sm bg-white border ${
-                                errors.username ? 'border-red-300' : 'border-gray-300'
+                                errors.last_name ? 'border-red-300' : 'border-gray-300'
                             } rounded-lg focus:ring-1 focus:ring-sky-500`}
                             disabled={loading}
                         />
-                        {errors.username && (
-                            <p className="mt-1 text-xs text-red-600">{errors.username}</p>
+                        {errors.last_name && (
+                            <p className="mt-1 text-xs text-red-600">{errors.last_name}</p>
                         )}
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    <div className="md:col-span-2">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
+                            Имя <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.first_name}
+                            onChange={(e) => handleChange('first_name', e.target.value)}
+                            className={`w-full px-3 py-2 text-sm bg-white border ${
+                                errors.first_name ? 'border-red-300' : 'border-gray-300'
+                            } rounded-lg focus:ring-1 focus:ring-sky-500`}
+                            disabled={loading}
+                        />
+                        {errors.first_name && (
+                            <p className="mt-1 text-xs text-red-600">{errors.first_name}</p>
+                        )}
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
+                            Отчество
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.middle_name || ''}
+                            onChange={(e) => handleChange('middle_name', e.target.value)}
+                            className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg"
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <div className="md:col-span-3">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
                             Email <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -184,72 +217,10 @@ export default function UsersForm({
                         )}
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            {user ? 'Новый пароль' : 'Пароль'} {!user && <span className="text-red-500">*</span>}
+                    <div className="md:col-span-3">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
+                            Телефон
                         </label>
-                        <input
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => handleChange('password', e.target.value)}
-                            className={`w-full px-3 py-2 text-sm bg-white border ${
-                                errors.password ? 'border-red-300' : 'border-gray-300'
-                            } rounded-lg focus:ring-1 focus:ring-sky-500`}
-                            disabled={loading}
-                        />
-                        {user && (
-                            <p className="mt-1 text-xs text-gray-500">
-                                Оставьте пустым, если переназначать пароль не нужно.
-                            </p>
-                        )}
-                        {errors.password && (
-                            <p className="mt-1 text-xs text-red-600">{errors.password}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Имя <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.first_name}
-                            onChange={(e) => handleChange('first_name', e.target.value)}
-                            className={`w-full px-3 py-2 text-sm bg-white border ${
-                                errors.first_name ? 'border-red-300' : 'border-gray-300'
-                            } rounded-lg`}
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Фамилия <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.last_name}
-                            onChange={(e) => handleChange('last_name', e.target.value)}
-                            className={`w-full px-3 py-2 text-sm bg-white border ${
-                                errors.last_name ? 'border-red-300' : 'border-gray-300'
-                            } rounded-lg`}
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Отчество</label>
-                        <input
-                            type="text"
-                            value={formData.middle_name || ''}
-                            onChange={(e) => handleChange('middle_name', e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg"
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Телефон</label>
                         <input
                             type="text"
                             value={formatPhoneInput(formData.phone)}
@@ -259,8 +230,46 @@ export default function UsersForm({
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    <div className="md:col-span-3">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
+                            Логин <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.username}
+                            onChange={(e) => handleChange('username', e.target.value)}
+                            className={`w-full px-3 py-2 text-sm bg-white border ${
+                                errors.username ? 'border-red-300' : 'border-gray-300'
+                            } rounded-lg focus:ring-1 focus:ring-sky-500`}
+                            disabled={loading}
+                        />
+                        {errors.username && (
+                            <p className="mt-1 text-xs text-red-600">{errors.username}</p>
+                        )}
+                    </div>
+
+                    {!user && (
+                        <div className="md:col-span-3">
+                            <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
+                                Пароль <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="password"
+                                value={formData.password}
+                                onChange={(e) => handleChange('password', e.target.value)}
+                                className={`w-full px-3 py-2 text-sm bg-white border ${
+                                    errors.password ? 'border-red-300' : 'border-gray-300'
+                                } rounded-lg focus:ring-1 focus:ring-sky-500`}
+                                disabled={loading}
+                            />
+                            {errors.password && (
+                                <p className="mt-1 text-xs text-red-600">{errors.password}</p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="md:col-span-2">
+                        <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
                             Роль <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -282,24 +291,24 @@ export default function UsersForm({
                         </select>
                     </div>
 
-                    <div className="col-span-2">
-                        <label className="flex items-start gap-3 px-3 py-3 border border-gray-200 rounded-lg bg-gray-50">
-                            <input
-                                type="checkbox"
-                                checked={formData.required_action === 'RESET_PASSWORD'}
-                                onChange={handleResetPasswordRequirementChange}
-                                disabled={loading}
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                                Запросить обязательную смену пароля при следующем входе
-                            </span>
-                        </label>
-                    </div>
+                    {!user && (
+                        <div className="md:col-span-4 flex items-end">
+                            <label className="flex h-10 items-center gap-3 text-left text-sm text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.required_action === 'RESET_PASSWORD'}
+                                    onChange={handleResetPasswordRequirementChange}
+                                    disabled={loading}
+                                    className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                                />
+                                <span>Обязательная смена пароля при входе</span>
+                            </label>
+                        </div>
+                    )}
 
                     {formData.role_id === SUPPLIER_ROLE_ID && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        <div className="md:col-span-3">
+                            <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
                                 Поставщик <span className="text-red-500">*</span>
                             </label>
                             <select
@@ -322,8 +331,8 @@ export default function UsersForm({
                     )}
 
                     {formData.role_id === CONTRACTOR_ROLE_ID && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        <div className="md:col-span-3">
+                            <label className="block text-left text-sm font-medium text-gray-700 mb-1.5">
                                 Подрядчик <span className="text-red-500">*</span>
                             </label>
                             <select
@@ -344,6 +353,7 @@ export default function UsersForm({
                             </select>
                         </div>
                     )}
+
                 </div>
             </div>
 

@@ -1,8 +1,9 @@
-import Button from '@mui/material/Button';
 import { useAppDispatch } from '@/app/store';
 import { logout } from '@/features/auth/authSlice';
 import { StyledTooltip } from '../ui/StyledTooltip';
 import { useNavigate } from 'react-router-dom';
+import { IconButton } from '@mui/material';
+import { LogOut } from 'lucide-react';
 
 export default function LogoutButton() {
     const navigate = useNavigate();
@@ -14,15 +15,22 @@ export default function LogoutButton() {
     };
 
     return (
-        <StyledTooltip title="выйти">
-            <Button
-                size="small"
+        <StyledTooltip title="Выйти">
+            <IconButton
+                size="medium"
                 color="inherit"
-                style={{ fontSize: '13px' }}
                 onClick={handleLogout}
+                sx={{
+                    p: 0.5,
+                    right: -25,
+                    color: '#ffffff',
+                    '&:hover': {
+                        backgroundColor: 'rgba(255,255,255,0.12)',
+                    },
+                }}
             >
-                esc
-            </Button>
+                <LogOut size={18} />
+            </IconButton>
         </StyledTooltip>
     );
 }

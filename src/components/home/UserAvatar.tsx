@@ -23,15 +23,15 @@ export default function UserAvatar() {
         <StyledTooltip title={tooltipTxt}>
             <Avatar
                 sx={{
-                    width: 30,
-                    height: 30,
+                    width: 32,
+                    height: 32,
                     color: '#2c7ecb',
                     bgcolor: '#ffffff',
                     fontSize: 14,
-                    marginRight: 2,
                     fontWeight: 600,
+                    right: -10,
                     cursor: 'default',
-                    lineHeight: '28px',
+                    lineHeight: '30px',
                     border: '1px solid rgba(74, 144, 226, 0.25)',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
                 }}

@@ -1,5 +1,5 @@
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone } from 'lucide-react';
+import { Pencil, Trash2, Loader2, FolderOpen, Mail, Phone, KeyRound } from 'lucide-react';
 import type { User } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
@@ -8,6 +8,7 @@ interface UsersTableProps {
     users: User[];
     refs: Record<string, ReferenceResult>;
     onEdit: (user: User) => void;
+    onResetPassword: (user: User) => void;
     onDelete: (user: User) => void;
     loading?: boolean;
 }
@@ -72,7 +73,14 @@ const ROLE_CONFIG: Record<number, { label: string; className: string }> = {
 };
 
 /************************************************************************************************************/
-export default function UsersTable({ users, refs, onEdit, onDelete, loading }: UsersTableProps) {
+export default function UsersTable({
+    users,
+    refs,
+    onEdit,
+    onResetPassword,
+    onDelete,
+    loading,
+}: UsersTableProps) {
     // const navigate = useNavigate();
     // const handleRowClick = (user: User) => {
     //     navigate(`/users/${user.id}`, { state: { user } });
@@ -164,8 +172,8 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                                 {/* <Person /> */}
                                                 <span className="truncate max-w-[200px]">
                                                     {[
-                                                        user.first_name,
                                                         user.last_name,
+                                                        user.first_name,
                                                         user.middle_name,
                                                     ]
                                                         .filter(Boolean)
@@ -264,6 +272,24 @@ export default function UsersTable({ users, refs, onEdit, onDelete, loading }: U
                                                 "
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                        </StyledTooltip>
+                                        <StyledTooltip title="Сбросить пароль">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onResetPassword(user);
+                                                }}
+                                                className="
+                                                    p-1.5
+                                                    text-gray-400
+                                                    hover:text-amber-600
+                                                    hover:bg-amber-50
+                                                    rounded
+                                                    transition-colors
+                                                "
+                                            >
+                                                <KeyRound className="w-3.5 h-3.5" />
                                             </button>
                                         </StyledTooltip>
                                         <StyledTooltip title="Удалить">

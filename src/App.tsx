@@ -2,12 +2,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppSelector, useAppDispatch } from './app/store';
-import {
-    changeOwnPassword,
-    fetchProfile,
-    logout,
-    setAuthChecked,
-} from './features/auth/authSlice';
+import { changeOwnPassword, fetchProfile, logout, setAuthChecked } from './features/auth/authSlice';
 
 import Header from './components/home/Header';
 import Footer from './components/home/Footer';
@@ -59,8 +54,8 @@ export default function App() {
 
     useEffect(() => {
         if (!isAuthChecked || !user || !resetRequired || resetPasswordSource) return;
+        toast.error('Для смены пароля войдите заново с временным паролем');
 
-        toast.error('Р”Р»СЏ СЃРјРµРЅС‹ РїР°СЂРѕР»СЏ РІРѕР№РґРёС‚Рµ Р·Р°РЅРѕРІРѕ СЃ РІСЂРµРјРµРЅРЅС‹Рј РїР°СЂРѕР»РµРј');
         dispatch(logout());
         navigate('/login');
     }, [dispatch, isAuthChecked, navigate, resetPasswordSource, resetRequired, user]);
@@ -74,17 +69,17 @@ export default function App() {
 
     const handlePasswordSave = () => {
         if (!passwords.newPassword || !passwords.repeatPassword) {
-            toast.error('Р’РІРµРґРёС‚Рµ РЅРѕРІС‹Р№ РїР°СЂРѕР»СЊ Рё РїРѕРІС‚РѕСЂРёС‚Рµ РµРіРѕ');
+            toast.error('Введите новый пароль и повторите его');
             return;
         }
 
         if (passwords.newPassword !== passwords.repeatPassword) {
-            toast.error('РџР°СЂРѕР»Рё РЅРµ СЃРѕРІРїР°РґР°СЋС‚');
+            toast.error('Пароли не совпадают');
             return;
         }
 
         if (!resetPasswordSource) {
-            toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ РІСЂРµРјРµРЅРЅС‹Р№ РїР°СЂРѕР»СЊ. Р’РѕР№РґРёС‚Рµ Р·Р°РЅРѕРІРѕ.');
+            toast.error('Не удалось определить временный пароль. Войдите заново.');
             dispatch(logout());
             navigate('/login');
             return;
@@ -108,17 +103,14 @@ export default function App() {
     if (!isAuthChecked) {
         return <div>Loading...</div>;
     }
-
     return (
-        <div className="app-container">
+        <div className="flex flex-col min-h-screen">
             <Header onMenuClick={handleMenuClick} />
             <Menu open={drawerOpen} onClose={handleDrawerClose} />
 
-            <main className="text-center">
+            <main className="flex-1">
                 <Outlet />
             </main>
-            <Footer />
-
             <ChangePasswordModal
                 open={resetRequired}
                 newPassword={passwords.newPassword}
@@ -128,6 +120,31 @@ export default function App() {
                 onClose={() => {}}
                 loading={loading}
             />
+            <Footer />
         </div>
     );
+
+    // return (
+    //     // <div className="app-container">
+    //     <div>
+    //         <Header onMenuClick={handleMenuClick} />
+    //         <Menu open={drawerOpen} onClose={handleDrawerClose} />
+
+    //         {/* <main className="text-center"> */}
+    //         <main>
+    //             <Outlet />
+    //         </main>
+    //         <Footer />
+
+    //         <ChangePasswordModal
+    //             open={resetRequired}
+    //             newPassword={passwords.newPassword}
+    //             repeatPassword={passwords.repeatPassword}
+    //             onChange={handlePasswordChange}
+    //             onSave={handlePasswordSave}
+    //             onClose={() => {}}
+    //             loading={loading}
+    //         />
+    //     </div>
+    // );
 }

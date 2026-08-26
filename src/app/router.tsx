@@ -9,7 +9,7 @@ import ProjectsPage from '@/features/projects/a_project/ProjectsPage';
 import ProjectDashboardPage from '@/features/projects/a_project/ProjectDashboardPage';
 import ContractorsPage from '@/features/contractors/ContractorsPage';
 import SuppliersPage from '@/features/suppliers/SuppliersPage';
-import UsersPageMobileReset from '../pages/UsersPageMobileReset';
+import UsersPage from '@/features/users/UsersPage';
 import MaterialRequestsPage from '@/features/projects/material_request/MaterialRequestsPage';
 import Dashboard from '@/components/ui/dashboard/Dashboard';
 import EstimatesStagePage from '@/features/projects/pto/projectBlocks/EstimatesStagePage';
@@ -35,7 +35,7 @@ export const router = createBrowserRouter([
         path: '/',
         element: <App />,
         children: [
-            { path: 'users', element: <UsersPageMobileReset /> },
+            { path: 'users', element: <UsersPage /> },
             { path: 'suppliers', element: <SuppliersPage /> },
             { path: 'contractors', element: <ContractorsPage /> },
             { path: 'materials', element: <MaterialsPage /> },

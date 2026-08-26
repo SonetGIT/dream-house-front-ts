@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import { useReference } from '@/features/reference/useReference';
 import { TablePagination } from '@/components/ui/TablePagination';
+import { apiRequest } from '@/utils/apiRequest';
 import {
     createUser,
     deleteUser,
@@ -118,6 +119,19 @@ export default function UsersPage() {
         setModal('delete');
     };
 
+    const handleResetPassword = async (user: User) => {
+        if (!window.confirm(`Сбросить пароль для ${user.username}?`)) {
+            return;
+        }
+
+        try {
+            const res = await apiRequest('/users/resetPassword/' + user.id, 'PUT');
+            toast.success(res.message || 'Пароль сброшен, пользователю назначен временный пароль');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Ошибка сброса пароля'));
+        }
+    };
+
     const refetchUsers = (page = pagination?.page ?? 1, size = pagination?.size ?? 10) => {
         dispatch(fetchUsers(buildFetchParams(page, size)));
     };
@@ -188,8 +202,8 @@ export default function UsersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-            <div className="mx-auto max-w-[1800px] px-4 py-6">
+        <div className="rounded-[10px] bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+            <div className="mx-auto max-w-[1800px] py-4">
                 <div>
                     <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Пользователи</h1>
                 </div>
@@ -207,6 +221,7 @@ export default function UsersPage() {
                         loading={loading}
                         refs={refs}
                         onEdit={handleEdit}
+                        onResetPassword={handleResetPassword}
                         onDelete={handleDelete}
                     />
 

@@ -2,22 +2,22 @@ import { Tooltip, tooltipClasses, type TooltipProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 const StyledTooltip = styled(({ className, ...props }: TooltipProps) => (
-    <Tooltip {...props} classes={{ popper: className }} />
-))(({}) => ({
+    <Tooltip {...props} arrow classes={{ popper: className }} />
+))(() => ({
     [`& .${tooltipClasses.tooltip}`]: {
-        backgroundColor: '#7011be ',
+        backgroundColor: '#2c7ecb',
         color: '#ffffff',
         fontWeight: 500,
-        borderRadius: '5px',
-        maxWidth: 200,
+        borderRadius: '6px',
+        maxWidth: 220,
         fontSize: '0.8125rem',
-        padding: '4px 10px',
-        // boxShadow: theme.shadows[4], // или оставить как есть
-        lineHeight: 1.4,
-        // [`& .${tooltipClasses.arrow}`]: {
-        //     color: theme.palette.grey[900],
-        // },
+        padding: '6px 10px',
+        lineHeight: 1.35,
+        boxShadow: '0 4px 14px rgba(44, 126, 203, 0.22)',
+        border: '2px solid rgba(253, 237, 89, 0.45)',
+    },
+    [`& .${tooltipClasses.arrow}`]: {
+        color: '#2c7ecb',
     },
 }));
-
 export { StyledTooltip };

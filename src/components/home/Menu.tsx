@@ -9,11 +9,8 @@ import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { useLocation, useNavigate } from 'react-router-dom';
-import SwitchAccountSharpIcon from '@mui/icons-material/SwitchAccountSharp';
-import SupervisedUserCircleSharpIcon from '@mui/icons-material/SupervisedUserCircleSharp';
-import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import { VscReferences } from 'react-icons/vsc';
-import { Handshake } from 'lucide-react';
+import { UserRound, Building2, UsersRound, HardHat, Handshake } from 'lucide-react';
 
 interface SubItem {
     label: string;
@@ -36,16 +33,16 @@ const drawerItems: DrawerItem[] = [
     {
         label: 'Пользователи',
         path: '/users',
-        icon: <SwitchAccountSharpIcon />,
+        icon: <UserRound />,
     },
     {
         label: 'Объекты',
         path: '/projects',
-        icon: <AssessmentOutlinedIcon />,
+        icon: <Building2 />,
     },
+    { label: 'Поставщики', path: '/suppliers', icon: <UsersRound /> },
+    { label: 'Подрядчики', path: '/contractors', icon: <HardHat /> },
     { label: 'Отдел продаж', path: '/sales', icon: <Handshake /> },
-    { label: 'Поставщики', path: '/suppliers', icon: <SupervisedUserCircleSharpIcon /> },
-    { label: 'Подрядчики', path: '/contractors', icon: <SupervisedUserCircleSharpIcon /> },
     {
         label: 'Справочники',
         icon: <VscReferences />,
@@ -75,8 +72,19 @@ export default function Menu({ open, onClose }: DrawerProps) {
     };
 
     return (
-        <Drawer anchor="left" open={open} onClose={onClose}>
-            <Box sx={{ width: 240 }} role="presentation">
+        <Drawer
+            anchor="left"
+            open={open}
+            onClose={onClose}
+            PaperProps={{
+                sx: {
+                    width: 260,
+                    bgcolor: '#f0f7ff',
+                    height: '100vh',
+                },
+            }}
+        >
+            <Box sx={{ height: '100%' }} role="presentation">
                 <List disablePadding>
                     {drawerItems.map((item) => {
                         const isOpen = openSubmenus[item.label] ?? false;
@@ -88,26 +96,39 @@ export default function Menu({ open, onClose }: DrawerProps) {
                                 <ListItem disablePadding>
                                     <ListItemButton
                                         sx={{
-                                            // py: 0.9,
-                                            // pl: 1.9,
-                                            bgcolor: isActive ? 'action.selected' : 'inherit',
+                                            py: 0.9,
+                                            pl: 1.9,
+                                            my: 0.25,
+                                            bgcolor: isActive ? '#b6d3fc' : 'transparent',
+                                            color: isActive ? '#032666' : '#1f2937',
+                                            '& .MuiListItemIcon-root': {
+                                                minWidth: 36,
+                                                color: isActive ? '#032666' : '#6b7280',
+                                            },
+                                            '&:hover': {
+                                                bgcolor: isActive ? '#b6d3fc' : '#dee9fa',
+                                            },
                                         }}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleItemClick(item);
                                         }}
                                     >
-                                        <ListItemIcon sx={{ minWidth: 36 }}>
-                                            {item.icon}
-                                        </ListItemIcon>
+                                        <ListItemIcon>{item.icon}</ListItemIcon>
+
                                         <ListItemText
                                             primary={
-                                                <span className="text-[13px] text-gray-800 font-medium">
+                                                <span
+                                                    className={`text-[14px] font-medium ${
+                                                        isActive ? 'text-blue-900' : 'text-gray-800'
+                                                    }`}
+                                                >
                                                     {item.label}
                                                 </span>
                                             }
                                             disableTypography
                                         />
+
                                         {hasSubItems && (
                                             <ListItemIcon
                                                 sx={{ minWidth: 24, justifyContent: 'center' }}
