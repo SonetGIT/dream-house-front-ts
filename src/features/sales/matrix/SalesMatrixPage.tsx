@@ -798,7 +798,9 @@ export default function SalesMatrixPage() {
                     <UnitPassportPage
                         unitId={selectedUnitId}
                         onClose={() => setSelectedUnitId(null)}
-                        onDataChanged={reloadOverview}
+                        onDataChanged={async () => {
+                            await reloadOverview();
+                        }}
                     />
                 )}
             </div>
