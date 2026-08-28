@@ -23,7 +23,7 @@ export default function LegalDocStagesTable({
     onDeleteSubStageId,
 }: DocumentStagesTableProps) {
     const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
-
+    console.log('stages1', stages);
     const toggleRow = (id: number) => {
         setExpandedRowId((prev) => (prev === id ? null : id));
     };

@@ -22,12 +22,14 @@ export default function LegalDocStagesPage() {
     /* HOOKS */
 
     const { projectId } = useOutletContext<ProjectOutletContext>();
+    console.log('projectId', projectId);
     const dispatch = useAppDispatch();
 
     const { data: stages, loading, error } = useAppSelector((state) => state.legalDocStages);
 
     const { items } = useAppSelector((state) => state.legalDocuments);
-
+    console.log('stages', stages);
+    console.log('items', items);
     /* STATE */
 
     const [editingStage, setEditingStage] = useState<LegalDocStages | null>(null);
@@ -44,8 +46,13 @@ export default function LegalDocStagesPage() {
 
     /* DERIVED STATE */
 
-    const filteredStages = stages.filter((stage) =>
-        stage.name.toLowerCase().includes(search.toLowerCase()),
+    // const filteredStages = stages.filter((stage) =>
+    //     stage.name.toLowerCase().includes(search.toLowerCase()),
+    // );
+    const filteredStages = stages.filter(
+        (stage) =>
+            stage.project_id === projectId &&
+            stage.name.toLowerCase().includes(search.toLowerCase()),
     );
 
     const totalDocuments = items.filter((doc) => !doc.deleted).length;
@@ -207,7 +214,7 @@ export default function LegalDocStagesPage() {
                                 <Layers className="w-5 h-5 text-blue-600" />
                                 <span className="text-sm font-medium text-gray-700">Этапов:</span>
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white">
-                                    {stages.length}
+                                    {filteredStages.length}
                                 </span>
                             </div>
 

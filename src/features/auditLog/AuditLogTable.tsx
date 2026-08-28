@@ -16,6 +16,8 @@ import { useAppDispatch, useAppSelector } from '@/app/store';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { useReference } from '../reference/useReference';
 import { AuditLogMetadataList } from './AuditLogMetadataList';
+import type { ProjectOutletContext } from '../projects/pto/PtoPage';
+import { useOutletContext } from 'react-router-dom';
 
 /* ==== types ==== */
 
@@ -44,6 +46,11 @@ interface PropsType {
 
 /********************************************************************************************************************************/
 export function AuditLogTable({ entity_type, entity_id, formMetadata }: PropsType) {
+    const { projectId } = useOutletContext<ProjectOutletContext>();
+    console.log('projectId', projectId);
+    console.log('entity_type', entity_type);
+    console.log('entity_id', entity_id);
+
     const dispatch = useAppDispatch();
     const { data, loading, error } = useAppSelector((state) => state.auditLog);
 
