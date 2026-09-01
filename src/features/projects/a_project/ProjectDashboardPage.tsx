@@ -41,8 +41,8 @@ export default function ProjectDashboardPage() {
     const isIndexRoute = location.pathname === `/projects/${projectId}`;
 
     return (
-        <div className="min-h-screen bg-white bg-gradient-to-br">
-            <div className="mx-auto max-w-[1800px] py-2">
+        <div className="w-full rounded-[10px] bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+            <div className="w-full px-3 py-3 sm:px-6">
                 {/* <Box component="main" className="project-details-container"> */}
                 {/* BACK BUTTON */}
                 <div>

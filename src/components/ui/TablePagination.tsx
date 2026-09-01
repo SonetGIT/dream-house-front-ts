@@ -70,7 +70,7 @@ export function TablePagination({
 
     return (
         <div
-            className={`flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white ${className}`}
+            className={`flex items-center justify-between px-6 py-4 border-gray-200 bg-white ${className}`}
         >
             {/* Левая часть: выбор количества строк на странице */}
             <div className="flex items-center gap-4">

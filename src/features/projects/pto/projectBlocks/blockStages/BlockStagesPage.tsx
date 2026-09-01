@@ -43,7 +43,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
     });
 
     const [deleteState, setDeleteState] = useState<
-        { type: 'stage'; id: number }
+        | { type: 'stage'; id: number }
         | {
               type: 'subStage';
               id: number;
@@ -170,7 +170,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
             if (deleteState.type === 'stage') {
                 await dispatch(deleteBlockStage(deleteState.id)).unwrap();
 
-                toast.success('Этап удален');
+                toast.success('Этап успешно удален');
 
                 const nextPage =
                     stages.length === 1 && currentStagePage > 1
@@ -188,7 +188,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
                     }),
                 ).unwrap();
 
-                toast.success('Подэтап удален');
+                toast.success('Подэтап успешно удален');
 
                 const nextPage =
                     deleteState.currentPageItems === 1 && deleteState.page > 1

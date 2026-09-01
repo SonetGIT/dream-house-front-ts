@@ -56,19 +56,16 @@ export default function LegalDocStagesTable({
                                         Наименование
                                     </div>
                                 </th>
-
                                 <th className="px-4 py-3 text-left border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата создания
                                     </div>
                                 </th>
-
                                 <th className="px-3 py-3 text-left border-l bg-blue-50">
                                     <div className="text-xs font-semibold text-blue-700 uppercase">
                                         Дата обновления
                                     </div>
                                 </th>
-
                                 <th className="w-24 px-4 py-3 text-center border-l bg-gray-50">
                                     <div className="text-xs text-gray-600 uppercase">Действия</div>
                                 </th>
@@ -86,7 +83,7 @@ export default function LegalDocStagesTable({
                                                 className="transition-colors border-b hover:bg-gray-50"
                                                 onClick={() => toggleRow(stage.id)}
                                             >
-                                                <td className="px-4 py-3">
+                                                <td className="px-2 py-2">
                                                     <button
                                                         type="button"
                                                         className="p-2 transition-colors rounded-md hover:bg-white/80 focus:outline-none"
@@ -106,7 +103,6 @@ export default function LegalDocStagesTable({
                                                 <td className="text-[14px] text-gray-900 border-l border-gray-200 pl-2 pr-3 py-2.5">
                                                     {stage.name}
                                                 </td>
-
                                                 <td className="w-[200px] text-[14px] text-gray-700 border-l border-gray-200 px-3 py-2.5">
                                                     {formatDateTime(stage.created_at)}
                                                 </td>
@@ -160,11 +156,10 @@ export default function LegalDocStagesTable({
 
                                             {isExpanded && (
                                                 <tr className="bg-gray-50">
-                                                    <td className="border-b border-gray-200 w-9" />
                                                     <td
-                                                        colSpan={4}
+                                                        colSpan={6}
                                                         className="px-5 py-4 border-b border-gray-200"
-                                                        onClick={(e) => e.stopPropagation()}
+                                                        onClick={(event) => event.stopPropagation()}
                                                     >
                                                         <div className="ml-3">
                                                             <LegalDocTable

@@ -182,12 +182,9 @@ export default function ProjectsPage() {
 
     /*******************************************************************************************************************/
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-            <div className="mx-auto max-w-[1800px] px-4 py-5">
-                {/* Header */}
-                <div>
-                    <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Объекты</h1>
-                </div>
+        <div className="w-full rounded-[10px] bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+            <div className="w-full px-3 py-3 sm:px-6">
+                <h1 className="mb-2 text-3xl font-bold text-left text-sky-800">Объекты</h1>
 
                 {/* Фильтры */}
                 <ProjectFiltersPanel

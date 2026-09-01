@@ -103,6 +103,8 @@ export default function App() {
     if (!isAuthChecked) {
         return <div>Loading...</div>;
     }
+
+    /**********************************************************************************************/
     return (
         <div className="flex flex-col min-h-screen">
             <Header onMenuClick={handleMenuClick} />
@@ -123,28 +125,4 @@ export default function App() {
             <Footer />
         </div>
     );
-
-    // return (
-    //     // <div className="app-container">
-    //     <div>
-    //         <Header onMenuClick={handleMenuClick} />
-    //         <Menu open={drawerOpen} onClose={handleDrawerClose} />
-
-    //         {/* <main className="text-center"> */}
-    //         <main>
-    //             <Outlet />
-    //         </main>
-    //         <Footer />
-
-    //         <ChangePasswordModal
-    //             open={resetRequired}
-    //             newPassword={passwords.newPassword}
-    //             repeatPassword={passwords.repeatPassword}
-    //             onChange={handlePasswordChange}
-    //             onSave={handlePasswordSave}
-    //             onClose={() => {}}
-    //             loading={loading}
-    //         />
-    //     </div>
-    // );
 }
