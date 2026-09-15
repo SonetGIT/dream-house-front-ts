@@ -27,6 +27,9 @@ interface State {
     unreadCount: number;
     loading: boolean;
     error: string | null;
+    listRequestId: string | null;
+    countRequestId: string | null;
+    liveItems: Notification[];
 }
 
 //INITIAL
@@ -35,6 +38,9 @@ const initialState: State = {
     unreadCount: 0,
     loading: false,
     error: null,
+    listRequestId: null,
+    countRequestId: null,
+    liveItems: [],
 };
 
 const getErrorMessage = (error: unknown, fallback: string) =>
@@ -94,7 +100,8 @@ const notificationSlice = createSlice({
 
             if (!state.items.find((i) => i.id === n.id)) {
                 state.items.unshift(n);
-                state.unreadCount++;
+                if (!n.is_read) state.unreadCount++;
+                if (state.listRequestId) state.liveItems.unshift(n);
             }
         },
 
@@ -108,29 +115,47 @@ const notificationSlice = createSlice({
         builder
 
             //UNREAD COUNT
-            .addCase(fetchUnreadCount.pending, (state) => {
+            .addCase(fetchUnreadCount.pending, (state, action) => {
+                state.countRequestId = action.meta.requestId;
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchUnreadCount.fulfilled, (state, action) => {
-                state.loading = false;
+                if (state.countRequestId !== action.meta.requestId) return;
+                state.countRequestId = null;
+                state.loading = state.listRequestId !== null;
                 state.unreadCount = action.payload ?? 0;
             })
             .addCase(fetchUnreadCount.rejected, (state, action) => {
-                state.loading = false;
+                if (state.countRequestId !== action.meta.requestId) return;
+                state.countRequestId = null;
+                state.loading = state.listRequestId !== null;
                 state.error = action.payload || 'Ошибка загрузки';
             })
 
             //LIST
-            .addCase(fetchNotifications.pending, (state) => {
+            .addCase(fetchNotifications.pending, (state, action) => {
+                state.listRequestId = action.meta.requestId;
+                state.liveItems = [];
                 state.loading = true;
+                state.error = null;
             })
             .addCase(fetchNotifications.fulfilled, (state, action) => {
-                state.loading = false;
-                state.items = action.payload;
+                if (state.listRequestId !== action.meta.requestId) return;
+                state.listRequestId = null;
+                state.loading = state.countRequestId !== null;
+                const liveIds = new Set(state.liveItems.map((item) => item.id));
+                state.items = [
+                    ...state.liveItems,
+                    ...action.payload.filter((item) => !liveIds.has(item.id)),
+                ];
+                state.liveItems = [];
             })
             .addCase(fetchNotifications.rejected, (state, action) => {
-                state.loading = false;
+                if (state.listRequestId !== action.meta.requestId) return;
+                state.listRequestId = null;
+                state.liveItems = [];
+                state.loading = state.countRequestId !== null;
                 state.error = action.payload || 'Ошибка загрузки';
             })
 
@@ -143,7 +168,14 @@ const notificationSlice = createSlice({
                     item.is_read = true;
                     state.unreadCount = Math.max(0, state.unreadCount - 1);
                 }
-            });
+            })
+            // Reset at the auth boundary, not on transport reconnect. In-flight
+            // responses from the previous session are ignored by request IDs.
+            .addMatcher(
+                (action) => ['auth/logout', 'auth/fetchProfile/rejected', 'auth/authUser/fulfilled']
+                    .includes(action.type),
+                () => ({ ...initialState, items: [], liveItems: [] }),
+            );
     },
 });
 

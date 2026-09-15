@@ -11,6 +11,8 @@ import { fetchProjectBlocks } from '../pto/projectBlocks/projectBlocksSlice';
 import { FaFileExcel, FaFilePdf, FaFileWord } from 'react-icons/fa';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { REPORT_BASE_URL } from '../pto/workPerformed/workPerformedTs/downloadWorkPerformedReport';
+import toast from 'react-hot-toast';
+import { reportRequest } from './reportRequest';
 
 /**********************************************************************************************************************/
 export default function ReportsPage() {
@@ -47,6 +49,14 @@ export default function ReportsPage() {
             }),
         );
     }, [dispatch, numericProjectId]);
+
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                window.URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const refs = {
         projectBlocks: useReference('projectBlocks'),
@@ -104,21 +114,42 @@ export default function ReportsPage() {
         return result.valid;
     };
 
-    const handlePreview = () => {
+    const handlePreview = async () => {
         if (!runValidation() || !selectedReport) return;
 
         const url = buildReportUrl(selectedReport, 'html', values, contextValues, REPORT_BASE_URL);
 
         setPreviewLoading(true);
-        setPreviewUrl(url);
+        try {
+            const response = await reportRequest(url);
+            setPreviewUrl(window.URL.createObjectURL(response.blob));
+        } catch (error) {
+            setPreviewLoading(false);
+            toast.error(
+                error instanceof Error ? error.message : 'Не удалось сформировать отчёт',
+            );
+        }
     };
 
-    const handleDownload = (format: 'pdf' | 'docx' | 'xlsx') => {
+    const handleDownload = async (format: 'pdf' | 'docx' | 'xlsx') => {
         if (!runValidation() || !selectedReport) return;
 
         const url = buildReportUrl(selectedReport, format, values, contextValues, REPORT_BASE_URL);
 
-        window.open(url, '_blank', 'noopener,noreferrer');
+        try {
+            const response = await reportRequest(url);
+            const objectUrl = window.URL.createObjectURL(response.blob);
+            const link = document.createElement('a');
+
+            link.href = objectUrl;
+            link.download = response.fileName || `${selectedReport.name}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 0);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Не удалось скачать отчёт');
+        }
     };
 
     /******************************************************************************************************************/

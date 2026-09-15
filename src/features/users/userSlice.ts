@@ -5,6 +5,7 @@ export interface Pagination {
     page: number;
     size: number;
     total: number;
+    totalSubSections?: number;
     pages: number;
     hasNext: boolean;
     hasPrev: boolean;

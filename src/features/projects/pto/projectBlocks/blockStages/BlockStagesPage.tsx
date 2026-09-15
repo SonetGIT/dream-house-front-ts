@@ -61,10 +61,7 @@ export default function BlockStagesPage({ blockId }: { blockId: number }) {
     /* статистика по этапам и подэтапам */
     const totalStages = stagesPagination?.total ?? stages.length;
 
-    const totalSubStages = stages.reduce((sum, stage) => {
-        const subStages = subStagesByStageId[stage.id] ?? [];
-        return sum + subStages.length;
-    }, 0);
+    const totalSubStages = stagesPagination?.totalSubSections ?? stages.length;
 
     /* загрузка этапов */
     useEffect(() => {
