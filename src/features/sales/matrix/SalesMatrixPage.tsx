@@ -278,7 +278,6 @@ export default function SalesMatrixPage() {
                 // Load SVG content directly as blob text.
                 const blob = await fetchFileContent(
                     `/documentFiles/download/${svgFile.id}`,
-                    localStorage.getItem('token') || undefined,
                 );
 
                 if (cancelled) return;

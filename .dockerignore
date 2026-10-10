@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.git
+.env
+.env.*
+.vscode
+.idea
+coverage
+*.log
+*.tsbuildinfo
+*.bat
+Docker.md
+package-lock.json

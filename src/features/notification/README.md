@@ -6,7 +6,7 @@ change closes the previous connection, removes listeners and clears notification
 
 Defaults:
 
-- Server: the origin of `VITE_BASE_URL` (without `/api`).
+- Server: the origin of `VITE_API_URL` (without `/api`).
 - Socket.IO path: `/socket.io`.
 - Namespace: `/`.
 - Token: `socket.handshake.auth.token`; the polling handshake also includes

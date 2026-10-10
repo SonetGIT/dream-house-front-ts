@@ -1,3 +1,4 @@
+import { authenticatedFetch } from '@/features/auth/authSession';
 import { getToken } from '@/features/auth/getToken';
 
 export interface ReportResponse {
@@ -41,7 +42,7 @@ export async function reportRequest(url: string): Promise<ReportResponse> {
     }
 
     try {
-        const response = await fetch(url, {
+        const response = await authenticatedFetch(url, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${token}`,

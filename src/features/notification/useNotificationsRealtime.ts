@@ -26,7 +26,7 @@ export const useNotificationsRealtime = () => {
         const syncNotifications = () => {
             // Also restore notifications missed while the connection was offline.
             dispatch(fetchUnreadCount());
-            dispatch(fetchNotifications({ page: 1, size: 20 }));
+            dispatch(fetchNotifications({ page: 1, size: 10 }));
         };
 
         const handleNew = (data: NotificationEvent) => {

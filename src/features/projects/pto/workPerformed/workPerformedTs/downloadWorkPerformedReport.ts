@@ -1,8 +1,9 @@
+import { authenticatedFetch } from '@/features/auth/authSession';
 import { getToken } from '@/features/auth/getToken';
 
 type WorkPerformedReportFormat = 'pdf' | 'xlsx' | 'docx' | 'html';
 
-export const REPORT_BASE_URL = 'http://77.235.27.71:8080';
+export const REPORT_BASE_URL = import.meta.env.VITE_REPORTS_URL;
 
 const getFileNameFromContentDisposition = (contentDisposition: string | null) => {
     if (!contentDisposition) return null;
@@ -27,7 +28,7 @@ export const downloadWorkPerformedReport = async (
 ) => {
     const token = getToken();
 
-    const response = await fetch(`${REPORT_BASE_URL}/report/workPerformed/${id}?format=${format}`, {
+    const response = await authenticatedFetch(`${REPORT_BASE_URL}/report/workPerformed/${id}?format=${format}`, {
         method: 'GET',
         headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),

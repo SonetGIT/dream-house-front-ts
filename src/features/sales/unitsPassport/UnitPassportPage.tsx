@@ -1,3 +1,4 @@
+import { authenticatedFetch } from '@/features/auth/authSession';
 import { type ChangeEvent, type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -259,25 +260,6 @@ const getMonthDiff = (start: string, end: string) => {
         (endDate.getMonth() - startDate.getMonth());
 
     return Math.max(diff || 1, 1);
-};
-
-const getSalesReportBaseUrls = () => {
-    const candidates = [REPORT_BASE_URL];
-
-    [import.meta.env.VITE_BASE_URL as string | undefined, window.location.origin].forEach(
-        (value) => {
-            if (!value) return;
-
-            try {
-                const url = new URL(value);
-                candidates.push(`${url.protocol}//${url.hostname}:8080`);
-            } catch {
-                // Ignore malformed runtime URL values.
-            }
-        },
-    );
-
-    return Array.from(new Set(candidates.filter(Boolean)));
 };
 
 const statusTextHas = (reservation: SalesReservation | null | undefined, parts: string[]) => {
@@ -1675,9 +1657,8 @@ export function UnitPassportPage({ unitId, onClose, onDataChanged }: UnitPasspor
         const fallbackName = `График платежей договор №${deal.contract_number || deal.id}.xlsx`;
 
         try {
-            const [baseUrl] = getSalesReportBaseUrls();
-            const response = await fetch(
-                `${baseUrl}/report/sales-payment-schedule?dealId=${deal.id}`,
+            const response = await authenticatedFetch(
+                `${REPORT_BASE_URL}/report/sales-payment-schedule?dealId=${deal.id}`,
                 {
                     method: 'GET',
                     headers: token ? { Authorization: `Bearer ${token}` } : {},

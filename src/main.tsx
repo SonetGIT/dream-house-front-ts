@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { router } from './app/router.tsx';
 import { store } from './app/store.ts';
 import { CustomToaster } from './components/ui/CustomToaster.tsx';
+import AuthSessionSync from './features/auth/AuthSessionSync.tsx';
 import SocketProvider from './features/notification/SocketProvider.tsx';
 import './index.css';
 import './styles/table.css';
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
         <Provider store={store}>
             {/* RouterProvider рендерит всё приложение, согласно маршрутам, описанным в router.tsx. App.tsx  */}
             <CustomToaster />
+            <AuthSessionSync />
             <SocketProvider>
                 <RouterProvider router={router} />
             </SocketProvider>

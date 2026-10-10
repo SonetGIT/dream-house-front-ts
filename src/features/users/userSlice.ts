@@ -31,6 +31,8 @@ export interface User {
 
     created_at: string;
     updated_at: string;
+    last_seen_at?: string | null;
+    isOnline?: boolean | null;
 
     deleted: boolean;
 }
@@ -53,7 +55,7 @@ export interface UserForm {
     required_action?: string | null;
 }
 
-export type UserFormData = Omit<User, 'id' | 'created_at' | 'updated_at' | 'deleted'>;
+export type UserFormData = Omit<User, 'id' | 'created_at' | 'updated_at' | 'deleted' | 'last_seen_at' | 'isOnline'>;
 export type UserSubmitData = UserFormData & { password?: string };
 
 interface UsersState {

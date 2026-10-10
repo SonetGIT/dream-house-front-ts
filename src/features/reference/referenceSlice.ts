@@ -21,7 +21,7 @@ export const fetchEnum = createAsyncThunk<
         return rejectWithValue(null); // ⬅️ НЕ ошибка, просто нет токена
     }
 
-    const API_URL = import.meta.env.VITE_BASE_URL;
+    const API_URL = import.meta.env.VITE_API_URL;
     const service = new ReferenceService(API_URL, token, extra.config);
 
     try {

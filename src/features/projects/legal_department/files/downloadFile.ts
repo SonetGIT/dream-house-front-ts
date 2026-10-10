@@ -1,7 +1,8 @@
-const API_URL = import.meta.env.VITE_BASE_URL;
+import { authenticatedFetch } from '@/features/auth/authSession';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export async function downloadFile(endpoint: string, filename: string, token?: string) {
-    const res = await fetch(`${API_URL}${endpoint}`, {
+    const res = await authenticatedFetch(`${API_URL}${endpoint}`, {
         method: 'GET',
         headers: {
             ...(token && { Authorization: `Bearer ${token}` }),
@@ -31,7 +32,7 @@ export async function downloadFile(endpoint: string, filename: string, token?: s
     window.URL.revokeObjectURL(url);
 }
 export async function fetchFileContent(endpoint: string, token?: string): Promise<Blob> {
-    const res = await fetch(`${API_URL}${endpoint}`, {
+    const res = await authenticatedFetch(`${API_URL}${endpoint}`, {
         method: 'GET',
         headers: {
             ...(token && { Authorization: `Bearer ${token}` }),

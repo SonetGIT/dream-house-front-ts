@@ -172,8 +172,8 @@ const notificationSlice = createSlice({
             // Reset at the auth boundary, not on transport reconnect. In-flight
             // responses from the previous session are ignored by request IDs.
             .addMatcher(
-                (action) => ['auth/logout', 'auth/fetchProfile/rejected', 'auth/authUser/fulfilled']
-                    .includes(action.type),
+                (action) => ['auth/endSession/pending', 'auth/fetchProfile/rejected', 'auth/authUser/fulfilled']
+                    .includes(action.type) || (action.type === 'auth/syncSession' && !action.payload),
                 () => ({ ...initialState, items: [], liveItems: [] }),
             );
     },

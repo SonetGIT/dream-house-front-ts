@@ -1,8 +1,9 @@
+import { authenticatedFetch } from '@/features/auth/authSession';
 import { getToken } from '@/features/auth/getToken';
 import type { TasksStats } from '@/features/projects/tasks/tasksSlice';
 import type { Pagination } from '@/features/users/userSlice';
 
-const API_URL = import.meta.env.VITE_BASE_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export interface ApiResponse<T> {
     data: T;
@@ -45,7 +46,7 @@ export async function apiRequest<T = any>(
             config.body = isFormData ? body : JSON.stringify(body);
         }
 
-        const res = await fetch(`${API_URL}${endpoint}`, config);
+        const res = await authenticatedFetch(`${API_URL}${endpoint}`, config);
 
         const contentType = res.headers.get('content-type');
 

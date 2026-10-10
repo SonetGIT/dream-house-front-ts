@@ -4,6 +4,13 @@ import type { User } from './userSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { formatPhoneDisplay } from '@/utils/formatPhoneNumber';
 
+function formatLastSeen(value: string | null | undefined): string {
+    if (value == null) return 'Еще не входил(а)';
+    // The API timestamp has no timezone: preserve its time without browser conversion.
+    const match = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}:\d{2})(?:\.\d+)?$/.exec(value);
+    return match ? `${match[3]}.${match[2]}.${match[1]} ${match[4]}` : value || '—';
+}
+
 interface UsersTableProps {
     users: User[];
     refs: Record<string, ReferenceResult>;
@@ -137,6 +144,12 @@ export default function UsersTable({
                             Подрядчик
                         </th>
 
+                        <th className="w-24 px-3 py-3 text-xs font-semibold text-left">
+                            Статус
+                        </th>
+                        <th className="w-40 px-3 py-3 text-xs font-semibold text-left">
+                            Последнее посещение
+                        </th>
                         <th className="w-20 px-3 py-3 text-xs font-semibold text-center">
                             Действия
                         </th>
@@ -252,6 +265,18 @@ export default function UsersTable({
                                     ) : (
                                         '_'
                                     )}
+                                </td>
+                                <td className="px-3 py-2.5 text-left">
+                                    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold border rounded-full whitespace-nowrap ${
+                                        user.isOnline === true
+                                            ? 'bg-green-100 text-green-800 border-green-200'
+                                            : 'bg-gray-100 text-gray-800 border-gray-200'
+                                    }`}>
+                                        {user.isOnline === true ? 'В сети' : user.isOnline === false ? 'Не в сети' : '—'}
+                                    </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-xs text-left text-gray-700 whitespace-nowrap">
+                                    {formatLastSeen(user.last_seen_at)}
                                 </td>
                                 {/* Действия */}
                                 <td className="px-3 py-2">

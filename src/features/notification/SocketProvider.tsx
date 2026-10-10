@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { io } from 'socket.io-client';
 import { useAppSelector } from '@/app/store';
+import { authClient, subscribeAuthSession } from '@/features/auth/authSession';
 import { SocketContext } from './socketContext';
 
 export default function SocketProvider({ children }: { children: ReactNode }) {
-    const { token, user, isAuthChecked } = useAppSelector((state) => state.auth);
+    const { user, isAuthChecked } = useAppSelector((state) => state.auth);
+    const token = useSyncExternalStore(subscribeAuthSession,
+        () => authClient.getSession()?.accessToken ?? null);
     const userId = user?.id;
     const canConnect = Boolean(token && userId && isAuthChecked);
     const [connected, setConnected] = useState(false);
     const [socket] = useState(() => {
         // REST uses /api; Socket.IO uses the server origin, not the /api namespace.
         const serverUrl = import.meta.env.VITE_SOCKET_URL ||
-            new URL(import.meta.env.VITE_BASE_URL || '/', window.location.origin).origin;
+            new URL(import.meta.env.VITE_API_URL || '/', window.location.origin).origin;
 
         return io(serverUrl, {
             path: import.meta.env.VITE_SOCKET_PATH || '/socket.io',
@@ -30,11 +33,26 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         // Polling handshake also supports backends that read the Bearer header.
         socket.io.opts.extraHeaders = { Authorization: `Bearer ${token}` };
 
+        let disposed = false;
+        let refreshing = false;
         const handleConnect = () => setConnected(true);
         const handleDisconnect = () => setConnected(false);
-        const handleError = (error: Error) => {
+        const handleError = (error: Error & { data?: { code?: string } }) => {
             setConnected(false);
             console.warn('[Socket.IO] Ошибка подключения:', error.message);
+            const code = error.data?.code;
+            if (!refreshing && (error.message === 'Unauthorized' || code?.startsWith('ACCESS_TOKEN_') ||
+                code === 'SESSION_REVOKED' || code === 'USER_UNAVAILABLE')) {
+                refreshing = true;
+                void authClient.refreshAccessToken(token, code).then((nextToken) => {
+                    if (disposed || authClient.getSession()?.accessToken !== nextToken) return;
+                    socket.auth = { token: nextToken };
+                    socket.io.opts.extraHeaders = { Authorization: `Bearer ${nextToken}` };
+                    socket.connect();
+                }).catch(() => {
+                    // Session changes are handled centrally; avoid an auth retry loop.
+                });
+            }
         };
 
         socket.on('connect', handleConnect);
@@ -43,6 +61,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         socket.connect();
 
         return () => {
+            disposed = true;
             socket.disconnect();
             socket.off('connect', handleConnect);
             socket.off('disconnect', handleDisconnect);

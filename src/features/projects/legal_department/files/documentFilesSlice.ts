@@ -78,7 +78,6 @@ export const downloadDocumentFile = createAsyncThunk<
         await downloadFile(
             `/documentFiles/download/${file_id}`,
             filename,
-            localStorage.getItem('token') || undefined,
         );
     } catch (err: any) {
         return rejectWithValue(err.message || 'Ошибка скачивания файла');

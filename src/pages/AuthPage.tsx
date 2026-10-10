@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../app/store';
 import { authUser } from '../features/auth/authSlice';
 import { type AuthCredentials } from '../features/auth/authSlice';
@@ -11,11 +11,15 @@ export default function AuthPage() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const { loading, error } = useAppSelector((state) => state.auth);
+    const { loading, error, user, isAuthChecked } = useAppSelector((state) => state.auth);
     const [authForm, setAuthForm] = useState<AuthCredentials>({
         username: '',
         password: '',
     });
+
+    useEffect(() => {
+        if (user && isAuthChecked && user.required_action !== 'RESET_PASSWORD') navigate('/projects');
+    }, [user, isAuthChecked, navigate]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setAuthForm({ ...authForm, [e.target.id]: e.target.value });

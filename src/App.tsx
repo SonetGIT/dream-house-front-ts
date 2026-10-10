@@ -2,7 +2,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppSelector, useAppDispatch } from './app/store';
-import { changeOwnPassword, fetchProfile, logout, setAuthChecked } from './features/auth/authSlice';
+import { changeOwnPassword, logout } from './features/auth/authSlice';
 
 import Header from './components/home/Header';
 import Footer from './components/home/Footer';
@@ -27,16 +27,6 @@ export default function App() {
 
     const handleMenuClick = () => setDrawerOpen(true);
     const handleDrawerClose = () => setDrawerOpen(false);
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-
-        if (token) {
-            dispatch(fetchProfile());
-        } else {
-            dispatch(setAuthChecked());
-        }
-    }, [dispatch]);
 
     useEffect(() => {
         if (!isAuthChecked) return;
@@ -100,9 +90,11 @@ export default function App() {
             .catch((err: string) => toast.error(err));
     };
 
-    if (!isAuthChecked) {
+    if (!isAuthChecked || (!user && loading)) {
         return <div>Loading...</div>;
     }
+
+    if (!user) return null;
 
     /**********************************************************************************************/
     return (

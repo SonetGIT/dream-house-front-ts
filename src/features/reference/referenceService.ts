@@ -1,3 +1,4 @@
+import { authenticatedFetch } from '@/features/auth/authSession';
 export interface EnumItem {
     id: number | string;
     name?: string;
@@ -37,7 +38,7 @@ export class ReferenceService {
         }
 
         const url = `${this.baseUrl}${conf.apiName}`;
-        const response = await fetch(url, {
+        const response = await authenticatedFetch(url, {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,

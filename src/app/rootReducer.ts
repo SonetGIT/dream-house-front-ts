@@ -1,5 +1,5 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import authReducer from '../features/auth/authSlice';
+import authReducer, { syncSession } from '../features/auth/authSlice';
 import userReducer from '../features/users/userSlice';
 import projectsReducer from '../features/projects/a_project/projectsSlice';
 import referenceReducer from '../features/reference/referenceSlice';
@@ -45,7 +45,7 @@ import salesPaymentSchedulesReducer from '@/features/sales/slices/salesPaymentSc
 import salesDictionariesReducer from '@/features/sales/slices/salesDictionariesSlice';
 import salesUnitPassportReducer from '@/features/sales/slices/salesUnitPassportSlice';
 
-export const rootReducer = combineReducers({
+const combinedReducer = combineReducers({
     auth: authReducer,
     users: userReducer,
     reference: referenceReducer,
@@ -93,4 +93,13 @@ export const rootReducer = combineReducers({
     salesUnitPassport: salesUnitPassportReducer,
 });
 
-export type RootReducerState = ReturnType<typeof rootReducer>;
+export type RootReducerState = ReturnType<typeof combinedReducer>;
+export const rootReducer: typeof combinedReducer = (state, action) => {
+    if (state?.auth && syncSession.match(action)) {
+        const nextGeneration = action.payload?.generation ?? null;
+        if (state.auth.generation !== nextGeneration) {
+            state = { ...combinedReducer(undefined, { type: '@@auth/reset' }), auth: state.auth };
+        }
+    }
+    return combinedReducer(state, action);
+};
