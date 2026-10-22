@@ -1,7 +1,7 @@
 import { Pencil, Trash2, Check, X } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { EstimateItem } from './estimateItemsSlice';
-import { useState, useMemo } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
 import { useCurrencyRates } from '@/utils/useCurrencyRates';
 import { parseNumber } from '@/utils/parseNumber';
@@ -145,9 +145,12 @@ export default function MaterialsTable({
                 <tbody>
                     {items
                         .filter((sub) => sub.item_type === 1)
-                        .map((sub) => {
+                        .map((sub, index, rows) => {
                             const isEditing = editingId === sub.id;
                             const data = isEditing ? editedData : sub;
+                            const previous = rows[index - 1];
+                            const startsGroup = !previous || previous.stage_id !== sub.stage_id ||
+                                previous.subsection_id !== sub.subsection_id;
 
                             const filteredMaterials = data.material_type
                                 ? materialsByType[Number(data.material_type)] || []
@@ -162,8 +165,17 @@ export default function MaterialsTable({
                                     : [];
 
                             return (
+                                <Fragment key={sub.id}>
+                                    {startsGroup && (
+                                        <tr className="border-b border-blue-100 bg-blue-50">
+                                            <th colSpan={14} className="px-3 py-3 text-sm font-semibold text-left text-blue-800">
+                                                {sub.stage_id != null ? refs.blockStages.lookup(sub.stage_id) : 'Без этапа'}
+                                                {' / '}
+                                                {sub.subsection_id != null ? refs.stageSubsections.lookup(sub.subsection_id) : 'Без подэтапа'}
+                                            </th>
+                                        </tr>
+                                    )}
                                 <tr
-                                    key={sub.id}
                                     className={`transition-colors border-b ${isEditing ? 'bg-blue-50/30' : 'hover:bg-gray-50'}`}
                                 >
                                     <td className="px-3 py-3 text-sm text-gray-600">
@@ -445,8 +457,12 @@ export default function MaterialsTable({
                                         </div>
                                     </td>
                                 </tr>
+                                </Fragment>
                             );
                         })}
+                    {!items.some((row) => row.item_type === 1) && (
+                        <tr><td colSpan={14} className="py-6 text-sm text-center text-gray-500">Материалы отсутствуют</td></tr>
+                    )}
                 </tbody>
             </table>
         </div>

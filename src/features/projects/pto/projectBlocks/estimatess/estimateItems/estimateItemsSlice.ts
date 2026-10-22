@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
+import { copyBlockStructure } from '../../copyBlockStructure';
 
 /*TYPES*/
 export interface EstimateItem {
@@ -64,12 +65,14 @@ interface EstimateItemsState {
     byEstimateId: Record<number, EstimateItem[]>;
     loading: boolean;
     error: string | null;
+    requestId: string | null;
 }
 
 const initialState: EstimateItemsState = {
     byEstimateId: {},
     loading: false,
     error: null,
+    requestId: null,
 };
 
 /*FETCH*/
@@ -149,14 +152,17 @@ const estimateItemsSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
+            .addCase(copyBlockStructure.fulfilled, () => initialState)
 
             /* FETCH */
-            .addCase(fetchEstimateItems.pending, (state) => {
+            .addCase(fetchEstimateItems.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
+                state.requestId = action.meta.requestId;
             })
 
             .addCase(fetchEstimateItems.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
 
                 state.byEstimateId = {};
@@ -173,6 +179,7 @@ const estimateItemsSlice = createSlice({
             })
 
             .addCase(fetchEstimateItems.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })

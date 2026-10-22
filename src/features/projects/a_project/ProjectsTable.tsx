@@ -100,6 +100,7 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                         <th className="w-24 px-3 py-3 text-xs font-semibold text-left">Прогресс</th>
                         <th className="px-3 py-3 text-xs font-semibold text-left w-28">Менеджер</th>
                         <th className="px-3 py-3 text-xs font-semibold text-left w-28">Прораб</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-left w-28">Нач. участка</th>
                         <th className="px-3 py-3 text-xs font-semibold text-left w-28">Мастер</th>
                         <th className="px-3 py-3 text-xs font-semibold text-left w-28">
                             Зав. склад
@@ -229,6 +230,12 @@ export function ProjectsTable({ projects, refs, onEdit, onDelete, loading }: Pro
                                 <td className="px-3 py-2.5 text-xs text-gray-700">
                                     {project.foreman_id
                                         ? refs.users.lookup(project.foreman_id)
+                                        : '—'}
+                                </td>
+                                {/* Начальник участка */}
+                                <td className="px-3 py-2.5 text-xs text-gray-700">
+                                    {project.site_manager_id
+                                        ? refs.users.lookup(project.site_manager_id)
                                         : '—'}
                                 </td>
                                 {/* Мастер */}

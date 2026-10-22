@@ -225,7 +225,7 @@ export default function MaterialWriteOffTable({
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">
-                                                {`Акт №${writeOff.work_performed_id}`}
+                                                {`Акт №${writeOff.work_performed?.number ?? '—'}`}
                                             </td>
 
                                             <td className="px-2 py-2 text-xs text-center text-gray-900">

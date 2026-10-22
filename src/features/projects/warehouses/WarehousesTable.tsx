@@ -105,6 +105,7 @@ export default function WarehousesTable({
     const workPerformedOptions = useMemo(() => {
         return (workPerformedData ?? []).map((item) => ({
             id: item.id,
+            number: item.number,
             performed_person_name: item.performed_person_name,
             created_at: item.created_at,
             items:

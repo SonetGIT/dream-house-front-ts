@@ -6,6 +6,7 @@ import type { PurchaseOrderItem } from '../purchaseOrderItems/purchaseOrderItems
 /* TYPES */
 export interface PurchaseOrder {
     id: number;
+    number?: string | number | null;
     project_id: number;
     block_id: number;
     status: number;

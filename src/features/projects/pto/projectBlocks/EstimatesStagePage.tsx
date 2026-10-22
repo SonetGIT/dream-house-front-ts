@@ -1,45 +1,59 @@
 import { useEffect, useState } from 'react';
-import { Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
+import { Alert, Button, CircularProgress, Paper, Typography, Tabs, Tab, Divider, Box } from '@mui/material';
 import { CheckCircle2, Clock, DollarSign, Home, Ruler, TrendingUp } from 'lucide-react';
 import EstimatesPage from './estimatess/EstimatesPage';
 import BlockStagesPage from './blockStages/BlockStagesPage';
 import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import { fetchProjectBlocks } from './projectBlocksSlice';
+import { fetchStructureProjectBlocks } from './copyBlockStructure';
+import CopyBlockStructureButton from './CopyBlockStructureButton';
+import { fetchEstimates } from './estimatess/estimatesSlice';
+import { fetchEstimateItems } from './estimatess/estimateItems/estimateItemsSlice';
+import toast from 'react-hot-toast';
 
 /*ЭТАПЫ-СМЕТЫ*******************************************************************************************************************************/
 export default function EstimatesStagePage() {
     const dispatch = useAppDispatch();
     const { projectId, prjBlockId } = useParams();
     const blockId = prjBlockId ? Number(prjBlockId) : null;
+    const projectIdNumber = Number(projectId);
+    const [tabIndex, setTabIndex] = useState(0);
 
-    const { data: blocks } = useAppSelector((state) => state.projectBlocks);
+    const { data: blocks, loading, error, structureVersion } = useAppSelector((state) => state.projectBlocks);
 
-    const currentBlock = blocks.find((b) => b.id === blockId) ?? null;
+    const currentBlock = blocks.find((b) => b.id === blockId && b.project_id === projectIdNumber) ?? null;
 
     const blockName = currentBlock?.name || '';
 
     useEffect(() => {
-        if (Number(projectId)) {
-            dispatch(
-                fetchProjectBlocks({
-                    page: 1,
-                    size: 10,
-                    project_id: Number(projectId),
-                }),
-            );
+        if (Number.isSafeInteger(projectIdNumber) && projectIdNumber > 0) {
+            dispatch(fetchStructureProjectBlocks(projectIdNumber));
         }
-    }, [dispatch, Number(projectId)]);
+    }, [dispatch, projectIdNumber, blockId, structureVersion]);
 
-    if (blockId === null) {
+    // Refresh follows the active page, including browser navigation during a copy.
+    // The active tab remounts on structureVersion; prefetch the estimate on the stages tab.
+    useEffect(() => {
+        if (!blockId || !Number.isSafeInteger(blockId) || blockId <= 0 || structureVersion === 0 || tabIndex !== 0) return;
+        let active = true;
+        void Promise.allSettled([
+            dispatch(fetchEstimates({ block_id: blockId, page: 1, size: 10 })).unwrap(),
+            dispatch(fetchEstimateItems()).unwrap(),
+        ]).then((results) => {
+            if (active && results.some((result) => result.status === 'rejected')) {
+                toast.error('Не все данные сметы обновились. Обновите страницу.');
+            }
+        });
+        return () => { active = false; };
+    }, [dispatch, blockId, structureVersion, tabIndex]);
+
+    if (blockId === null || !Number.isSafeInteger(blockId) || blockId <= 0) {
         return (
             <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }}>
                 <Typography color="text.secondary">Блоки отсутствуют</Typography>
             </Paper>
         );
     }
-
-    const [tabIndex, setTabIndex] = useState(0);
 
     return (
         <Paper sx={{ flex: 1, p: 3, borderRadius: 3 }}>
@@ -54,9 +68,11 @@ export default function EstimatesStagePage() {
                 }}
             >
                 {/* Левая часть — название */}
-                <Typography variant="h5" fontWeight={400}>
-                    {blockName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Typography variant="h5" fontWeight={400}>{blockName}</Typography>
+                    {currentBlock && <CopyBlockStructureButton key={blockId} source={currentBlock}
+                        onCopied={() => setTabIndex(0)} />}
+                </Box>
 
                 {/* Правая часть — карточки */}
                 <div className="flex flex-wrap items-center gap-4">
@@ -136,6 +152,15 @@ export default function EstimatesStagePage() {
                     )}
                 </div>
             </Box>
+            {loading && <CircularProgress size={24} aria-label="Загрузка показателей блока" />}
+            {error && <Alert severity="error" sx={{ my: 2 }} action={
+                <Button color="inherit" onClick={() => dispatch(fetchStructureProjectBlocks(projectIdNumber))}>
+                    Повторить
+                </Button>
+            }>{error}</Alert>}
+            {!loading && !error && !currentBlock && <Alert severity="warning" sx={{ my: 2 }}>
+                Блок не найден в текущем проекте.
+            </Alert>}
             <Tabs value={tabIndex} onChange={(_, value) => setTabIndex(value)} sx={{ mb: 1 }}>
                 <Tab label="Этапы" />
                 <Tab label="Сметы" />
@@ -143,8 +168,8 @@ export default function EstimatesStagePage() {
 
             <Divider sx={{ mb: 2 }} />
             <Box>
-                {tabIndex === 0 && <BlockStagesPage blockId={blockId} />}
-                {tabIndex === 1 && <EstimatesPage blockId={blockId} blockName={blockName} />}
+                {tabIndex === 0 && <BlockStagesPage key={`${blockId}:${structureVersion}`} blockId={blockId} />}
+                {tabIndex === 1 && <EstimatesPage key={`${blockId}:${structureVersion}`} blockId={blockId} blockName={blockName} />}
             </Box>
         </Paper>
     );

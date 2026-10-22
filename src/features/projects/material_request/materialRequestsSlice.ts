@@ -5,6 +5,7 @@ import type { MaterialRequestItem } from '../material_request_items/materialRequ
 
 export interface MaterialRequest {
     id: number;
+    number?: string | number | null;
     project_id: number;
     block_id: number;
     status: number;

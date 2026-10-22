@@ -26,6 +26,7 @@ function getInitialFormData(project?: ProjectFormData | null): ProjectForm {
         status: project?.status ?? null,
         manager_id: project?.manager_id ?? null,
         foreman_id: project?.foreman_id ?? null,
+        site_manager_id: project?.site_manager_id ?? null,
         master_id: project?.master_id ?? null,
         warehouse_manager_id: project?.warehouse_manager_id ?? null,
         description: project?.description ?? '',
@@ -59,7 +60,6 @@ export function ProjectForm({
         if (!formData.end_date) newErrors.end_date = 'Дата окончания обязательна';
         if (!formData.planned_budget) newErrors.planned_budget = 'Плановый бюджет обязателен';
         if (!formData.status) newErrors.status = 'Выберите статус';
-        if (!formData.manager_id) newErrors.manager_id = 'Выберите инженера объекта';
 
         if (formData.start_date && formData.end_date) {
             const start = new Date(formData.start_date);
@@ -86,7 +86,7 @@ export function ProjectForm({
             planned_budget: formData.planned_budget!,
             actual_budget: formData.actual_budget ?? 0,
             status: formData.status!,
-            manager_id: formData.manager_id!,
+            manager_id: formData.manager_id,
             progress_percent: formData.progress_percent ?? 0,
         };
 
@@ -301,10 +301,10 @@ export function ProjectForm({
                     {/* Менеджер */}
                     <div>
                         <label className="block text-sm font-medium text-blue-700 mb-1.5">
-                            Менеджер <span className="text-red-500">*</span>
+                            Менеджер
                         </label>
                         <select
-                            value={formData.manager_id || ''}
+                            value={formData.manager_id ?? ''}
                             onChange={(e) =>
                                 handleChange(
                                     'manager_id',
@@ -319,7 +319,7 @@ export function ProjectForm({
                 `}
                             disabled={loading}
                         >
-                            <option value="">Выберите инженера</option>
+                            <option value="">Не назначен</option>
                             {refs.users.data?.map((manager) => (
                                 <option key={manager.id} value={manager.id}>
                                     {manager.name}
@@ -351,6 +351,30 @@ export function ProjectForm({
                             {refs.users.data?.map((foreman) => (
                                 <option key={foreman.id} value={foreman.id}>
                                     {foreman.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Начальник участка */}
+                    <div>
+                        <label htmlFor="project-site-manager" className="block text-sm font-medium text-blue-700 mb-1.5">
+                            Нач. участка
+                        </label>
+                        <select
+                            id="project-site-manager"
+                            name="site_manager_id"
+                            value={formData.site_manager_id ?? ''}
+                            onChange={(e) =>
+                                handleChange('site_manager_id', e.target.value ? Number(e.target.value) : null)
+                            }
+                            className="w-full px-3 py-2 text-sm text-gray-900 transition-all bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-transparent"
+                            disabled={loading}
+                        >
+                            <option value="">Не назначен</option>
+                            {refs.users.data?.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name}
                                 </option>
                             ))}
                         </select>

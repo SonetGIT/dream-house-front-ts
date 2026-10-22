@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
 import type { EstimateItem } from './estimateItems/estimateItemsSlice';
+import { copyBlockStructure } from '../copyBlockStructure';
 
 /*  TYPES  */
 export interface Estimate {
@@ -55,6 +56,7 @@ interface EstimatesState {
     loading: boolean;
     submitting: boolean;
     error: string | null;
+    requestId: string | null;
 }
 
 const initialState: EstimatesState = {
@@ -63,6 +65,7 @@ const initialState: EstimatesState = {
     loading: false,
     submitting: false,
     error: null,
+    requestId: null,
 };
 
 const normalizeItem = (value: unknown): Estimate | null => {
@@ -182,6 +185,7 @@ const estimatesSlice = createSlice({
     initialState,
     reducers: {
         clearMaterialEstimates: (state) => {
+            state.requestId = null;
             state.data = [];
             state.pagination = null;
             state.loading = false;
@@ -191,18 +195,22 @@ const estimatesSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            .addCase(copyBlockStructure.fulfilled, () => initialState)
 
             /* SEARCH */
-            .addCase(fetchEstimates.pending, (state) => {
+            .addCase(fetchEstimates.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
+                state.requestId = action.meta.requestId;
             })
             .addCase(fetchEstimates.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.data = action.payload.data;
                 state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchEstimates.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })

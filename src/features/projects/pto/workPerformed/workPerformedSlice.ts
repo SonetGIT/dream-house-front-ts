@@ -24,6 +24,7 @@ export interface WorkPerformedItem {
 
 export interface WorkPerformed {
     id: number;
+    number?: string | number | null;
     block_id: number;
     project_id: number;
     code: string | null;

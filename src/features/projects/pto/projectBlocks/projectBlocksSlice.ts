@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
+import { copyBlockStructure, fetchStructureProjectBlocks } from './copyBlockStructure';
 
 /*TYPES*/
 export interface ProjectBlock {
@@ -36,6 +37,9 @@ interface BlocksState {
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
+    copying: boolean;
+    requestId: string | null;
+    structureVersion: number;
 }
 
 const initialState: BlocksState = {
@@ -43,6 +47,9 @@ const initialState: BlocksState = {
     pagination: null,
     loading: false,
     error: null,
+    copying: false,
+    requestId: null,
+    structureVersion: 0,
 };
 
 /*FETCH*/
@@ -116,7 +123,9 @@ const projectBlocksSlice = createSlice({
         clearProjectBlocks: (state) => {
             state.data = [];
             state.pagination = null;
+            state.loading = false;
             state.error = null;
+            state.requestId = null;
         },
     },
 
@@ -124,21 +133,46 @@ const projectBlocksSlice = createSlice({
         builder
 
             /* FETCH */
-            .addCase(fetchProjectBlocks.pending, (state) => {
+            .addCase(fetchProjectBlocks.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
+                state.requestId = action.meta.requestId;
             })
 
             .addCase(fetchProjectBlocks.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.data = action.payload.data;
                 state.pagination = action.payload.pagination;
             })
 
             .addCase(fetchProjectBlocks.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })
+            .addCase(fetchStructureProjectBlocks.pending, (state, action) => {
+                state.loading = true;
+                state.error = null;
+                state.requestId = action.meta.requestId;
+            })
+            .addCase(fetchStructureProjectBlocks.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
+                state.loading = false;
+                state.data = action.payload;
+                state.pagination = null;
+            })
+            .addCase(fetchStructureProjectBlocks.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
+                state.loading = false;
+                state.error = action.payload ?? 'Ошибка загрузки блоков';
+            })
+            .addCase(copyBlockStructure.pending, (state) => { state.copying = true; })
+            .addCase(copyBlockStructure.fulfilled, (state) => {
+                state.copying = false;
+                state.structureVersion += 1;
+            })
+            .addCase(copyBlockStructure.rejected, (state) => { state.copying = false; })
 
             /* CREATE */
             .addCase(createProjectBlock.fulfilled, (state, action) => {

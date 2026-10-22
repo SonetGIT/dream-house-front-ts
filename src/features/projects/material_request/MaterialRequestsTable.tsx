@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Collapse, Button } from '@mui/material';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Collapse, Button, CircularProgress } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
     fetchSearchMaterialReq,
@@ -8,13 +8,21 @@ import {
 } from './materialRequestsSlice';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { ReferenceResult } from '@/features/reference/referenceSlice';
-import type { User } from '@/features/users/userSlice';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { FaFileExcel } from 'react-icons/fa';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import toast from 'react-hot-toast';
 import MatReqItemsTable from '../material_request_items/MatReqItemsTable';
 import { fetchMaterialRequestItems } from '../material_request_items/materialRequestItemsSlice';
 import { useParams } from 'react-router-dom';
+import {
+    SITE_MANAGER_APPROVAL_ENABLED,
+    canSignMaterialRequest as canSign,
+    getMaterialRequestSignStage as getSignStage,
+    getPendingMaterialRequestSignStages,
+    isMaterialRequestFullyApproved as isFullyApproved,
+} from './materialRequestApproval';
+import { downloadMaterialRequestReport } from './downloadMaterialRequestReport';
 
 interface PropsType {
     data: MaterialRequest[];
@@ -54,6 +62,27 @@ export default function MaterialRequestsTable(props: PropsType) {
     const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
     const currentUser = useAppSelector((state) => state.auth.user);
     const [itemsMap, setItemsMap] = useState<Record<number, any[]>>({});
+    const pendingReports = useRef(new Set<number>());
+    const [downloadingReports, setDownloadingReports] = useState<Set<number>>(new Set());
+
+    const handleDownloadReport = async (request: MaterialRequest) => {
+        if (pendingReports.current.has(request.id)) return;
+        pendingReports.current.add(request.id);
+        setDownloadingReports((previous) => new Set(previous).add(request.id));
+        try {
+            await downloadMaterialRequestReport(request);
+            toast.success('Отчёт по заявке скачан');
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Не удалось скачать отчёт по заявке');
+        } finally {
+            pendingReports.current.delete(request.id);
+            setDownloadingReports((previous) => {
+                const next = new Set(previous);
+                next.delete(request.id);
+                return next;
+            });
+        }
+    };
 
     useEffect(() => {
         const focusedRequestId = props.focusedRequestId;
@@ -125,85 +154,6 @@ export default function MaterialRequestsTable(props: PropsType) {
         });
     }, []);
 
-    /*PERMISSIONS*/
-    const canSign = (req: MaterialRequest, user?: User) => {
-        if (!user) return false;
-
-        const userId = Number(user.id);
-        const roleId = Number(user.role_id);
-
-        if (roleId === 1) return true;
-
-        switch (roleId) {
-            case 4:
-                return (
-                    !req.approved_by_foreman &&
-                    (!req.foreman_user_id || Number(req.foreman_user_id) === userId)
-                );
-
-            case 7:
-                return (
-                    !req.approved_by_purchasing_agent &&
-                    (!req.purchasing_agent_user_id ||
-                        Number(req.purchasing_agent_user_id) === userId)
-                );
-
-            case 9:
-                return (
-                    !req.approved_by_site_manager &&
-                    (!req.site_manager_user_id || Number(req.site_manager_user_id) === userId)
-                );
-
-            case 10:
-                return (
-                    !req.approved_by_planning_engineer &&
-                    (!req.planning_engineer_user_id ||
-                        Number(req.planning_engineer_user_id) === userId)
-                );
-
-            case 11:
-                return (
-                    !req.approved_by_main_engineer &&
-                    (!req.main_engineer_user_id || Number(req.main_engineer_user_id) === userId)
-                );
-
-            default:
-                return false;
-        }
-    };
-
-    const isFullyApproved = (req: MaterialRequest): boolean => {
-        return (
-            !!req.approved_by_foreman &&
-            !!req.approved_by_purchasing_agent &&
-            !!req.approved_by_site_manager &&
-            !!req.approved_by_planning_engineer &&
-            !!req.approved_by_main_engineer
-        );
-    };
-
-    const getSignStage = (
-        user?: User | null,
-    ):
-        | 'foreman'
-        | 'planning_engineer'
-        | 'main_engineer'
-        | 'site_manager'
-        | 'purchasing_agent'
-        | null => {
-        if (!user) return null;
-
-        const roleId = Number(user.role_id);
-
-        if (roleId === 4) return 'foreman';
-        if (roleId === 7) return 'purchasing_agent';
-        if (roleId === 9) return 'site_manager';
-        if (roleId === 10) return 'planning_engineer';
-        if (roleId === 11) return 'main_engineer';
-
-        return null;
-    };
-
     const refetchWriteOffs = async (
         page = pagination?.page ?? 1,
         size = pagination?.size ?? 10,
@@ -230,33 +180,7 @@ export default function MaterialRequestsTable(props: PropsType) {
 
         try {
             if (roleId === 1) {
-                const stages: Array<
-                    | 'foreman'
-                    | 'planning_engineer'
-                    | 'main_engineer'
-                    | 'purchasing_agent'
-                    | 'site_manager'
-                > = [];
-
-                if (!req.approved_by_foreman) {
-                    stages.push('foreman');
-                }
-
-                if (!req.approved_by_planning_engineer) {
-                    stages.push('planning_engineer');
-                }
-
-                if (!req.approved_by_main_engineer) {
-                    stages.push('main_engineer');
-                }
-
-                if (!req.approved_by_purchasing_agent) {
-                    stages.push('purchasing_agent');
-                }
-
-                if (!req.approved_by_site_manager) {
-                    stages.push('site_manager');
-                }
+                const stages = getPendingMaterialRequestSignStages(req);
 
                 if (!stages.length) {
                     toast.success('Документ уже полностью подписан');
@@ -358,12 +282,12 @@ export default function MaterialRequestsTable(props: PropsType) {
                                         userId: req.foreman_user_id,
                                         approvedTime: req.approved_by_foreman_time,
                                     },
-                                    {
+                                    ...(SITE_MANAGER_APPROVAL_ENABLED ? [{
                                         label: 'Нач. участка',
                                         approved: req.approved_by_site_manager,
                                         userId: req.site_manager_user_id,
                                         approvedTime: req.approved_by_site_manager_time,
-                                    },
+                                    }] : []),
                                     {
                                         label: 'Снабженец',
                                         approved: req.approved_by_purchasing_agent,
@@ -422,7 +346,7 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                 </button>
                                             </td>
                                             <td className="px-2 py-2 text-xs font-medium text-center text-gray-700 bg-blue-40/20">
-                                                {req.id}
+                                                {req.number ?? '—'}
                                             </td>
 
                                             {/* статус */}
@@ -452,7 +376,8 @@ export default function MaterialRequestsTable(props: PropsType) {
 
                                             {/*ЭТАП СОГЛАСОВАНИЯ  */}
                                             <td className="px-2 py-2 text-sm text-center text-gray-900 border-l ">
-                                                <div className="grid grid-cols-5 gap-3 text-xs items-left">
+                                                <div className="grid gap-3 text-xs items-left"
+                                                    style={{ gridTemplateColumns: `repeat(${signatures.length}, minmax(0, 1fr))` }}>
                                                     {signatures.map((s) => (
                                                         <div
                                                             key={s.label}
@@ -497,6 +422,24 @@ export default function MaterialRequestsTable(props: PropsType) {
                                             {/* Действия */}
                                             <td className="px-3 py-2 border-l bg-gray-50">
                                                 <div className="flex items-center justify-center gap-1.5">
+                                                    <StyledTooltip title="Скачать XLSX">
+                                                        <span onClick={(event) => event.stopPropagation()}>
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Скачать XLSX"
+                                                                disabled={downloadingReports.has(req.id)}
+                                                                className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    void handleDownloadReport(req);
+                                                                }}
+                                                            >
+                                                                {downloadingReports.has(req.id)
+                                                                    ? <CircularProgress size={16} color="inherit" />
+                                                                    : <FaFileExcel className="w-4 h-4" />}
+                                                            </button>
+                                                        </span>
+                                                    </StyledTooltip>
                                                     <StyledTooltip title="Удалить">
                                                         <button
                                                             onClick={(e) => {

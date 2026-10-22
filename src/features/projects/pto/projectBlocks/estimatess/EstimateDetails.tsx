@@ -17,6 +17,8 @@ import { useAppDispatch } from '@/app/store';
 import toast from 'react-hot-toast';
 import MaterialsTable from './estimateItems/MaterialsTable';
 import { calcRowTotal } from '@/utils/calcRowTotal';
+import { TablePagination } from '@/components/ui/TablePagination';
+import { useEstimateItemsPagination } from './estimateItems/useEstimateItemsPagination';
 
 interface EstimateDetailsProps {
     blockId: number;
@@ -38,6 +40,8 @@ export default function EstimateDetails({
     const [tab, setTab] = useState<TabType>('materials');
     const [currentRowId, setCurrentRowId] = useState<number>(item.id);
     const [formType, setFormType] = useState<'material' | 'service' | null>(null);
+    const materialsPage = useEstimateItemsPagination(items, 1);
+    const servicesPage = useEstimateItemsPagination(items, 2);
 
     /** справочники */
     const refs = {
@@ -129,11 +133,20 @@ export default function EstimateDetails({
 
                             <MaterialsTable
                                 blockId={blockId}
-                                items={items}
+                                items={materialsPage.items}
                                 refs={refs}
                                 calcRowTotal={calcRowTotal}
                                 onDeleteEstimateItemId={onDeleteEstimateItemId}
                                 onUpdateEstimateItem={handleUpdateEstimateItem}
+                            />
+                            <TablePagination
+                                pagination={materialsPage.pagination}
+                                onPageChange={materialsPage.onPageChange}
+                                onSizeChange={materialsPage.onSizeChange}
+                                sizeOptions={[10, 25, 50, 100]}
+                                labelRowsPerPage="Материалов на странице:"
+                                showFirstButton
+                                showLastButton
                             />
                         </div>
                     )}
@@ -154,11 +167,23 @@ export default function EstimateDetails({
 
                             <ServicesTable
                                 blockId={blockId}
-                                items={items}
+                                items={servicesPage.items}
                                 refs={refs}
                                 calcRowTotal={calcRowTotal}
                                 onDeleteEstimateItemId={onDeleteEstimateItemId}
                                 onUpdateEstimateItem={handleUpdateEstimateItem}
+                            />
+                            {servicesPage.pagination.total === 0 && (
+                                <div className="py-6 text-sm text-center text-gray-500">Услуги отсутствуют</div>
+                            )}
+                            <TablePagination
+                                pagination={servicesPage.pagination}
+                                onPageChange={servicesPage.onPageChange}
+                                onSizeChange={servicesPage.onSizeChange}
+                                sizeOptions={[10, 25, 50, 100]}
+                                labelRowsPerPage="Услуг на странице:"
+                                showFirstButton
+                                showLastButton
                             />
                         </div>
                     )}

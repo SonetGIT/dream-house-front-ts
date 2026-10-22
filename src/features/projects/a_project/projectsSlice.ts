@@ -18,8 +18,9 @@ export interface Project {
 
     status: number;
 
-    manager_id: number;
+    manager_id: number | null;
     foreman_id: number | null;
+    site_manager_id: number | null;
     master_id: number | null;
     warehouse_manager_id: number | null;
 
@@ -45,6 +46,7 @@ export interface ProjectForm {
     status: number | null;
     manager_id: number | null;
     foreman_id: number | null;
+    site_manager_id: number | null;
     master_id: number | null;
     warehouse_manager_id: number | null;
     description: string;

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest } from '@/utils/apiRequest';
 import type { Pagination } from '@/features/users/userSlice';
+import { copyBlockStructure } from '../copyBlockStructure';
 
 /* TYPES */
 
@@ -34,6 +35,7 @@ interface BlockStagesState {
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
+    requestId: string | null;
 }
 
 const initialState: BlockStagesState = {
@@ -41,6 +43,7 @@ const initialState: BlockStagesState = {
     pagination: null,
     loading: false,
     error: null,
+    requestId: null,
 };
 
 /* FETCH */
@@ -109,18 +112,22 @@ const blockStagesSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
+            .addCase(copyBlockStructure.fulfilled, () => initialState)
 
             /* FETCH */
-            .addCase(fetchBlockStages.pending, (state) => {
+            .addCase(fetchBlockStages.pending, (state, action) => {
                 state.loading = true;
                 state.error = null;
+                state.requestId = action.meta.requestId;
             })
             .addCase(fetchBlockStages.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.data = action.payload.data;
                 state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchBlockStages.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })

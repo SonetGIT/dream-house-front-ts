@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
 import { apiRequest } from '@/utils/apiRequest';
+import { copyBlockStructure } from '../../copyBlockStructure';
 
 /* TYPES */
 
@@ -30,6 +31,7 @@ interface StageSubsectionsState {
     paginationByStageId: Record<number, Pagination | null>;
     loadingByStageId: Record<number, boolean>;
     errorByStageId: Record<number, string | null>;
+    requestIdByStageId: Record<number, string>;
 }
 
 const initialState: StageSubsectionsState = {
@@ -37,6 +39,7 @@ const initialState: StageSubsectionsState = {
     paginationByStageId: {},
     loadingByStageId: {},
     errorByStageId: {},
+    requestIdByStageId: {},
 };
 
 /* FETCH */
@@ -126,10 +129,12 @@ const stageSubsectionsSlice = createSlice({
             delete state.paginationByStageId[stageId];
             delete state.loadingByStageId[stageId];
             delete state.errorByStageId[stageId];
+            delete state.requestIdByStageId[stageId];
         },
     },
     extraReducers: (builder) => {
         builder
+            .addCase(copyBlockStructure.fulfilled, () => initialState)
 
             /* FETCH */
 
@@ -138,10 +143,12 @@ const stageSubsectionsSlice = createSlice({
 
                 state.loadingByStageId[stageId] = true;
                 state.errorByStageId[stageId] = null;
+                state.requestIdByStageId[stageId] = action.meta.requestId;
             })
 
             .addCase(fetchStageSubsections.fulfilled, (state, action) => {
                 const stageId = action.payload.stageId;
+                if (state.requestIdByStageId[stageId] !== action.meta.requestId) return;
 
                 state.loadingByStageId[stageId] = false;
 
@@ -152,6 +159,7 @@ const stageSubsectionsSlice = createSlice({
 
             .addCase(fetchStageSubsections.rejected, (state, action) => {
                 const stageId = action.meta.arg.stage_id;
+                if (state.requestIdByStageId[stageId] !== action.meta.requestId) return;
 
                 state.loadingByStageId[stageId] = false;
                 state.errorByStageId[stageId] = action.payload ?? 'Ошибка загрузки';

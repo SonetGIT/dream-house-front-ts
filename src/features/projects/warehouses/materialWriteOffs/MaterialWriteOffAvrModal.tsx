@@ -23,6 +23,7 @@ interface WorkPerformedItemOption {
 
 interface WorkPerformedOption {
     id: number;
+    number?: string | number | null;
     performed_person_name: string;
     created_at?: string;
     items: WorkPerformedItemOption[];
@@ -280,7 +281,7 @@ export default function MaterialWriteOffAvrModal({
                             <option value="">Выберите АВР</option>
                             {workPerformedOptions.map((item) => (
                                 <option key={item.id} value={item.id}>
-                                    №{item.id} - {item.performed_person_name}
+                                    №{item.number ?? '—'} - {item.performed_person_name}
                                 </option>
                             ))}
                         </select>

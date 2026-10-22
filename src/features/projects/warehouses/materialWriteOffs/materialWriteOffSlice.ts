@@ -13,6 +13,7 @@ export interface MaterialWriteOffWarehouse {
 
 export interface MaterialWriteOffWorkPerformed {
     id: number;
+    number?: string | number | null;
     code: string | null;
     performed_person_name: string | null;
 }

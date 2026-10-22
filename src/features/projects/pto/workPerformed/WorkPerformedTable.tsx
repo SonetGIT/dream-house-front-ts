@@ -370,7 +370,7 @@ export default function WorkPerformedTable(props: PropsType) {
                                                 </button>
                                             </td>
                                             <td className="px-2 py-2 text-xs font-medium text-left text-gray-700 bg-blue-40/20">
-                                                {workPerf.id}
+                                                {workPerf.number ?? '—'}
                                             </td>
 
                                             {/* статус */}
