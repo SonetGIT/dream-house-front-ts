@@ -9,6 +9,7 @@ import {
 
 interface ConfirmDialogProps {
     open: boolean;
+    loading?: boolean;
     title?: string;
     message: string;
     onConfirm: () => void;
@@ -19,7 +20,7 @@ export default function ConfirmDialog(props: ConfirmDialogProps) {
     return (
         <Dialog
             open={props.open}
-            onClose={props.onCancel}
+            onClose={props.loading ? undefined : props.onCancel}
             PaperProps={{
                 style: {
                     overflow: 'hidden', // убираем прокрутку
@@ -44,6 +45,7 @@ export default function ConfirmDialog(props: ConfirmDialogProps) {
             </DialogContent>
             <DialogActions style={{ marginTop: -10 }}>
                 <Button
+                    disabled={props.loading}
                     onClick={props.onCancel}
                     color="secondary"
                     variant="outlined"
@@ -56,6 +58,7 @@ export default function ConfirmDialog(props: ConfirmDialogProps) {
                     Нет
                 </Button>
                 <Button
+                    disabled={props.loading}
                     onClick={props.onConfirm}
                     color="success"
                     variant="outlined"

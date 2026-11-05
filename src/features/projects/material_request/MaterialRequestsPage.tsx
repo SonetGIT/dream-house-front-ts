@@ -1,5 +1,5 @@
 import { Box, Button, CircularProgress, Paper, Typography } from '@mui/material';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import toast from 'react-hot-toast';
@@ -49,7 +49,11 @@ export default function MaterialRequestsPage() {
     const [deleteState, setDeleteState] = useState<{
         type: 'matReq' | 'matReqItem';
         id: number;
+        number?: string | number | null;
     } | null>(null);
+
+    const deletingRef = useRef(false);
+    const [deleting, setDeleting] = useState(false);
 
     const clearFocusFromUrl = useCallback(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -127,8 +131,14 @@ export default function MaterialRequestsPage() {
     };
 
     const confirmDelete = useCallback(async () => {
-        if (!deleteState) return;
-
+        if (!deleteState || deletingRef.current) return;
+        deletingRef.current = true;
+        setDeleting(true);
+        const refreshList = () => dispatch(fetchSearchMaterialReq({
+            project_id: Number(projectId),
+            ...(blockId ? { block_id: blockId } : {}),
+            ...(focusId ? { id: focusId, page: 1, size } : { page, size }),
+        }));
         try {
             if (deleteState.type === 'matReq') {
                 await dispatch(deleteMaterialRequest(deleteState.id)).unwrap();
@@ -136,21 +146,21 @@ export default function MaterialRequestsPage() {
             } else {
                 await dispatch(deleteMaterialRequestItem(deleteState.id)).unwrap();
                 toast.success('Позиция удалена');
-
-                if (Number(projectId)) {
-                    dispatch(
-                        fetchSearchMaterialReq({
-                            project_id: Number(projectId),
-                            ...(blockId ? { block_id: blockId } : {}),
-                            ...(focusId ? { id: focusId, page: 1, size } : { page, size }),
-                        }),
-                    );
-                }
             }
-        } catch {
-            toast.error('Ошибка удаления, проверьте права доступа на удаления');
+            await refreshList();
+        } catch (error: unknown) {
+            const message = typeof error === 'string' ? error
+                : error && typeof error === 'object' && 'message' in error
+                    && typeof error.message === 'string' ? error.message : 'Ошибка удаления';
+            toast.error(message);
+            if (error && typeof error === 'object' && 'status' in error
+                && (error.status === 404 || error.status === 409)) {
+                await refreshList();
+            }
         } finally {
             setDeleteState(null);
+            deletingRef.current = false;
+            setDeleting(false);
         }
     }, [deleteState, dispatch, projectId, blockId, focusId, page, size]);
 
@@ -190,7 +200,10 @@ export default function MaterialRequestsPage() {
                         data={materialRequests.filter((req) => req.project_id === project.id)}
                         refs={refs}
                         focusedRequestId={focusId}
-                        onDeleteMatReqId={(id) => setDeleteState({ type: 'matReq', id })}
+                        deleting={deleting}
+                        onDeleteMatReqId={(request) => setDeleteState({
+                            type: 'matReq', id: request.id, number: request.number,
+                        })}
                         onDeleteMatReqItemId={(itemId) =>
                             setDeleteState({ type: 'matReqItem', id: itemId })
                         }
@@ -235,14 +248,16 @@ export default function MaterialRequestsPage() {
             {/* DELETE CONFIRM */}
             <ConfirmDialog
                 open={deleteState?.type === 'matReq'}
+                loading={deleting}
                 title="Удалить заявку?"
-                message="Это действие нельзя отменить."
+                message={`Удалить заявку №${deleteState?.number ?? '—'} со всеми позициями?`}
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteState(null)}
             />
 
             <ConfirmDialog
                 open={deleteState?.type === 'matReqItem'}
+                loading={deleting}
                 title="Удалить позицию из заявки?"
                 message="Это действие нельзя отменить."
                 onConfirm={confirmDelete}

@@ -37,3 +37,13 @@ export function getPendingMaterialRequestSignStages(req: MaterialRequest) {
 export function isMaterialRequestFullyApproved(req: MaterialRequest): boolean {
     return activeStages.every((stage) => !!req[stage.approvedField]);
 }
+
+export function canDeleteMaterialRequest(req: MaterialRequest, user?: User | null): boolean {
+    const roleId = Number(user?.role_id);
+    return (roleId === 1 || roleId === 10)
+        && Number(req.status) === 1
+        && !req.deleted
+        && approvalStages.every(({ approvedField }) =>
+            !req[approvedField] && !req[`${approvedField}_time`],
+        );
+}

@@ -5,6 +5,15 @@ import type { Pagination } from '@/features/users/userSlice';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+export class ApiError extends Error {
+    readonly status: number;
+    constructor(message: string, status: number) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+    }
+}
+
 export interface ApiResponse<T> {
     data: T;
     stats?: TasksStats;
@@ -51,7 +60,7 @@ export async function apiRequest<T = any>(
         const contentType = res.headers.get('content-type');
 
         if (!contentType?.includes('application/json')) {
-            if (!res.ok) throw new Error('Ошибка запроса');
+            if (!res.ok) throw new ApiError('Ошибка запроса', res.status);
             const blob = await res.blob();
             return { data: blob as unknown as T };
         }
@@ -59,7 +68,7 @@ export async function apiRequest<T = any>(
         const json = await res.json();
 
         if (!res.ok || json?.success === false) {
-            throw new Error(json?.message || 'Ошибка запроса');
+            throw new ApiError(json?.message || 'Ошибка запроса', res.status);
         }
 
         // ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ

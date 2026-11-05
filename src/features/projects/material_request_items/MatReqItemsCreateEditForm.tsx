@@ -131,6 +131,7 @@ export default function MatReqItemsCreateEditForm({
             await dispatch(
                 fetchSearchMaterialReq({
                     project_id: projectId,
+                    block_id: blockId,
                     page: 1,
                     size: 10,
                 }),

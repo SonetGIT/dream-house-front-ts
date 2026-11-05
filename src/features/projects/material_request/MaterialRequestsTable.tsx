@@ -17,6 +17,7 @@ import { fetchMaterialRequestItems } from '../material_request_items/materialReq
 import { useParams } from 'react-router-dom';
 import {
     SITE_MANAGER_APPROVAL_ENABLED,
+    canDeleteMaterialRequest,
     canSignMaterialRequest as canSign,
     getMaterialRequestSignStage as getSignStage,
     getPendingMaterialRequestSignStages,
@@ -28,7 +29,8 @@ interface PropsType {
     data: MaterialRequest[];
     refs: Record<string, ReferenceResult>;
     focusedRequestId?: number | null;
-    onDeleteMatReqId: (id: number) => void;
+    onDeleteMatReqId: (request: MaterialRequest) => void;
+    deleting?: boolean;
     onDeleteMatReqItemId: (id: number) => void;
 }
 const matReqStatuses: Record<number, { label: string; className: string }> = {
@@ -440,24 +442,29 @@ export default function MaterialRequestsTable(props: PropsType) {
                                                             </button>
                                                         </span>
                                                     </StyledTooltip>
-                                                    <StyledTooltip title="Удалить">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                props.onDeleteMatReqId(req.id);
-                                                            }}
-                                                            className="
-                                                                p-1.5
-                                                                text-gray-400
-                                                                hover:text-red-600
-                                                                hover:bg-red-50
-                                                                rounded
-                                                                transition-colors
-                                                            "
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </StyledTooltip>
+                                                    {canDeleteMaterialRequest(req, currentUser) && (
+                                                        <StyledTooltip title="Удалить">
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Удалить"
+                                                                disabled={props.deleting}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    props.onDeleteMatReqId(req);
+                                                                }}
+                                                                className="
+                                                                    p-1.5
+                                                                    text-gray-400
+                                                                    hover:text-red-600
+                                                                    hover:bg-red-50
+                                                                    rounded
+                                                                    transition-colors
+                                                                "
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </StyledTooltip>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

@@ -1,10 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store';
-import {
-    clearMaterialRequests,
-    fetchSearchMaterialReq,
-} from '../material_request/materialRequestsSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import { CgPlayBackwards } from 'react-icons/cg';
 import Dashboard from '@/components/ui/dashboard/Dashboard';
@@ -28,12 +24,6 @@ export default function ProjectDashboardPage() {
             dispatch(getProjectById(Number(projectId)));
         }
     }, [projectId, dispatch]);
-
-    useEffect(() => {
-        if (!project?.id) return;
-        dispatch(clearMaterialRequests());
-        dispatch(fetchSearchMaterialReq({ page: 1, size: 10, project_id: project.id }));
-    }, [project?.id, dispatch]);
 
     if (projectLoading) return <div>Загрузка...</div>;
     if (!project) return <div>Проект не найден</div>;

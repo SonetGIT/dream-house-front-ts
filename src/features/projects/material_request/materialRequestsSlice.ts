@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { Pagination } from '@/features/users/userSlice';
-import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
+import { ApiError, apiRequest, type ApiResponse } from '@/utils/apiRequest';
 import type { MaterialRequestItem } from '../material_request_items/materialRequestItemsSlice';
 
 export interface MaterialRequest {
@@ -215,14 +215,17 @@ export const updateMaterialRequest = createAsyncThunk<
 });
 
 // DELETE
-export const deleteMaterialRequest = createAsyncThunk<number, number, { rejectValue: string }>(
+export const deleteMaterialRequest = createAsyncThunk<number, number, { rejectValue: { message: string; status?: number } }>(
     'materialRequests/delete',
     async (id, { rejectWithValue }) => {
         try {
             await apiRequest(`/materialRequests/delete/${id}`, 'DELETE');
             return id;
-        } catch (err: any) {
-            return rejectWithValue(err.message || 'Ошибка удаления заявки');
+        } catch (err: unknown) {
+            return rejectWithValue({
+                message: err instanceof Error ? err.message : 'Ошибка удаления заявки',
+                ...(err instanceof ApiError ? { status: err.status } : {}),
+            });
         }
     },
 );
