@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/app/store';
@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { deleteEstimateItem, fetchEstimateItems } from './estimateItems/estimateItemsSlice';
 import EstimatesTable from './EstimatesTable';
 import type { User } from '@/features/users/userSlice';
+import { downloadEstimateReport } from './downloadEstimateReport';
 
 interface Props {
     blockId: number;
@@ -27,6 +28,24 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
     const currentUser = useAppSelector((state) => state.auth.user);
     const page = 1;
     const size = 10;
+    const creatingRef = useRef(false);
+    const [creating, setCreating] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const exportInProgress = useRef(false);
+
+    const handleExport = async () => {
+        if (exportInProgress.current) return;
+        exportInProgress.current = true;
+        setExporting(true);
+        try {
+            await downloadEstimateReport(blockId, blockName);
+        } catch (reason: unknown) {
+            toast.error(reason instanceof Error ? reason.message : 'Не удалось выгрузить смету в Excel');
+        } finally {
+            exportInProgress.current = false;
+            setExporting(false);
+        }
+    };
 
     const [deleteState, setDeleteState] = useState<{
         type: 'estimate' | 'item';
@@ -211,6 +230,9 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
 
     //CREATE
     const handleCreateEstimate = useCallback(async () => {
+        if (creatingRef.current) return;
+        creatingRef.current = true;
+        setCreating(true);
         try {
             //Проверка: уже есть смета в этом блоке
             if (data.length > 0) {
@@ -239,6 +261,9 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
             );
         } catch {
             toast.error('Ошибка создания сметы');
+        } finally {
+            creatingRef.current = false;
+            setCreating(false);
         }
     }, [dispatch, blockId, blockName, page, size, data]);
 
@@ -246,8 +271,8 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
     return (
         <Paper sx={{ p: 2, borderRadius: 3 }}>
             {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button variant="outlined" startIcon={<Add />} onClick={handleCreateEstimate}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
+                <Button variant="outlined" startIcon={<Add />} disabled={creating} onClick={handleCreateEstimate}>
                     Добавить смету
                 </Button>
             </Box>
@@ -262,6 +287,8 @@ export default function EstimatesPage({ blockId, blockName }: Props) {
             ) : (
                 <>
                     <EstimatesTable
+                        onExport={handleExport}
+                        exporting={exporting}
                         blockId={blockId}
                         data={data}
                         currentUser={currentUser}

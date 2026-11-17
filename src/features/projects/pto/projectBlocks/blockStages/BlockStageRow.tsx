@@ -1,3 +1,4 @@
+import { useAsyncActionLock } from '@/utils/useAsyncActionLock';
 import { useEffect, useState } from 'react';
 import { Check, ChevronDown, ChevronRight, Pencil, PlusCircle, Trash2, X } from 'lucide-react';
 
@@ -47,6 +48,7 @@ export default function BlockStageRow({
 
     // const loading = useAppSelector((s) => s.stageSubsections.loadingByStageId[stage.id]);
 
+    const { pending: saving, run, isLocked } = useAsyncActionLock();
     const [expanded, setExpanded] = useState(false);
     const [isAddingSubstage, setIsAddingSubstage] = useState(false);
     const [newSubstageName, setNewSubstageName] = useState('');
@@ -86,7 +88,7 @@ export default function BlockStageRow({
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     }
 
-    const handleAddSubstage = async () => {
+    const handleAddSubstage = () => run(async () => {
         if (!newSubstageName.trim()) return;
 
         try {
@@ -103,9 +105,10 @@ export default function BlockStageRow({
         } catch {
             toast.error('Ошибка создания');
         }
-    };
+    });
 
     const handleCancelAdd = () => {
+        if (isLocked()) return;
         setNewSubstageName('');
         setIsAddingSubstage(false);
     };
@@ -114,7 +117,7 @@ export default function BlockStageRow({
         setEditingSubstageName(sub.name);
     };
 
-    const handleSaveEdit = async () => {
+    const handleSaveEdit = () => run(async () => {
         if (!editingSubstageName.trim() || editingSubstageId === null) return;
 
         try {
@@ -137,9 +140,10 @@ export default function BlockStageRow({
         } catch {
             toast.error('Ошибка обновления');
         }
-    };
+    });
 
     const handleCancelEdit = () => {
+        if (isLocked()) return;
         setEditingSubstageId(null);
         setEditingSubstageName('');
     };
@@ -285,7 +289,8 @@ export default function BlockStageRow({
                                             <div className="flex flex-shrink-0 gap-1">
                                                 <StyledTooltip title="Сохранить">
                                                     <button
-                                                        onClick={handleSaveEdit}
+                                                        disabled={saving}
+                                                onClick={handleSaveEdit}
                                                         className="p-1.5 text-white bg-sky-600 hover:bg-sky-700 rounded transition-colors"
                                                     >
                                                         <Check className="w-3.5 h-3.5" />
@@ -386,6 +391,7 @@ export default function BlockStageRow({
                                         />
                                         <div className="flex flex-shrink-0 gap-1">
                                             <button
+                                                disabled={saving}
                                                 onClick={handleAddSubstage}
                                                 className="p-1.5 text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
                                                 title="Сохранить"

@@ -1,3 +1,4 @@
+import { useAsyncActionLock } from '@/utils/useAsyncActionLock';
 import { X, FileText } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { LegalDocStages } from './legalDocStageSlice';
@@ -8,7 +9,7 @@ interface BlockStageModalProps {
         name: string;
     };
     onChange: (data: any) => void;
-    onSubmit: (e: React.FormEvent) => void;
+    onSubmit: (e: React.FormEvent) => Promise<void>;
     onClose: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function LegalDocStageModal({
     onSubmit,
     onClose,
 }: BlockStageModalProps) {
+    const { pending: saving, run, isLocked } = useAsyncActionLock();
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     // Auto-focus name input when modal opens
@@ -29,16 +31,16 @@ export default function LegalDocStageModal({
     // Handle Escape key to close modal
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape' && !isLocked()) onClose();
         };
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [onClose]);
+    }, [onClose, isLocked]);
 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center duration-200 bg-black/40 backdrop-blur-sm animate-in fade-in"
-            onClick={onClose}
+            onClick={() => { if (!isLocked()) onClose(); }}
         >
             <div
                 className="w-full max-w-[520px] bg-white rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
@@ -56,7 +58,7 @@ export default function LegalDocStageModal({
                     </div>
 
                     <button
-                        onClick={onClose}
+                        onClick={() => { if (!isLocked()) onClose(); }}
                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                         title="Закрыть (Esc)"
                     >
@@ -64,7 +66,8 @@ export default function LegalDocStageModal({
                     </button>
                 </div>
 
-                <form onSubmit={onSubmit}>
+                <form onSubmit={(event) => { event.preventDefault(); void run(async () => { await onSubmit(event); }); }}>
+                    <fieldset disabled={saving} className="contents">
                     <div className="px-6 py-5 space-y-4">
                         {/* NAME */}
                         <div className="space-y-1.5">
@@ -94,7 +97,7 @@ export default function LegalDocStageModal({
                     <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={() => { if (!isLocked()) onClose(); }}
                             className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400"
                         >
                             Отмена
@@ -102,12 +105,14 @@ export default function LegalDocStageModal({
 
                         <button
                             type="submit"
+                            aria-busy={saving}
                             disabled={!formData.name.trim()}
                             className="px-5 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed hover:shadow-md"
                         >
                             {editing ? 'Сохранить изменения' : 'Создать этап'}
                         </button>
                     </div>
+                    </fieldset>
                 </form>
             </div>
         </div>

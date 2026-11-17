@@ -12,8 +12,8 @@ interface Props {
     onEdit: (material: Material) => void;
     onDelete: (id: number) => void;
     pagination: Pagination | null;
-    onPrevPage: () => void;
-    onNextPage: () => void;
+    onPageChange: (page: number) => void;
+    onSizeChange: (size: number) => void;
 }
 
 /*********************************************************************************************************/
@@ -27,11 +27,16 @@ export function MaterialsTableMenu(props: Props) {
                         <TableCell>ед.изм.</TableCell>
                         <TableCell>Коэффициент</TableCell>
                         <TableCell>Описание</TableCell>
-                        <TableCell align="right" />
+                        <TableCell align="center">Действие</TableCell>
                     </TableRow>
                 </TableHead>
 
                 <TableBody>
+                    {props.data.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={5} align="center">Материалы не найдены</TableCell>
+                        </TableRow>
+                    )}
                     {props.data?.map((material) => (
                         <TableRow
                             key={material.id}
@@ -49,22 +54,33 @@ export function MaterialsTableMenu(props: Props) {
                             </TableCell>
                             <TableCell>{material.coefficient}</TableCell>
                             <TableCell>{material.description}</TableCell>
-                            <TableCell className="action-container">
-                                <StyledTooltip title="Удалить">
-                                    <MdDelete
-                                        size={20}
-                                        color="#c96161"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            props.onDelete(material.id);
-                                        }}
-                                    />
-                                </StyledTooltip>
+                            <TableCell align="center">
+                                <div className="action-container">
+                                    <StyledTooltip title="Удалить">
+                                        <MdDelete
+                                            size={20}
+                                            color="#c96161"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                props.onDelete(material.id);
+                                            }}
+                                        />
+                                    </StyledTooltip>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
+            {props.pagination && (
+                <TablePagination
+                    pagination={props.pagination}
+                    onPageChange={props.onPageChange}
+                    onSizeChange={props.onSizeChange}
+                    showFirstButton
+                    showLastButton
+                />
+            )}
         </div>
     );
 }

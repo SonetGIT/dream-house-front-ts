@@ -12,11 +12,16 @@ export function getEstimateItemsPage(
     requestedPage: number,
     requestedSize: number,
 ): EstimateItemsPage {
-    let rows = items.filter((item) => item.item_type === itemType);
+    const createdTime = (item: EstimateItem) => {
+        const time = item.created_at ? Date.parse(item.created_at) : NaN;
+        return Number.isFinite(time) ? time : 0;
+    };
+    let rows = items.filter((item) => item.item_type === itemType)
+        .sort((left, right) => createdTime(right) - createdTime(left) || right.id - left.id);
 
     if (itemType === 1) {
         // Keep stage/subsection groups contiguous across the complete material list.
-        // Preserve the original order of stages, subsections and rows within a group.
+        // Order groups by their newest position and keep newest positions first within each group.
         const stages = new Map<number | null, Map<number | null, EstimateItem[]>>();
         for (const row of rows) {
             let subsections = stages.get(row.stage_id);

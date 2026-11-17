@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiRequest, type ApiResponse } from '@/utils/apiRequest';
+import { materialPayload } from './materialPayload';
 import type { Pagination } from '../users/userSlice';
 
 /* TYPES */
@@ -9,6 +10,7 @@ export interface Material {
     type: number;
     unit_of_measure: number;
     coefficient: string | null;
+    coeffitient?: number | string | null;
     description: string | null;
     created_at?: string;
     updated_at?: string;
@@ -25,7 +27,9 @@ export interface MaterialFormData {
 interface FetchMaterialsParams {
     page: number;
     size: number;
-    search?: string;
+    name?: string;
+    description?: string;
+    type?: number;
     unit_of_measure?: number;
 }
 
@@ -34,6 +38,7 @@ interface MaterialsState {
     pagination: Pagination | null;
     loading: boolean;
     error: string | null;
+    requestId: string | null;
 }
 
 const initialState: MaterialsState = {
@@ -41,6 +46,7 @@ const initialState: MaterialsState = {
     pagination: null,
     loading: false,
     error: null,
+    requestId: null,
 };
 
 /* FETCH (with search + pagination) */
@@ -51,8 +57,8 @@ export const fetchMaterials = createAsyncThunk<
 >('materials/search', async (params, { rejectWithValue }) => {
     try {
         return await apiRequest<Material[]>('/materials/search', 'POST', params);
-    } catch (error: any) {
-        return rejectWithValue(error.message || 'Ошибка загрузки материалов');
+    } catch (error: unknown) {
+        return rejectWithValue(error instanceof Error ? error.message : 'Ошибка загрузки материалов');
     }
 });
 
@@ -61,15 +67,11 @@ export const createMaterial = createAsyncThunk<Material, MaterialFormData, { rej
     'materials/create',
     async (data, { rejectWithValue }) => {
         try {
-            const res = await apiRequest<Material>('/materials/create', 'POST', {
-                ...data,
-                type: Number(data.type),
-                unit_of_measure: Number(data.unit_of_measure),
-            });
+            const res = await apiRequest<Material>('/materials/create', 'POST', materialPayload(data, true));
 
             return res.data;
-        } catch (err: any) {
-            return rejectWithValue(err.message || 'Ошибка создания материала');
+        } catch (err: unknown) {
+            return rejectWithValue(err instanceof Error ? err.message : 'Ошибка создания материала');
         }
     },
 );
@@ -81,15 +83,11 @@ export const updateMaterial = createAsyncThunk<
     { rejectValue: string }
 >('materials/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<Material>(`/materials/update/${id}`, 'PUT', {
-            ...data,
-            type: Number(data.type),
-            unit_of_measure: Number(data.unit_of_measure),
-        });
+        const res = await apiRequest<Material>(`/materials/update/${id}`, 'PUT', materialPayload(data, false));
 
         return res.data;
-    } catch (err: any) {
-        return rejectWithValue(err.message || 'Ошибка обновления материала');
+    } catch (err: unknown) {
+        return rejectWithValue(err instanceof Error ? err.message : 'Ошибка обновления материала');
     }
 });
 
@@ -100,8 +98,8 @@ export const deleteMaterial = createAsyncThunk<number, number, { rejectValue: st
         try {
             await apiRequest(`/materials/delete/${id}`, 'DELETE');
             return id;
-        } catch (err: any) {
-            return rejectWithValue(err.message || 'Ошибка удаления материала');
+        } catch (err: unknown) {
+            return rejectWithValue(err instanceof Error ? err.message : 'Ошибка удаления материала');
         }
     },
 );
@@ -115,16 +113,22 @@ const materialsSlice = createSlice({
         builder
 
             /* FETCH */
-            .addCase(fetchMaterials.pending, (state) => {
+            .addCase(fetchMaterials.pending, (state, action) => {
+                state.requestId = action.meta.requestId;
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchMaterials.fulfilled, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
-                state.data = action.payload.data;
+                state.data = action.payload.data.map((material) => ({
+                    ...material,
+                    coefficient: material.coefficient ?? (material.coeffitient == null ? null : String(material.coeffitient)),
+                }));
                 state.pagination = action.payload.pagination ?? null;
             })
             .addCase(fetchMaterials.rejected, (state, action) => {
+                if (state.requestId !== action.meta.requestId) return;
                 state.loading = false;
                 state.error = action.payload ?? 'Ошибка загрузки';
             })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/store';
 import {
     fetchMaterials,
@@ -6,8 +6,9 @@ import {
     updateMaterial,
     deleteMaterial,
     type Material,
+    type MaterialFormData,
 } from './materialsSlice';
-import { Button, Box, CircularProgress, Typography } from '@mui/material';
+import { Button, Box, CircularProgress, Typography, Tab, Tabs } from '@mui/material';
 import { MdOutlinePlaylistAdd, MdOutlineRestartAlt } from 'react-icons/md';
 import { MaterialsTableMenu } from './MaterialsTableMenu';
 import { MaterialCreateEditDialog } from './MaterialCreateEditDialog';
@@ -16,50 +17,82 @@ import toast from 'react-hot-toast';
 import InputSearch from '@/components/ui/InputSearch';
 import { useReference } from '../reference/useReference';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
+import MaterialTypesPage from './MaterialTypesPage';
+import { fetchEnum } from '../reference/referenceSlice';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
+import { downloadMaterialsExcel } from './downloadMaterialsExcel';
 
 export default function MaterialsPage() {
+    const [tab, setTab] = useState('materials');
+    return <>
+        <Tabs value={tab} onChange={(_, value: string) => setTab(value)}>
+            <Tab value="materials" label="Материалы" />
+            <Tab value="types" label="Типы материалов" />
+        </Tabs>
+        {tab === 'materials' ? <MaterialsDirectory /> : <MaterialTypesPage />}
+    </>;
+}
+
+function MaterialsDirectory() {
     const dispatch = useAppDispatch();
     const { data, pagination, loading, error } = useAppSelector((state) => state.materials);
-    const refs = { unitsOfMeasure: useReference('unitsOfMeasure') };
+    const refs = {
+        unitsOfMeasure: useReference('unitsOfMeasure'),
+        materialTypes: useReference('materialTypes'),
+    };
 
+    const [busy, setBusy] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const exportInProgress = useRef(false);
+
+    const handleExport = async () => {
+        if (exportInProgress.current) return;
+        exportInProgress.current = true;
+        setExporting(true);
+        try {
+            await downloadMaterialsExcel();
+        } catch {
+            toast.error('Не удалось выгрузить материалы в Excel');
+        } finally {
+            exportInProgress.current = false;
+            setExporting(false);
+        }
+    };
     const [openForm, setOpenForm] = useState(false);
     const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [searchText, setSearchText] = useState('');
     const [unitsOfMeasureId, setUnitsOfMeasureId] = useState<string | number | null>(null);
 
-    /* INITIAL LOAD */
+    const [query, setQuery] = useState({
+        page: 1,
+        size: 10,
+        name: '',
+        type: undefined as number | undefined,
+        unit_of_measure: undefined as number | undefined,
+    });
+
     useEffect(() => {
-        dispatch(fetchMaterials({ page: 1, size: 10 }));
-    }, [dispatch]);
+        dispatch(fetchMaterials(query));
+    }, [dispatch, query]);
 
-    const loadMaterials = (searchParam = searchText, unitParam = unitsOfMeasureId) => {
-        dispatch(
-            fetchMaterials({
-                page: 1,
-                size: 10,
-                search: searchParam || undefined,
-                unit_of_measure: unitParam ? Number(unitParam) : undefined,
-            }),
-        );
-    };
-
-    /* SEARCH */
     const handleSearch = () => {
-        loadMaterials(searchText, unitsOfMeasureId);
+        setQuery((current) => ({ ...current, page: 1, name: searchText.trim() }));
     };
 
-    useEffect(() => {
-        loadMaterials(searchText, unitsOfMeasureId);
-    }, [unitsOfMeasureId]);
+    const handleUnitChange = (value: string | number | null) => {
+        setUnitsOfMeasureId(value);
+        setQuery((current) => ({
+            ...current,
+            page: 1,
+            unit_of_measure: value === null || value === '' ? undefined : Number(value),
+        }));
+    };
 
-    /* RESET */
     const handleReset = () => {
         setSearchText('');
         setUnitsOfMeasureId(null);
-
-        loadMaterials('', null);
+        setQuery((current) => ({ ...current, page: 1, name: '', type: undefined, unit_of_measure: undefined }));
     };
 
     /* CREATE / EDIT */
@@ -73,32 +106,24 @@ export default function MaterialsPage() {
         setOpenForm(true);
     };
 
-    const handleSubmit = (data: any) => {
-        if (editingMaterial) {
-            dispatch(updateMaterial({ id: editingMaterial.id, data: data }))
-                .unwrap()
-                .then(() => {
-                    dispatch(fetchMaterials({ page: 1, size: 10 }));
-                    toast.success('Материал успешно обновлён');
-                })
-                .catch((err: string) => {
-                    toast.error(err || 'Ошибка при обновлении материала');
-                });
-        } else {
-            dispatch(createMaterial(data))
-                .unwrap()
-                .then(() => {
-                    dispatch(fetchMaterials({ page: 1, size: 10 }));
-                    toast.success('Материал успешно создан', {
-                        duration: 3000,
-                    });
-                })
-                .catch((err: string) => {
-                    console.log('err', err);
-                    toast.error(err || 'Ошибка при создании материала');
-                });
+    const handleSubmit = async (formData: MaterialFormData) => {
+        if (busy) return;
+        setBusy(true);
+        try {
+            if (editingMaterial) {
+                await dispatch(updateMaterial({ id: editingMaterial.id, data: formData })).unwrap();
+            } else {
+                await dispatch(createMaterial(formData)).unwrap();
+            }
+            setOpenForm(false);
+            void dispatch(fetchMaterials(query));
+            void dispatch(fetchEnum('materials'));
+            toast.success(editingMaterial ? 'Материал успешно обновлён' : 'Материал успешно создан');
+        } catch (reason: unknown) {
+            toast.error(typeof reason === 'string' ? reason : reason instanceof Error ? reason.message : 'Ошибка сохранения');
+        } finally {
+            setBusy(false);
         }
-        setOpenForm(false);
     };
 
     /* DELETE */
@@ -107,93 +132,73 @@ export default function MaterialsPage() {
     };
 
     const handleConfirmDelete = () => {
-        if (!deleteId) return;
+        if (!deleteId || busy) return;
+        setBusy(true);
 
         dispatch(deleteMaterial(deleteId))
             .unwrap()
             .then(() => {
-                dispatch(
-                    fetchMaterials({
-                        page: 1,
-                        size: 10,
-                        search: searchText,
-                        unit_of_measure: unitsOfMeasureId ? Number(unitsOfMeasureId) : undefined,
-                    }),
-                );
+                if (data.length === 1 && query.page > 1) {
+                    setQuery((current) => ({ ...current, page: current.page - 1 }));
+                } else {
+                    dispatch(fetchMaterials(query));
+                }
 
+                setDeleteId(null);
+                void dispatch(fetchEnum('materials'));
                 toast.success('Материал удалён');
             })
             .catch((err: string) => {
                 toast.error(err || 'Ошибка удаления');
-            });
-
-        setDeleteId(null);
+            }).finally(() => setBusy(false));
     };
 
-    //Пагинация
-    const handleNextPage = () => {
-        if (!pagination?.hasNext) return;
-        dispatch(
-            fetchMaterials({
-                page: pagination.page + 1,
-                size: pagination.size,
-                search: searchText,
-            }),
-        );
+    const handlePageChange = (page: number) => {
+        if (loading) return;
+        setQuery((current) => ({ ...current, page }));
     };
 
-    const handlePrevPage = () => {
-        if (!pagination?.hasPrev) return;
-        dispatch(
-            fetchMaterials({
-                page: pagination.page - 1,
-                size: pagination.size,
-                search: searchText,
-            }),
-        );
+    const handleSizeChange = (size: number) => {
+        if (loading) return;
+        setQuery((current) => ({ ...current, page: 1, size }));
     };
-
-    /* LOADING / ERROR */
-    if (loading)
-        return (
-            <Box display="flex" justifyContent="center" p={3}>
-                <CircularProgress />
-            </Box>
-        );
-
-    if (error)
-        return (
-            <Typography color="error" sx={{ p: 3 }}>
-                {error}
-            </Typography>
-        );
 
     /************************************************************************************************************/
     return (
         <>
             {/* FILTER BAR */}
             <div className="filter-container">
-                <div className="filter-search">
+                <Box className="filter-search" sx={{ flexWrap: 'wrap', gap: 1, '& > *': { maxWidth: '100%' } }}>
                     <InputSearch
+                        placeholder="Название материала"
                         value={searchText}
                         onChange={setSearchText}
                         onEnter={handleSearch}
                     />
 
                     <ReferenceSelect
+                        label="Тип материала" value={query.type ?? ''}
+                        options={refs.materialTypes.data ?? []} loading={refs.materialTypes.loading}
+                        onChange={(value) => setQuery((current) => ({
+                            ...current, page: 1, type: value === '' ? undefined : Number(value),
+                        }))}
+                    />
+
+                    <ReferenceSelect
                         label="Единица измерения"
                         value={unitsOfMeasureId || ''}
-                        onChange={setUnitsOfMeasureId}
+                        onChange={handleUnitChange}
                         options={refs.unitsOfMeasure.data || []}
                         loading={refs.unitsOfMeasure.loading}
                     />
 
+                    <Button variant="outlined" onClick={handleSearch}>Найти</Button>
                     <div className="icon">
                         <StyledTooltip title="Сбросить фильтры и поиск">
                             <MdOutlineRestartAlt onClick={handleReset} />
                         </StyledTooltip>
                     </div>
-                </div>
+                </Box>
 
                 <div className="filter-actions">
                     <Button
@@ -203,31 +208,42 @@ export default function MaterialsPage() {
                     >
                         Создать
                     </Button>
+                    <Button variant="outlined" disabled={exporting} onClick={handleExport}>
+                        Excel
+                    </Button>
                 </div>
             </div>
 
+            {loading && (
+                <Box display="flex" justifyContent="center" p={3}>
+                    <CircularProgress />
+                </Box>
+            )}
+            {error && <Typography color="error" sx={{ p: 3 }}>{error}</Typography>}
+
             {/* TABLE */}
             <MaterialsTableMenu
-                data={data}
+                data={error ? [] : data}
                 refs={refs}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 pagination={pagination}
-                onPrevPage={handlePrevPage}
-                onNextPage={handleNextPage}
+                onPageChange={handlePageChange}
+                onSizeChange={handleSizeChange}
             />
 
             {/* DIALOG */}
-            <MaterialCreateEditDialog
-                open={openForm}
+            {openForm && <MaterialCreateEditDialog
+                busy={busy}
                 material={editingMaterial}
                 onClose={() => setOpenForm(false)}
                 onSubmit={handleSubmit}
-            />
+            />}
 
             {/* DELETE CONFIRM */}
             <ConfirmDialog
                 open={Boolean(deleteId)}
+                loading={busy}
                 title="Удалить материал?"
                 message="Вы уверены, что хотите удалить материал?"
                 onConfirm={handleConfirmDelete}

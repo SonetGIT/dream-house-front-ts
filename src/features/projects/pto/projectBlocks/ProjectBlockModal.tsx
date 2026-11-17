@@ -1,3 +1,4 @@
+import { useAsyncActionLock } from '@/utils/useAsyncActionLock';
 import { X, Building2, DollarSign, Ruler } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ProjectBlock } from './projectBlocksSlice';
@@ -7,7 +8,7 @@ interface BlockModalProps {
     onClose: () => void;
     projectId: number;
     block: ProjectBlock | null;
-    onSubmit: (data: Partial<ProjectBlock>) => void;
+    onSubmit: (data: Partial<ProjectBlock>) => Promise<void>;
 }
 
 export default function ProjectBlockModal({
@@ -17,6 +18,7 @@ export default function ProjectBlockModal({
     block,
     onSubmit,
 }: BlockModalProps) {
+    const { pending: saving, run, isLocked } = useAsyncActionLock();
     const nameInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState({
         project_id: projectId,
@@ -49,11 +51,11 @@ export default function ProjectBlockModal({
     // Handle Escape key to close modal
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape' && !isLocked()) onClose();
         };
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [onClose]);
+    }, [onClose, isLocked]);
 
     const parseNumber = (value: string) => {
         const normalized = value.replace(',', '.');
@@ -67,7 +69,7 @@ export default function ProjectBlockModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        void run(async () => { await onSubmit(formData); });
     };
 
     if (!open) return null;
@@ -75,7 +77,7 @@ export default function ProjectBlockModal({
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 duration-200 bg-black/40 backdrop-blur-sm animate-in fade-in"
-            onClick={onClose}
+            onClick={() => { if (!isLocked()) onClose(); }}
         >
             <div
                 className="w-full max-w-[600px] bg-white rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
@@ -93,7 +95,7 @@ export default function ProjectBlockModal({
                     </div>
 
                     <button
-                        onClick={onClose}
+                        onClick={() => { if (!isLocked()) onClose(); }}
                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                         title="Закрыть (Esc)"
                     >
@@ -102,6 +104,7 @@ export default function ProjectBlockModal({
                 </div>
 
                 <form onSubmit={handleSubmit}>
+                    <fieldset disabled={saving} className="contents">
                     <div className="px-6 py-5 space-y-5">
                         {/* NAME */}
                         <div className="space-y-1.5">
@@ -191,7 +194,7 @@ export default function ProjectBlockModal({
                     <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={() => { if (!isLocked()) onClose(); }}
                             className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400"
                         >
                             Отмена
@@ -199,12 +202,14 @@ export default function ProjectBlockModal({
 
                         <button
                             type="submit"
+                            aria-busy={saving}
                             disabled={!formData.name.trim()}
                             className="px-5 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed hover:shadow-md"
                         >
                             {block ? 'Сохранить изменения' : 'Создать блок'}
                         </button>
                     </div>
+                    </fieldset>
                 </form>
             </div>
         </div>

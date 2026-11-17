@@ -1,3 +1,4 @@
+import { useAsyncActionLock } from '@/utils/useAsyncActionLock';
 import { Pencil, Trash2, Check, X } from 'lucide-react';
 import { StyledTooltip } from '@/components/ui/StyledTooltip';
 import type { EstimateItem } from './estimateItemsSlice';
@@ -17,7 +18,7 @@ interface MaterialsTableProps {
     refs: Record<string, ReferenceResult>;
     calcRowTotal: (row: any) => number;
     onDeleteEstimateItemId: (id: number) => void;
-    onUpdateEstimateItem?: (id: number, data: Partial<EstimateItem>) => void;
+    onUpdateEstimateItem?: (id: number, data: Partial<EstimateItem>) => Promise<void>;
 }
 
 export default function MaterialsTable({
@@ -29,6 +30,7 @@ export default function MaterialsTable({
     onUpdateEstimateItem,
 }: MaterialsTableProps) {
     // ---------- STATE ----------
+    const { pending: saving, run, isLocked } = useAsyncActionLock();
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editedData, setEditedData] = useState<Partial<EstimateItem>>({});
 
@@ -75,20 +77,22 @@ export default function MaterialsTable({
 
     // ---------- HANDLERS ----------
     const handleEdit = (item: EstimateItem) => {
+        if (isLocked()) return;
         setEditingId(item.id);
         setEditedData({ ...item });
     };
 
-    const handleSave = async () => {
+    const handleSave = () => run(async () => {
         if (onUpdateEstimateItem && editingId !== null) {
             await onUpdateEstimateItem(editingId, editedData);
         }
 
         setEditingId(null);
         setEditedData({});
-    };
+    });
 
     const handleCancel = () => {
+        if (isLocked()) return;
         setEditingId(null);
         setEditedData({});
     };
@@ -415,8 +419,9 @@ export default function MaterialsTable({
                                                 <>
                                                     <StyledTooltip title="Сохранить изменения">
                                                         <button
+                                                            disabled={saving}
                                                             onClick={handleSave}
-                                                            className="p-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                                                            className="p-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             <Check className="w-3.5 h-3.5" />
                                                         </button>
@@ -424,6 +429,7 @@ export default function MaterialsTable({
 
                                                     <StyledTooltip title="Отменить">
                                                         <button
+                                                            disabled={saving}
                                                             onClick={handleCancel}
                                                             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                                                         >

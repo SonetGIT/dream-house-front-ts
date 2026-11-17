@@ -10,6 +10,8 @@ import type { Estimate } from './estimatesSlice';
 import { calcRowTotal } from '@/utils/calcRowTotal';
 import { formatDateTime } from '@/utils/formatDateTime';
 import type { User } from '@/features/users/userSlice';
+import { FaFileExcel } from 'react-icons/fa';
+import EstimateNameDialog from './EstimateNameDialog';
 
 interface EstimatesTableProps {
     blockId: number;
@@ -21,6 +23,8 @@ interface EstimatesTableProps {
     signing?: boolean;
     onDeleteEstimateId: (id: number) => void;
     onDeleteEstimateItemId: (id: number) => void;
+    onExport: () => void;
+    exporting: boolean;
 }
 
 const getSignatureClassName = (approved?: boolean | null) => {
@@ -46,10 +50,13 @@ export default function EstimatesTable({
     signing = false,
     onDeleteEstimateId,
     onDeleteEstimateItemId,
+    onExport,
+    exporting,
 }: EstimatesTableProps) {
     const estimateItems = useAppSelector((state) => state.estimateItems.byEstimateId);
     const users = useReference('users');
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    const [renamingEstimate, setRenamingEstimate] = useState<Estimate | null>(null);
 
     const toggleRow = (id: number) => {
         setExpandedRows((prev) => {
@@ -184,6 +191,7 @@ export default function EstimatesTable({
                                             </td>
 
                                             <EstimateRow
+                                                onRename={() => setRenamingEstimate(item)}
                                                 item={item}
                                                 materialSum={sums[item.id]?.material || 0}
                                                 serviceSum={sums[item.id]?.service || 0}
@@ -229,6 +237,22 @@ export default function EstimatesTable({
 
                                             <td className="px-4 py-3 border-l bg-gray-50">
                                                 <div className="flex items-center justify-center gap-2">
+                                                    <StyledTooltip title={exporting ? 'Выгрузка…' : 'Скачать Excel'}>
+                                                        <span>
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Скачать Excel"
+                                                                disabled={exporting}
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+                                                                    onExport();
+                                                                }}
+                                                                className="rounded p-1.5 text-green-600 transition-colors hover:bg-green-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                            >
+                                                                <FaFileExcel className="w-4 h-4" />
+                                                            </button>
+                                                        </span>
+                                                    </StyledTooltip>
                                                     <StyledTooltip title="Удалить смету">
                                                         <button
                                                             type="button"
@@ -284,6 +308,10 @@ export default function EstimatesTable({
                     </table>
                 </div>
             </div>
+            {renamingEstimate && <EstimateNameDialog
+                key={renamingEstimate.id} estimate={renamingEstimate}
+                onClose={() => setRenamingEstimate(null)}
+            />}
         </div>
     );
 }

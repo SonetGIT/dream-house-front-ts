@@ -1,3 +1,4 @@
+import { useAsyncActionLock } from '@/utils/useAsyncActionLock';
 import { useState } from 'react';
 import { X, Plus, Trash2, Save } from 'lucide-react';
 import ReferencesSelect from '@/components/ui/ReferencesSelect';
@@ -33,6 +34,7 @@ export default function ServicesEstimateItemsCreate({
     onClose,
     // onSumChange,
 }: MaterialFormProps) {
+    const { pending: saving, run, isLocked } = useAsyncActionLock();
     //HOOKS
     const dispatch = useAppDispatch();
     const rates = useCurrencyRates();
@@ -121,7 +123,12 @@ export default function ServicesEstimateItemsCreate({
         setRows((prev) => prev.filter((r) => r.id !== id));
     };
 
-    const submit = async (e: React.FormEvent) => {
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        void run(() => save(e));
+    };
+
+    const save = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const valid = rows.filter((r) => r.service_type && r.service_id && r.unit_of_measure);
@@ -164,12 +171,13 @@ export default function ServicesEstimateItemsCreate({
                         </p>
                     </div>
 
-                    <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100">
+                    <button disabled={saving} onClick={() => { if (!isLocked()) onClose(); }} className="p-1 rounded-lg hover:bg-gray-100">
                         <X className="w-5 h-5 text-red-500" />
                     </button>
                 </div>
 
                 <form onSubmit={submit} className="flex flex-col flex-1 overflow-hidden">
+                    <fieldset disabled={saving} className="flex flex-col flex-1 min-h-0 overflow-hidden border-0 p-0 m-0">
                     <div className="flex-1 p-4 overflow-y-auto">
                         <table className="w-full border-collapse">
                             <thead className="sticky top-0 z-10 bg-gray-50">
@@ -469,7 +477,7 @@ export default function ServicesEstimateItemsCreate({
                     <div className="flex justify-end gap-4 px-6 py-4 border-t bg-gray-50">
                         <button
                             type="button"
-                            onClick={onClose}
+                            disabled={saving} onClick={() => { if (!isLocked()) onClose(); }}
                             className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100"
                         >
                             Отмена
@@ -477,12 +485,14 @@ export default function ServicesEstimateItemsCreate({
 
                         <button
                             type="submit"
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                            disabled={saving}
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4" />
-                            Сохранить все материалы
+                            {saving ? 'Сохранение…' : 'Сохранить все услуги'}
                         </button>
                     </div>
+                    </fieldset>
                 </form>
             </td>
         </tr>

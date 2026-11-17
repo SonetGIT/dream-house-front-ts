@@ -33,35 +33,35 @@ test('materials are grouped by stage and subsection before pagination', () => {
     const original = JSON.stringify(items);
     const first = page(items, 1, 1, 2);
     const second = page(items, 1, 2, 2);
-    assert.deepEqual(ids(first.items), [1, 4]);
+    assert.deepEqual(ids(first.items), [4, 1]);
     assert.deepEqual(ids(second.items), [3, 2]);
     assert.equal(first.pagination.total, 4);
     assert.equal(first.pagination.pages, 2);
     assert.equal(first.pagination.hasNext, true);
     assert.equal(second.pagination.hasPrev, true);
     assert.equal(JSON.stringify(items), original);
-    assert.equal(first.items[0], items[0]);
+    assert.equal(first.items[0], items[3]);
 });
 
 test('groups with no subsection remain distinct for different stages and missing stage', () => {
     const items = [row(1, 1, 10, null), row(2, 1, 11, null), row(3, 1, 10, null), row(4, 1, null, null), row(5, 1, 11, 20)];
-    assert.deepEqual(ids(page(items, 1, 1, 10).items), [1, 3, 2, 5, 4]);
+    assert.deepEqual(ids(page(items, 1, 1, 10).items), [5, 2, 4, 3, 1]);
 });
 
 test('a large material group can span pages without losing or repeating positions', () => {
     const items = [row(1, 1, 10, 20), row(2, 1, 10, 20), row(3, 1, 10, 20), row(4, 1, 11, 30)];
-    assert.deepEqual(ids(page(items, 1, 1, 2).items), [1, 2]);
-    assert.deepEqual(ids(page(items, 1, 2, 2).items), [3, 4]);
+    assert.deepEqual(ids(page(items, 1, 1, 2).items), [4, 3]);
+    assert.deepEqual(ids(page(items, 1, 2, 2).items), [2, 1]);
 });
 
-test('service pagination has its own total and preserves the service order', () => {
+test('service pagination has its own total and orders services newest first', () => {
     const items = [row(1, 1, 10, 20), row(2, 2, 11, 30), row(3, 2, 10, 20), row(4, 1, 10, 20), row(5, 2, 11, 30)];
     const services = page(items, 2, 2, 2);
-    assert.deepEqual(ids(services.items), [5]);
+    assert.deepEqual(ids(services.items), [2]);
     assert.equal(services.pagination.total, 3);
     assert.equal(services.pagination.page, 2);
     assert.equal(services.pagination.hasNext, false);
-    assert.deepEqual(ids(page(items, 1, 1, 10).items), [1, 4]);
+    assert.deepEqual(ids(page(items, 1, 1, 10).items), [4, 1]);
 });
 
 test('deleting the last row on a page falls back to the last nonempty page', () => {
@@ -69,7 +69,7 @@ test('deleting the last row on a page falls back to the last nonempty page', () 
     const result = page(items, 2, 2, 2);
     assert.equal(result.pagination.page, 1);
     assert.equal(result.pagination.hasPrev, false);
-    assert.deepEqual(ids(result.items), [1, 2]);
+    assert.deepEqual(ids(result.items), [2, 1]);
 });
 
 test('an empty list has a usable first page and zero records', () => {
@@ -80,4 +80,28 @@ test('an empty list has a usable first page and zero records', () => {
     assert.equal(result.pagination.pages, 1);
     assert.equal(result.pagination.hasNext, false);
     assert.equal(result.pagination.hasPrev, false);
+});
+
+
+test('creation date takes priority over id and update date does not change ordering', () => {
+    for (const type of [1, 2]) {
+        const items = [
+            { ...row(50, type, 10, 20), created_at: '2026-11-01T00:00:00Z', updated_at: '2026-11-20T00:00:00Z' },
+            { ...row(4, type, 10, 20), created_at: '2026-11-16T00:00:00Z' },
+            { ...row(5, type, 10, 20), created_at: '2026-11-16T00:00:00Z' },
+            { ...row(60, type, 10, 20), created_at: 'invalid' },
+        ];
+        const original = JSON.stringify(items);
+        assert.deepEqual(ids(page(items, type, 1, 10).items), [5, 4, 50, 60]);
+        assert.equal(JSON.stringify(items), original);
+    }
+});
+
+test('adding a position and reloading in another API order keeps the newest row first', () => {
+    for (const type of [1, 2]) {
+        const older = row(1, type, 10, 20);
+        const newer = row(2, type, 11, 30);
+        assert.deepEqual(ids(page([older, newer], type, 1, 10).items), [2, 1]);
+        assert.deepEqual(ids(page([newer, older], type, 1, 10).items), [2, 1]);
+    }
 });

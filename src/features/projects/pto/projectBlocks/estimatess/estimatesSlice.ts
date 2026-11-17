@@ -131,13 +131,15 @@ export const createEstimate = createAsyncThunk<Estimate, EstimateFormData, { rej
 
 /*  UPDATE  */
 export const updateEstimate = createAsyncThunk<
-    Estimate,
-    { id: number; data: EstimateFormData },
+    Pick<Estimate, 'id' | 'name'>,
+    { id: number; data: Pick<EstimateFormData, 'name'> },
     { rejectValue: string }
 >('estimates/update', async ({ id, data }, { rejectWithValue }) => {
     try {
-        const res = await apiRequest<Estimate>(`/materialEstimates/update/${id}`, 'PUT', data);
-        return res.data;
+        const name = data.name.trim();
+        if (!name) return rejectWithValue('Укажите название сметы');
+        await apiRequest<unknown>(`/materialEstimates/update/${id}`, 'PUT', { name });
+        return { id, name };
     } catch (error: unknown) {
         return rejectWithValue(getErrorMessage(error, 'Ошибка обновления сметы'));
     }
@@ -227,7 +229,7 @@ const estimatesSlice = createSlice({
             .addCase(updateEstimate.fulfilled, (state, action) => {
                 const index = state.data.findIndex((m) => m.id === action.payload.id);
                 if (index !== -1) {
-                    state.data[index] = action.payload;
+                    state.data[index].name = action.payload.name;
                 }
             })
 

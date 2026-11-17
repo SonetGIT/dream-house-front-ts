@@ -2,8 +2,11 @@ import { useReference } from '@/features/reference/useReference';
 import type { Estimate } from './estimatesSlice';
 import { formatNumber } from '@/utils/formatNumber';
 import { getStatusColor } from '@/utils/getStatusColor';
+import { Pencil } from 'lucide-react';
+import { StyledTooltip } from '@/components/ui/StyledTooltip';
 
 interface EstimateRowProps {
+    onRename: () => void;
     item: Estimate;
     materialSum: number;
     serviceSum: number;
@@ -12,6 +15,7 @@ interface EstimateRowProps {
 
 /***********************************************************************************************************/
 export default function EstimateRow({
+    onRename,
     item,
     materialSum,
     serviceSum,
@@ -33,7 +37,16 @@ export default function EstimateRow({
             </td>
 
             <td className="w-20 px-4 py-3 text-xs text-left border-l text-sky-800 bg-blue-50/30">
-                {item.name}
+                <div className="flex items-center gap-2">
+                    <span className="text-[12px] leading-4">{item.name}</span>
+                    <StyledTooltip title="Изменить название сметы">
+                        <button type="button" aria-label="Изменить название сметы"
+                            onClick={(event) => { event.stopPropagation(); onRename(); }}
+                            className="shrink-0 rounded p-1 text-sky-600 hover:bg-blue-100">
+                            <Pencil className="h-4 w-4" />
+                        </button>
+                    </StyledTooltip>
+                </div>
             </td>
 
             <td className="px-4 py-3 font-medium text-right text-gray-900 border-l bg-blue-50/30">

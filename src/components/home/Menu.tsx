@@ -48,7 +48,7 @@ const drawerItems: DrawerItem[] = [
         icon: <VscReferences />,
         subItems: [
             { label: 'Материалы', path: '/materials' },
-            { label: 'Презентации', path: '/materials' },
+            { label: 'Услуги', path: '/services' },
         ],
     },
 ];

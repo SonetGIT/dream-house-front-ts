@@ -1,3 +1,4 @@
+import { useAsyncActionLock } from '@/utils/useAsyncActionLock';
 import { X, Package, DollarSign } from 'lucide-react';
 import type { EstimateItem } from './estimateItemsSlice';
 import { useEffect, useState } from 'react';
@@ -7,7 +8,7 @@ import { parseNumber } from '@/utils/parseNumber';
 interface MaterialEditModalProps {
     item: EstimateItem | null;
     refs: any;
-    onSubmit: (data: Partial<EstimateItem>) => void;
+    onSubmit: (data: Partial<EstimateItem>) => Promise<void>;
     onClose: () => void;
 }
 
@@ -17,6 +18,7 @@ export default function MaterialEditModal({
     onSubmit,
     onClose,
 }: MaterialEditModalProps) {
+    const { pending: saving, run, isLocked } = useAsyncActionLock();
     const [formData, setFormData] = useState<Partial<EstimateItem>>({
         stage_id: item?.stage_id ?? null,
         subsection_id: item?.subsection_id ?? null,
@@ -49,11 +51,11 @@ export default function MaterialEditModal({
     // Handle Escape key to close modal
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape' && !isLocked()) onClose();
         };
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
-    }, [onClose]);
+    }, [onClose, isLocked]);
 
     const handleChange = (key: keyof EstimateItem, value: any) => {
         setFormData((prev) => {
@@ -88,7 +90,7 @@ export default function MaterialEditModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        void run(async () => { await onSubmit(formData); });
     };
 
     const total = calculateTotal();
@@ -96,7 +98,7 @@ export default function MaterialEditModal({
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 duration-200 bg-black/40 backdrop-blur-sm animate-in fade-in"
-            onClick={onClose}
+            onClick={() => { if (!isLocked()) onClose(); }}
         >
             <div
                 className="w-full max-w-[900px] bg-white rounded-lg shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
@@ -114,7 +116,7 @@ export default function MaterialEditModal({
                     </div>
 
                     <button
-                        onClick={onClose}
+                        onClick={() => { if (!isLocked()) onClose(); }}
                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                         title="Закрыть (Esc)"
                     >
@@ -123,6 +125,7 @@ export default function MaterialEditModal({
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                    <fieldset disabled={saving} className="contents">
                     <div className="flex-1 px-6 py-5 space-y-5 overflow-y-auto">
                         {/* Этап и Подэтап */}
                         <div className="grid grid-cols-2 gap-4">
@@ -303,7 +306,7 @@ export default function MaterialEditModal({
                     <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={() => { if (!isLocked()) onClose(); }}
                             className="px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400"
                         >
                             Отмена
@@ -311,6 +314,7 @@ export default function MaterialEditModal({
 
                         <button
                             type="submit"
+                            aria-busy={saving}
                             disabled={
                                 !formData.material_type ||
                                 !formData.material_id ||
@@ -321,6 +325,7 @@ export default function MaterialEditModal({
                             Сохранить изменения
                         </button>
                     </div>
+                    </fieldset>
                 </form>
             </div>
         </div>

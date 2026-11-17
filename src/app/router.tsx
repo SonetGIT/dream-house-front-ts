@@ -3,6 +3,7 @@ import App from '../App';
 import NotFoundPage from '../pages/NotFoundPage';
 import AuthPage from '../pages/AuthPage';
 import MaterialsPage from '@/features/materials/MaterialsPage';
+import ServicesPage from '@/features/services/ServicesPage';
 import PtoPage from '@/features/projects/pto/PtoPage';
 import LegalDocStagesPage from '@/features/projects/legal_department/legalDocStages/LegalDocStagesPage';
 import ProjectsPage from '@/features/projects/a_project/ProjectsPage';
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
             { path: 'suppliers', element: <SuppliersPage /> },
             { path: 'contractors', element: <ContractorsPage /> },
             { path: 'materials', element: <MaterialsPage /> },
+            { path: 'services', element: <ServicesPage /> },
             {
                 path: 'sales',
                 element: <SalesPageTabs />,

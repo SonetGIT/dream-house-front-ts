@@ -1,104 +1,39 @@
-import { useEffect, useState } from 'react';
-import { Box, TextField } from '@mui/material';
+import { Box, TextField, Typography } from '@mui/material';
 import { ReferenceSelect } from '@/components/ui/ReferenceSelect';
 import { useReference } from '@/features/reference/useReference';
-import type { Material, MaterialFormData } from './materialsSlice';
+import type { MaterialFormData } from './materialsSlice';
 
 interface Props {
-    initialData: Material | null;
+    data: MaterialFormData;
+    editing: boolean;
+    disabled: boolean;
     onChange: (data: MaterialFormData) => void;
 }
 
-export function MaterialForm({ initialData, onChange }: Props) {
+export function MaterialForm({ data, editing, disabled, onChange }: Props) {
     const materialTypes = useReference('materialTypes');
     const units = useReference('unitsOfMeasure');
-
-    const [formData, setFormData] = useState<MaterialFormData>({
-        name: '',
-        type: '',
-        unit_of_measure: '',
-        coefficient: '',
-        description: '',
-    });
-
-    useEffect(() => {
-        if (initialData) {
-            setFormData({
-                name: initialData.name,
-                type: initialData.type,
-                unit_of_measure: initialData.unit_of_measure,
-                coefficient: initialData.coefficient || '',
-                description: initialData.description || '',
-            });
-        }
-    }, [initialData]);
-
-    useEffect(() => {
-        onChange(formData);
-    }, [formData]);
-
     return (
-        <Box display="flex" flexDirection="column" gap={2}>
-            <TextField
-                label="Название"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                size="small"
-            />
-
-            <ReferenceSelect
-                label="Тип"
-                value={formData.type}
-                onChange={(v) =>
-                    setFormData({
-                        ...formData,
-                        type: v === '' ? '' : Number(v),
-                    })
-                }
-                options={materialTypes.data ?? []}
-            />
-
-            <ReferenceSelect
-                label="Единица измерения"
-                value={formData.unit_of_measure}
-                onChange={(v) =>
-                    setFormData({
-                        ...formData,
-                        unit_of_measure: v === '' ? '' : Number(v),
-                    })
-                }
-                options={units.data ?? []}
-            />
-            <TextField
-                label="Коэффициент"
-                value={formData.coefficient}
-                onChange={(e) => {
-                    const value = e.target.value.replace(',', '.');
-
-                    // Разрешаем только цифры и одну точку
-                    if (/^\d*\.?\d*$/.test(value)) {
-                        setFormData({
-                            ...formData,
-                            coefficient: value,
-                        });
-                    }
-                }}
-                size="small"
-            />
-
-            <TextField
-                label="Описание"
-                multiline
-                rows={3}
-                value={formData.description}
-                onChange={(e) =>
-                    setFormData({
-                        ...formData,
-                        description: e.target.value,
-                    })
-                }
-                size="small"
-            />
+        <Box display="flex" flexDirection="column" gap={2}
+            sx={{ '& > .MuiAutocomplete-root': { minWidth: 0, width: '100%' } }}>
+            <TextField autoFocus fullWidth required label="Название материала" placeholder="Название материала" value={data.name} disabled={disabled}
+                onChange={(event) => onChange({ ...data, name: event.target.value })} size="small" />
+            <ReferenceSelect label="Тип материала" value={data.type} disabled={disabled}
+                onChange={(value) => onChange({ ...data, type: value === '' ? '' : Number(value) })}
+                options={materialTypes.data ?? []} loading={materialTypes.loading} />
+            {materialTypes.error && <Typography color="error">{materialTypes.error}</Typography>}
+            <ReferenceSelect label="Ед. изм. *" value={data.unit_of_measure} disabled={disabled}
+                onChange={(value) => onChange({ ...data, unit_of_measure: value === '' ? '' : Number(value) })}
+                options={units.data ?? []} loading={units.loading} />
+            {units.error && <Typography color="error">{units.error}</Typography>}
+            <TextField label="Коэффициент" value={data.coefficient} disabled={disabled || editing}
+                helperText={editing ? 'Коэффициент задаётся при создании материала' : undefined}
+                onChange={(event) => {
+                    const value = event.target.value.replace(',', '.');
+                    if (/^\d*\.?\d*$/.test(value)) onChange({ ...data, coefficient: value });
+                }} size="small" />
+            <TextField label="Описание" multiline rows={3} value={data.description} disabled={disabled}
+                onChange={(event) => onChange({ ...data, description: event.target.value })} size="small" />
         </Box>
     );
 }
